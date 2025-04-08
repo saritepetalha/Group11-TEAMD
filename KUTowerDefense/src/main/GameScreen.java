@@ -12,7 +12,11 @@ public class GameScreen extends JPanel {
 	
 	private Random random;
 	private BufferedImage img;
+	private long lastTime;
+	private int frames;
+
 	
+
 	private ArrayList<BufferedImage> sprites = new ArrayList<>();
 	
 	
@@ -23,6 +27,7 @@ public class GameScreen extends JPanel {
 		
 		random = new Random();
 		
+		
 	}
 	
 	private void loadSprites() {
@@ -31,6 +36,8 @@ public class GameScreen extends JPanel {
 				sprites.add(img.getSubimage(x * 32, y * 32, 32, 32));		
 			}
 		}
+
+		
 		
 	}
 
@@ -42,8 +49,11 @@ public class GameScreen extends JPanel {
 				g.drawImage(sprites.get(getRandomInt()), x * 32, y * 32, null);
 			}		
 		}
+
+
 	}
 	
+
 	private int getRandomInt() {
 		return random.nextInt(100);
 	}
