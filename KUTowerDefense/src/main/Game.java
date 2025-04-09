@@ -31,6 +31,7 @@ public class Game extends JFrame implements Runnable{
 
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		setLocationRelativeTo(null);
+		setResizable(false);
 		initClasses();
 
 		add(gamescreen);

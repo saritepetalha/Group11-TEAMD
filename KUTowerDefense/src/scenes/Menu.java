@@ -27,7 +27,7 @@ public class Menu extends GameScene implements SceneMethods {
     public void render(Graphics g) {
         for (int y = 0; y < 20; y++) {
             for (int x = 0; x < 20; x++) {
-                g.drawImage(sprites.get(getRandomInt()), x * 32, y * 32, null);
+                g.drawImage(sprites.get(getRandomInt()), x * 64, y * 64, null);
             }		
         }
     }
@@ -35,7 +35,7 @@ public class Menu extends GameScene implements SceneMethods {
 
     private void importImg() {
 		
-		InputStream is = getClass().getResourceAsStream("/spriteatlas.png");
+		InputStream is = getClass().getResourceAsStream("/Tiles/Tileset64.png");
 		
 		try {
 			img = ImageIO.read(is);
@@ -46,16 +46,16 @@ public class Menu extends GameScene implements SceneMethods {
 	}
 
     private void loadSprites() {
-		for (int y = 0; y < 10; y++) {
-			for (int x = 0; x < 10; x++) {
-				sprites.add(img.getSubimage(x * 32, y * 32, 32, 32));		
+		for (int y = 0; y < 8; y++) {
+			for (int x = 0; x < 4; x++) {
+				sprites.add(img.getSubimage(x * 64, y * 64, 64, 64));
 			}
 		}
 	}
 
 
     private int getRandomInt() {
-		return random.nextInt(100);
+		return random.nextInt(sprites.size());
 	}
 
 }
