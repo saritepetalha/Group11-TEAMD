@@ -40,8 +40,6 @@ public class TileManager {
 
     // This method is used to get a specific tile sprite from the atlas
     private BufferedImage getSprite(int x, int y) {
-        System.out.println("Width: " + atlas.getWidth());
-        System.out.println("Height: " + atlas.getHeight());
         BufferedImage tile = atlas.getSubimage(x * 64, y * 64, 64, 64);
         System.out.println("Tile 1 loaded: " + (tile != null));
         return tile;

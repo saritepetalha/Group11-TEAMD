@@ -11,8 +11,6 @@ public class LoadSave {
 
         BufferedImage img = null;
         InputStream is = LoadSave.class.getClassLoader().getResourceAsStream("Tiles/Tileset64.png");
-        System.out.println("Dosya bulundu mu? " + (is != null));
-
         try {
             img = ImageIO.read(is);
         } catch (IOException e) {
