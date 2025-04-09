@@ -20,14 +20,13 @@ public class Playing extends GameScene implements SceneMethods {
 
     @Override
     public void render(Graphics g) {
+        g.setColor(Color.RED);
+        g.fillRect(0, 0, 640, 640);
 
         for (int i = 0; i < level.length; i++) {
             for (int j = 0; j < level[i].length; j++) {
                 g.drawImage(tileManager.getSprite(level[i][j]), j * 64, i * 64, null);
             }
         }
-
-        g.setColor(Color.RED);
-        g.fillRect(0, 0, 640, 640);
     }
 }
