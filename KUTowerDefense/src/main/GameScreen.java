@@ -8,6 +8,7 @@ import java.util.Random;
 import java.awt.Dimension;
 import javax.swing.JPanel;
 
+import dimensions.GameDimensions;
 import inputs.KeyboardListener;
 import inputs.MyMouseListener;
 
@@ -18,13 +19,9 @@ public class GameScreen extends JPanel {
 	private KeyboardListener keyboardListener;
 
 	private Game game;
-	
 
 	public GameScreen(Game game) {
-		
 		this.game = game;
-
-		
 		setPanelSize();	
 	}
 
@@ -41,14 +38,11 @@ public class GameScreen extends JPanel {
 	
 
 	private void setPanelSize() {
-		size = new Dimension(1792, 864);
+		size = new Dimension (GameDimensions.GAME_WIDTH + 4*GameDimensions.ButtonSize.MEDIUM.getSize(), GameDimensions.GAME_HEIGHT);
 		setMinimumSize(size);
 		setMaximumSize(size);
 		setPreferredSize(size);
 	}
-
-
-	
 
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);

@@ -3,6 +3,7 @@ package scenes;
 import java.awt.Color;
 import java.awt.Graphics;
 
+import dimensions.GameDimensions;
 import helpMethods.LevelBuilder;
 import main.Game;
 import managers.TileManager;
@@ -14,64 +15,59 @@ import static main.GameStates.*;
 public class Playing extends GameScene implements SceneMethods {
     private int[][] level;
     private TileManager tileManager;
-    private TheButton backMenu;
+
     private EditTiles editTiles;
 
     public Playing(Game game) {
         super(game);
         level = LevelBuilder.getLevelData();
         tileManager = new TileManager();
-        editTiles = new EditTiles(1536,0,256, 864);
-        initButtons();
+        editTiles = new EditTiles(GameDimensions.GAME_WIDTH,0,4*GameDimensions.ButtonSize.MEDIUM.getSize(), GameDimensions.GAME_HEIGHT,this);
     }
 
-    private void initButtons() {
-        backMenu = new TheButton("Back", 2, 2, 100, 30);
+    public TileManager getTileManager() {
+        return tileManager;
     }
 
     @Override
     public void render(Graphics g) {
-        g.setColor(Color.RED);
-        g.fillRect(0, 0, 1536, 864);
+        g.setColor(new Color(134,177,63,255));
+        g.fillRect(0, 0, GameDimensions.GAME_WIDTH, GameDimensions.GAME_HEIGHT);
 
         for (int i = 0; i < level.length; i++) {
             for (int j = 0; j < level[i].length; j++) {
-                g.drawImage(tileManager.getSprite(level[i][j]), j * 96, i * 96, null);
+                g.drawImage(tileManager.getSprite(level[i][j]), j * 64, i * 64, null);
             }
         }
-        drawButtons(g);
+
         editTiles.draw(g);
 
     }
 
-    private void drawButtons(Graphics g) {
-        backMenu.draw(g);
-    }
-
     @Override
     public void mouseClicked(int x, int y) {
-        if (backMenu.getBounds().contains(x, y)) {
-            setGameState(MENU);
+        if( x >= GameDimensions.GAME_WIDTH){
+            editTiles.mouseClicked(x,y);
         }
+
     }
 
     @Override
     public void mouseMoved(int x, int y) {
-        backMenu.setMouseOver(false);
-        if (backMenu.getBounds().contains(x, y)) {
-            backMenu.setMouseOver(true);
+        if( x >= GameDimensions.GAME_WIDTH){
+            editTiles.mouseMoved(x,y);
         }
+
     }
 
     @Override
     public void mousePressed(int x, int y) {
-        if (backMenu.getBounds().contains(x, y)) {
-            backMenu.setMousePressed(true);
+        if( x >= GameDimensions.GAME_WIDTH){
+            editTiles.mousePressed(x,y);
         }
+
     }
 
     @Override
-    public void mouseReleased(int x, int y) {
-        backMenu.resetBooleans();
-    }
+    public void mouseReleased(int x, int y) {editTiles.mouseReleased(x,y);}
 }

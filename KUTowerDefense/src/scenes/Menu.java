@@ -31,7 +31,7 @@ public class Menu extends GameScene implements SceneMethods {
 
     private void importImg() {
 
-        InputStream is = getClass().getResourceAsStream("/Tiles/Tileset96x96.png");
+        InputStream is = getClass().getResourceAsStream("/Tiles/Tileset64.png");
 
         try {
             img = ImageIO.read(is);

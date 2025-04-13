@@ -10,7 +10,7 @@ public class LoadSave {
     public static BufferedImage getSpriteAtlas() {
 
         BufferedImage img = null;
-        InputStream is = LoadSave.class.getResourceAsStream("/Tiles/Tileset96x96.png");
+        InputStream is = LoadSave.class.getResourceAsStream("/Tiles/Tileset64.png");
 
         try {
             img = ImageIO.read(is);

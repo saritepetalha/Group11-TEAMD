@@ -25,9 +25,10 @@ public class TileManager {
 
     // This method is used to create the tiles from the atlas
     private void createTiles() {
-        tiles.add(Grass = new Tile(getSprite(3, 3))); // Grass
-        tiles.add(Rock = new Tile(getSprite(3, 4))); // Rock
-        tiles.add(Road = new Tile(getSprite(1, 3))); // Road
+        int id = 0;
+        tiles.add(Grass = new Tile(getSprite(3, 3),id++,"Grass")); // Grass
+        tiles.add(Rock = new Tile(getSprite(3, 4),id++, "Rock")); // Rock
+        tiles.add(Road = new Tile(getSprite(1, 3),id++, "Road")); // Road
     }
 
     // This method is used to get the sprite of a specific tile by index
@@ -40,7 +41,7 @@ public class TileManager {
 
     // This method is used to get a specific tile sprite from the atlas
     private BufferedImage getSprite(int x, int y) {
-        BufferedImage tile = atlas.getSubimage(x * 96, y * 96, 96, 96);
+        BufferedImage tile = atlas.getSubimage(x * 64, y * 64, 64, 64);
         System.out.println("Tile 1 loaded: " + (tile != null));
         return tile;
     }
