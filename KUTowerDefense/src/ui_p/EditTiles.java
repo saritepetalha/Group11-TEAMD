@@ -30,16 +30,29 @@ public class EditTiles {
     }
 
     private void initButtons() {
-        backMenu = new TheButton("Back", GameDimensions.GAME_WIDTH + 4* GameDimensions.ButtonSize.MEDIUM.getSize() - GameDimensions.ButtonSize.SMALL.getSize(), GameDimensions.BUTTON_PADDING, GameDimensions.ButtonSize.SMALL.getSize(), GameDimensions.ButtonSize.SMALL.getSize());
+        backMenu = new TheButton("Back", GameDimensions.GAME_WIDTH + 4* GameDimensions.ButtonSize.MEDIUM.getSize() - GameDimensions.ButtonSize.SMALL.getSize(),
+                GameDimensions.BUTTON_PADDING, GameDimensions.ButtonSize.SMALL.getSize(), GameDimensions.ButtonSize.SMALL.getSize());
+
+        int widthButton = GameDimensions.ButtonSize.MEDIUM.getSize();
+        int heightButton = GameDimensions.ButtonSize.MEDIUM.getSize();
+        int gameWidth = GameDimensions.GAME_WIDTH;
 
         for(int i = 0; i < playing.getTileManager().tiles.size(); i++) {
             Tile tile = playing.getTileManager().tiles.get(i);
-            tilesButtons.add(new TheButton(tile.getName(),GameDimensions.GAME_WIDTH , 2*GameDimensions.ButtonSize.MEDIUM.getSize(), GameDimensions.ButtonSize.MEDIUM.getSize(), GameDimensions.ButtonSize.MEDIUM.getSize()));
+            tilesButtons.add(new TheButton(tile.getName(),gameWidth + widthButton * (i % 4),
+                    2*heightButton + widthButton * (i / 4),
+                    widthButton,
+                    heightButton));
+            System.out.println(i/4);
         }
     }
 
     private void drawButtons(Graphics g) {
         backMenu.draw(g);
+
+        for (TheButton tilesButton : tilesButtons) {
+            tilesButton.draw(g);
+        }
     }
 
     public void draw(Graphics g){

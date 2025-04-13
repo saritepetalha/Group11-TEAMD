@@ -3,6 +3,7 @@ package scenes;
 import java.awt.Color;
 import java.awt.Graphics;
 
+import dimensions.GameDimensions;
 import main.Game;
 import ui_p.TheButton;
 import static main.GameStates.*;
@@ -23,7 +24,7 @@ public class Options extends GameScene implements SceneMethods {
     @Override
     public void render(Graphics g) {
         g.setColor(Color.BLUE);
-        g.fillRect(0, 0, 1536, 864);
+        g.fillRect(0, 0, GameDimensions.GAME_WIDTH, GameDimensions.GAME_HEIGHT);
         drawButtons(g);
     }
 

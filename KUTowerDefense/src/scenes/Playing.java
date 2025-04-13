@@ -36,7 +36,7 @@ public class Playing extends GameScene implements SceneMethods {
 
         for (int i = 0; i < level.length; i++) {
             for (int j = 0; j < level[i].length; j++) {
-                g.drawImage(tileManager.getSprite(level[i][j]), j * 64, i * 64, null);
+                g.drawImage(tileManager.getSprite(level[i][j]), j * GameDimensions.TILE_DISPLAY_SIZE, i * GameDimensions.TILE_DISPLAY_SIZE, null);
             }
         }
 

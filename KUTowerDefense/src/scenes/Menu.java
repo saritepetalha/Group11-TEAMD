@@ -9,6 +9,7 @@ import java.util.Random;
 import javax.imageio.ImageIO;
 
 
+import dimensions.GameDimensions;
 import main.Game;
 import ui_p.TheButton;
 
@@ -44,7 +45,7 @@ public class Menu extends GameScene implements SceneMethods {
     private void loadSprites() {
         for (int y = 0; y < 8; y++) {
             for (int x = 0; x < 4; x++) {
-                sprites.add(img.getSubimage(x * 64, y * 64, 64, 64));
+                sprites.add(img.getSubimage(x * GameDimensions.TILE_DISPLAY_SIZE, y * GameDimensions.TILE_DISPLAY_SIZE, GameDimensions.TILE_DISPLAY_SIZE, GameDimensions.TILE_DISPLAY_SIZE));
             }
         }
     }
