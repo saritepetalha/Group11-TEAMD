@@ -8,16 +8,51 @@ public class TheButton {
     private int y;
     private int width;
     private int height;
+    private int id;
     private Rectangle bounds;
     private boolean mouseOver, mousePressed;
 
+    // constructor for normal buttons
     public TheButton (String text, int x, int y, int width, int height) {
         this.text = text;
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
+        this.id = -1;
         this.bounds = new Rectangle(x, y, width, height);
+
+    }
+
+    // constructor for tile buttons
+    public TheButton (String text, int x, int y, int width, int height, int id) {
+        this.text = text;
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        this.id = id;
+        this.bounds = new Rectangle(x, y, width, height);
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public int getX() {
+        return x;
+    }
+
+    public int getY() {
+        return y;
+    }
+
+    public int getWidth() {
+        return width;
+    }
+
+    public int getHeight() {
+        return height;
     }
 
     public void draw(Graphics g) {

@@ -1,6 +1,7 @@
 package ui_p;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
 import static main.GameStates.MENU;
@@ -42,8 +43,8 @@ public class EditTiles {
             tilesButtons.add(new TheButton(tile.getName(),gameWidth + widthButton * (i % 4),
                     2*heightButton + widthButton * (i / 4),
                     widthButton,
-                    heightButton));
-            System.out.println(i/4);
+                    heightButton,
+                    i));
         }
     }
 
@@ -51,9 +52,18 @@ public class EditTiles {
         backMenu.draw(g);
 
         for (TheButton tilesButton : tilesButtons) {
-            tilesButton.draw(g);
+            x = tilesButton.getX();
+            y = tilesButton.getY();
+            width = tilesButton.getWidth();
+            height = tilesButton.getHeight();
+
+            // draw button with its image on
+            g.drawImage(playing.getTileManager().getSprite(tilesButton.getId()),x,y,width,height,null);
+
+            //tilesButton.draw(g);
         }
     }
+
 
     public void draw(Graphics g){
         g.setColor(new Color(157,209,153,255));     // color given in the project's example image

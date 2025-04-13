@@ -118,20 +118,21 @@ public class TileManager {
     // This method is used to get a specific tile sprite from the atlas
     private BufferedImage getSprite(int x, int y) {
         // for castle tile, because its dimensions are doubled other tiles
+        /*
         if(x == 0 && y == 6){
             BufferedImage tile = atlas.getSubimage(x * GameDimensions.TILE_DISPLAY_SIZE, y * GameDimensions.TILE_DISPLAY_SIZE,
                     GameDimensions.TILE_DISPLAY_SIZE*2, GameDimensions.TILE_DISPLAY_SIZE*2);
             System.out.println("Tile 1 loaded: " + (tile != null));
             return tile;
-        }
+        }*/
 
         // other tiles
-        else{
+        //else{
             BufferedImage tile = atlas.getSubimage(x * GameDimensions.TILE_DISPLAY_SIZE, y * GameDimensions.TILE_DISPLAY_SIZE,
                     GameDimensions.TILE_DISPLAY_SIZE, GameDimensions.TILE_DISPLAY_SIZE);
             System.out.println("Tile 1 loaded: " + (tile != null));
             return tile;
-        }
+        //}
 
 
     }
