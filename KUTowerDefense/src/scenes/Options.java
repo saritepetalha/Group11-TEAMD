@@ -23,7 +23,7 @@ public class Options extends GameScene implements SceneMethods {
     @Override
     public void render(Graphics g) {
         g.setColor(Color.BLUE);
-        g.fillRect(0, 0, 1280, 1024);
+        g.fillRect(0, 0, 1536, 864);
         drawButtons(g);
     }
 

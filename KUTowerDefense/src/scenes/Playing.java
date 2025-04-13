@@ -6,6 +6,7 @@ import java.awt.Graphics;
 import helpMethods.LevelBuilder;
 import main.Game;
 import managers.TileManager;
+import ui_p.EditTiles;
 import ui_p.TheButton;
 
 import static main.GameStates.*;
@@ -14,11 +15,13 @@ public class Playing extends GameScene implements SceneMethods {
     private int[][] level;
     private TileManager tileManager;
     private TheButton backMenu;
+    private EditTiles editTiles;
 
     public Playing(Game game) {
         super(game);
         level = LevelBuilder.getLevelData();
         tileManager = new TileManager();
+        editTiles = new EditTiles(1536,0,256, 864);
         initButtons();
     }
 
@@ -29,14 +32,16 @@ public class Playing extends GameScene implements SceneMethods {
     @Override
     public void render(Graphics g) {
         g.setColor(Color.RED);
-        g.fillRect(0, 0, 1280, 1024);
+        g.fillRect(0, 0, 1536, 864);
 
         for (int i = 0; i < level.length; i++) {
             for (int j = 0; j < level[i].length; j++) {
-                g.drawImage(tileManager.getSprite(level[i][j]), j * 64, i * 64, null);
+                g.drawImage(tileManager.getSprite(level[i][j]), j * 96, i * 96, null);
             }
         }
         drawButtons(g);
+        editTiles.draw(g);
+
     }
 
     private void drawButtons(Graphics g) {
