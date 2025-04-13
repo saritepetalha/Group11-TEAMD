@@ -8,41 +8,14 @@ import helpMethods.LoadSave;
 
 public class TileManager {
     public Tile
-            CurvedRoadNorthWest,
-            CurvedRoadNorth,
-            CurvedRoadNorthEast,
-            FlatRoadUp,
-
-            CurvedRoadWest,
-            Grass,
-            CurvedRoadEast,
-            FlatRoadVertical,
-
-            CurvedRoadSouthWest,
-            CurvedRoadSouth,
-            CurvedRoadSouthEast,
-            FlatRoadDown,
-
-            FlatRoadLeft,
-            FlatRoadHorizontal,
-            FlatRoadRight,
-            DeadTree,
-
-            Tree1,
-            Tree2,
-            Tree3,
-            Rock1,
-
-            ArtilleryTower,
-            MageTower,
-            House,
-            Rock2,
-
-            Castle,
-            ArcherTower,
-            Pit,
-            SmallCastle,
-            Wood;
+            CurvedRoadNorthWest, CurvedRoadNorth, CurvedRoadNorthEast, FlatRoadUp,
+            CurvedRoadWest, Grass, CurvedRoadEast, FlatRoadVertical,
+            CurvedRoadSouthWest, CurvedRoadSouth, CurvedRoadSouthEast, FlatRoadDown,
+            FlatRoadLeft, FlatRoadHorizontal, FlatRoadRight, DeadTree,
+            Tree1, Tree2, Tree3, Rock1,
+            ArtilleryTower, MageTower, House, Rock2,
+            CastleTopLeft, CastleTopRight, ArcherTower, Pit,
+            CastleBottomLeft, CastleBottomRight, SmallCastle, Wood;
 
     public BufferedImage atlas;
     public ArrayList<Tile> tiles = new ArrayList<>();
@@ -97,17 +70,15 @@ public class TileManager {
         tiles.add(House = new Tile(getSprite(2, 5), id++, "House"));
         tiles.add(Rock2 = new Tile(getSprite(3, 5), id++, "Rock2"));
 
-        tiles.add(Castle = new Tile(getSprite(0, 6), id++, "Castle")); // top-left
-        tiles.add(new Tile(getSprite(1, 6), id++, "Castle")); // top-right
+        tiles.add(CastleTopLeft = new Tile(getSprite(0, 6), id++, "Castle")); // top-left
+        tiles.add(CastleTopRight = new Tile(getSprite(1, 6), id++, "Castle")); // top-right
         tiles.add(ArcherTower = new Tile(getSprite(2, 6), id++, "ArcherTower"));
         tiles.add(Pit = new Tile(getSprite(3, 6), id++, "Pit"));
 
-        tiles.add(new Tile(getSprite(0, 7), id++, "Castle")); // bottom-left
-        tiles.add(new Tile(getSprite(1, 7), id++, "Castle")); // bottom-right
+        tiles.add(CastleBottomLeft = new Tile(getSprite(0, 7), id++, "Castle")); // bottom-left
+        tiles.add(CastleBottomRight = new Tile(getSprite(1, 7), id++, "Castle")); // bottom-right
         tiles.add(SmallCastle = new Tile(getSprite(2, 7), id++, "SmallCastle"));
         tiles.add(Wood = new Tile(getSprite(3, 7), id++, "Wood"));
-
-
 
     }
 
@@ -119,24 +90,25 @@ public class TileManager {
         return tiles.get(index).getSprite();
     }
 
-    // This method is used to get a specific tile sprite from the atlas
-    private BufferedImage getSprite(int x, int y) {
-        // for castle tile, because its dimensions are doubled other tiles
-        /*
-        if(x == 0 && y == 6){
-            BufferedImage tile = atlas.getSubimage(x * GameDimensions.TILE_DISPLAY_SIZE, y * GameDimensions.TILE_DISPLAY_SIZE,
-                    GameDimensions.TILE_DISPLAY_SIZE*2, GameDimensions.TILE_DISPLAY_SIZE*2);
-            System.out.println("Tile 1 loaded: " + (tile != null));
-            return tile;
-        }*/
+    // dedicated method to get the full castle sprite, as its dimension doubles other tiles' dimensions
+    public BufferedImage getFullCastleSprite() {
+        return atlas.getSubimage(
+                0 * GameDimensions.TILE_DISPLAY_SIZE,    // X coordinate (first tile, left)
+                6 * GameDimensions.TILE_DISPLAY_SIZE,       // Y coordinate (row 6)
+                GameDimensions.TILE_DISPLAY_SIZE * 2,       // 2 tiles wide, as it is a 2x2 tile
+                GameDimensions.TILE_DISPLAY_SIZE * 2        // 2 tiles high, as it is a 2x2 tile
+        );
+    }
 
-        // other tiles
-        //else{
-            BufferedImage tile = atlas.getSubimage(x * GameDimensions.TILE_DISPLAY_SIZE, y * GameDimensions.TILE_DISPLAY_SIZE,
-                    GameDimensions.TILE_DISPLAY_SIZE, GameDimensions.TILE_DISPLAY_SIZE);
-            System.out.println("Tile 1 loaded: " + (tile != null));
-            return tile;
-        //}
+    // This method is used to get a specific tile sprite from the atlas (except castle tiles)
+    private BufferedImage getSprite(int x, int y) {
+        BufferedImage tile = atlas.getSubimage(x * GameDimensions.TILE_DISPLAY_SIZE,
+                y * GameDimensions.TILE_DISPLAY_SIZE,
+                GameDimensions.TILE_DISPLAY_SIZE,
+                GameDimensions.TILE_DISPLAY_SIZE);
+
+                System.out.println("Tile 1 loaded: " + (tile != null));  // for debugging
+                return tile;
 
 
     }

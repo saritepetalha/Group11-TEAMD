@@ -59,10 +59,26 @@ public class EditTiles {
 
         for(int i = 0; i < playing.getTileManager().tiles.size(); i++) {
             Tile tile = playing.getTileManager().tiles.get(i);
-            tilesButtons.add(new TheButton(tile.getName(),gameWidth + widthButton * (i % 4),
-                    2*heightButton + widthButton * (i / 4),
-                    widthButton,
-                    heightButton,
+
+            // skip extra Castle tiles (one button for Castle)
+            if (tile.getName().equals("Castle") && tile != playing.getTileManager().CastleTopLeft) {
+                continue;
+            }
+
+            // determining if the tile should be large by checking if its name is Castle.
+            boolean isLarge = tile.getName().equals("Castle");
+
+            int buttonWidth = isLarge ? 2 * widthButton : widthButton;
+            int buttonHeight = isLarge ? 2 * heightButton : heightButton;
+
+            int xPos = gameWidth + widthButton * (i % 4);
+            int yPos = 2 * heightButton + widthButton * (i / 4);
+
+            tilesButtons.add(new TheButton(tile.getName(),
+                    xPos,
+                    yPos,
+                    buttonWidth,
+                    buttonHeight,
                     i));
         }
     }
@@ -102,7 +118,20 @@ public class EditTiles {
                 imageY -= 4; // offset up by 2 pixels
             }
 
-            g2d.drawImage(playing.getTileManager().getSprite(tilesButton.getId()), imageX, imageY, width, height,null);
+            BufferedImage spriteToDraw;
+
+            if (tilesButton.getText().equals("Castle")) {
+                spriteToDraw = playing.getTileManager().getFullCastleSprite();
+            } else {
+                spriteToDraw = playing.getTileManager().getSprite(tilesButton.getId());
+            }
+
+            g2d.drawImage(spriteToDraw,
+                    imageX,
+                    imageY,
+                    width,
+                    height,
+                    null);
 
         }
 

@@ -35,6 +35,10 @@ public class TheButton {
         this.bounds = new Rectangle(x, y, width, height);
     }
 
+    public String getText() {
+        return text;
+    }
+
     public int getId() {
         return id;
     }
