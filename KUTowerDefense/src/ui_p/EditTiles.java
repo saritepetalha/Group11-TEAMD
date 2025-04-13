@@ -49,6 +49,8 @@ public class EditTiles {
     }
 
     private void drawButtons(Graphics g) {
+        Graphics2D g2d = (Graphics2D) g;
+
         backMenu.draw(g);
 
         for (TheButton tilesButton : tilesButtons) {
@@ -57,12 +59,22 @@ public class EditTiles {
             width = tilesButton.getWidth();
             height = tilesButton.getHeight();
 
-            // draw button with its image on
-            g.drawImage(playing.getTileManager().getSprite(tilesButton.getId()),x,y,width,height,null);
+            // changing opacity when the mouse is over tiles.
+            if (tilesButton.isMouseOver()) {
+                g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.4f));
+            } else {
+                g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
+            }
 
-            //tilesButton.draw(g);
+            g2d.setColor(new Color(157,209,153,255));
+            g2d.fillRect(x, y, width, height);
+
+            g2d.drawImage(playing.getTileManager().getSprite(tilesButton.getId()), x, y, width, height, null);
         }
+
+        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
     }
+
 
 
     public void draw(Graphics g){
@@ -80,14 +92,39 @@ public class EditTiles {
 
     public void mouseMoved(int x, int y) {
         backMenu.setMouseOver(false);
+
+        for (TheButton tilesButton : tilesButtons) {
+            tilesButton.setMouseOver(false);
+        }
         if (backMenu.getBounds().contains(x, y)) {
             backMenu.setMouseOver(true);
+        }
+        else{
+            for (TheButton tilesButton : tilesButtons) {
+                if (tilesButton.getBounds().contains(x, y)){
+                    backMenu.setMouseOver(true);
+                }
+                else {
+                    for(TheButton tileButtons: tilesButtons){
+                        if(tileButtons.getBounds().contains(x, y)){
+                            tileButtons.setMouseOver(true);
+                            return;
+                        }
+                    }
+                }
+            }
         }
     }
 
     public void mousePressed(int x, int y) {
         if (backMenu.getBounds().contains(x, y)) {
             backMenu.setMousePressed(true);
+        }
+        else{
+            for (TheButton tilesButton : tilesButtons) {
+                tilesButton.setMousePressed(true);
+                return;
+            }
         }
     }
 
