@@ -11,13 +11,17 @@ import ui_p.EditTiles;
 import ui_p.TheButton;
 
 import static main.GameStates.*;
+import objects.Tile;
 
 public class Playing extends GameScene implements SceneMethods {
     private int[][] level;
     private TileManager tileManager;
-    private TileManager selectedTile;
+    private Tile selectedTile;
+    private boolean drawSelected = false;
 
     private EditTiles editTiles;
+
+    private int mouseX, mouseY;
 
     public Playing(Game game) {
         super(game);
@@ -30,12 +34,17 @@ public class Playing extends GameScene implements SceneMethods {
         return tileManager;
     }
 
-    public TileManager getSelectedTile() {
-        return selectedTile;
-    }
-    public void setSelectedTile(TileManager selectedTile) {
+    public void setSelectedTile(Tile selectedTile) {
         this.selectedTile = selectedTile;
+        drawSelected = true;
     }
+    private void drawSelectedTile(Graphics g) {
+        if (selectedTile != null && drawSelected) {
+            g.drawImage(selectedTile.getSprite(), mouseX, mouseY, 64, 64, null);
+        }
+
+    }
+
 
 
 
@@ -51,6 +60,7 @@ public class Playing extends GameScene implements SceneMethods {
         }
 
         editTiles.draw(g);
+        drawSelectedTile(g);
 
     }
 
@@ -59,13 +69,34 @@ public class Playing extends GameScene implements SceneMethods {
         if( x >= GameDimensions.GAME_WIDTH){
             editTiles.mouseClicked(x,y);
         }
+        else {
+            modifyTile(x, y);
+        }
 
+    }
+    private void modifyTile(int x, int y) {
+
+        x /= 64;
+        y /= 64;
+
+        if (selectedTile != null) {
+            level[y][x] = selectedTile.getId();
+
+        }
     }
 
     @Override
     public void mouseMoved(int x, int y) {
         if( x >= GameDimensions.GAME_WIDTH){
             editTiles.mouseMoved(x,y);
+            drawSelected = false;
+        }
+        else{
+            mouseX = x / 64;
+            mouseY = y / 64;
+            mouseX *= 64;
+            mouseY *= 64;
+            drawSelected = true;
         }
 
     }
