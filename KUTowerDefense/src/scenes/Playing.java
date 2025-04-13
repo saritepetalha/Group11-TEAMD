@@ -15,6 +15,7 @@ import static main.GameStates.*;
 public class Playing extends GameScene implements SceneMethods {
     private int[][] level;
     private TileManager tileManager;
+    private TileManager selectedTile;
 
     private EditTiles editTiles;
 
@@ -28,6 +29,15 @@ public class Playing extends GameScene implements SceneMethods {
     public TileManager getTileManager() {
         return tileManager;
     }
+
+    public TileManager getSelectedTile() {
+        return selectedTile;
+    }
+    public void setSelectedTile(TileManager selectedTile) {
+        this.selectedTile = selectedTile;
+    }
+
+
 
     @Override
     public void render(Graphics g) {

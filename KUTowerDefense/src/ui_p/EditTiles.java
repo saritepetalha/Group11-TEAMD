@@ -16,7 +16,11 @@ public class EditTiles {
     private int x,y, width, height; // starting position x,y, and width and height of the edit tiles bar
 
     private TheButton backMenu;
+    private TheButton draw, erase, fill, trash, save;
+
+
     private Playing playing;
+    private Tile selectedTile;
 
     private ArrayList<TheButton> tilesButtons = new ArrayList<>();
 
@@ -33,6 +37,21 @@ public class EditTiles {
     private void initButtons() {
         backMenu = new TheButton("Back", GameDimensions.GAME_WIDTH + 4* GameDimensions.ButtonSize.MEDIUM.getSize() - GameDimensions.ButtonSize.SMALL.getSize(),
                 GameDimensions.BUTTON_PADDING, GameDimensions.ButtonSize.SMALL.getSize(), GameDimensions.ButtonSize.SMALL.getSize());
+
+        draw = new TheButton("Draw", GameDimensions.GAME_WIDTH,
+                GameDimensions.ButtonSize.MEDIUM.getSize(), GameDimensions.ButtonSize.SMALL.getSize(), GameDimensions.ButtonSize.SMALL.getSize());
+
+        erase = new TheButton("Erase", GameDimensions.GAME_WIDTH + GameDimensions.ButtonSize.SMALL.getSize(),
+                GameDimensions.ButtonSize.MEDIUM.getSize(), GameDimensions.ButtonSize.SMALL.getSize(), GameDimensions.ButtonSize.SMALL.getSize());
+
+        fill = new TheButton("Fill", GameDimensions.GAME_WIDTH + 2 * GameDimensions.ButtonSize.SMALL.getSize(),
+                GameDimensions.ButtonSize.MEDIUM.getSize(), GameDimensions.ButtonSize.SMALL.getSize(), GameDimensions.ButtonSize.SMALL.getSize());
+
+        trash = new TheButton("Trash", GameDimensions.GAME_WIDTH + 3 * GameDimensions.ButtonSize.SMALL.getSize(),
+                GameDimensions.ButtonSize.MEDIUM.getSize(), GameDimensions.ButtonSize.SMALL.getSize(), GameDimensions.ButtonSize.SMALL.getSize());
+
+        save = new TheButton("Save", GameDimensions.GAME_WIDTH + 4 * GameDimensions.ButtonSize.SMALL.getSize(),
+                GameDimensions.ButtonSize.MEDIUM.getSize(), GameDimensions.ButtonSize.SMALL.getSize(), GameDimensions.ButtonSize.SMALL.getSize());
 
         int widthButton = GameDimensions.ButtonSize.MEDIUM.getSize();
         int heightButton = GameDimensions.ButtonSize.MEDIUM.getSize();
@@ -52,6 +71,11 @@ public class EditTiles {
         Graphics2D g2d = (Graphics2D) g;
 
         backMenu.draw(g);
+        draw.draw(g);
+        erase.draw(g);
+        fill.draw(g);
+        trash.draw(g);
+        save.draw(g);
 
         for (TheButton tilesButton : tilesButtons) {
             x = tilesButton.getX();
@@ -69,7 +93,17 @@ public class EditTiles {
             g2d.setColor(new Color(157,209,153,255));
             g2d.fillRect(x, y, width, height);
 
-            g2d.drawImage(playing.getTileManager().getSprite(tilesButton.getId()), x, y, width, height, null);
+            int imageX = x;
+            int imageY = y;
+
+            // applying offset if button is being pressed
+            if (tilesButton.isMousePressed()) {
+                imageX -= 4; // offset to left by 2 pixels
+                imageY -= 4; // offset up by 2 pixels
+            }
+
+            g2d.drawImage(playing.getTileManager().getSprite(tilesButton.getId()), imageX, imageY, width, height,null);
+
         }
 
         g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
@@ -88,10 +122,40 @@ public class EditTiles {
         if (backMenu.getBounds().contains(x, y)) {
             setGameState(MENU);
         }
+        else if (draw.getBounds().contains(x, y)) {
+
+        }
+        else if (erase.getBounds().contains(x, y)) {
+
+        }
+        else if (fill.getBounds().contains(x, y)) {
+
+        }
+        else if (trash.getBounds().contains(x, y)) {
+
+        }
+        else if (save.getBounds().contains(x, y)) {
+
+        }
+        else{
+            for (TheButton tilesButton : tilesButtons) {
+                if (tilesButton.getBounds().contains(x, y)){
+                    selectedTile = playing.getTileManager().getTile(tilesButton.getId());
+                    playing.setSelectedTile(selectedTile);
+                    return;
+                }
+            }
+        }
+
     }
 
     public void mouseMoved(int x, int y) {
         backMenu.setMouseOver(false);
+        draw.setMouseOver(false);
+        erase.setMouseOver(false);
+        fill.setMouseOver(false);
+        trash.setMouseOver(false);
+        save.setMouseOver(false);
 
         for (TheButton tilesButton : tilesButtons) {
             tilesButton.setMouseOver(false);
@@ -99,19 +163,29 @@ public class EditTiles {
         if (backMenu.getBounds().contains(x, y)) {
             backMenu.setMouseOver(true);
         }
+        else if (draw.getBounds().contains(x, y)) {
+            draw.setMouseOver(true);
+        }
+        else if (erase.getBounds().contains(x, y)) {
+            erase.setMouseOver(true);
+        }
+        else if (fill.getBounds().contains(x, y)) {
+            fill.setMouseOver(true);
+        }
+        else if (trash.getBounds().contains(x, y)) {
+            trash.setMouseOver(true);
+        }
+        else if (save.getBounds().contains(x, y)) {
+            save.setMouseOver(true);
+        }
+
         else{
             for (TheButton tilesButton : tilesButtons) {
                 if (tilesButton.getBounds().contains(x, y)){
-                    backMenu.setMouseOver(true);
+                    tilesButton.setMouseOver(true);
+                    return;
                 }
-                else {
-                    for(TheButton tileButtons: tilesButtons){
-                        if(tileButtons.getBounds().contains(x, y)){
-                            tileButtons.setMouseOver(true);
-                            return;
-                        }
-                    }
-                }
+
             }
         }
     }
@@ -122,14 +196,19 @@ public class EditTiles {
         }
         else{
             for (TheButton tilesButton : tilesButtons) {
-                tilesButton.setMousePressed(true);
-                return;
+                if(tilesButton.getBounds().contains(x, y)){
+                    tilesButton.setMousePressed(true);
+                    return;
+                }
             }
         }
     }
 
     public void mouseReleased(int x, int y) {
         backMenu.resetBooleans();
+        for (TheButton tilesButton : tilesButtons) {
+            tilesButton.resetBooleans();
+        }
     }
 
 }

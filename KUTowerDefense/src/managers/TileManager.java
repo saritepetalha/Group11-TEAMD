@@ -52,6 +52,10 @@ public class TileManager {
         createTiles();
     }
 
+    public Tile getTile(int id){
+        return tiles.get(id);
+    }
+
     // This method is used to load the tile atlas from the resources by using LoadSave class
     private void loadAtlas() {
         atlas = LoadSave.getSpriteAtlas();
@@ -136,4 +140,5 @@ public class TileManager {
 
 
     }
+
 }
