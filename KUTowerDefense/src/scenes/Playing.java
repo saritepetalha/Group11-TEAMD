@@ -2,6 +2,7 @@ package scenes;
 
 import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.image.BufferedImage;
 
 import dimensions.GameDimensions;
 import helpMethods.LevelBuilder;
@@ -27,7 +28,7 @@ public class Playing extends GameScene implements SceneMethods {
         super(game);
         level = LevelBuilder.getLevelData();
         tileManager = new TileManager();
-        editTiles = new EditTiles(GameDimensions.GAME_WIDTH,0,4*GameDimensions.ButtonSize.MEDIUM.getSize(), GameDimensions.GAME_HEIGHT,this);
+        editTiles = new EditTiles(GameDimensions.GAME_WIDTH,0,4*GameDimensions.ButtonSize.MEDIUM.getSize(), GameDimensions.GAME_HEIGHT,this, game);
     }
 
     public TileManager getTileManager() {
@@ -38,15 +39,28 @@ public class Playing extends GameScene implements SceneMethods {
         this.selectedTile = selectedTile;
         drawSelected = true;
     }
+
+    public void setDrawSelected(boolean drawSelected) {
+        this.drawSelected = drawSelected;
+    }
+
     private void drawSelectedTile(Graphics g) {
         if (selectedTile != null && drawSelected) {
-            g.drawImage(selectedTile.getSprite(), mouseX, mouseY, 64, 64, null);
+            int tileSize = GameDimensions.TILE_DISPLAY_SIZE;
+
+            BufferedImage spriteToDraw;
+
+            if (selectedTile.getName().equals("Castle")) {
+                spriteToDraw = tileManager.getFullCastleSprite(); // using the complete 2x2 castle sprite
+                g.drawImage(spriteToDraw, mouseX, mouseY, tileSize * 2, tileSize * 2, null);
+            } else {
+                spriteToDraw = selectedTile.getSprite();
+                g.drawImage(spriteToDraw, mouseX, mouseY, tileSize, tileSize, null);
+            }
+
         }
 
     }
-
-
-
 
     @Override
     public void render(Graphics g) {
@@ -79,9 +93,21 @@ public class Playing extends GameScene implements SceneMethods {
         x /= 64;
         y /= 64;
 
-        if (selectedTile != null) {
-            level[y][x] = selectedTile.getId();
+        if (selectedTile == null) {
+            return;
+        }
 
+        if (selectedTile.getName().equals("Castle")) {
+            // place Castle in 2x2 area
+            if (y + 1 < level.length && x + 1 < level[0].length) {
+
+                level[y][x] = tileManager.CastleTopLeft.getId();                   // top-left: ID 24
+                level[y][x + 1] = tileManager.CastleTopRight.getId();           // top-right: ID 25
+                level[y + 1][x] = tileManager.CastleBottomLeft.getId();           // bottom-left: ID 28
+                level[y + 1][x + 1] = tileManager.CastleBottomRight.getId();       // bottom-right: ID 29
+            }
+        } else {
+            level[y][x] = selectedTile.getId();
         }
     }
 

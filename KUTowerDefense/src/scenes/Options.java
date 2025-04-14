@@ -9,11 +9,12 @@ import ui_p.TheButton;
 import static main.GameStates.*;
 
 public class Options extends GameScene implements SceneMethods {
-
+    private Game game;
     private TheButton backMenu;
 
     public Options(Game game) {
         super(game);
+        this.game = game;
         initButtons();
     }
 
@@ -35,7 +36,7 @@ public class Options extends GameScene implements SceneMethods {
     @Override
     public void mouseClicked(int x, int y) {
         if (backMenu.getBounds().contains(x, y)) {
-            setGameState(MENU);
+            game.changeGameState(MENU);
         }
     }
 

@@ -27,7 +27,7 @@ public class GameScreen extends JPanel {
 
 	public void initInputs() {
 		myMouseListener = new MyMouseListener(game);
-		keyboardListener = new KeyboardListener();
+		keyboardListener = new KeyboardListener(game.getPlaying());
 
 		addMouseListener(myMouseListener);
 		addMouseMotionListener(myMouseListener);
@@ -37,11 +37,39 @@ public class GameScreen extends JPanel {
 	}
 	
 
-	private void setPanelSize() {
-		size = new Dimension (GameDimensions.GAME_WIDTH + 4*GameDimensions.ButtonSize.MEDIUM.getSize(), GameDimensions.GAME_HEIGHT);
+	public void setPanelSize() {
+		int width, height;
+
+		switch (GameStates.gameState) {
+			case MENU:
+				width = GameDimensions.MAIN_MENU_SCREEN_WIDTH;
+				height = GameDimensions.MAIN_MENU_SCREEN_HEIGHT;
+				break;
+
+			// must be changed to normal game mode, since the editting mode is now on the playing case I didn't change it
+			case PLAYING:
+				width = GameDimensions.TOTAL_GAME_WIDTH;	//width = GameDimensions.GAME_WIDTH
+				height = GameDimensions.GAME_HEIGHT;
+				break;
+
+			case EDIT:
+				width = GameDimensions.TOTAL_GAME_WIDTH;
+				height = GameDimensions.GAME_HEIGHT;
+				break;
+
+			default:
+				width = GameDimensions.GAME_WIDTH;
+				height = GameDimensions.GAME_HEIGHT;
+				break;
+		}
+
+		size = new Dimension (width, height);
 		setMinimumSize(size);
 		setMaximumSize(size);
 		setPreferredSize(size);
+
+		revalidate();  // ensures proper refresh
+		repaint();
 	}
 
 	public void paintComponent(Graphics g) {
