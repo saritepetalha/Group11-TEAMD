@@ -8,11 +8,12 @@ import static main.GameStates.MENU;
 import static main.GameStates.setGameState;
 
 import dimensions.GameDimensions;
+import main.Game;
 import scenes.Playing;
 import objects.Tile;
 
 public class EditTiles {
-
+    private Game game;
     private int x,y, width, height; // starting position x,y, and width and height of the edit tiles bar
 
     private TheButton backMenu;
@@ -24,12 +25,13 @@ public class EditTiles {
 
     private ArrayList<TheButton> tilesButtons = new ArrayList<>();
 
-    public EditTiles(int x, int y, int width, int height, Playing playing) {
+    public EditTiles(int x, int y, int width, int height, Playing playing, Game game) {
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
         this.playing = playing;
+        this.game = game;
 
         initButtons();
     }
@@ -149,7 +151,7 @@ public class EditTiles {
 
     public void mouseClicked(int x, int y) {
         if (backMenu.getBounds().contains(x, y)) {
-            setGameState(MENU);
+            game.changeGameState(MENU);
         }
         else if (draw.getBounds().contains(x, y)) {
 

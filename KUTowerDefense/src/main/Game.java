@@ -28,14 +28,22 @@ public class Game extends JFrame implements Runnable{
 	public Game() {
 
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
-		setLocationRelativeTo(null);
 		setResizable(false);
 		initClasses();
 
 		add(gamescreen);
 		pack();
 		setVisible(true);
+		setLocationRelativeTo(null);
 	}
+
+	public void changeGameState(GameStates newState) {
+		GameStates.gameState = newState;
+		gamescreen.setPanelSize(); // adjust GameScreen size
+		pack();                    // resize JFrame according to new dimensions
+		setLocationRelativeTo(null); // re-center the window
+	}
+
 
 	private void initClasses() {
 		gamescreen = new GameScreen(this);

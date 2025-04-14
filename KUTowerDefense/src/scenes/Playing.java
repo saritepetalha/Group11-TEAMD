@@ -28,7 +28,7 @@ public class Playing extends GameScene implements SceneMethods {
         super(game);
         level = LevelBuilder.getLevelData();
         tileManager = new TileManager();
-        editTiles = new EditTiles(GameDimensions.GAME_WIDTH,0,4*GameDimensions.ButtonSize.MEDIUM.getSize(), GameDimensions.GAME_HEIGHT,this);
+        editTiles = new EditTiles(GameDimensions.GAME_WIDTH,0,4*GameDimensions.ButtonSize.MEDIUM.getSize(), GameDimensions.GAME_HEIGHT,this, game);
     }
 
     public TileManager getTileManager() {

@@ -79,6 +79,32 @@ public class TheButton {
     }
 
 
+
+    public void drawStyled(Graphics g) {
+        Graphics2D g2d = (Graphics2D) g;
+
+        // enable anti-aliasing for smoother text
+        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+
+        Font font = new Font("MV Boli", Font.PLAIN, 45);  // You can change the font here
+        g2d.setFont(font);
+
+        // set color depending on hover state
+        if (mouseOver) {
+            g2d.setColor(new Color(255, 99, 71)); // tomato red when hovered
+        } else {
+            g2d.setColor(new Color(255, 255, 255, 230)); // soft white
+        }
+
+        // center text inside bounds
+        FontMetrics fm = g2d.getFontMetrics();
+        int textX = x + (width - fm.stringWidth(text)) / 2;
+        int textY = y + ((height - fm.getHeight()) / 2) + fm.getAscent();
+
+        g2d.drawString(text, textX, textY);
+    }
+
+
     public void setMouseOver(boolean mouseOver) {
         this.mouseOver = mouseOver;
     }
