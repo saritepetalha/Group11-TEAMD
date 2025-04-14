@@ -40,6 +40,10 @@ public class Playing extends GameScene implements SceneMethods {
         drawSelected = true;
     }
 
+    public void setDrawSelected(boolean drawSelected) {
+        this.drawSelected = drawSelected;
+    }
+
     private void drawSelectedTile(Graphics g) {
         if (selectedTile != null && drawSelected) {
             int tileSize = GameDimensions.TILE_DISPLAY_SIZE;
