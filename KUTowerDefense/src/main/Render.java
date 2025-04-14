@@ -20,6 +20,9 @@ public class Render {
     
     public void render(Graphics g) {
         switch (GameStates.gameState) {
+            case INTRO:
+                game.getIntro().render(g);
+                break;
             case MENU:
                 game.getMenu().render(g);
                 break;
