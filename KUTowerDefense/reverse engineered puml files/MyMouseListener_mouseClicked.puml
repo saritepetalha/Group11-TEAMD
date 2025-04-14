@@ -1,0 +1,78 @@
+@startuml
+participant Actor
+Actor -> MyMouseListener : mouseClicked
+activate MyMouseListener
+MyMouseListener -> Playing : mouseClicked
+activate Playing
+Playing -> EditTiles : mouseClicked
+activate EditTiles
+EditTiles -> Game : changeGameState
+activate Game
+Game -> GameScreen : setPanelSize
+activate GameScreen
+GameScreen --> Game
+deactivate GameScreen
+Game --> EditTiles
+deactivate Game
+EditTiles -> TileManager : getTile
+activate TileManager
+TileManager --> EditTiles
+deactivate TileManager
+EditTiles --> Playing
+deactivate EditTiles
+Playing -> Playing : modifyTile
+activate Playing
+Playing --> Playing
+deactivate Playing
+Playing --> MyMouseListener
+deactivate Playing
+MyMouseListener -> Menu : mouseClicked
+activate Menu
+Menu -> Game : changeGameState
+activate Game
+Game -> GameScreen : setPanelSize
+activate GameScreen
+GameScreen --> Game
+deactivate GameScreen
+Game --> Menu
+deactivate Game
+Menu -> Game : changeGameState
+activate Game
+Game -> GameScreen : setPanelSize
+activate GameScreen
+GameScreen --> Game
+deactivate GameScreen
+Game --> Menu
+deactivate Game
+Menu -> Game : changeGameState
+activate Game
+Game -> GameScreen : setPanelSize
+activate GameScreen
+GameScreen --> Game
+deactivate GameScreen
+Game --> Menu
+deactivate Game
+Menu -> Game : changeGameState
+activate Game
+Game -> GameScreen : setPanelSize
+activate GameScreen
+GameScreen --> Game
+deactivate GameScreen
+Game --> Menu
+deactivate Game
+Menu --> MyMouseListener
+deactivate Menu
+MyMouseListener -> Options : mouseClicked
+activate Options
+Options -> Game : changeGameState
+activate Game
+Game -> GameScreen : setPanelSize
+activate GameScreen
+GameScreen --> Game
+deactivate GameScreen
+Game --> Options
+deactivate Game
+Options --> MyMouseListener
+deactivate Options
+return
+@enduml
