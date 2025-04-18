@@ -27,7 +27,7 @@ public class GameScreen extends JPanel {
 
 	public void initInputs() {
 		myMouseListener = new MyMouseListener(game);
-		keyboardListener = new KeyboardListener(game.getPlaying());
+		keyboardListener = new KeyboardListener(game.getPlaying(), game);
 
 		addMouseListener(myMouseListener);
 		addMouseMotionListener(myMouseListener);
@@ -41,6 +41,11 @@ public class GameScreen extends JPanel {
 		int width, height;
 
 		switch (GameStates.gameState) {
+			case INTRO:
+				width = GameDimensions.MAIN_MENU_SCREEN_WIDTH;
+				height = GameDimensions.MAIN_MENU_SCREEN_HEIGHT;
+				break;
+
 			case MENU:
 				width = GameDimensions.MAIN_MENU_SCREEN_WIDTH;
 				height = GameDimensions.MAIN_MENU_SCREEN_HEIGHT;

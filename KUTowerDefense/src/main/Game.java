@@ -9,6 +9,7 @@ import inputs.KeyboardListener;
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 
+import scenes.Intro;
 import scenes.Menu;
 import scenes.Options;
 import scenes.Playing;
@@ -22,6 +23,7 @@ public class Game extends JFrame implements Runnable{
 	private final double UPS_SET = 60.0;
 
 	private Render render;
+	private Intro intro;
 	private Menu menu;
 	private Options options;
 	private Playing playing;
@@ -48,6 +50,7 @@ public class Game extends JFrame implements Runnable{
 	private void initClasses() {
 		gamescreen = new GameScreen(this);
 		render = new Render(this);
+		intro = new Intro(this);
 		menu = new Menu(this);
 		options = new Options(this);
 		playing = new Playing(this);
@@ -62,6 +65,22 @@ public class Game extends JFrame implements Runnable{
 
 	private void updateGame() {
 		//System.out.println("GAME UPDATED");
+		switch (GameStates.gameState) {
+			case INTRO:
+				intro.update();  // Update the intro animation
+				break;
+			case MENU:
+				// menu update logic if needed
+				break;
+			case PLAYING:
+				// playing update logic
+				break;
+			case OPTIONS:
+				// options update logic
+				break;
+			default:
+				break;
+		}
 	}
 
 	
@@ -126,4 +145,6 @@ public class Game extends JFrame implements Runnable{
 	public Playing getPlaying() {
 		return playing;
 	}
+
+	public Intro getIntro() {  return intro; }
 }

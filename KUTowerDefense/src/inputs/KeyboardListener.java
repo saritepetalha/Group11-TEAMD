@@ -2,6 +2,7 @@ package inputs;
 
 import java.awt.event.KeyListener;
 
+import main.Game;
 import main.GameStates;
 
 import java.awt.event.KeyEvent;
@@ -13,13 +14,22 @@ public class KeyboardListener implements KeyListener {
     @Override
     public void keyTyped(KeyEvent e) {}
     private scenes.Playing playing;
+    private Game game;
 
-    public KeyboardListener(scenes.Playing playing) {
+    public KeyboardListener(scenes.Playing playing, Game game) {
         this.playing = playing;
+        this.game = game;
     }
 
     @Override
     public void keyPressed(KeyEvent e) {
+        // if in intro, any key skips to menu
+        if (GameStates.gameState == GameStates.INTRO) {
+            GameStates.gameState = GameStates.MENU;
+            game.getIntro().stopMusic();
+            return;
+        }
+
         if (e.getKeyCode() == KeyEvent.VK_A) {
             GameStates.gameState = GameStates.MENU;
         } else if (e.getKeyCode() == KeyEvent.VK_S) {
