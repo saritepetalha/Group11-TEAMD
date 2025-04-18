@@ -41,7 +41,7 @@ public class Intro {
     private boolean rotationDirection = true; // true = clockwise, false = counter-clockwise
 
     // logo scaling properties
-    private float logoScale = 0.5f; // resizes the logo (0.5 = 50% of original size)
+    private float logoScale = 0.8f; // resizes the logo (0.5 = 50% of original size)
     private boolean pulsating = true;
     private float pulseFactor = 0.05f; // how much the logo grows/shrinks
     private float currentPulseScale = 0;
@@ -49,7 +49,7 @@ public class Intro {
     private boolean growing = true;
 
 
-    private Color backgroundColor = new Color(220, 240, 248);
+    private Color backgroundColor = new Color(255, 242, 218);
 
     public Intro(Game game) {
         this.game = game;
@@ -59,7 +59,7 @@ public class Intro {
 
     private void loadImages() {
         try {
-            InputStream is = getClass().getResourceAsStream("/teamD_logo_bg_removed.png");
+            InputStream is = getClass().getResourceAsStream("/teamD_logo_alt.png");
             if (is != null) {
                 logoImage = ImageIO.read(is);
             }
@@ -174,8 +174,8 @@ public class Intro {
 
                 int centerX = game.getWidth() / 2;
                 int centerY = game.getHeight() / 2;
-                int logoX = centerX - scaledWidth / 5;
-                int logoY = centerY - scaledHeight / 3;
+                int logoX = centerX - scaledWidth / 4;
+                int logoY = centerY - scaledHeight / 4;
 
                 //g2d.setColor(Color.RED);
                 //g2d.drawLine(x - 10, y, x + 10, y);
