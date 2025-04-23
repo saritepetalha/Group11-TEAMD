@@ -28,7 +28,9 @@ public class MyMouseListener implements MouseListener, MouseMotionListener {
         else if (GameStates.gameState == GameStates.OPTIONS) {
             game.getOptions().mouseMoved(e.getX(), e.getY());
         }
-
+        else if (GameStates.gameState == GameStates.EDIT) {
+            game.getMapEditing().mouseMoved(e.getX(), e.getY());
+        }
     }
 
     @Override
@@ -42,6 +44,9 @@ public class MyMouseListener implements MouseListener, MouseMotionListener {
             }
             else if (GameStates.gameState == GameStates.OPTIONS) {
                 game.getOptions().mouseClicked(e.getX(), e.getY());
+            }
+            else if (GameStates.gameState == GameStates.EDIT) {
+                game.getMapEditing().mouseClicked(e.getX(), e.getY());
             }
 
         }
@@ -62,6 +67,9 @@ public class MyMouseListener implements MouseListener, MouseMotionListener {
         else if (GameStates.gameState == GameStates.OPTIONS) {
             game.getOptions().mousePressed(e.getX(), e.getY());
         }
+        else if (GameStates.gameState == GameStates.EDIT) {
+            game.getMapEditing().mousePressed(e.getX(), e.getY());
+        }
     }
 
     @Override
@@ -74,6 +82,9 @@ public class MyMouseListener implements MouseListener, MouseMotionListener {
         }
         else if (GameStates.gameState == GameStates.OPTIONS) {
             game.getOptions().mouseReleased(e.getX(), e.getY());
+        }
+        else if (GameStates.gameState == GameStates.EDIT) {
+            game.getMapEditing().mouseReleased(e.getX(), e.getY());
         }
     }
 

@@ -17,9 +17,8 @@ import objects.Tile;
 
 public class Playing extends GameScene implements SceneMethods {
     private int[][] level;
-    private TileManager tileManager;
-    private Tile selectedTile;
-    private boolean drawSelected = false;
+    //private Tile selectedTile;
+    //private boolean drawSelected = false;
 
     private EditTiles editTiles;
 
@@ -27,27 +26,15 @@ public class Playing extends GameScene implements SceneMethods {
 
     public Playing(Game game) {
         super(game);
-        level = LevelBuilder.getLevelData();
-        tileManager = new TileManager();
+        loadDefaultLevel();
+
         editTiles = new EditTiles(GameDimensions.GAME_WIDTH,0,4*GameDimensions.ButtonSize.MEDIUM.getSize(), GameDimensions.GAME_HEIGHT,this, game);
 
-        createDefaultLevel();
-        loadDefaultLevel();
     }
 
 
     public void saveLevel() {
         LoadSave.saveLevel("defaultleveltest1",level);
-    }
-
-    private void createDefaultLevel() {
-        int[][] bruh = new int[20][20];
-        for (int i = 0; i < 20; i++) {
-            for (int j = 0; j < 20; j++) {
-                bruh[i][j] = 0;
-            }
-        }
-        LoadSave.createLevel("defaultleveltest1", bruh);
     }
 
 
@@ -67,27 +54,7 @@ public class Playing extends GameScene implements SceneMethods {
         drawSelected = true;
     }
 
-    public void setDrawSelected(boolean drawSelected) {
-        this.drawSelected = drawSelected;
-    }
 
-    private void drawSelectedTile(Graphics g) {
-        if (selectedTile != null && drawSelected) {
-            int tileSize = GameDimensions.TILE_DISPLAY_SIZE;
-
-            BufferedImage spriteToDraw;
-
-            if (selectedTile.getName().equals("Castle")) {
-                spriteToDraw = tileManager.getFullCastleSprite(); // using the complete 2x2 castle sprite
-                g.drawImage(spriteToDraw, mouseX, mouseY, tileSize * 2, tileSize * 2, null);
-            } else {
-                spriteToDraw = selectedTile.getSprite();
-                g.drawImage(spriteToDraw, mouseX, mouseY, tileSize, tileSize, null);
-            }
-
-        }
-
-    }
 
     @Override
     public void render(Graphics g) {
@@ -101,7 +68,6 @@ public class Playing extends GameScene implements SceneMethods {
         }
 
         editTiles.draw(g);
-        drawSelectedTile(g);
 
     }
 
@@ -115,28 +81,7 @@ public class Playing extends GameScene implements SceneMethods {
         }
 
     }
-    private void modifyTile(int x, int y) {
 
-        x /= 64;
-        y /= 64;
-
-        if (selectedTile == null) {
-            return;
-        }
-
-        if (selectedTile.getName().equals("Castle")) {
-            // place Castle in 2x2 area
-            if (y + 1 < level.length && x + 1 < level[0].length) {
-
-                level[y][x] = tileManager.CastleTopLeft.getId();                   // top-left: ID 24
-                level[y][x + 1] = tileManager.CastleTopRight.getId();           // top-right: ID 25
-                level[y + 1][x] = tileManager.CastleBottomLeft.getId();           // bottom-left: ID 28
-                level[y + 1][x + 1] = tileManager.CastleBottomRight.getId();       // bottom-right: ID 29
-            }
-        } else {
-            level[y][x] = selectedTile.getId();
-        }
-    }
 
     @Override
     public void mouseMoved(int x, int y) {
