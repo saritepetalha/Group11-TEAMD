@@ -35,6 +35,11 @@ public class Playing extends GameScene implements SceneMethods {
         loadDefaultLevel();
     }
 
+
+    public void saveLevel() {
+        LoadSave.saveLevel("defaultleveltest1",level);
+    }
+
     private void createDefaultLevel() {
         int[][] bruh = new int[20][20];
         for (int i = 0; i < 20; i++) {

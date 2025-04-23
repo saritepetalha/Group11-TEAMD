@@ -28,9 +28,10 @@ public class LoadSave {
     //This function saves the game to a json file as a 2d array with key: tiles
     //If it is wished the same json file could be used for saving the game state
     //As in the location of the enemy groups, location of towers etc.
+    //THIS FUNCTION'S LOGIC CHANGED TO IMPLEMENT SAVE LEVEL LOGIC
     public static void createLevel(String fileName, int[][] tiles) {
         File file = new File("resources/Levels/" + fileName + ".json");
-        if (!file.exists()) {
+        //if (file.exists()) {
             Gson gson = new GsonBuilder()
                     .setPrettyPrinting()
                     .create();
@@ -46,7 +47,7 @@ public class LoadSave {
                 throw new RuntimeException(e);
             }
         }
-    }
+    //
 
     //This funcion gets the created level's data from Levels folder under resources
     //FRONT END IS NOT IMPLEMENTED YET
@@ -71,5 +72,16 @@ public class LoadSave {
             e.printStackTrace();
             return null;
         }
+    }
+
+
+    public static void saveLevel(String fileName, int[][] tiles) {
+        File file = new File("resources/Levels/" + fileName + ".json");
+        if (!file.exists()) {
+            System.out.println("Level file not found: " + file.getPath());
+            return;
+        }
+        createLevel(fileName, tiles);
+
     }
 }
