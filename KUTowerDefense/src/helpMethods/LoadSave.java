@@ -47,7 +47,7 @@ public class LoadSave {
                 throw new RuntimeException(e);
             }
         }
-    //
+    //}
 
     //This funcion gets the created level's data from Levels folder under resources
     //FRONT END IS NOT IMPLEMENTED YET

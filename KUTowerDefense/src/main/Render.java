@@ -32,6 +32,9 @@ public class Render {
             case OPTIONS:
                 game.getOptions().render(g);
                 break;
+            case EDIT:
+                game.getMapEditing().render(g);
+                break;
             case QUIT:
                 break;
         }

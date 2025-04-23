@@ -3,16 +3,17 @@ package main;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
+
+import helpMethods.LoadSave;
 import inputs.MyMouseListener;
 import inputs.KeyboardListener;
 
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 
-import scenes.Intro;
-import scenes.Menu;
-import scenes.Options;
-import scenes.Playing;
+import managers.TileManager;
+import scenes.*;
+
 public class Game extends JFrame implements Runnable{
 	
 	private GameScreen gamescreen;
@@ -27,16 +28,30 @@ public class Game extends JFrame implements Runnable{
 	private Menu menu;
 	private Options options;
 	private Playing playing;
+	private MapEditing mapEditing;
+	private TileManager tileManager;
+
 	public Game() {
 
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		setResizable(false);
 		initClasses();
+		createDefaultLevel();
 
 		add(gamescreen);
 		pack();
 		setVisible(true);
 		setLocationRelativeTo(null);
+	}
+
+	private void createDefaultLevel() {
+		int[][] bruh = new int[20][20];
+		for (int i = 0; i < 20; i++) {
+			for (int j = 0; j < 20; j++) {
+				bruh[i][j] = 0;
+			}
+		}
+		//LoadSave.createLevel("defaultleveltest1", bruh);
 	}
 
 	public void changeGameState(GameStates newState) {
@@ -54,6 +69,8 @@ public class Game extends JFrame implements Runnable{
 		menu = new Menu(this);
 		options = new Options(this);
 		playing = new Playing(this);
+		mapEditing = new MapEditing(this);
+		tileManager = new TileManager();
 	}
 	
 
@@ -147,4 +164,6 @@ public class Game extends JFrame implements Runnable{
 	}
 
 	public Intro getIntro() {  return intro; }
+
+	public MapEditing getMapEditing() { return mapEditing; }
 }

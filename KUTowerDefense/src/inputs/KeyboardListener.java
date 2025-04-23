@@ -13,11 +13,11 @@ public class KeyboardListener implements KeyListener {
 
     @Override
     public void keyTyped(KeyEvent e) {}
-    private scenes.Playing playing;
+    private scenes.MapEditing mapEditing;
     private Game game;
 
-    public KeyboardListener(scenes.Playing playing, Game game) {
-        this.playing = playing;
+    public KeyboardListener(scenes.MapEditing mapEditing, Game game) {
+        this.mapEditing = mapEditing;
         this.game = game;
     }
 
@@ -41,8 +41,8 @@ public class KeyboardListener implements KeyListener {
 
             // If in playing state, clear the tile selection
             if (GameStates.gameState == GameStates.PLAYING) {
-                playing.setDrawSelected(false);
-                playing.setSelectedTile(null);
+                mapEditing.setDrawSelected(false);
+                mapEditing.setSelectedTile(null);
             }
 
         }
