@@ -85,6 +85,12 @@ public class EditTiles {
         }
     }
 
+
+    private void saveLevel(){
+        playing.saveLevel();
+    }
+
+
     private void drawButtons(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
 
@@ -166,7 +172,7 @@ public class EditTiles {
 
         }
         else if (save.getBounds().contains(x, y)) {
-
+            saveLevel();
         }
         else{
             for (TheButton tilesButton : tilesButtons) {
@@ -225,6 +231,10 @@ public class EditTiles {
         if (backMenu.getBounds().contains(x, y)) {
             backMenu.setMousePressed(true);
         }
+
+        else if (save.getBounds().contains(x, y)) {
+            save.setMousePressed(true);
+        }
         else{
             for (TheButton tilesButton : tilesButtons) {
                 if(tilesButton.getBounds().contains(x, y)){
@@ -237,6 +247,7 @@ public class EditTiles {
 
     public void mouseReleased(int x, int y) {
         backMenu.resetBooleans();
+        save.resetBooleans();
         for (TheButton tilesButton : tilesButtons) {
             tilesButton.resetBooleans();
         }

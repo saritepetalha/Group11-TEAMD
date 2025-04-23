@@ -6,6 +6,7 @@ import java.awt.image.BufferedImage;
 
 import dimensions.GameDimensions;
 import helpMethods.LevelBuilder;
+import helpMethods.LoadSave;
 import main.Game;
 import managers.TileManager;
 import ui_p.EditTiles;
@@ -29,6 +30,32 @@ public class Playing extends GameScene implements SceneMethods {
         level = LevelBuilder.getLevelData();
         tileManager = new TileManager();
         editTiles = new EditTiles(GameDimensions.GAME_WIDTH,0,4*GameDimensions.ButtonSize.MEDIUM.getSize(), GameDimensions.GAME_HEIGHT,this, game);
+
+        createDefaultLevel();
+        loadDefaultLevel();
+    }
+
+
+    public void saveLevel() {
+        LoadSave.saveLevel("defaultleveltest1",level);
+    }
+
+    private void createDefaultLevel() {
+        int[][] bruh = new int[20][20];
+        for (int i = 0; i < 20; i++) {
+            for (int j = 0; j < 20; j++) {
+                bruh[i][j] = 0;
+            }
+        }
+        LoadSave.createLevel("defaultleveltest1", bruh);
+    }
+
+
+    private void loadDefaultLevel() {
+        int[][] lvl = LoadSave.getLevelData("defaultleveltest1");
+        //THIS LINE IS JUST TO SEE WHETHER THE BACKEND OF THE getLevelData function works or not
+        //IT WORKS!!!
+        System.out.println(java.util.Arrays.deepToString(lvl));
     }
 
     public TileManager getTileManager() {
