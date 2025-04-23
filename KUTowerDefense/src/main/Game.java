@@ -51,7 +51,7 @@ public class Game extends JFrame implements Runnable{
 				bruh[i][j] = 0;
 			}
 		}
-		LoadSave.createLevel("defaultleveltest1", bruh);
+		//LoadSave.createLevel("defaultleveltest1", bruh);
 	}
 
 	public void changeGameState(GameStates newState) {

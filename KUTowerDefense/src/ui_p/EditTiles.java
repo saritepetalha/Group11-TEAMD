@@ -9,10 +9,11 @@ import static main.GameStates.setGameState;
 
 import dimensions.GameDimensions;
 import main.Game;
+import scenes.MapEditing;
 import scenes.Playing;
 import objects.Tile;
 
-public class EditTiles {
+public class EditTiles extends EditBar{
     private Game game;
     private int x,y, width, height; // starting position x,y, and width and height of the edit tiles bar
 
@@ -20,17 +21,14 @@ public class EditTiles {
     private TheButton draw, erase, fill, trash, save;
 
 
-    private Playing playing;
+    private MapEditing mapEditing;
     private Tile selectedTile;
 
     private ArrayList<TheButton> tilesButtons = new ArrayList<>();
 
-    public EditTiles(int x, int y, int width, int height, Playing playing, Game game) {
-        this.x = x;
-        this.y = y;
-        this.width = width;
-        this.height = height;
-        this.playing = playing;
+    public EditTiles(int x, int y, int width, int height, MapEditing mapEditing, Game game) {
+        super(x, y, width, height);
+        this.mapEditing = mapEditing;
         this.game = game;
 
         initButtons();
@@ -59,11 +57,11 @@ public class EditTiles {
         int heightButton = GameDimensions.ButtonSize.MEDIUM.getSize();
         int gameWidth = GameDimensions.GAME_WIDTH;
 
-        for(int i = 0; i < playing.getTileManager().tiles.size(); i++) {
-            Tile tile = playing.getTileManager().tiles.get(i);
+        for(int i = 0; i < mapEditing.getTileManager().tiles.size(); i++) {
+            Tile tile = mapEditing.getTileManager().tiles.get(i);
 
             // skip extra Castle tiles (one button for Castle)
-            if (tile.getName().equals("Castle") && tile != playing.getTileManager().CastleTopLeft) {
+            if (tile.getName().equals("Castle") && tile != mapEditing.getTileManager().CastleTopLeft) {
                 continue;
             }
 
@@ -87,7 +85,7 @@ public class EditTiles {
 
 
     private void saveLevel(){
-        playing.saveLevel();
+        mapEditing.saveLevel();
     }
 
 
@@ -129,9 +127,9 @@ public class EditTiles {
             BufferedImage spriteToDraw;
 
             if (tilesButton.getText().equals("Castle")) {
-                spriteToDraw = playing.getTileManager().getFullCastleSprite();
+                spriteToDraw = mapEditing.getTileManager().getFullCastleSprite();
             } else {
-                spriteToDraw = playing.getTileManager().getSprite(tilesButton.getId());
+                spriteToDraw = mapEditing.getTileManager().getSprite(tilesButton.getId());
             }
 
             g2d.drawImage(spriteToDraw,
@@ -177,8 +175,8 @@ public class EditTiles {
         else{
             for (TheButton tilesButton : tilesButtons) {
                 if (tilesButton.getBounds().contains(x, y)){
-                    selectedTile = playing.getTileManager().getTile(tilesButton.getId());
-                    playing.setSelectedTile(selectedTile);
+                    selectedTile = mapEditing.getTileManager().getTile(tilesButton.getId());
+                    mapEditing.setSelectedTile(selectedTile);
                     return;
                 }
             }
