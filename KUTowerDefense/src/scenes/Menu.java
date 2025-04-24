@@ -62,8 +62,8 @@ public class Menu extends GameScene implements SceneMethods {
     }
 
     private void initButtons() {
-        int buttonWidth = 250;
-        int buttonHeight = 50;
+        int buttonWidth = 270;
+        int buttonHeight = 55;
         int centerX = GameDimensions.MAIN_MENU_SCREEN_WIDTH / 2 - buttonWidth / 2;
         int centerY = GameDimensions.MAIN_MENU_SCREEN_HEIGHT / 2 - buttonHeight / 2;
 

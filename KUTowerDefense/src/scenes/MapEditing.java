@@ -20,7 +20,7 @@ public class MapEditing extends GameScene implements SceneMethods{
     private Tile selectedTile;
     private boolean drawSelected = false;
     private EditTiles editTiles;
-    private int lastTileX, lastTileY, lastTileId;
+    private int lastTileX, lastTileY, lastTileId, prevDraggedTileX, prevDraggedTileY;
 
     private int mouseX, mouseY;
 
@@ -165,25 +165,61 @@ public class MapEditing extends GameScene implements SceneMethods{
         editTiles.mouseReleased(x,y);
     }
 
-    private void changeTile(int x, int y) {
-        if (selectedTile != null){
-            int tileX = x / GameDimensions.TILE_DISPLAY_SIZE;
-            int tileY = y / GameDimensions.TILE_DISPLAY_SIZE;
-
-            if (lastTileX == tileX && lastTileY == tileY && lastTileId == selectedTile.getId()) {
-                return;
-            }
-            lastTileX = tileX;
-            lastTileY = tileY;
-            lastTileId = selectedTile.getId();
-
-            level[tileY][tileX] = selectedTile.getId();
-        }
-    }
     @Override
     public void mouseDragged(int x, int y) {
         if (x < GameDimensions.GAME_WIDTH && y < GameDimensions.GAME_HEIGHT) {
             changeTile(x, y);
         }
     }
+
+    private void changeTile(int x, int y) {
+        if (selectedTile != null) {
+            int tileX = x / GameDimensions.TILE_DISPLAY_SIZE;
+            int tileY = y / GameDimensions.TILE_DISPLAY_SIZE;
+
+            if (lastTileX == tileX && lastTileY == tileY && lastTileId == selectedTile.getId()) {
+                return;
+            }
+
+            if (!selectedTile.getName().contains("Road")) {
+                return;
+            }
+
+            int dx = tileX - prevDraggedTileX;
+            int dy = tileY - prevDraggedTileY;
+
+            if (dx != 0 || dy != 0) {
+                Tile tileToPlace = getAutoConvertedTile(selectedTile, dx, dy);
+
+                level[tileY][tileX] = tileToPlace.getId();
+                lastTileId = tileToPlace.getId();
+            }
+
+            lastTileX = tileX;
+            lastTileY = tileY;
+            prevDraggedTileX = tileX;
+            prevDraggedTileY = tileY;
+        }
+    }
+
+    private Tile getAutoConvertedTile(Tile originalTile, int dx, int dy) {
+        String name = originalTile.getName();
+
+        if (!name.startsWith("CurvedRoad")) {
+            return originalTile;
+        }
+
+        if (dx == 1 && dy == 0) {
+            return tileManager.FlatRoadHorizontal;
+        } else if (dx == -1 && dy == 0) {
+            return tileManager.FlatRoadHorizontal;
+        } else if (dx == 0 && dy == 1) {
+            return tileManager.FlatRoadVertical;
+        } else if (dx == 0 && dy == -1) {
+            return tileManager.FlatRoadVertical;
+        }
+
+        return originalTile;
+    }
+
 }
