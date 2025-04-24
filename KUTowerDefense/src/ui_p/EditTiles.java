@@ -24,6 +24,7 @@ public class EditTiles extends EditBar{
 
     private TheButton backMenu;
     private TheButton draw, erase, fill, trash, save;
+    private ModeButton mode;
     private static BufferedImage img;
     private String currentMode = "Draw";
 
@@ -34,6 +35,10 @@ public class EditTiles extends EditBar{
     private ArrayList<TheButton> tilesButtons = new ArrayList<>();
     private ArrayList<BufferedImage> ButtonImages = new ArrayList<>();
 
+    private static BufferedImage buttonSheetImg;
+    private static BufferedImage modeLabelImg;
+    private BufferedImage modeImage;
+
     public EditTiles(int x, int y, int width, int height, MapEditing mapEditing, Game game) {
         super(x, y, width, height);
         this.mapEditing = mapEditing;
@@ -41,13 +46,26 @@ public class EditTiles extends EditBar{
 
         loadButtonImageFile();
         loadButtonImages();
+
+        loadModeImageFile();
+        loadModeImage();
+
         initButtons();
     }
 
     public static void loadButtonImageFile() {
         InputStream is = LoadSave.class.getResourceAsStream("/UI/kutowerbuttons4.png");
         try {
-            img = ImageIO.read(is);
+            buttonSheetImg = ImageIO.read(is);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void loadModeImageFile() {
+        InputStream is = LoadSave.class.getResourceAsStream("/UI/Button_Blue_3Slides.png");
+        try {
+            modeLabelImg = ImageIO.read(is);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -60,9 +78,13 @@ public class EditTiles extends EditBar{
             for (int x = 0; x < 4; x++) {
                 int subX = x * tileSize;
                 int subY = y * tileSize;
-                ButtonImages.add(img.getSubimage(subX, subY, tileSize, tileSize));
+                ButtonImages.add(buttonSheetImg.getSubimage(subX, subY, tileSize, tileSize));
             }
         }
+    }
+
+    private void loadModeImage() {
+        modeImage = modeLabelImg.getSubimage(0, 0, 192, 64);
     }
 
 
@@ -116,6 +138,15 @@ public class EditTiles extends EditBar{
                 ButtonImages.get(2)
         );
 
+        mode = new ModeButton(currentMode + " Mode",
+                GameDimensions.GAME_WIDTH,
+                GameDimensions.BUTTON_PADDING,
+                192*2/3,
+                64*2/3,
+                modeImage
+        );
+
+
 
         int widthButton = GameDimensions.ButtonSize.MEDIUM.getSize();
         int heightButton = GameDimensions.ButtonSize.MEDIUM.getSize();
@@ -162,6 +193,9 @@ public class EditTiles extends EditBar{
         fill.draw(g);
         trash.draw(g);
         save.draw(g);
+
+        mode.setText(currentMode + " Mode");
+        mode.draw(g);
 
         for (TheButton tilesButton : tilesButtons) {
             x = tilesButton.getX();
