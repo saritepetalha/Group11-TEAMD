@@ -20,6 +20,7 @@ public class MapEditing extends GameScene implements SceneMethods{
     private Tile selectedTile;
     private boolean drawSelected = false;
     private EditTiles editTiles;
+    private int lastTileX, lastTileY, lastTileId;
 
     private int mouseX, mouseY;
 
@@ -160,5 +161,29 @@ public class MapEditing extends GameScene implements SceneMethods{
     }
 
     @Override
-    public void mouseReleased(int x, int y) {editTiles.mouseReleased(x,y);}
+    public void mouseReleased(int x, int y) {
+        editTiles.mouseReleased(x,y);
+    }
+
+    private void changeTile(int x, int y) {
+        if (selectedTile != null){
+            int tileX = x / GameDimensions.TILE_DISPLAY_SIZE;
+            int tileY = y / GameDimensions.TILE_DISPLAY_SIZE;
+
+            if (lastTileX == tileX && lastTileY == tileY && lastTileId == selectedTile.getId()) {
+                return;
+            }
+            lastTileX = tileX;
+            lastTileY = tileY;
+            lastTileId = selectedTile.getId();
+
+            level[tileY][tileX] = selectedTile.getId();
+        }
+    }
+    @Override
+    public void mouseDragged(int x, int y) {
+        if (x < GameDimensions.GAME_WIDTH && y < GameDimensions.GAME_HEIGHT) {
+            changeTile(x, y);
+        }
+    }
 }

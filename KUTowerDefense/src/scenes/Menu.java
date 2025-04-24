@@ -156,6 +156,11 @@ public class Menu extends GameScene implements SceneMethods {
         exitButton.resetBooleans();
     }
 
+    @Override
+    public void mouseDragged(int x, int y) {
+
+    }
+
 
     private int getRandomInt() {
 		return random.nextInt(sprites.size());
