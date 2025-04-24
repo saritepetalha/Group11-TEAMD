@@ -25,6 +25,7 @@ public class LoadSave {
         return img;
     }
 
+
     //This function saves the game to a json file as a 2d array with key: tiles
     //If it is wished the same json file could be used for saving the game state
     //As in the location of the enemy groups, location of towers etc.

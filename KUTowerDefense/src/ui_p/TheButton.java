@@ -1,6 +1,7 @@
 package ui_p;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 
 public class TheButton {
     private String text;
@@ -11,6 +12,7 @@ public class TheButton {
     private int id;
     private Rectangle bounds;
     private boolean mouseOver, mousePressed;
+    private BufferedImage sprite;
 
     // constructor for normal buttons
     public TheButton (String text, int x, int y, int width, int height) {
@@ -33,6 +35,16 @@ public class TheButton {
         this.height = height;
         this.id = id;
         this.bounds = new Rectangle(x, y, width, height);
+    }
+
+    // constructor for buttons with sprite
+    public TheButton(String text, int x, int y, int width, int height, BufferedImage sprite) {
+        this.text = text;
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        this.sprite = sprite;
     }
 
     public String getText() {
@@ -60,6 +72,11 @@ public class TheButton {
     }
 
     public void draw(Graphics g) {
+        if (sprite != null) {
+            g.drawImage(sprite, x, y, width, height, null);
+            return;
+        }
+
         if (mouseOver)
             g.setColor(Color.gray);
         else
@@ -114,7 +131,7 @@ public class TheButton {
     }
 
     public Rectangle getBounds(){
-        return bounds;
+        return new Rectangle(x, y, width, height);
     }
 
     public void setMousePressed(boolean mousePressed) {

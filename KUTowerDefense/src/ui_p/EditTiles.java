@@ -2,16 +2,21 @@ package ui_p;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 
 import static main.GameStates.MENU;
 import static main.GameStates.setGameState;
 
 import dimensions.GameDimensions;
+import helpMethods.LoadSave;
 import main.Game;
 import scenes.MapEditing;
 import scenes.Playing;
 import objects.Tile;
+
+import javax.imageio.ImageIO;
 
 public class EditTiles extends EditBar{
     private Game game;
@@ -19,39 +24,98 @@ public class EditTiles extends EditBar{
 
     private TheButton backMenu;
     private TheButton draw, erase, fill, trash, save;
+    private static BufferedImage img;
+    private String currentMode = "Draw";
 
 
     private MapEditing mapEditing;
     private Tile selectedTile;
 
     private ArrayList<TheButton> tilesButtons = new ArrayList<>();
+    private ArrayList<BufferedImage> ButtonImages = new ArrayList<>();
 
     public EditTiles(int x, int y, int width, int height, MapEditing mapEditing, Game game) {
         super(x, y, width, height);
         this.mapEditing = mapEditing;
         this.game = game;
 
+        loadButtonImageFile();
+        loadButtonImages();
         initButtons();
     }
 
+    public static void loadButtonImageFile() {
+        InputStream is = LoadSave.class.getResourceAsStream("/UI/kutowerbuttons4.png");
+        try {
+            img = ImageIO.read(is);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void loadButtonImages() {
+        int tileSize = 64;
+
+        for (int y = 0; y < 4; y++) {
+            for (int x = 0; x < 4; x++) {
+                int subX = x * tileSize;
+                int subY = y * tileSize;
+                ButtonImages.add(img.getSubimage(subX, subY, tileSize, tileSize));
+            }
+        }
+    }
+
+
+
     private void initButtons() {
-        backMenu = new TheButton("Back", GameDimensions.GAME_WIDTH + 4* GameDimensions.ButtonSize.MEDIUM.getSize() - GameDimensions.ButtonSize.SMALL.getSize(),
-                GameDimensions.BUTTON_PADDING, GameDimensions.ButtonSize.SMALL.getSize(), GameDimensions.ButtonSize.SMALL.getSize());
+        backMenu = new TheButton("Back",
+                GameDimensions.GAME_WIDTH + 4 * GameDimensions.ButtonSize.MEDIUM.getSize() - GameDimensions.ButtonSize.SMALL.getSize(),
+                GameDimensions.BUTTON_PADDING,
+                GameDimensions.ButtonSize.SMALL.getSize(),
+                GameDimensions.ButtonSize.SMALL.getSize(),
+                ButtonImages.get(3)
+        );
 
-        draw = new TheButton("Draw", GameDimensions.GAME_WIDTH,
-                GameDimensions.ButtonSize.MEDIUM.getSize(), GameDimensions.ButtonSize.SMALL.getSize(), GameDimensions.ButtonSize.SMALL.getSize());
+        draw = new TheButton("Draw",
+                GameDimensions.GAME_WIDTH,
+                GameDimensions.ButtonSize.MEDIUM.getSize(),
+                GameDimensions.ButtonSize.SMALL.getSize(),
+                GameDimensions.ButtonSize.SMALL.getSize(),
+                ButtonImages.get(0)
+        );
 
-        erase = new TheButton("Erase", GameDimensions.GAME_WIDTH + GameDimensions.ButtonSize.SMALL.getSize(),
-                GameDimensions.ButtonSize.MEDIUM.getSize(), GameDimensions.ButtonSize.SMALL.getSize(), GameDimensions.ButtonSize.SMALL.getSize());
+        erase = new TheButton("Erase",
+                GameDimensions.GAME_WIDTH + GameDimensions.ButtonSize.SMALL.getSize(),
+                GameDimensions.ButtonSize.MEDIUM.getSize(),
+                GameDimensions.ButtonSize.SMALL.getSize(),
+                GameDimensions.ButtonSize.SMALL.getSize(),
+                ButtonImages.get(13)
+        );
 
-        fill = new TheButton("Fill", GameDimensions.GAME_WIDTH + 2 * GameDimensions.ButtonSize.SMALL.getSize(),
-                GameDimensions.ButtonSize.MEDIUM.getSize(), GameDimensions.ButtonSize.SMALL.getSize(), GameDimensions.ButtonSize.SMALL.getSize());
+        fill = new TheButton("Fill",
+                GameDimensions.GAME_WIDTH + 2 * GameDimensions.ButtonSize.SMALL.getSize(),
+                GameDimensions.ButtonSize.MEDIUM.getSize(),
+                GameDimensions.ButtonSize.SMALL.getSize(),
+                GameDimensions.ButtonSize.SMALL.getSize(),
+                ButtonImages.get(12)
+        );
 
-        trash = new TheButton("Trash", GameDimensions.GAME_WIDTH + 3 * GameDimensions.ButtonSize.SMALL.getSize(),
-                GameDimensions.ButtonSize.MEDIUM.getSize(), GameDimensions.ButtonSize.SMALL.getSize(), GameDimensions.ButtonSize.SMALL.getSize());
+        trash = new TheButton("Trash",
+                GameDimensions.GAME_WIDTH + 3 * GameDimensions.ButtonSize.SMALL.getSize(),
+                GameDimensions.ButtonSize.MEDIUM.getSize(),
+                GameDimensions.ButtonSize.SMALL.getSize(),
+                GameDimensions.ButtonSize.SMALL.getSize(),
+                ButtonImages.get(1)
+        );
 
-        save = new TheButton("Save", GameDimensions.GAME_WIDTH + 4 * GameDimensions.ButtonSize.SMALL.getSize(),
-                GameDimensions.ButtonSize.MEDIUM.getSize(), GameDimensions.ButtonSize.SMALL.getSize(), GameDimensions.ButtonSize.SMALL.getSize());
+        save = new TheButton("Save",
+                GameDimensions.GAME_WIDTH + 4 * GameDimensions.ButtonSize.SMALL.getSize(),
+                GameDimensions.ButtonSize.MEDIUM.getSize(),
+                GameDimensions.ButtonSize.SMALL.getSize(),
+                GameDimensions.ButtonSize.SMALL.getSize(),
+                ButtonImages.get(2)
+        );
+
 
         int widthButton = GameDimensions.ButtonSize.MEDIUM.getSize();
         int heightButton = GameDimensions.ButtonSize.MEDIUM.getSize();
@@ -158,16 +222,13 @@ public class EditTiles extends EditBar{
             game.changeGameState(MENU);
         }
         else if (draw.getBounds().contains(x, y)) {
-
+            currentMode = "Draw";
         }
         else if (erase.getBounds().contains(x, y)) {
-
+            currentMode = "Erase";
         }
         else if (fill.getBounds().contains(x, y)) {
-
-        }
-        else if (trash.getBounds().contains(x, y)) {
-
+            currentMode = "Fill";
         }
         else if (save.getBounds().contains(x, y)) {
             saveLevel();
