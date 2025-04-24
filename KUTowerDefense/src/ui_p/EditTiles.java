@@ -263,6 +263,11 @@ public class EditTiles extends EditBar{
         }
         else if (fill.getBounds().contains(x, y)) {
             currentMode = "Fill";
+            mapEditing.fillAllTiles();
+        }
+        else if (trash.getBounds().contains(x, y)) {
+            currentMode = "Trash";
+            mapEditing.resetAllTiles();
         }
         else if (save.getBounds().contains(x, y)) {
             saveLevel();
@@ -276,7 +281,16 @@ public class EditTiles extends EditBar{
                 }
             }
         }
+    }
 
+    public void mouseDragged(int x, int y) {
+        if (x < GameDimensions.GAME_WIDTH && y < GameDimensions.GAME_HEIGHT) {
+            if (currentMode.equals("Draw")) {
+                mapEditing.modifyTile(x, y);
+            } else if (currentMode.equals("Erase")) {
+                mapEditing.eraseTile(x, y);
+            }
+        }
     }
 
     public void mouseMoved(int x, int y) {
@@ -344,6 +358,10 @@ public class EditTiles extends EditBar{
         for (TheButton tilesButton : tilesButtons) {
             tilesButton.resetBooleans();
         }
+    }
+
+    public String getCurrentMode() {
+        return currentMode;
     }
 
 }

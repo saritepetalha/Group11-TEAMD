@@ -88,8 +88,7 @@ public class MapEditing extends GameScene implements SceneMethods{
 
     }
 
-    private void modifyTile(int x, int y) {
-
+    public void modifyTile(int x, int y) {
         x /= 64;
         y /= 64;
 
@@ -100,7 +99,6 @@ public class MapEditing extends GameScene implements SceneMethods{
         if (selectedTile.getName().equals("Castle")) {
             // place Castle in 2x2 area
             if (y + 1 < level.length && x + 1 < level[0].length) {
-
                 level[y][x] = tileManager.CastleTopLeft.getId();                   // top-left: ID 24
                 level[y][x + 1] = tileManager.CastleTopRight.getId();           // top-right: ID 25
                 level[y + 1][x] = tileManager.CastleBottomLeft.getId();           // bottom-left: ID 28
@@ -108,6 +106,41 @@ public class MapEditing extends GameScene implements SceneMethods{
             }
         } else {
             level[y][x] = selectedTile.getId();
+        }
+    }
+
+    public void eraseTile(int x, int y) {
+        x /= 64;
+        y /= 64;
+        level[y][x] = 5;
+    }
+
+    public void fillAllTiles() {
+        if (selectedTile == null) {
+            return;
+        }
+
+        for (int i = 0; i < level.length; i++) {
+            for (int j = 0; j < level[i].length; j++) {
+                if (selectedTile.getName().equals("Castle")) {
+                    if (i + 1 < level.length && j + 1 < level[i].length) {
+                        level[i][j] = tileManager.CastleTopLeft.getId();
+                        level[i][j + 1] = tileManager.CastleTopRight.getId();
+                        level[i + 1][j] = tileManager.CastleBottomLeft.getId();
+                        level[i + 1][j + 1] = tileManager.CastleBottomRight.getId();
+                    }
+                } else {
+                    level[i][j] = selectedTile.getId();
+                }
+            }
+        }
+    }
+
+    public void resetAllTiles() {
+        for (int i = 0; i < level.length; i++) {
+            for (int j = 0; j < level[i].length; j++) {
+                level[i][j] = 5;
+            }
         }
     }
 
@@ -134,7 +167,11 @@ public class MapEditing extends GameScene implements SceneMethods{
             editTiles.mouseClicked(x,y);
         }
         else {
-            modifyTile(x, y);
+            if (editTiles.getCurrentMode().equals("Erase")) {
+                eraseTile(x, y);
+            } else {
+                modifyTile(x, y);
+            }
         }
     }
 
