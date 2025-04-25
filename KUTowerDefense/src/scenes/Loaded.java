@@ -21,6 +21,7 @@ public class Loaded extends GameScene implements SceneMethods {
         initButtons();
     }
 
+
     private void initButtons() {
         backButton = new TheButton("Back", 
             GameDimensions.GAME_WIDTH / 2 - GameDimensions.ButtonSize.MEDIUM.getSize() / 2,
