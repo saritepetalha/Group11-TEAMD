@@ -36,7 +36,9 @@ public class EditTiles extends EditBar{
     private ArrayList<BufferedImage> ButtonImages = new ArrayList<>();
 
     private static BufferedImage buttonSheetImg;
+    private static BufferedImage yellowHoverImg;
     private static BufferedImage modeLabelImg;
+    private static BufferedImage pressedImg;
     private BufferedImage modeImage;
 
     public EditTiles(int x, int y, int width, int height, MapEditing mapEditing, Game game) {
@@ -47,10 +49,33 @@ public class EditTiles extends EditBar{
         loadButtonImageFile();
         loadButtonImages();
 
+        loadYellowBorderImage();
+        loadPressedButtonImage();
+
         loadModeImageFile();
         loadModeImage();
 
         initButtons();
+    }
+
+
+
+    public static void loadPressedButtonImage() {
+        InputStream is = LoadSave.class.getResourceAsStream("/UI/Button_Blue_Pressed.png");
+        try {
+            pressedImg = ImageIO.read(is);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void loadYellowBorderImage() {
+        InputStream is = LoadSave.class.getResourceAsStream("/UI/Button_Hover.png");
+        try {
+            yellowHoverImg = ImageIO.read(is);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public static void loadButtonImageFile() {
@@ -146,8 +171,6 @@ public class EditTiles extends EditBar{
                 modeImage
         );
 
-
-
         int widthButton = GameDimensions.ButtonSize.MEDIUM.getSize();
         int heightButton = GameDimensions.ButtonSize.MEDIUM.getSize();
         int gameWidth = GameDimensions.GAME_WIDTH;
@@ -178,7 +201,6 @@ public class EditTiles extends EditBar{
         }
     }
 
-
     private void saveLevel(){
         mapEditing.saveLevel();
     }
@@ -188,60 +210,100 @@ public class EditTiles extends EditBar{
         Graphics2D g2d = (Graphics2D) g;
 
         backMenu.draw(g);
-        draw.draw(g);
-        erase.draw(g);
-        fill.draw(g);
-        trash.draw(g);
-        save.draw(g);
 
         mode.setText(currentMode + " Mode");
         mode.draw(g);
 
-        for (TheButton tilesButton : tilesButtons) {
-            x = tilesButton.getX();
-            y = tilesButton.getY();
-            width = tilesButton.getWidth();
-            height = tilesButton.getHeight();
 
-            // changing opacity when the mouse is over tiles.
-            if (tilesButton.isMouseOver()) {
-                g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.4f));
-            } else {
-                g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
-            }
+        drawActionButton(g2d, draw, ButtonImages.get(0), yellowHoverImg, pressedImg);
+        drawActionButton(g2d, erase, ButtonImages.get(13), yellowHoverImg, pressedImg);
+        drawActionButton(g2d, fill, ButtonImages.get(12), yellowHoverImg, pressedImg);
+        drawActionButton(g2d, trash, ButtonImages.get(1), yellowHoverImg, pressedImg);
+        drawActionButton(g2d, save, ButtonImages.get(2), yellowHoverImg, pressedImg);
 
-            g2d.setColor(new Color(157,209,153,255));
-            g2d.fillRect(x, y, width, height);
-
-            int imageX = x;
-            int imageY = y;
-
-            // applying offset if button is being pressed
-            if (tilesButton.isMousePressed()) {
-                imageX -= 4; // offset to left by 2 pixels
-                imageY -= 4; // offset up by 2 pixels
-            }
-
-            BufferedImage spriteToDraw;
-
-            if (tilesButton.getText().equals("Castle")) {
-                spriteToDraw = mapEditing.getTileManager().getFullCastleSprite();
-            } else {
-                spriteToDraw = mapEditing.getTileManager().getSprite(tilesButton.getId());
-            }
-
-            g2d.drawImage(spriteToDraw,
-                    imageX,
-                    imageY,
-                    width,
-                    height,
-                    null);
-
+        for (TheButton btn : tilesButtons){
+            drawTilesButtonEffect(g2d, btn);
         }
 
         g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
     }
 
+    private void drawTilesButtonEffect(Graphics2D g2d, TheButton tilesButton) {
+        x = tilesButton.getX();
+        y = tilesButton.getY();
+        width = tilesButton.getWidth();
+        height = tilesButton.getHeight();
+
+        // changing opacity when the mouse is over tiles.
+        if (tilesButton.isMouseOver()) {
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.4f));
+        } else {
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
+        }
+
+        g2d.setColor(new Color(157,209,153,255));
+        g2d.fillRect(x, y, width, height);
+
+        int imageX = x;
+        int imageY = y;
+
+        // applying offset if button is being pressed
+        if (tilesButton.isMousePressed()) {
+            imageX -= 4; // offset to left by 2 pixels
+            imageY -= 4; // offset up by 2 pixels
+        }
+
+        BufferedImage spriteToDraw;
+
+        if (tilesButton.getText().equals("Castle")) {
+            spriteToDraw = mapEditing.getTileManager().getFullCastleSprite();
+        } else {
+            spriteToDraw = mapEditing.getTileManager().getSprite(tilesButton.getId());
+        }
+
+        g2d.drawImage(spriteToDraw,
+                imageX,
+                imageY,
+                width,
+                height,
+                null);
+    }
+
+    private void drawActionButton(Graphics2D g2d, TheButton button, BufferedImage normalImg, BufferedImage hoverImg, BufferedImage pressedImg ) {
+        int x = button.getX();
+        int y = button.getY();
+        int width = button.getWidth();
+        int height = button.getHeight();
+
+        int drawX = x;
+        int drawY = y;
+
+        // Draw base button background
+        g2d.setColor(new Color(157,209,153,255));
+        g2d.fillRect(drawX, drawY, width, height);
+
+        BufferedImage toDraw;
+        if (button.isMousePressed()) {
+            toDraw = pressedImg;
+        } else if (button.isMouseOver()) {
+            toDraw = hoverImg;
+        } else {
+            toDraw = normalImg;
+        }
+        g2d.drawImage(toDraw, drawX, drawY, width, height, null);
+
+        // (temporary) Draw text centered, if needed
+        if (button.isMouseOver() && button.getText() != null && !button.getText().isEmpty()) {
+            g2d.setColor(Color.WHITE);
+            g2d.setFont(new Font("MV Boli", Font.BOLD, 11));
+            FontMetrics fm = g2d.getFontMetrics();
+            int textWidth = fm.stringWidth(button.getText());
+            int textHeight = fm.getHeight();
+            g2d.drawString(button.getText(), drawX + (width - textWidth) / 2, drawY + (height + textHeight / 5) / 2);
+        }
+
+
+    }
 
 
     public void draw(Graphics g){
