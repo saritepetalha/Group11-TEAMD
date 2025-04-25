@@ -29,6 +29,7 @@ public class Game extends JFrame implements Runnable{
 	private Options options;
 	private Playing playing;
 	private MapEditing mapEditing;
+	private Loaded loaded;
 	private TileManager tileManager;
 
 	public Game() {
@@ -70,6 +71,7 @@ public class Game extends JFrame implements Runnable{
 		options = new Options(this);
 		playing = new Playing(this);
 		mapEditing = new MapEditing(this);
+		loaded = new Loaded(this);
 		tileManager = new TileManager();
 	}
 	
