@@ -38,6 +38,10 @@ public class Playing extends GameScene implements SceneMethods {
         System.out.println(java.util.Arrays.deepToString(lvl));
     }
 
+    public void loadLevel(String levelName) {
+        level = LoadSave.getLevelData(levelName);
+    }
+
 
 
 
@@ -61,4 +65,9 @@ public class Playing extends GameScene implements SceneMethods {
 
     @Override
     public void mouseReleased(int x, int y) {}
+
+    @Override
+    public void mouseDragged(int x, int y) {
+
+    }
 }

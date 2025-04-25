@@ -39,6 +39,12 @@ public class KeyboardListener implements KeyListener {
         } else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
             System.out.println("ESC key pressed - clearing tile selection");
 
+            // If in edit state, clear the tile selection
+            if (GameStates.gameState == GameStates.EDIT) {
+                mapEditing.setDrawSelected(false);
+                mapEditing.setSelectedTile(null);
+            }
+
             // If in playing state, clear the tile selection
             if (GameStates.gameState == GameStates.PLAYING) {
                 mapEditing.setDrawSelected(false);
