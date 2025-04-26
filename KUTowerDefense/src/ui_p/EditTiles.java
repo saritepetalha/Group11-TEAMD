@@ -18,7 +18,6 @@ public class EditTiles extends Bar {
     private TheButton backMenu;
     private TheButton draw, erase, fill, trash, save;
     private ModeButton mode;
-    private static BufferedImage img;
     private String currentMode = "Draw";
 
 
@@ -26,6 +25,8 @@ public class EditTiles extends Bar {
     private Tile selectedTile;
 
     private ArrayList<TheButton> tilesButtons = new ArrayList<>();
+
+    private TheButton startPoint, endPoint;
 
     /*
     private ArrayList<BufferedImage> ButtonImages = new ArrayList<>();
@@ -168,7 +169,8 @@ public class EditTiles extends Bar {
         int heightButton = GameDimensions.ButtonSize.MEDIUM.getSize();
         int gameWidth = GameDimensions.GAME_WIDTH;
 
-        for(int i = 0; i < mapEditing.getTileManager().tiles.size(); i++) {
+        int i;
+        for(i = 0; i < mapEditing.getTileManager().tiles.size(); i++) {
             Tile tile = mapEditing.getTileManager().tiles.get(i);
 
             // skip extra Castle tiles (one button for Castle)
@@ -192,6 +194,21 @@ public class EditTiles extends Bar {
                     buttonHeight,
                     i));
         }
+
+        startPoint = new TheButton("Start", GameDimensions.GAME_WIDTH,
+                GameDimensions.GAME_HEIGHT -  GameDimensions.BUTTON_PADDING - GameDimensions.ButtonSize.MEDIUM.getSize(),
+                widthButton,
+                heightButton,
+                i++);
+
+        endPoint = new TheButton("End",
+                GameDimensions.GAME_WIDTH + GameDimensions.ButtonSize.MEDIUM.getSize(),
+                GameDimensions.GAME_HEIGHT -  GameDimensions.BUTTON_PADDING - GameDimensions.ButtonSize.MEDIUM.getSize(),
+                widthButton,
+                heightButton,
+                i++);
+
+
     }
 
     private void saveLevel(){
@@ -203,6 +220,8 @@ public class EditTiles extends Bar {
         Graphics2D g2d = (Graphics2D) g;
 
         backMenu.draw(g);
+        startPoint.draw(g);
+        endPoint.draw(g);
 
         mode.setText(currentMode + " Mode");
         mode.draw(g);

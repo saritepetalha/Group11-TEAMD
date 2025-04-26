@@ -1,9 +1,9 @@
 package enemies;
 
 import java.awt.*;
+import static constants.Constants.*;
 
-public class Enemy {
-
+public abstract class Enemy {
     private float x,y;          // using floats to have much more control when dealing with speed of the enemies
     private int id;
     private int health;
@@ -17,6 +17,7 @@ public class Enemy {
         this.id = id;
         this.enemyType = enemyType;
         boundary = new Rectangle((int)x, (int)y, 64, 64);
+        lastDirection = Direction.RIGHT;
     }
 
     public void move(float x, float y){

@@ -1,8 +1,10 @@
 package managers;
 
 import enemies.Enemy;
+import enemies.*;
 import scenes.Playing;
 import helpMethods.LoadSave;
+import constants.Constants;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -17,7 +19,8 @@ public class EnemyManager {
     public EnemyManager(Playing playing) {
         this.playing = playing;
         enemyImages = extractEnemyFrames();
-        addEnemy(64*3, 64*3);
+        addEnemy(64*3, 64*3, Constants.Enemies.GOBLIN);
+        addEnemy(64*3, 64*3, Constants.Enemies.WARRIOR);
         //enemyTest = new Enemy(64*3, 64*3, 0, 0);
     }
 
@@ -28,8 +31,16 @@ public class EnemyManager {
         //enemyTest.move(0.3f,0);
     }
 
-    public void addEnemy(int x, int y){
-        enemies.add(new Enemy(x,y, 0,0));
+    public void addEnemy(int x, int y, int enemyType){
+        switch(enemyType){
+            case Constants.Enemies.GOBLIN:
+                enemies.add(new Goblin(x,y,0));
+                break;
+            case Constants.Enemies.WARRIOR:
+                enemies.add(new Warrior(x,y,0));
+                break;
+        }
+        enemies.add(new Goblin(x,y,0));
     }
 
     public void draw(Graphics g){
@@ -63,6 +74,6 @@ public class EnemyManager {
     }
 
     private void drawEnemy(Enemy enemy, Graphics g){
-        g.drawImage(enemyImages[0], (int) enemy.getX(), (int) enemy.getY(), null);
+        g.drawImage(enemyImages[enemy.getEnemyType()], (int) enemy.getX(), (int) enemy.getY(), null);
     }
 }
