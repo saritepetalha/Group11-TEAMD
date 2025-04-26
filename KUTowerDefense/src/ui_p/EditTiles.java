@@ -275,12 +275,9 @@ public class EditTiles extends EditBar{
         int width = button.getWidth();
         int height = button.getHeight();
 
-        int drawX = x;
-        int drawY = y;
-
         // Draw base button background
         g2d.setColor(new Color(157,209,153,255));
-        g2d.fillRect(drawX, drawY, width, height);
+        g2d.fillRect(x, y, width, height);
 
         BufferedImage toDraw;
         if (button.isMousePressed()) {
@@ -290,7 +287,7 @@ public class EditTiles extends EditBar{
         } else {
             toDraw = normalImg;
         }
-        g2d.drawImage(toDraw, drawX, drawY, width, height, null);
+        g2d.drawImage(toDraw, x, y, width, height, null);
 
         // (temporary) Draw text centered, if needed
         if (button.isMouseOver() && button.getText() != null && !button.getText().isEmpty()) {
@@ -299,7 +296,7 @@ public class EditTiles extends EditBar{
             FontMetrics fm = g2d.getFontMetrics();
             int textWidth = fm.stringWidth(button.getText());
             int textHeight = fm.getHeight();
-            g2d.drawString(button.getText(), drawX + (width - textWidth) / 2, drawY + (height + textHeight / 5) / 2);
+            g2d.drawString(button.getText(), x + (width - textWidth) / 2, y + (height + textHeight / 5) / 2);
         }
 
 

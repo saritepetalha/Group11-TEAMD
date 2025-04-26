@@ -1,0 +1,59 @@
+package managers;
+
+import enemies.Enemy;
+import scenes.Playing;
+import helpMethods.LoadSave;
+
+import java.awt.*;
+import java.awt.image.BufferedImage;
+
+public class EnemyManager {
+
+    private Playing playing;
+    private BufferedImage[] enemyImages;
+    private Enemy enemyTest;
+
+    public EnemyManager(Playing playing) {
+        this.playing = playing;
+        enemyImages = extractEnemyFrames();
+        enemyTest = new Enemy(64*3, 64*3, 0, 0);
+
+    }
+
+    public void update(){
+
+    }
+
+    public void draw(Graphics2D g){
+        drawEnemy(enemyTest, g);
+
+    }
+
+    // method to extract all enemy animation frames (6 goblin + 6 warrior)
+    // returns an array: 0-5 goblin, 6-11 warrior
+    public static BufferedImage[] extractEnemyFrames() {
+        BufferedImage[] enemyFrames = new BufferedImage[12];
+
+        // load both sprite atlases
+        BufferedImage goblinSheet = LoadSave.getEnemyAtlas("goblin");
+        BufferedImage warriorSheet = LoadSave.getEnemyAtlas("warrior");
+
+        // each sprite sheet has 6 frames, each frame is 192x192
+        for (int i = 0; i < 6; i++) {
+            // goblin frames
+            BufferedImage goblinFrame = goblinSheet.getSubimage(i * 192, 0, 192, 192);
+            enemyFrames[i] = goblinFrame.getSubimage(64, 64, 64, 64); // center 64x64
+
+            // warrior frames
+            BufferedImage warriorFrame = warriorSheet.getSubimage(i * 192, 0, 192, 192);
+            enemyFrames[6 + i] = warriorFrame.getSubimage(64, 64, 64, 64); // center 64x64
+        }
+
+        return enemyFrames;
+    }
+
+
+    private void drawEnemy(Enemy en, Graphics2D g){
+        g.drawImage(enemyImages[0], (int) en.getX(), (int) en.getY(), null);
+    }
+}
