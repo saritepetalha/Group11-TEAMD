@@ -22,13 +22,15 @@ public class MapEditing extends GameScene implements SceneMethods{
     private EditTiles editTiles;
     private int lastTileX, lastTileY, lastTileId, prevDraggedTileX, prevDraggedTileY;
 
+    private final Window owner;
     private int mouseX, mouseY;
 
-    public MapEditing(Game game) {
+    public MapEditing(Game game, Window owner) {
         super(game);
+        this.owner = owner;
         level = LevelBuilder.getLevelData();
         tileManager = new TileManager();
-        editTiles = new EditTiles(GameDimensions.GAME_WIDTH,0,4*GameDimensions.ButtonSize.MEDIUM.getSize(), GameDimensions.GAME_HEIGHT,this, game);
+        editTiles = new EditTiles(GameDimensions.GAME_WIDTH,0,4*GameDimensions.ButtonSize.MEDIUM.getSize(), GameDimensions.GAME_HEIGHT,this, game, owner);
         createDefaultLevel();
         loadDefaultLevel();
     }
@@ -144,8 +146,8 @@ public class MapEditing extends GameScene implements SceneMethods{
         }
     }
 
-    public void saveLevel() {
-        LoadSave.saveLevel("defaultleveltest1",level);
+    public void saveLevel(String filename) {
+        LoadSave.saveLevel(filename,level);
     }
 
     public void setDrawSelected(boolean drawSelected) {
