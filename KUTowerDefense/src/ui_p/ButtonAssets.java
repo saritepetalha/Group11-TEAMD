@@ -3,6 +3,7 @@ package ui_p;
 import helpMethods.LoadSave;
 
 import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,6 +18,13 @@ public class ButtonAssets {
     public static BufferedImage modeImage;
     public static ArrayList<BufferedImage> buttonImages = new ArrayList<>();
 
+    public static BufferedImage startPointImg;
+    public static BufferedImage endPointImg;
+    public static BufferedImage startPointHoverImg;
+    public static BufferedImage endPointHoverImg;
+    public static BufferedImage startPointPressedImg;
+    public static BufferedImage endPointPressedImg;
+
     static {
         loadAll();
     }
@@ -28,6 +36,8 @@ public class ButtonAssets {
         loadModeImageFile();
         loadModeImage();
         loadButtonImages();
+        loadStartPointImg();
+        loadEndPointImg();
     }
 
     private static void loadButtonImageFile() {
@@ -77,5 +87,57 @@ public class ButtonAssets {
             }
         }
     }
+
+    private static BufferedImage loadImage(String path) {
+        BufferedImage img = null;
+        try (InputStream is = LoadSave.class.getResourceAsStream(path)) {
+            if (is != null)
+                img = ImageIO.read(is);
+            else
+                System.err.println("Image not found: " + path);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return img;
+    }
+
+    public static void loadStartPointImg() {
+        startPointImg = loadImage("/UI/startPoint192x192.png");
+        // create hover versions with yellow highlight overlay
+        startPointHoverImg = createHoverEffect(startPointImg);
+        // create pressed versions with slight offset effect
+        startPointPressedImg = createPressedEffect(startPointImg);
+    }
+
+    public static void loadEndPointImg() {
+        endPointImg = loadImage("/UI/endPoint192x192.png");
+        // create hover versions with yellow highlight overlay
+        endPointHoverImg = createHoverEffect(endPointImg);
+        // create pressed versions with slight offset effect
+        endPointPressedImg = createPressedEffect(endPointImg);
+    }
+
+
+    // helper method to create hover effect by overlaying yellow highlight
+    private static BufferedImage createHoverEffect(BufferedImage original) {
+        BufferedImage result = new BufferedImage(original.getWidth(), original.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2d = result.createGraphics();
+        g2d.drawImage(original, 0, 0, null);
+        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
+        g2d.setColor(new Color(255, 255, 0, 100)); // Subtle yellow tint
+        g2d.fillRect(0, 0, original.getWidth(), original.getHeight());
+        g2d.dispose();
+        return result;
+    }
+
+    // helper method to create pressed effect
+    private static BufferedImage createPressedEffect(BufferedImage original) {
+        BufferedImage result = new BufferedImage(original.getWidth(), original.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2d = result.createGraphics();
+        g2d.drawImage(original, 2, 2, null); // Slight offset to create pressed effect
+        g2d.dispose();
+        return result;
+    }
+
 }
 

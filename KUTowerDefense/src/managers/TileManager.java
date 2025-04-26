@@ -1,10 +1,15 @@
 package managers;
 
 import constants.GameDimensions;
+import main.Game;
 import objects.Tile;
+
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import helpMethods.LoadSave;
+import ui_p.ButtonAssets;
+import constants.GameDimensions;
 
 public class TileManager {
     public Tile
@@ -84,10 +89,27 @@ public class TileManager {
 
     // This method is used to get the sprite of a specific tile by index
     public BufferedImage getSprite(int index) {
+        // special handling for start and end points
+        if (index == -1) {
+            return resizeImage(ButtonAssets.startPointImg, GameDimensions.TILE_DISPLAY_SIZE, GameDimensions.TILE_DISPLAY_SIZE);
+        } else if (index == -2) {
+            return resizeImage(ButtonAssets.endPointImg, GameDimensions.TILE_DISPLAY_SIZE, GameDimensions.TILE_DISPLAY_SIZE);
+        }
+
+        // regular tile handling
         if (index < 0 || index >= tiles.size()) {
             throw new IndexOutOfBoundsException("Invalid tile index: " + index);
         }
         return tiles.get(index).getSprite();
+    }
+
+    private BufferedImage resizeImage(BufferedImage original, int width, int height) {
+        BufferedImage resized = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = resized.createGraphics();
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g.drawImage(original, 0, 0, width, height, null);
+        g.dispose();
+        return resized;
     }
 
     // dedicated method to get the full castle sprite, as its dimension doubles other tiles' dimensions

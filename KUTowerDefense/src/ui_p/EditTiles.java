@@ -208,7 +208,6 @@ public class EditTiles extends Bar {
                 heightButton,
                 i++);
 
-
     }
 
     private void saveLevel(){
@@ -220,9 +219,6 @@ public class EditTiles extends Bar {
         Graphics2D g2d = (Graphics2D) g;
 
         backMenu.draw(g);
-        startPoint.draw(g);
-        endPoint.draw(g);
-
         mode.setText(currentMode + " Mode");
         mode.draw(g);
 
@@ -236,7 +232,56 @@ public class EditTiles extends Bar {
             drawTilesButtonEffect(g2d, btn);
         }
 
+        drawPathPointButton(g2d, startPoint, ButtonAssets.startPointImg, ButtonAssets.startPointHoverImg, ButtonAssets.startPointPressedImg);
+        drawPathPointButton(g2d, endPoint, ButtonAssets.endPointImg, ButtonAssets.endPointHoverImg, ButtonAssets.endPointPressedImg);
+
         g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
+    }
+
+    // method for drawing path point buttons with hover/press animations
+    private void drawPathPointButton(Graphics2D g2d, TheButton button, BufferedImage normalImg, BufferedImage hoverImg, BufferedImage pressedImg) {
+        int x = button.getX();
+        int y = button.getY();
+        int width = button.getWidth();
+        int height = button.getHeight();
+
+        // draw base button background
+        g2d.setColor(new Color(157, 209, 153, 255));
+        g2d.fillRect(x, y, width, height);
+
+        // determine which image to use based on button state
+        BufferedImage toDraw;
+        int imageX = x;
+        int imageY = y;
+
+        if (button.isMousePressed()) {
+            toDraw = pressedImg;
+            imageX += 2; // add slight offset for pressed effect
+            imageY += 2; // add slight offset for pressed effect
+        } else if (button.isMouseOver()) {
+            toDraw = hoverImg;
+
+            // add subtle animation for hover - subtle pulsing or glow effect
+            long currentTime = System.currentTimeMillis();
+            float pulseAmount = (float) Math.sin(currentTime * 0.005) * 0.1f + 0.9f;
+            width = (int)(width * pulseAmount);
+            height = (int)(height * pulseAmount);
+            imageX = x + (button.getWidth() - width) / 2;
+            imageY = y + (button.getHeight() - height) / 2;
+        } else {
+            toDraw = normalImg;
+        }
+
+        // draw the appropriate image
+        g2d.drawImage(toDraw, imageX, imageY, width, height, null);
+
+        // draw text label below the image for clarity
+        g2d.setColor(Color.WHITE);
+        g2d.setFont(new Font("MV Boli", Font.BOLD, 11));
+        FontMetrics fm = g2d.getFontMetrics();
+        int textWidth = fm.stringWidth(button.getText());
+        g2d.drawString(button.getText(), x + (button.getWidth() - textWidth) / 2,
+                y + button.getHeight() + fm.getAscent());
     }
 
     private void drawTilesButtonEffect(Graphics2D g2d, TheButton tilesButton) {
@@ -342,6 +387,16 @@ public class EditTiles extends Bar {
         else if (save.getBounds().contains(x, y)) {
             saveLevel();
         }
+        else if (startPoint.getBounds().contains(x, y)) {
+            selectedTile = new Tile(ButtonAssets.startPointImg,-1,"Start Point");
+            mapEditing.setSelectedTile(selectedTile);
+            System.out.println("Start point selected"); // Debug output
+        }
+        else if (endPoint.getBounds().contains(x, y)) {
+            selectedTile = new Tile(ButtonAssets.endPointImg, -2, "End Point");
+            mapEditing.setSelectedTile(selectedTile);
+            System.out.println("End point selected"); // Debug output
+        }
         else{
             for (TheButton tilesButton : tilesButtons) {
                 if (tilesButton.getBounds().contains(x, y)){
@@ -370,6 +425,8 @@ public class EditTiles extends Bar {
         fill.setMouseOver(false);
         trash.setMouseOver(false);
         save.setMouseOver(false);
+        startPoint.setMouseOver(false);
+        endPoint.setMouseOver(false);
 
         for (TheButton tilesButton : tilesButtons) {
             tilesButton.setMouseOver(false);
@@ -392,7 +449,12 @@ public class EditTiles extends Bar {
         else if (save.getBounds().contains(x, y)) {
             save.setMouseOver(true);
         }
-
+        else if (startPoint.getBounds().contains(x, y)) {
+            startPoint.setMouseOver(true);
+        }
+        else if (endPoint.getBounds().contains(x, y)) {
+            endPoint.setMouseOver(true);
+        }
         else{
             for (TheButton tilesButton : tilesButtons) {
                 if (tilesButton.getBounds().contains(x, y)){
@@ -412,6 +474,14 @@ public class EditTiles extends Bar {
         else if (save.getBounds().contains(x, y)) {
             save.setMousePressed(true);
         }
+
+        else if (startPoint.getBounds().contains(x, y)) {
+            startPoint.setMousePressed(true);
+        }
+        else if (endPoint.getBounds().contains(x, y)) {
+            endPoint.setMousePressed(true);
+        }
+
         else{
             for (TheButton tilesButton : tilesButtons) {
                 if(tilesButton.getBounds().contains(x, y)){
@@ -425,6 +495,8 @@ public class EditTiles extends Bar {
     public void mouseReleased(int x, int y) {
         backMenu.resetBooleans();
         save.resetBooleans();
+        startPoint.resetBooleans();
+        endPoint.resetBooleans();
         for (TheButton tilesButton : tilesButtons) {
             tilesButton.resetBooleans();
         }
