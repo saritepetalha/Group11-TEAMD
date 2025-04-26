@@ -1,16 +1,18 @@
 package ui_p;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 
 public class TheButton {
-    private String text;
-    private int x;
-    private int y;
-    private int width;
-    private int height;
+    protected String text;
+    protected int x;
+    protected int y;
+    protected int width;
+    protected int height;
     private int id;
     private Rectangle bounds;
     private boolean mouseOver, mousePressed;
+    private BufferedImage sprite;
 
     // constructor for normal buttons
     public TheButton (String text, int x, int y, int width, int height) {
@@ -33,6 +35,16 @@ public class TheButton {
         this.height = height;
         this.id = id;
         this.bounds = new Rectangle(x, y, width, height);
+    }
+
+    // constructor for buttons with sprite
+    public TheButton(String text, int x, int y, int width, int height, BufferedImage sprite) {
+        this.text = text;
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        this.sprite = sprite;
     }
 
     public String getText() {
@@ -60,14 +72,15 @@ public class TheButton {
     }
 
     public void draw(Graphics g) {
-        if (mouseOver)
-            g.setColor(Color.gray);
-        else
-            g.setColor(Color.WHITE);
-        g.fillRect(x, y, width, height);
+        if (sprite != null) {
+            g.drawImage(sprite, x, y, width, height, null);
+            return;
+        }
 
-        g.setColor(Color.black);
+
+        g.setColor(Color.BLACK);
         g.drawRect(x, y, width, height);
+
         if (mousePressed) {
             g.drawRect(x + 1, y + 1, width - 2, height - 2);
             g.drawRect(x + 2, y + 2, width - 4, height - 4);
@@ -75,8 +88,9 @@ public class TheButton {
 
         int w = g.getFontMetrics().stringWidth(text);
         int h = g.getFontMetrics().getHeight();
-        g.drawString(text, x - w / 2 + width / 2, y + h / 2 + height / 2);
+        g.drawString(text, x + (width - w) / 2, y + (height + h / 2) / 2);
     }
+
 
 
 
@@ -114,7 +128,7 @@ public class TheButton {
     }
 
     public Rectangle getBounds(){
-        return bounds;
+        return new Rectangle(x, y, width, height);
     }
 
     public void setMousePressed(boolean mousePressed) {
@@ -128,6 +142,10 @@ public class TheButton {
     public void resetBooleans() {
         mouseOver = false;
         mousePressed = false;
+    }
+
+    public void setText(String text) {
+        this.text = text;
     }
 
 

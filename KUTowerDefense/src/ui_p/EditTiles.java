@@ -2,68 +2,161 @@ package ui_p;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 
 import static main.GameStates.MENU;
 import static main.GameStates.setGameState;
 
 import dimensions.GameDimensions;
+import helpMethods.LoadSave;
 import main.Game;
+import scenes.MapEditing;
 import scenes.Playing;
 import objects.Tile;
 
-public class EditTiles {
+import javax.imageio.ImageIO;
+
+public class EditTiles extends EditBar{
     private Game game;
     private int x,y, width, height; // starting position x,y, and width and height of the edit tiles bar
 
     private TheButton backMenu;
     private TheButton draw, erase, fill, trash, save;
+    private ModeButton mode;
+    private static BufferedImage img;
+    private String currentMode = "Draw";
 
 
-    private Playing playing;
+    private MapEditing mapEditing;
     private Tile selectedTile;
 
     private ArrayList<TheButton> tilesButtons = new ArrayList<>();
+    private ArrayList<BufferedImage> ButtonImages = new ArrayList<>();
 
-    public EditTiles(int x, int y, int width, int height, Playing playing, Game game) {
-        this.x = x;
-        this.y = y;
-        this.width = width;
-        this.height = height;
-        this.playing = playing;
+    private static BufferedImage buttonSheetImg;
+    private static BufferedImage modeLabelImg;
+    private BufferedImage modeImage;
+
+    public EditTiles(int x, int y, int width, int height, MapEditing mapEditing, Game game) {
+        super(x, y, width, height);
+        this.mapEditing = mapEditing;
         this.game = game;
+
+        loadButtonImageFile();
+        loadButtonImages();
+
+        loadModeImageFile();
+        loadModeImage();
 
         initButtons();
     }
 
+    public static void loadButtonImageFile() {
+        InputStream is = LoadSave.class.getResourceAsStream("/UI/kutowerbuttons4.png");
+        try {
+            buttonSheetImg = ImageIO.read(is);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void loadModeImageFile() {
+        InputStream is = LoadSave.class.getResourceAsStream("/UI/Button_Blue_3Slides.png");
+        try {
+            modeLabelImg = ImageIO.read(is);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void loadButtonImages() {
+        int tileSize = 64;
+
+        for (int y = 0; y < 4; y++) {
+            for (int x = 0; x < 4; x++) {
+                int subX = x * tileSize;
+                int subY = y * tileSize;
+                ButtonImages.add(buttonSheetImg.getSubimage(subX, subY, tileSize, tileSize));
+            }
+        }
+    }
+
+    private void loadModeImage() {
+        modeImage = modeLabelImg.getSubimage(0, 0, 192, 64);
+    }
+
+
+
     private void initButtons() {
-        backMenu = new TheButton("Back", GameDimensions.GAME_WIDTH + 4* GameDimensions.ButtonSize.MEDIUM.getSize() - GameDimensions.ButtonSize.SMALL.getSize(),
-                GameDimensions.BUTTON_PADDING, GameDimensions.ButtonSize.SMALL.getSize(), GameDimensions.ButtonSize.SMALL.getSize());
+        backMenu = new TheButton("Back",
+                GameDimensions.GAME_WIDTH + 4 * GameDimensions.ButtonSize.MEDIUM.getSize() - GameDimensions.ButtonSize.SMALL.getSize(),
+                GameDimensions.BUTTON_PADDING,
+                GameDimensions.ButtonSize.SMALL.getSize(),
+                GameDimensions.ButtonSize.SMALL.getSize(),
+                ButtonImages.get(3)
+        );
 
-        draw = new TheButton("Draw", GameDimensions.GAME_WIDTH,
-                GameDimensions.ButtonSize.MEDIUM.getSize(), GameDimensions.ButtonSize.SMALL.getSize(), GameDimensions.ButtonSize.SMALL.getSize());
+        draw = new TheButton("Draw",
+                GameDimensions.GAME_WIDTH,
+                GameDimensions.ButtonSize.MEDIUM.getSize(),
+                GameDimensions.ButtonSize.SMALL.getSize(),
+                GameDimensions.ButtonSize.SMALL.getSize(),
+                ButtonImages.get(0)
+        );
 
-        erase = new TheButton("Erase", GameDimensions.GAME_WIDTH + GameDimensions.ButtonSize.SMALL.getSize(),
-                GameDimensions.ButtonSize.MEDIUM.getSize(), GameDimensions.ButtonSize.SMALL.getSize(), GameDimensions.ButtonSize.SMALL.getSize());
+        erase = new TheButton("Erase",
+                GameDimensions.GAME_WIDTH + GameDimensions.ButtonSize.SMALL.getSize(),
+                GameDimensions.ButtonSize.MEDIUM.getSize(),
+                GameDimensions.ButtonSize.SMALL.getSize(),
+                GameDimensions.ButtonSize.SMALL.getSize(),
+                ButtonImages.get(13)
+        );
 
-        fill = new TheButton("Fill", GameDimensions.GAME_WIDTH + 2 * GameDimensions.ButtonSize.SMALL.getSize(),
-                GameDimensions.ButtonSize.MEDIUM.getSize(), GameDimensions.ButtonSize.SMALL.getSize(), GameDimensions.ButtonSize.SMALL.getSize());
+        fill = new TheButton("Fill",
+                GameDimensions.GAME_WIDTH + 2 * GameDimensions.ButtonSize.SMALL.getSize(),
+                GameDimensions.ButtonSize.MEDIUM.getSize(),
+                GameDimensions.ButtonSize.SMALL.getSize(),
+                GameDimensions.ButtonSize.SMALL.getSize(),
+                ButtonImages.get(12)
+        );
 
-        trash = new TheButton("Trash", GameDimensions.GAME_WIDTH + 3 * GameDimensions.ButtonSize.SMALL.getSize(),
-                GameDimensions.ButtonSize.MEDIUM.getSize(), GameDimensions.ButtonSize.SMALL.getSize(), GameDimensions.ButtonSize.SMALL.getSize());
+        trash = new TheButton("Trash",
+                GameDimensions.GAME_WIDTH + 3 * GameDimensions.ButtonSize.SMALL.getSize(),
+                GameDimensions.ButtonSize.MEDIUM.getSize(),
+                GameDimensions.ButtonSize.SMALL.getSize(),
+                GameDimensions.ButtonSize.SMALL.getSize(),
+                ButtonImages.get(1)
+        );
 
-        save = new TheButton("Save", GameDimensions.GAME_WIDTH + 4 * GameDimensions.ButtonSize.SMALL.getSize(),
-                GameDimensions.ButtonSize.MEDIUM.getSize(), GameDimensions.ButtonSize.SMALL.getSize(), GameDimensions.ButtonSize.SMALL.getSize());
+        save = new TheButton("Save",
+                GameDimensions.GAME_WIDTH + 4 * GameDimensions.ButtonSize.SMALL.getSize(),
+                GameDimensions.ButtonSize.MEDIUM.getSize(),
+                GameDimensions.ButtonSize.SMALL.getSize(),
+                GameDimensions.ButtonSize.SMALL.getSize(),
+                ButtonImages.get(2)
+        );
+
+        mode = new ModeButton(currentMode + " Mode",
+                GameDimensions.GAME_WIDTH,
+                GameDimensions.BUTTON_PADDING,
+                192*2/3,
+                64*2/3,
+                modeImage
+        );
+
+
 
         int widthButton = GameDimensions.ButtonSize.MEDIUM.getSize();
         int heightButton = GameDimensions.ButtonSize.MEDIUM.getSize();
         int gameWidth = GameDimensions.GAME_WIDTH;
 
-        for(int i = 0; i < playing.getTileManager().tiles.size(); i++) {
-            Tile tile = playing.getTileManager().tiles.get(i);
+        for(int i = 0; i < mapEditing.getTileManager().tiles.size(); i++) {
+            Tile tile = mapEditing.getTileManager().tiles.get(i);
 
             // skip extra Castle tiles (one button for Castle)
-            if (tile.getName().equals("Castle") && tile != playing.getTileManager().CastleTopLeft) {
+            if (tile.getName().equals("Castle") && tile != mapEditing.getTileManager().CastleTopLeft) {
                 continue;
             }
 
@@ -87,7 +180,7 @@ public class EditTiles {
 
 
     private void saveLevel(){
-        playing.saveLevel();
+        mapEditing.saveLevel();
     }
 
 
@@ -100,6 +193,9 @@ public class EditTiles {
         fill.draw(g);
         trash.draw(g);
         save.draw(g);
+
+        mode.setText(currentMode + " Mode");
+        mode.draw(g);
 
         for (TheButton tilesButton : tilesButtons) {
             x = tilesButton.getX();
@@ -129,9 +225,9 @@ public class EditTiles {
             BufferedImage spriteToDraw;
 
             if (tilesButton.getText().equals("Castle")) {
-                spriteToDraw = playing.getTileManager().getFullCastleSprite();
+                spriteToDraw = mapEditing.getTileManager().getFullCastleSprite();
             } else {
-                spriteToDraw = playing.getTileManager().getSprite(tilesButton.getId());
+                spriteToDraw = mapEditing.getTileManager().getSprite(tilesButton.getId());
             }
 
             g2d.drawImage(spriteToDraw,
@@ -160,16 +256,18 @@ public class EditTiles {
             game.changeGameState(MENU);
         }
         else if (draw.getBounds().contains(x, y)) {
-
+            currentMode = "Draw";
         }
         else if (erase.getBounds().contains(x, y)) {
-
+            currentMode = "Erase";
         }
         else if (fill.getBounds().contains(x, y)) {
-
+            currentMode = "Fill";
+            mapEditing.fillAllTiles();
         }
         else if (trash.getBounds().contains(x, y)) {
-
+            currentMode = "Trash";
+            mapEditing.resetAllTiles();
         }
         else if (save.getBounds().contains(x, y)) {
             saveLevel();
@@ -177,13 +275,22 @@ public class EditTiles {
         else{
             for (TheButton tilesButton : tilesButtons) {
                 if (tilesButton.getBounds().contains(x, y)){
-                    selectedTile = playing.getTileManager().getTile(tilesButton.getId());
-                    playing.setSelectedTile(selectedTile);
+                    selectedTile = mapEditing.getTileManager().getTile(tilesButton.getId());
+                    mapEditing.setSelectedTile(selectedTile);
                     return;
                 }
             }
         }
+    }
 
+    public void mouseDragged(int x, int y) {
+        if (x < GameDimensions.GAME_WIDTH && y < GameDimensions.GAME_HEIGHT) {
+            if (currentMode.equals("Draw")) {
+                mapEditing.modifyTile(x, y);
+            } else if (currentMode.equals("Erase")) {
+                mapEditing.eraseTile(x, y);
+            }
+        }
     }
 
     public void mouseMoved(int x, int y) {
@@ -251,6 +358,10 @@ public class EditTiles {
         for (TheButton tilesButton : tilesButtons) {
             tilesButton.resetBooleans();
         }
+    }
+
+    public String getCurrentMode() {
+        return currentMode;
     }
 
 }

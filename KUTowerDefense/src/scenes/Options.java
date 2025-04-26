@@ -59,4 +59,9 @@ public class Options extends GameScene implements SceneMethods {
     public void mouseReleased(int x, int y) {
         backMenu.resetBooleans();
     }
+
+    @Override
+    public void mouseDragged(int x, int y) {
+
+    }
 }
