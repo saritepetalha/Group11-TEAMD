@@ -1,14 +1,10 @@
 package main;
 
-import java.awt.Color;
 import java.awt.Graphics;
-import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.Random;
 import java.awt.Dimension;
 import javax.swing.JPanel;
 
-import dimensions.GameDimensions;
+import constants.GameDimensions;
 import inputs.KeyboardListener;
 import inputs.MyMouseListener;
 

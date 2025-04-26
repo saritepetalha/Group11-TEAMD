@@ -1,4 +1,4 @@
-package dimensions;
+package constants;
 
 public class GameDimensions {
 

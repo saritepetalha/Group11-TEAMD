@@ -1,6 +1,6 @@
 package ui_p;
 
-import dimensions.GameDimensions;
+import constants.GameDimensions;
 import main.Game;
 import scenes.Playing;
 

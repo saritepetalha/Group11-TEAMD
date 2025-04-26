@@ -3,18 +3,11 @@ package scenes;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 
-import dimensions.GameDimensions;
-import helpMethods.LevelBuilder;
+import constants.GameDimensions;
 import helpMethods.LoadSave;
 import main.Game;
 import managers.EnemyManager;
-import managers.TileManager;
-import ui_p.EditTiles;
 import ui_p.PlayingBar;
-import ui_p.TheButton;
-
-import static main.GameStates.*;
-import objects.Tile;
 
 public class Playing extends GameScene implements SceneMethods {
     private int[][] level;

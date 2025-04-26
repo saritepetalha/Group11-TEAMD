@@ -1,6 +1,6 @@
 package managers;
 
-import dimensions.GameDimensions;
+import constants.GameDimensions;
 import objects.Tile;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;

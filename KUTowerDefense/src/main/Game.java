@@ -62,7 +62,6 @@ public class Game extends JFrame implements Runnable{
 		setLocationRelativeTo(null); // re-center the window
 	}
 
-
 	private void initClasses() {
 		gamescreen = new GameScreen(this);
 		render = new Render(this);
@@ -80,7 +79,6 @@ public class Game extends JFrame implements Runnable{
 		gameThread = new Thread(this);
 		gameThread.start();
 	}
-
 
 	private void updateGame() {
 		//System.out.println("GAME UPDATED");
@@ -104,8 +102,6 @@ public class Game extends JFrame implements Runnable{
 				break;
 		}
 	}
-
-	
 
 	public static void main(String[] args) {
 		

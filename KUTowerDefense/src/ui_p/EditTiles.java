@@ -2,20 +2,14 @@ package ui_p;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 
 import static main.GameStates.MENU;
 
-import dimensions.GameDimensions;
-import helpMethods.LoadSave;
+import constants.GameDimensions;
 import main.Game;
 import scenes.MapEditing;
 import objects.Tile;
-import ui_p.ButtonAssets;
-
-import javax.imageio.ImageIO;
 
 public class EditTiles extends Bar {
     private Game game;

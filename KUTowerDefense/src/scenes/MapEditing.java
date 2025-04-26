@@ -1,6 +1,6 @@
 package scenes;
 
-import dimensions.GameDimensions;
+import constants.GameDimensions;
 import helpMethods.LoadSave;
 import helpMethods.LevelBuilder;
 import main.Game;
