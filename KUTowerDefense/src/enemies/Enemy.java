@@ -9,6 +9,7 @@ public class Enemy {
     private int health;
     private int enemyType;
     private Rectangle boundary;    // for hit box
+    private int lastDirection;
 
     public Enemy(float x, float y, int id, int enemyType){
         this.x = x;
@@ -16,6 +17,11 @@ public class Enemy {
         this.id = id;
         this.enemyType = enemyType;
         boundary = new Rectangle((int)x, (int)y, 64, 64);
+    }
+
+    public void move(float x, float y){
+        this.x += x;
+        this.y += y;
     }
 
     public float getX() {
@@ -65,4 +71,5 @@ public class Enemy {
     public void setBoundary(Rectangle boundary) {
         this.boundary = boundary;
     }
+
 }

@@ -91,7 +91,10 @@ public class Game extends JFrame implements Runnable{
 			case MENU:
 				// menu update logic if needed
 				break;
+			case EDIT:
+				break;
 			case PLAYING:
+				playing.update();
 				// playing update logic
 				break;
 			case OPTIONS:
@@ -168,4 +171,7 @@ public class Game extends JFrame implements Runnable{
 	public Intro getIntro() {  return intro; }
 
 	public MapEditing getMapEditing() { return mapEditing; }
+
+	public TileManager getTileManager() { return tileManager;
+	}
 }

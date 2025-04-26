@@ -6,27 +6,37 @@ import helpMethods.LoadSave;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 
 public class EnemyManager {
-
     private Playing playing;
     private BufferedImage[] enemyImages;
-    private Enemy enemyTest;
+    //private Enemy enemyTest;
+    private ArrayList<Enemy> enemies = new ArrayList<>();
 
     public EnemyManager(Playing playing) {
         this.playing = playing;
         enemyImages = extractEnemyFrames();
-        enemyTest = new Enemy(64*3, 64*3, 0, 0);
-
+        addEnemy(64*3, 64*3);
+        //enemyTest = new Enemy(64*3, 64*3, 0, 0);
     }
 
     public void update(){
-
+        for (Enemy enemy:enemies){
+            enemy.move(0.3f, 0);
+        }
+        //enemyTest.move(0.3f,0);
     }
 
-    public void draw(Graphics2D g){
-        drawEnemy(enemyTest, g);
+    public void addEnemy(int x, int y){
+        enemies.add(new Enemy(x,y, 0,0));
+    }
 
+    public void draw(Graphics g){
+        for (Enemy enemy: enemies){
+            drawEnemy(enemy, g);
+        }
+        //drawEnemy(enemyTest, g);
     }
 
     // method to extract all enemy animation frames (6 goblin + 6 warrior)
@@ -52,8 +62,7 @@ public class EnemyManager {
         return enemyFrames;
     }
 
-
-    private void drawEnemy(Enemy en, Graphics2D g){
-        g.drawImage(enemyImages[0], (int) en.getX(), (int) en.getY(), null);
+    private void drawEnemy(Enemy enemy, Graphics g){
+        g.drawImage(enemyImages[0], (int) enemy.getX(), (int) enemy.getY(), null);
     }
 }

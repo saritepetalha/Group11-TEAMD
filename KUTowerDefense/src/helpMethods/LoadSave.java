@@ -28,8 +28,8 @@ public class LoadSave {
     public static BufferedImage getEnemyAtlas(String enemyType) {
         BufferedImage img = null;
         String path = switch (enemyType.toLowerCase()) {
-            case "warrior" -> "/Enemies/Goblin_Red.png";
-            case "goblin" -> "/Enemies/Warrior_Blue.png";
+            case "warrior" -> "/EnemyAssets/Goblin_Red.png";
+            case "goblin" -> "/EnemyAssets/Warrior_Blue.png";
             default -> throw new IllegalArgumentException("Unknown enemy type: " + enemyType);
         };
 

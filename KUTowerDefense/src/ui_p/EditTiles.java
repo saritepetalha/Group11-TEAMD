@@ -7,18 +7,17 @@ import java.io.InputStream;
 import java.util.ArrayList;
 
 import static main.GameStates.MENU;
-import static main.GameStates.setGameState;
 
 import dimensions.GameDimensions;
 import helpMethods.LoadSave;
 import main.Game;
 import scenes.MapEditing;
-import scenes.Playing;
 import objects.Tile;
+import ui_p.ButtonAssets;
 
 import javax.imageio.ImageIO;
 
-public class EditTiles extends EditBar{
+public class EditTiles extends Bar {
     private Game game;
     private int x,y, width, height; // starting position x,y, and width and height of the edit tiles bar
 
@@ -33,19 +32,21 @@ public class EditTiles extends EditBar{
     private Tile selectedTile;
 
     private ArrayList<TheButton> tilesButtons = new ArrayList<>();
-    private ArrayList<BufferedImage> ButtonImages = new ArrayList<>();
 
+    /*
+    private ArrayList<BufferedImage> ButtonImages = new ArrayList<>();
     private static BufferedImage buttonSheetImg;
     private static BufferedImage yellowHoverImg;
     private static BufferedImage modeLabelImg;
     private static BufferedImage pressedImg;
-    private BufferedImage modeImage;
+    private BufferedImage modeImage;*/
 
     public EditTiles(int x, int y, int width, int height, MapEditing mapEditing, Game game) {
         super(x, y, width, height);
         this.mapEditing = mapEditing;
         this.game = game;
 
+        /*
         loadButtonImageFile();
         loadButtonImages();
 
@@ -53,13 +54,13 @@ public class EditTiles extends EditBar{
         loadPressedButtonImage();
 
         loadModeImageFile();
-        loadModeImage();
+        loadModeImage();*/
 
         initButtons();
     }
 
 
-
+    /*
     public static void loadPressedButtonImage() {
         InputStream is = LoadSave.class.getResourceAsStream("/UI/Button_Blue_Pressed.png");
         try {
@@ -110,9 +111,7 @@ public class EditTiles extends EditBar{
 
     private void loadModeImage() {
         modeImage = modeLabelImg.getSubimage(0, 0, 192, 64);
-    }
-
-
+    }*/
 
     private void initButtons() {
         backMenu = new TheButton("Back",
@@ -120,7 +119,7 @@ public class EditTiles extends EditBar{
                 GameDimensions.BUTTON_PADDING,
                 GameDimensions.ButtonSize.SMALL.getSize(),
                 GameDimensions.ButtonSize.SMALL.getSize(),
-                ButtonImages.get(3)
+                ButtonAssets.buttonImages.get(3)
         );
 
         draw = new TheButton("Draw",
@@ -128,7 +127,7 @@ public class EditTiles extends EditBar{
                 GameDimensions.ButtonSize.MEDIUM.getSize(),
                 GameDimensions.ButtonSize.SMALL.getSize(),
                 GameDimensions.ButtonSize.SMALL.getSize(),
-                ButtonImages.get(0)
+                ButtonAssets.buttonImages.get(0)
         );
 
         erase = new TheButton("Erase",
@@ -136,7 +135,7 @@ public class EditTiles extends EditBar{
                 GameDimensions.ButtonSize.MEDIUM.getSize(),
                 GameDimensions.ButtonSize.SMALL.getSize(),
                 GameDimensions.ButtonSize.SMALL.getSize(),
-                ButtonImages.get(13)
+                ButtonAssets.buttonImages.get(13)
         );
 
         fill = new TheButton("Fill",
@@ -144,7 +143,7 @@ public class EditTiles extends EditBar{
                 GameDimensions.ButtonSize.MEDIUM.getSize(),
                 GameDimensions.ButtonSize.SMALL.getSize(),
                 GameDimensions.ButtonSize.SMALL.getSize(),
-                ButtonImages.get(12)
+                ButtonAssets.buttonImages.get(12)
         );
 
         trash = new TheButton("Trash",
@@ -152,7 +151,7 @@ public class EditTiles extends EditBar{
                 GameDimensions.ButtonSize.MEDIUM.getSize(),
                 GameDimensions.ButtonSize.SMALL.getSize(),
                 GameDimensions.ButtonSize.SMALL.getSize(),
-                ButtonImages.get(1)
+                ButtonAssets.buttonImages.get(1)
         );
 
         save = new TheButton("Save",
@@ -160,7 +159,7 @@ public class EditTiles extends EditBar{
                 GameDimensions.ButtonSize.MEDIUM.getSize(),
                 GameDimensions.ButtonSize.SMALL.getSize(),
                 GameDimensions.ButtonSize.SMALL.getSize(),
-                ButtonImages.get(2)
+                ButtonAssets.buttonImages.get(2)
         );
 
         mode = new ModeButton(currentMode + " Mode",
@@ -168,7 +167,7 @@ public class EditTiles extends EditBar{
                 GameDimensions.BUTTON_PADDING,
                 192*2/3,
                 64*2/3,
-                modeImage
+                ButtonAssets.modeImage
         );
 
         int widthButton = GameDimensions.ButtonSize.MEDIUM.getSize();
@@ -214,12 +213,11 @@ public class EditTiles extends EditBar{
         mode.setText(currentMode + " Mode");
         mode.draw(g);
 
-
-        drawActionButton(g2d, draw, ButtonImages.get(0), yellowHoverImg, pressedImg);
-        drawActionButton(g2d, erase, ButtonImages.get(13), yellowHoverImg, pressedImg);
-        drawActionButton(g2d, fill, ButtonImages.get(12), yellowHoverImg, pressedImg);
-        drawActionButton(g2d, trash, ButtonImages.get(1), yellowHoverImg, pressedImg);
-        drawActionButton(g2d, save, ButtonImages.get(2), yellowHoverImg, pressedImg);
+        drawActionButton(g2d, draw, ButtonAssets.buttonImages.getFirst(), ButtonAssets.yellowHoverImg, ButtonAssets.pressedImg);
+        drawActionButton(g2d, erase, ButtonAssets.buttonImages.get(13), ButtonAssets.yellowHoverImg, ButtonAssets.pressedImg);
+        drawActionButton(g2d, fill, ButtonAssets.buttonImages.get(12), ButtonAssets.yellowHoverImg, ButtonAssets.pressedImg);
+        drawActionButton(g2d, trash, ButtonAssets.buttonImages.get(1), ButtonAssets.yellowHoverImg, ButtonAssets.pressedImg);
+        drawActionButton(g2d, save, ButtonAssets.buttonImages.get(2), ButtonAssets.yellowHoverImg, ButtonAssets.pressedImg);
 
         for (TheButton btn : tilesButtons){
             drawTilesButtonEffect(g2d, btn);
