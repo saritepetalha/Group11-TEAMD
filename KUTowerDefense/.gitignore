@@ -3,3 +3,5 @@
 .settings
 .idea/workspace.xml/.idea/
 *.iml
+.idea/
+*.iml
