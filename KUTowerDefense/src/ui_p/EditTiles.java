@@ -7,16 +7,16 @@ import java.io.InputStream;
 import java.util.ArrayList;
 
 import static main.GameStates.MENU;
-import static main.GameStates.setGameState;
 
 import dimensions.GameDimensions;
 import helpMethods.LoadSave;
 import main.Game;
+import popUps.DialogueFactory;
 import scenes.MapEditing;
-import scenes.Playing;
 import objects.Tile;
 
 import javax.imageio.ImageIO;
+import javax.swing.*;
 
 public class EditTiles extends EditBar{
     private Game game;
@@ -28,6 +28,7 @@ public class EditTiles extends EditBar{
     private static BufferedImage img;
     private String currentMode = "Draw";
 
+    private final Window owner;
 
     private MapEditing mapEditing;
     private Tile selectedTile;
@@ -39,10 +40,11 @@ public class EditTiles extends EditBar{
     private static BufferedImage modeLabelImg;
     private BufferedImage modeImage;
 
-    public EditTiles(int x, int y, int width, int height, MapEditing mapEditing, Game game) {
+    public EditTiles(int x, int y, int width, int height, MapEditing mapEditing, Game game, Window owner) {
         super(x, y, width, height);
         this.mapEditing = mapEditing;
         this.game = game;
+        this.owner = owner;
 
         loadButtonImageFile();
         loadButtonImages();
@@ -179,8 +181,8 @@ public class EditTiles extends EditBar{
     }
 
 
-    private void saveLevel(){
-        mapEditing.saveLevel();
+    private void saveLevel(String levelName){
+        mapEditing.saveLevel(levelName);
     }
 
 
@@ -270,7 +272,14 @@ public class EditTiles extends EditBar{
             mapEditing.resetAllTiles();
         }
         else if (save.getBounds().contains(x, y)) {
-            saveLevel();
+            DialogueFactory dialogs = new DialogueFactory((JFrame) owner);      // owner = the main window
+            String levelName        = dialogs.createSaveLevelDialog()  // returns Dialog<String>
+                    .showAndWait();           // blocks, waits for user
+
+            /* 2) validate & save */
+            if (levelName != null && !levelName.trim().isEmpty()) {
+                saveLevel(levelName.trim());
+            }
         }
         else{
             for (TheButton tilesButton : tilesButtons) {
