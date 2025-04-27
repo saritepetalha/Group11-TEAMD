@@ -7,22 +7,44 @@ public abstract class Enemy {
     private float x,y;          // using floats to have much more control when dealing with speed of the enemies
     private int id;
     private int health;
+    private int maxHealth;
     private int enemyType;
+    private int currentPathIndex = 0;
+    private float speed;
+    private boolean reachedEnd = false;
     private Rectangle boundary;    // for hit box
-    private int lastDirection;
 
-    public Enemy(float x, float y, int id, int enemyType){
+    public Enemy(float x, float y, int id, int enemyType, float speed){
         this.x = x;
         this.y = y;
         this.id = id;
         this.enemyType = enemyType;
+        this.speed = speed;
         boundary = new Rectangle((int)x, (int)y, 64, 64);
-        lastDirection = Direction.RIGHT;
+
+        // initialize health based on enemy type
+        initializeHealth();
+        maxHealth = health;
     }
+
+    protected abstract void initializeHealth();
 
     public void move(float x, float y){
         this.x += x;
         this.y += y;
+
+        updateBounds();
+    }
+
+    private void updateBounds(){
+        boundary.x = (int) x;
+        boundary.y = (int) y;
+    }
+
+    public void setPos(float x, float y){
+        this.x = x;
+        this.y = y;
+        updateBounds();
     }
 
     public float getX() {
@@ -41,6 +63,8 @@ public abstract class Enemy {
         this.y = y;
     }
 
+    public Rectangle getBounds() {return boundary;}
+
     public int getId() {
         return id;
     }
@@ -57,20 +81,25 @@ public abstract class Enemy {
         this.health = health;
     }
 
-    public int getEnemyType() {
-        return enemyType;
+    public boolean isAlive(){return health > 0;}
+
+    public void hurt(int damage){
+        this.health -= damage;
+        if(health <= 0) health = 0;
     }
 
-    public void setEnemyType(int enemyType) {
-        this.enemyType = enemyType;
-    }
+    public int getEnemyType() {return enemyType;}
 
-    public Rectangle getBoundary() {
-        return boundary;
-    }
+    public float getSpeed() {return speed;}
 
-    public void setBoundary(Rectangle boundary) {
-        this.boundary = boundary;
-    }
+    public boolean hasReachedEnd() {return reachedEnd;}
+
+    public void setReachedEnd(boolean reachedEnd) {this.reachedEnd = reachedEnd;}
+
+    public int getCurrentPathIndex() {return currentPathIndex;}
+
+    public void setCurrentPathIndex(int currentPathIndex) {this.currentPathIndex = currentPathIndex;}
+
+    public float getHealthBarPercentage() {return (float) health/maxHealth;}
 
 }
