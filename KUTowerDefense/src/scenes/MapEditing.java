@@ -96,12 +96,39 @@ public class MapEditing extends GameScene implements SceneMethods{
             return;
         }
 
-        if (selectedTile.getName().equals("Castle")) {
+        // special handling for start and end points
+        if (selectedTile.getId() == -1) { // start point
+            // clear any existing start points
+            for (int i = 0; i < level.length; i++) {
+                for (int j = 0; j < level[0].length; j++) {
+                    if (level[i][j] == -1) {
+                        level[i][j] = 0; // reset to empty (will change)
+                    }
+                }
+            }
+            // set new start point
+            level[y][x] = -1;
+            System.out.println("Start point placed at: " + x + "," + y);
+
+        } else if (selectedTile.getId() == -2) { // End point
+            // clear any existing end points
+            for (int i = 0; i < level.length; i++) {
+                for (int j = 0; j < level[0].length; j++) {
+                    if (level[i][j] == -2) {
+                        level[i][j] = 0; // reset to empty (will change)
+                    }
+                }
+            }
+            // set new end point
+            level[y][x] = -2;
+            System.out.println("End point placed at: " + x + "," + y);
+
+        } else if (selectedTile.getName().equals("Castle")) {
             // place Castle in 2x2 area
             if (y + 1 < level.length && x + 1 < level[0].length) {
                 level[y][x] = tileManager.CastleTopLeft.getId();                   // top-left: ID 24
-                level[y][x + 1] = tileManager.CastleTopRight.getId();           // top-right: ID 25
-                level[y + 1][x] = tileManager.CastleBottomLeft.getId();           // bottom-left: ID 28
+                level[y][x + 1] = tileManager.CastleTopRight.getId();              // top-right: ID 25
+                level[y + 1][x] = tileManager.CastleBottomLeft.getId();            // bottom-left: ID 28
                 level[y + 1][x + 1] = tileManager.CastleBottomRight.getId();       // bottom-right: ID 29
             }
         } else {
