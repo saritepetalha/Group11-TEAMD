@@ -113,6 +113,13 @@ public class Constants {
         public static final int DOWN = 3;
     }
 
+    public static class PathPoints{
+        // constants for overlay data
+        public static final int NO_OVERLAY = 0;
+        public static final int START_POINT = 1;
+        public static final int END_POINT = 2;
+    }
+
     public static class Enemies {
         public static final int GOBLIN = 0;
         public static final int WARRIOR = 1;

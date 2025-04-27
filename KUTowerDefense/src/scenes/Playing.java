@@ -11,6 +11,7 @@ import ui_p.PlayingBar;
 
 public class Playing extends GameScene implements SceneMethods {
     private int[][] level;
+    private int[][] overlay;
     private PlayingBar bottomPlayingBar;
     private int mouseX, mouseY;
     private EnemyManager enemyManager;
@@ -19,7 +20,7 @@ public class Playing extends GameScene implements SceneMethods {
         super(game);
         bottomPlayingBar = new PlayingBar(0, GameDimensions.GAME_HEIGHT, GameDimensions.GAME_WIDTH, 100, this);
 
-        enemyManager = new EnemyManager(this);
+        //enemyManager = new EnemyManager(this, overlay, level);
         loadDefaultLevel();
     }
 

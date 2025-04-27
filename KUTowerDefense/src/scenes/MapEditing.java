@@ -1,6 +1,7 @@
 package scenes;
 
 import constants.GameDimensions;
+import static constants.Constants.PathPoints.*;
 import helpMethods.LoadSave;
 import helpMethods.LevelBuilder;
 import main.Game;
@@ -11,6 +12,7 @@ import ui_p.EditTiles;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+
 
 // a class to edit map. map editor part on the main screen.
 
@@ -26,10 +28,7 @@ public class MapEditing extends GameScene implements SceneMethods{
 
     private int mouseX, mouseY;
 
-    // constants for overlay data
-    private static final int NO_OVERLAY = 0;
-    private static final int START_POINT = 1;
-    private static final int END_POINT = 2;
+
 
     public MapEditing(Game game) {
         super(game);
