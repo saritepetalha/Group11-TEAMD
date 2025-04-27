@@ -91,9 +91,9 @@ public class TileManager {
     public BufferedImage getSprite(int index) {
         // special handling for start and end points
         if (index == -1) {
-            return resizeImage(ButtonAssets.startPointImg, GameDimensions.TILE_DISPLAY_SIZE, GameDimensions.TILE_DISPLAY_SIZE);
+            return resizeImage(ButtonAssets.startPointImg, GameDimensions.PATHPOINT_DISPLAY_SIZE, GameDimensions.PATHPOINT_DISPLAY_SIZE);
         } else if (index == -2) {
-            return resizeImage(ButtonAssets.endPointImg, GameDimensions.TILE_DISPLAY_SIZE, GameDimensions.TILE_DISPLAY_SIZE);
+            return resizeImage(ButtonAssets.endPointImg, GameDimensions.PATHPOINT_DISPLAY_SIZE, GameDimensions.PATHPOINT_DISPLAY_SIZE);
         }
 
         // regular tile handling

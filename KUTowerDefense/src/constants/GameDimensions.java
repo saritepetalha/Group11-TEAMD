@@ -24,6 +24,7 @@ public class GameDimensions {
 
     // Tile and UI sizes
     public static final int TILE_DISPLAY_SIZE = 64;
+    public static final int PATHPOINT_DISPLAY_SIZE = 48;
     public static final int MAIN_MENU_SCREEN_WIDTH = 640;
     public static final int MAIN_MENU_SCREEN_HEIGHT = 500;
 
