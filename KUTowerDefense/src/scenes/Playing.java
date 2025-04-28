@@ -24,8 +24,9 @@ public class Playing extends GameScene implements SceneMethods {
         loadDefaultLevel();
     }
 
-    public void saveLevel() {
-        LoadSave.saveLevel("defaultleveltest1",level);
+    public void saveLevel(String filename) {
+        LoadSave.saveLevel(filename,level);
+
     }
 
 

@@ -8,8 +8,11 @@ import static main.GameStates.MENU;
 
 import constants.GameDimensions;
 import main.Game;
+import popUps.DialogueFactory;
 import scenes.MapEditing;
 import objects.Tile;
+import javax.imageio.ImageIO;
+import javax.swing.*;
 
 public class EditTiles extends Bar {
     private Game game;
@@ -20,6 +23,7 @@ public class EditTiles extends Bar {
     private ModeButton mode;
     private String currentMode = "Draw";
 
+    private final Window owner;
 
     private MapEditing mapEditing;
     private Tile selectedTile;
@@ -36,10 +40,11 @@ public class EditTiles extends Bar {
     private static BufferedImage pressedImg;
     private BufferedImage modeImage;*/
 
-    public EditTiles(int x, int y, int width, int height, MapEditing mapEditing, Game game) {
+    public EditTiles(int x, int y, int width, int height, MapEditing mapEditing, Game game, Window owner) {
         super(x, y, width, height);
         this.mapEditing = mapEditing;
         this.game = game;
+        this.owner = owner;
 
         /*
         loadButtonImageFile();
@@ -210,8 +215,8 @@ public class EditTiles extends Bar {
 
     }
 
-    private void saveLevel(){
-        mapEditing.saveLevel();
+    private void saveLevel(String levelName){
+        mapEditing.saveLevel(levelName);
     }
 
 
@@ -385,7 +390,14 @@ public class EditTiles extends Bar {
             mapEditing.resetAllTiles();
         }
         else if (save.getBounds().contains(x, y)) {
-            saveLevel();
+            DialogueFactory dialogs = new DialogueFactory((JFrame) owner);      // owner = the main window
+            String levelName        = dialogs.createSaveLevelDialog()  // returns Dialog<String>
+                    .showAndWait();           // blocks, waits for user
+
+            /* 2) validate & save */
+            if (levelName != null && !levelName.trim().isEmpty()) {
+                saveLevel(levelName.trim());
+            }
         }
         else if (startPoint.getBounds().contains(x, y)) {
             selectedTile = new Tile(ButtonAssets.startPointImg,-1,"Start Point");
