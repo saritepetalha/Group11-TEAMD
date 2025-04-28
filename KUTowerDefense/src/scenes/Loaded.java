@@ -3,7 +3,7 @@ package scenes;
 import java.awt.*;
 import java.util.ArrayList;
 
-import dimensions.GameDimensions;
+import constants.GameDimensions;
 import helpMethods.LoadSave;
 import main.Game;
 import ui_p.TheButton;

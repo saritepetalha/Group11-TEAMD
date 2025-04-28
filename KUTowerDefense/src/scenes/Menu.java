@@ -9,12 +9,10 @@ import java.util.Random;
 import javax.imageio.ImageIO;
 
 
-import dimensions.GameDimensions;
+import constants.GameDimensions;
 import main.Game;
 import main.GameStates;
 import ui_p.TheButton;
-
-import static main.GameStates.*;
 
 public class Menu extends GameScene implements SceneMethods {
     private ArrayList<BufferedImage> sprites = new ArrayList<>();

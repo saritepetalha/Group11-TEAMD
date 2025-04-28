@@ -1,33 +1,32 @@
 package scenes;
 
-import java.awt.Color;
-import java.awt.Graphics;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 
-import dimensions.GameDimensions;
-import helpMethods.LevelBuilder;
+import constants.GameDimensions;
 import helpMethods.LoadSave;
 import main.Game;
-import managers.TileManager;
-import ui_p.EditTiles;
-import ui_p.TheButton;
-
-import static main.GameStates.*;
-import objects.Tile;
+import managers.EnemyManager;
+import ui_p.PlayingBar;
 
 public class Playing extends GameScene implements SceneMethods {
     private int[][] level;
-
+    private int[][] overlay;
+    private PlayingBar bottomPlayingBar;
     private int mouseX, mouseY;
+    private EnemyManager enemyManager;
 
     public Playing(Game game) {
         super(game);
+        bottomPlayingBar = new PlayingBar(0, GameDimensions.GAME_HEIGHT, GameDimensions.GAME_WIDTH, 100, this);
+
+        //enemyManager = new EnemyManager(this, overlay, level);
         loadDefaultLevel();
     }
 
-
     public void saveLevel(String filename) {
         LoadSave.saveLevel(filename,level);
+
     }
 
 
@@ -43,14 +42,28 @@ public class Playing extends GameScene implements SceneMethods {
     }
 
 
-
+    public void update() {
+        enemyManager.update();
+    }
 
     @Override
     public void render(Graphics g) {
 
+        for (int y = 0; y < level.length; y++) {
+            for (int x = 0; x < level[y].length; x++) {
+                int id = level[y][x];
+                g.drawImage(getSprite(id), x * 64, y * 64, null);
+            }
+        }
+
         g.setColor(new Color(134,177,63,255));
         g.fillRect(0, 0, GameDimensions.GAME_WIDTH, GameDimensions.GAME_HEIGHT);
+        enemyManager.draw(g);
 
+    }
+
+    private BufferedImage getSprite(int spriteID) {
+        return game.getTileManager().getSprite(spriteID);
     }
 
     @Override

@@ -2,30 +2,25 @@ package ui_p;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 
 import static main.GameStates.MENU;
 
-import dimensions.GameDimensions;
-import helpMethods.LoadSave;
+import constants.GameDimensions;
 import main.Game;
 import popUps.DialogueFactory;
 import scenes.MapEditing;
 import objects.Tile;
-
 import javax.imageio.ImageIO;
 import javax.swing.*;
 
-public class EditTiles extends EditBar{
+public class EditTiles extends Bar {
     private Game game;
     private int x,y, width, height; // starting position x,y, and width and height of the edit tiles bar
 
     private TheButton backMenu;
     private TheButton draw, erase, fill, trash, save;
     private ModeButton mode;
-    private static BufferedImage img;
     private String currentMode = "Draw";
 
     private final Window owner;
@@ -34,11 +29,16 @@ public class EditTiles extends EditBar{
     private Tile selectedTile;
 
     private ArrayList<TheButton> tilesButtons = new ArrayList<>();
-    private ArrayList<BufferedImage> ButtonImages = new ArrayList<>();
 
+    private TheButton startPoint, endPoint;
+
+    /*
+    private ArrayList<BufferedImage> ButtonImages = new ArrayList<>();
     private static BufferedImage buttonSheetImg;
+    private static BufferedImage yellowHoverImg;
     private static BufferedImage modeLabelImg;
-    private BufferedImage modeImage;
+    private static BufferedImage pressedImg;
+    private BufferedImage modeImage;*/
 
     public EditTiles(int x, int y, int width, int height, MapEditing mapEditing, Game game, Window owner) {
         super(x, y, width, height);
@@ -46,13 +46,37 @@ public class EditTiles extends EditBar{
         this.game = game;
         this.owner = owner;
 
+        /*
         loadButtonImageFile();
         loadButtonImages();
 
+        loadYellowBorderImage();
+        loadPressedButtonImage();
+
         loadModeImageFile();
-        loadModeImage();
+        loadModeImage();*/
 
         initButtons();
+    }
+
+
+    /*
+    public static void loadPressedButtonImage() {
+        InputStream is = LoadSave.class.getResourceAsStream("/UI/Button_Blue_Pressed.png");
+        try {
+            pressedImg = ImageIO.read(is);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void loadYellowBorderImage() {
+        InputStream is = LoadSave.class.getResourceAsStream("/UI/Button_Hover.png");
+        try {
+            yellowHoverImg = ImageIO.read(is);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public static void loadButtonImageFile() {
@@ -87,9 +111,7 @@ public class EditTiles extends EditBar{
 
     private void loadModeImage() {
         modeImage = modeLabelImg.getSubimage(0, 0, 192, 64);
-    }
-
-
+    }*/
 
     private void initButtons() {
         backMenu = new TheButton("Back",
@@ -97,7 +119,7 @@ public class EditTiles extends EditBar{
                 GameDimensions.BUTTON_PADDING,
                 GameDimensions.ButtonSize.SMALL.getSize(),
                 GameDimensions.ButtonSize.SMALL.getSize(),
-                ButtonImages.get(3)
+                ButtonAssets.buttonImages.get(3)
         );
 
         draw = new TheButton("Draw",
@@ -105,7 +127,7 @@ public class EditTiles extends EditBar{
                 GameDimensions.ButtonSize.MEDIUM.getSize(),
                 GameDimensions.ButtonSize.SMALL.getSize(),
                 GameDimensions.ButtonSize.SMALL.getSize(),
-                ButtonImages.get(0)
+                ButtonAssets.buttonImages.get(0)
         );
 
         erase = new TheButton("Erase",
@@ -113,7 +135,7 @@ public class EditTiles extends EditBar{
                 GameDimensions.ButtonSize.MEDIUM.getSize(),
                 GameDimensions.ButtonSize.SMALL.getSize(),
                 GameDimensions.ButtonSize.SMALL.getSize(),
-                ButtonImages.get(13)
+                ButtonAssets.buttonImages.get(13)
         );
 
         fill = new TheButton("Fill",
@@ -121,7 +143,7 @@ public class EditTiles extends EditBar{
                 GameDimensions.ButtonSize.MEDIUM.getSize(),
                 GameDimensions.ButtonSize.SMALL.getSize(),
                 GameDimensions.ButtonSize.SMALL.getSize(),
-                ButtonImages.get(12)
+                ButtonAssets.buttonImages.get(12)
         );
 
         trash = new TheButton("Trash",
@@ -129,7 +151,7 @@ public class EditTiles extends EditBar{
                 GameDimensions.ButtonSize.MEDIUM.getSize(),
                 GameDimensions.ButtonSize.SMALL.getSize(),
                 GameDimensions.ButtonSize.SMALL.getSize(),
-                ButtonImages.get(1)
+                ButtonAssets.buttonImages.get(1)
         );
 
         save = new TheButton("Save",
@@ -137,7 +159,7 @@ public class EditTiles extends EditBar{
                 GameDimensions.ButtonSize.MEDIUM.getSize(),
                 GameDimensions.ButtonSize.SMALL.getSize(),
                 GameDimensions.ButtonSize.SMALL.getSize(),
-                ButtonImages.get(2)
+                ButtonAssets.buttonImages.get(2)
         );
 
         mode = new ModeButton(currentMode + " Mode",
@@ -145,16 +167,15 @@ public class EditTiles extends EditBar{
                 GameDimensions.BUTTON_PADDING,
                 192*2/3,
                 64*2/3,
-                modeImage
+                ButtonAssets.modeImage
         );
-
-
 
         int widthButton = GameDimensions.ButtonSize.MEDIUM.getSize();
         int heightButton = GameDimensions.ButtonSize.MEDIUM.getSize();
         int gameWidth = GameDimensions.GAME_WIDTH;
 
-        for(int i = 0; i < mapEditing.getTileManager().tiles.size(); i++) {
+        int i;
+        for(i = 0; i < mapEditing.getTileManager().tiles.size(); i++) {
             Tile tile = mapEditing.getTileManager().tiles.get(i);
 
             // skip extra Castle tiles (one button for Castle)
@@ -178,8 +199,21 @@ public class EditTiles extends EditBar{
                     buttonHeight,
                     i));
         }
-    }
 
+        startPoint = new TheButton("Start", GameDimensions.GAME_WIDTH,
+                GameDimensions.GAME_HEIGHT -  GameDimensions.BUTTON_PADDING - GameDimensions.ButtonSize.MEDIUM.getSize(),
+                widthButton,
+                heightButton,
+                i++);
+
+        endPoint = new TheButton("End",
+                GameDimensions.GAME_WIDTH + GameDimensions.ButtonSize.MEDIUM.getSize(),
+                GameDimensions.GAME_HEIGHT -  GameDimensions.BUTTON_PADDING - GameDimensions.ButtonSize.MEDIUM.getSize(),
+                widthButton,
+                heightButton,
+                i++);
+
+    }
 
     private void saveLevel(String levelName){
         mapEditing.saveLevel(levelName);
@@ -190,60 +224,144 @@ public class EditTiles extends EditBar{
         Graphics2D g2d = (Graphics2D) g;
 
         backMenu.draw(g);
-        draw.draw(g);
-        erase.draw(g);
-        fill.draw(g);
-        trash.draw(g);
-        save.draw(g);
-
         mode.setText(currentMode + " Mode");
         mode.draw(g);
 
-        for (TheButton tilesButton : tilesButtons) {
-            x = tilesButton.getX();
-            y = tilesButton.getY();
-            width = tilesButton.getWidth();
-            height = tilesButton.getHeight();
+        drawActionButton(g2d, draw, ButtonAssets.buttonImages.getFirst(), ButtonAssets.yellowHoverImg, ButtonAssets.pressedImg);
+        drawActionButton(g2d, erase, ButtonAssets.buttonImages.get(13), ButtonAssets.yellowHoverImg, ButtonAssets.pressedImg);
+        drawActionButton(g2d, fill, ButtonAssets.buttonImages.get(12), ButtonAssets.yellowHoverImg, ButtonAssets.pressedImg);
+        drawActionButton(g2d, trash, ButtonAssets.buttonImages.get(1), ButtonAssets.yellowHoverImg, ButtonAssets.pressedImg);
+        drawActionButton(g2d, save, ButtonAssets.buttonImages.get(2), ButtonAssets.yellowHoverImg, ButtonAssets.pressedImg);
 
-            // changing opacity when the mouse is over tiles.
-            if (tilesButton.isMouseOver()) {
-                g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.4f));
-            } else {
-                g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
-            }
-
-            g2d.setColor(new Color(157,209,153,255));
-            g2d.fillRect(x, y, width, height);
-
-            int imageX = x;
-            int imageY = y;
-
-            // applying offset if button is being pressed
-            if (tilesButton.isMousePressed()) {
-                imageX -= 4; // offset to left by 2 pixels
-                imageY -= 4; // offset up by 2 pixels
-            }
-
-            BufferedImage spriteToDraw;
-
-            if (tilesButton.getText().equals("Castle")) {
-                spriteToDraw = mapEditing.getTileManager().getFullCastleSprite();
-            } else {
-                spriteToDraw = mapEditing.getTileManager().getSprite(tilesButton.getId());
-            }
-
-            g2d.drawImage(spriteToDraw,
-                    imageX,
-                    imageY,
-                    width,
-                    height,
-                    null);
-
+        for (TheButton btn : tilesButtons){
+            drawTilesButtonEffect(g2d, btn);
         }
+
+        drawPathPointButton(g2d, startPoint, ButtonAssets.startPointImg, ButtonAssets.startPointHoverImg, ButtonAssets.startPointPressedImg);
+        drawPathPointButton(g2d, endPoint, ButtonAssets.endPointImg, ButtonAssets.endPointHoverImg, ButtonAssets.endPointPressedImg);
 
         g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
     }
 
+    // method for drawing path point buttons with hover/press animations
+    private void drawPathPointButton(Graphics2D g2d, TheButton button, BufferedImage normalImg, BufferedImage hoverImg, BufferedImage pressedImg) {
+        int x = button.getX();
+        int y = button.getY();
+        int width = button.getWidth();
+        int height = button.getHeight();
+
+        // draw base button background
+        g2d.setColor(new Color(157, 209, 153, 255));
+        g2d.fillRect(x, y, width, height);
+
+        // determine which image to use based on button state
+        BufferedImage toDraw;
+        int imageX = x;
+        int imageY = y;
+
+        if (button.isMousePressed()) {
+            toDraw = pressedImg;
+            imageX += 2; // add slight offset for pressed effect
+            imageY += 2; // add slight offset for pressed effect
+        } else if (button.isMouseOver()) {
+            toDraw = hoverImg;
+
+            // add subtle animation for hover - subtle pulsing or glow effect
+            long currentTime = System.currentTimeMillis();
+            float pulseAmount = (float) Math.sin(currentTime * 0.005) * 0.1f + 0.9f;
+            width = (int)(width * pulseAmount);
+            height = (int)(height * pulseAmount);
+            imageX = x + (button.getWidth() - width) / 2;
+            imageY = y + (button.getHeight() - height) / 2;
+        } else {
+            toDraw = normalImg;
+        }
+
+        // draw the appropriate image
+        g2d.drawImage(toDraw, imageX, imageY, width, height, null);
+
+        // draw text label below the image for clarity
+        g2d.setColor(Color.WHITE);
+        g2d.setFont(new Font("MV Boli", Font.BOLD, 11));
+        FontMetrics fm = g2d.getFontMetrics();
+        int textWidth = fm.stringWidth(button.getText());
+        g2d.drawString(button.getText(), x + (button.getWidth() - textWidth) / 2,
+                y + button.getHeight() + fm.getAscent());
+    }
+
+    private void drawTilesButtonEffect(Graphics2D g2d, TheButton tilesButton) {
+        x = tilesButton.getX();
+        y = tilesButton.getY();
+        width = tilesButton.getWidth();
+        height = tilesButton.getHeight();
+
+        // changing opacity when the mouse is over tiles.
+        if (tilesButton.isMouseOver()) {
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.4f));
+        } else {
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
+        }
+
+        g2d.setColor(new Color(157,209,153,255));
+        g2d.fillRect(x, y, width, height);
+
+        int imageX = x;
+        int imageY = y;
+
+        // applying offset if button is being pressed
+        if (tilesButton.isMousePressed()) {
+            imageX -= 4; // offset to left by 2 pixels
+            imageY -= 4; // offset up by 2 pixels
+        }
+
+        BufferedImage spriteToDraw;
+
+        if (tilesButton.getText().equals("Castle")) {
+            spriteToDraw = mapEditing.getTileManager().getFullCastleSprite();
+        } else {
+            spriteToDraw = mapEditing.getTileManager().getSprite(tilesButton.getId());
+        }
+
+        g2d.drawImage(spriteToDraw,
+                imageX,
+                imageY,
+                width,
+                height,
+                null);
+    }
+
+    private void drawActionButton(Graphics2D g2d, TheButton button, BufferedImage normalImg, BufferedImage hoverImg, BufferedImage pressedImg ) {
+        int x = button.getX();
+        int y = button.getY();
+        int width = button.getWidth();
+        int height = button.getHeight();
+
+        // Draw base button background
+        g2d.setColor(new Color(157,209,153,255));
+        g2d.fillRect(x, y, width, height);
+
+        BufferedImage toDraw;
+        if (button.isMousePressed()) {
+            toDraw = pressedImg;
+        } else if (button.isMouseOver()) {
+            toDraw = hoverImg;
+        } else {
+            toDraw = normalImg;
+        }
+        g2d.drawImage(toDraw, x, y, width, height, null);
+
+        // (temporary) Draw text centered, if needed
+        if (button.isMouseOver() && button.getText() != null && !button.getText().isEmpty()) {
+            g2d.setColor(Color.WHITE);
+            g2d.setFont(new Font("MV Boli", Font.BOLD, 11));
+            FontMetrics fm = g2d.getFontMetrics();
+            int textWidth = fm.stringWidth(button.getText());
+            int textHeight = fm.getHeight();
+            g2d.drawString(button.getText(), x + (width - textWidth) / 2, y + (height + textHeight / 5) / 2);
+        }
+
+
+    }
 
 
     public void draw(Graphics g){
@@ -281,6 +399,16 @@ public class EditTiles extends EditBar{
                 saveLevel(levelName.trim());
             }
         }
+        else if (startPoint.getBounds().contains(x, y)) {
+            selectedTile = new Tile(ButtonAssets.startPointImg,-1,"Start Point");
+            mapEditing.setSelectedTile(selectedTile);
+            System.out.println("Start point selected"); // Debug output
+        }
+        else if (endPoint.getBounds().contains(x, y)) {
+            selectedTile = new Tile(ButtonAssets.endPointImg, -2, "End Point");
+            mapEditing.setSelectedTile(selectedTile);
+            System.out.println("End point selected"); // Debug output
+        }
         else{
             for (TheButton tilesButton : tilesButtons) {
                 if (tilesButton.getBounds().contains(x, y)){
@@ -309,6 +437,8 @@ public class EditTiles extends EditBar{
         fill.setMouseOver(false);
         trash.setMouseOver(false);
         save.setMouseOver(false);
+        startPoint.setMouseOver(false);
+        endPoint.setMouseOver(false);
 
         for (TheButton tilesButton : tilesButtons) {
             tilesButton.setMouseOver(false);
@@ -331,7 +461,12 @@ public class EditTiles extends EditBar{
         else if (save.getBounds().contains(x, y)) {
             save.setMouseOver(true);
         }
-
+        else if (startPoint.getBounds().contains(x, y)) {
+            startPoint.setMouseOver(true);
+        }
+        else if (endPoint.getBounds().contains(x, y)) {
+            endPoint.setMouseOver(true);
+        }
         else{
             for (TheButton tilesButton : tilesButtons) {
                 if (tilesButton.getBounds().contains(x, y)){
@@ -351,6 +486,14 @@ public class EditTiles extends EditBar{
         else if (save.getBounds().contains(x, y)) {
             save.setMousePressed(true);
         }
+
+        else if (startPoint.getBounds().contains(x, y)) {
+            startPoint.setMousePressed(true);
+        }
+        else if (endPoint.getBounds().contains(x, y)) {
+            endPoint.setMousePressed(true);
+        }
+
         else{
             for (TheButton tilesButton : tilesButtons) {
                 if(tilesButton.getBounds().contains(x, y)){
@@ -364,6 +507,8 @@ public class EditTiles extends EditBar{
     public void mouseReleased(int x, int y) {
         backMenu.resetBooleans();
         save.resetBooleans();
+        startPoint.resetBooleans();
+        endPoint.resetBooleans();
         for (TheButton tilesButton : tilesButtons) {
             tilesButton.resetBooleans();
         }
