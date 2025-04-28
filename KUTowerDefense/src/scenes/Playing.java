@@ -3,12 +3,15 @@ package scenes;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 
 import dimensions.GameDimensions;
 import helpMethods.LevelBuilder;
 import helpMethods.LoadSave;
 import main.Game;
 import managers.TileManager;
+import managers.TowerManager;
+import objects.Tower;
 import ui_p.EditTiles;
 import ui_p.TheButton;
 
@@ -16,13 +19,20 @@ import static main.GameStates.*;
 import objects.Tile;
 
 public class Playing extends GameScene implements SceneMethods {
+
     private int[][] level;
 
     private int mouseX, mouseY;
 
+    private Tile selectedTile;
+
+    private TowerManager towerManager;
+
     public Playing(Game game) {
         super(game);
+        level = LevelBuilder.getLevelData();
         loadDefaultLevel();
+        towerManager = new TowerManager(this);
     }
 
 
@@ -42,7 +52,14 @@ public class Playing extends GameScene implements SceneMethods {
         level = LoadSave.getLevelData(levelName);
     }
 
+    public void update() {
+        towerManager.update();
+    }
 
+
+    public void constructTower(){
+
+    }
 
 
     @Override
@@ -51,11 +68,14 @@ public class Playing extends GameScene implements SceneMethods {
         g.setColor(new Color(134,177,63,255));
         g.fillRect(0, 0, GameDimensions.GAME_WIDTH, GameDimensions.GAME_HEIGHT);
 
+        towerManager.draw(g);
     }
 
     @Override
-    public void mouseClicked(int x, int y) {}
+    public void mouseClicked(int x, int y) {
 
+
+    }
 
     @Override
     public void mouseMoved(int x, int y) {}
