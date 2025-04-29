@@ -23,12 +23,8 @@ public class TowerManager {
 
         this.playing = playing;
         loadTowerImages();
-        initializaTowers();
     }
 
-    private void initializaTowers() {
-        tower = new Tower(5, 0, ARCHER);
-    }
 
     private void loadTowerImages() {
 
@@ -49,7 +45,6 @@ public class TowerManager {
 
     public void draw(Graphics g) {
 
-        g.drawImage(towerImages[ARCHER], tower.getX(), tower.getY(), null);
     }
 
     public List<DeadTree> findDeadTrees(int[][] level){
@@ -67,15 +62,16 @@ public class TowerManager {
         return trees;
     }
 
-    public void buildArcherTower() {
-
+    public void buildArcherTower(int x, int y) {
+        towers.add(new Tower(x, y, ARCHER));
     }
 
-    public void buildMageTower() {
-
+    public void buildMageTower(int x, int y) {
+        towers.add(new Tower(x, y, SPELL));
     }
 
-    public void buildArtilerryTower() {
+    public void buildArtilerryTower(int x, int y) {
+        towers.add(new Tower(x, y, BOMB));
     }
 
 

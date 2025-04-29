@@ -99,4 +99,12 @@ public class DeadTree {
     public void setArtilleryButton(TheButton artilleryButton) {
         this.artilleryButton = artilleryButton;
     }
+
+    public int getX() {
+        return x;
+    }
+
+    public int getY() {
+        return y;
+    }
 }

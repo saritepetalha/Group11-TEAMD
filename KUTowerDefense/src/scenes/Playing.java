@@ -34,8 +34,6 @@ public class Playing extends GameScene implements SceneMethods {
     };
 
     private int mouseX, mouseY;
-
-    private Tile selectedTile;
     private List<DeadTree> trees;
 
     private TowerManager towerManager;
@@ -48,9 +46,9 @@ public class Playing extends GameScene implements SceneMethods {
 
         towerManager = new TowerManager(this);
         tileManager = new TileManager();
-        //if(towerManager.findDeadTrees(level) != null) {
+        if(towerManager.findDeadTrees(level) != null) {
             trees = towerManager.findDeadTrees(level);
-        //}
+        }
     }
 
 
@@ -103,6 +101,23 @@ public class Playing extends GameScene implements SceneMethods {
         }
     }
 
+    private void modifyTile(int x, int y, String tile) {
+
+        x /= 64;
+        y /= 64;
+
+        if (tile.equals("ARCHER")) {
+            level[y][x] = 26;
+        }
+        else if (tile.equals("MAGE")) {
+            level[y][x] = 20;
+        }
+        if (tile.equals("ARTILERRY")) {
+            level[y][x] = 21;
+        }
+
+    }
+
     @Override
     public void mouseClicked(int x, int y) {
 
@@ -112,19 +127,27 @@ public class Playing extends GameScene implements SceneMethods {
         boolean clickedOnTree = false;
         for(DeadTree tree: trees){
             if (tree.isShowChoices()){
+                int tileX = tree.getX();
+                int tileY = tree.getY();
                 if (tree.getArcherButton().isMousePressed(mouseX, mouseY)) {
-                    towerManager.buildArcherTower();
+                    towerManager.buildArcherTower(tree.getX(), tree.getY());
                     tree.setShowChoices(false);
+                    trees.remove(tree);
+                    modifyTile(tileX, tileY, "ARCHER");
                     return;
                 }
                 if (tree.getMageButton().isMousePressed(mouseX, mouseY)) {
-                    towerManager.buildMageTower();
+                    towerManager.buildMageTower(tree.getX(), tree.getY());
                     tree.setShowChoices(false);
+                    trees.remove(tree);
+                    modifyTile(tileX, tileY, "MAGE");
                     return;
                 }
                 if (tree.getArtilleryButton().isMousePressed(mouseX, mouseY)) {
-                    towerManager.buildArtilerryTower();
+                    towerManager.buildArtilerryTower(tree.getX(), tree.getY());
                     tree.setShowChoices(false);
+                    trees.remove(tree);
+                    modifyTile(tileX, tileY, "ARTILERRY");
                     return;
                 }
             }
