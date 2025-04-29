@@ -25,6 +25,26 @@ public class LoadSave {
         return img;
     }
 
+    public static BufferedImage getEnemyAtlas(String enemyType) {
+        BufferedImage img = null;
+        String path = switch (enemyType.toLowerCase()) {
+            case "warrior" -> "/EnemyAssets/Goblin_Red.png";
+            case "goblin" -> "/EnemyAssets/Warrior_Blue.png";
+            default -> throw new IllegalArgumentException("Unknown enemy type: " + enemyType);
+        };
+
+        InputStream is = LoadSave.class.getResourceAsStream(path);
+
+        try {
+            img = ImageIO.read(is);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return img;
+    }
+
+
 
     //This function saves the game to a json file as a 2d array with key: tiles
     //If it is wished the same json file could be used for saving the game state

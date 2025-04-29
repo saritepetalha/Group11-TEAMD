@@ -33,6 +33,7 @@ public class Game extends JFrame implements Runnable{
 	private TileManager tileManager;
 
 	public Game() {
+		this.tileManager = new TileManager();
 
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		setResizable(false);
@@ -62,14 +63,13 @@ public class Game extends JFrame implements Runnable{
 		setLocationRelativeTo(null); // re-center the window
 	}
 
-
 	private void initClasses() {
 		gamescreen = new GameScreen(this);
 		render = new Render(this);
 		intro = new Intro(this);
 		menu = new Menu(this);
 		options = new Options(this);
-		playing = new Playing(this);
+		playing = new Playing(this, this.tileManager);
 		mapEditing = new MapEditing(this, this);
 		loaded = new Loaded(this);
 		tileManager = new TileManager();
@@ -81,7 +81,6 @@ public class Game extends JFrame implements Runnable{
 		gameThread.start();
 	}
 
-
 	private void updateGame() {
 		//System.out.println("GAME UPDATED");
 		switch (GameStates.gameState) {
@@ -91,7 +90,10 @@ public class Game extends JFrame implements Runnable{
 			case MENU:
 				// menu update logic if needed
 				break;
+			case EDIT:
+				break;
 			case PLAYING:
+				playing.update();
 				// playing update logic
 				break;
 			case OPTIONS:
@@ -101,8 +103,6 @@ public class Game extends JFrame implements Runnable{
 				break;
 		}
 	}
-
-	
 
 	public static void main(String[] args) {
 		
@@ -168,4 +168,7 @@ public class Game extends JFrame implements Runnable{
 	public Intro getIntro() {  return intro; }
 
 	public MapEditing getMapEditing() { return mapEditing; }
+
+	public TileManager getTileManager() { return tileManager;
+	}
 }

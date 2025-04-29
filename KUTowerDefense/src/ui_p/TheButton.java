@@ -92,8 +92,6 @@ public class TheButton {
     }
 
 
-
-
     public void drawStyled(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
 

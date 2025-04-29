@@ -1,6 +1,6 @@
 package scenes;
 
-import dimensions.GameDimensions;
+import constants.GameDimensions;
 import main.Game;
 import main.GameStates;
 

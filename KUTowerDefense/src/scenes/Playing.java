@@ -1,15 +1,14 @@
 package scenes;
 
-import java.awt.Color;
-import java.awt.Graphics;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 
-import dimensions.GameDimensions;
-import helpMethods.LevelBuilder;
+import constants.GameDimensions;
 import helpMethods.LoadSave;
 import main.Game;
+
 import managers.TileManager;
 import managers.TowerManager;
 import objects.Tower;
@@ -19,48 +18,54 @@ import ui_p.TheButton;
 
 import static main.GameStates.*;
 import objects.Tile;
+import managers.EnemyManager;
+import ui_p.PlayingBar;
 
 public class Playing extends GameScene implements SceneMethods {
 
-    private int[][] level = {{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15},
-            {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15},
-            {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15},
-            {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15},
-            {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15},
-            {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15},
-            {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15},
-            {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15},
-            {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}
-    };
 
+public class Playing extends GameScene implements SceneMethods {
+    private int[][] level;
+    private int[][] overlay;
+    private PlayingBar bottomPlayingBar;
     private int mouseX, mouseY;
     private List<DeadTree> trees;
 
     private TowerManager towerManager;
     private TileManager tileManager;
 
-    public Playing(Game game) {
+    private final TileManager tileManager;
+
+    private EnemyManager enemyManager;
+
+
+    public Playing(Game game, TileManager tileManager) {
         super(game);
-        //level = LevelBuilder.getLevelData();
-        //loadDefaultLevel();
+        loadDefaultLevel();
+        this.tileManager = tileManager;
 
         towerManager = new TowerManager(this);
         tileManager = new TileManager();
         if(towerManager.findDeadTrees(level) != null) {
             trees = towerManager.findDeadTrees(level);
         }
+        
+        bottomPlayingBar = new PlayingBar(0, GameDimensions.GAME_HEIGHT, GameDimensions.GAME_WIDTH, 100, this);
+
+        //enemyManager = new EnemyManager(this, overlay, level);
+
+        loadDefaultLevel();
     }
-
-
-
 
     public void saveLevel(String filename) {
         LoadSave.saveLevel(filename,level);
+
     }
 
 
     private void loadDefaultLevel() {
-        int[][] lvl = LoadSave.getLevelData("defaultleveltest1");
+        int[][] lvl = LoadSave.getLevelData("defaultlevel");
+        this.level = lvl;
         //THIS LINE IS JUST TO SEE WHETHER THE BACKEND OF THE getLevelData function works or not
         //IT WORKS!!!
         System.out.println(java.util.Arrays.deepToString(lvl));
@@ -79,10 +84,24 @@ public class Playing extends GameScene implements SceneMethods {
         }
     }
 
+    private void drawMap(Graphics g) {
+
+        g.setColor(new Color(134,177,63,255));
+        g.fillRect(0, 0, GameDimensions.GAME_WIDTH, GameDimensions.GAME_HEIGHT);
+
+        for (int i = 0; i < level.length; i++) {
+            for (int j = 0; j < level[i].length; j++) {
+                g.drawImage(tileManager.getSprite(level[i][j]), j * GameDimensions.TILE_DISPLAY_SIZE, i * GameDimensions.TILE_DISPLAY_SIZE, null);
+            }
+        }
+
+    public void update() {
+        enemyManager.update();
+
+    }
 
     @Override
     public void render(Graphics g) {
-
         drawMap(g);
         towerManager.draw(g);
         drawTowerButtons(g);
@@ -90,9 +109,21 @@ public class Playing extends GameScene implements SceneMethods {
     }
 
     private void drawMap(Graphics g) {
+        for (int y = 0; y < level.length; y++) {
+            for (int x = 0; x < level[y].length; x++) {
+                int id = level[y][x];
+                g.drawImage(getSprite(id), x * 64, y * 64, null);
+            }
+        }
 
         g.setColor(new Color(134,177,63,255));
         g.fillRect(0, 0, GameDimensions.GAME_WIDTH, GameDimensions.GAME_HEIGHT);
+        enemyManager.draw(g);
+
+    }
+
+    private BufferedImage getSprite(int spriteID) {
+        return game.getTileManager().getSprite(spriteID);
 
         for (int i = 0; i < level.length; i++) {
             for (int j = 0; j < level[i].length; j++) {
