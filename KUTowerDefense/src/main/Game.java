@@ -33,6 +33,7 @@ public class Game extends JFrame implements Runnable{
 	private TileManager tileManager;
 
 	public Game() {
+		this.tileManager = new TileManager();
 
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		setResizable(false);
@@ -69,7 +70,7 @@ public class Game extends JFrame implements Runnable{
 		intro = new Intro(this);
 		menu = new Menu(this);
 		options = new Options(this);
-		playing = new Playing(this);
+		playing = new Playing(this, this.tileManager);
 		mapEditing = new MapEditing(this, this);
 		loaded = new Loaded(this);
 		tileManager = new TileManager();
