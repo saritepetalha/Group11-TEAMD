@@ -3,7 +3,7 @@ package scenes;
 import java.awt.Color;
 import java.awt.Graphics;
 
-import dimensions.GameDimensions;
+import constants.GameDimensions;
 import main.Game;
 import ui_p.TheButton;
 import static main.GameStates.*;
