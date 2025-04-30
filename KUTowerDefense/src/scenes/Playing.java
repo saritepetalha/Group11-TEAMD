@@ -4,12 +4,14 @@ import java.awt.*;
 import java.util.List;
 
 import constants.GameDimensions;
+import enemies.Enemy;
 import helpMethods.LoadSave;
 import main.Game;
 
 import managers.TileManager;
 import managers.TowerManager;
 
+import managers.WaveManager;
 import ui_p.DeadTree;
 
 import managers.EnemyManager;
@@ -21,7 +23,7 @@ public class Playing extends GameScene implements SceneMethods {
     private PlayingBar bottomPlayingBar;
     private int mouseX, mouseY;
     private List<DeadTree> trees;
-
+    private WaveManager waveManager;
     private TowerManager towerManager;
     private TileManager tileManager;
 
@@ -52,6 +54,7 @@ public class Playing extends GameScene implements SceneMethods {
         };
 
         enemyManager = new EnemyManager(this, overlay, level);
+        waveManager = new WaveManager(this);
 
         if(towerManager.findDeadTrees(level) != null) {
             trees = towerManager.findDeadTrees(level);
@@ -110,8 +113,44 @@ public class Playing extends GameScene implements SceneMethods {
     }
 
     public void update() {
+        waveManager.update();
+
+        if (isAllEnemiesDead()) {
+            if (isThereMoreWaves()) {
+                waveManager.startTimer();
+                if(isWaveTimerOver()){
+                    waveManager.incrementWaveIndex();
+                    enemyManager.getEnemies().clear();
+                    waveManager.resetEnemyIndex();
+                }
+            }
+        }
+
+        if (isTimeForNewEnemy()){
+            spawnEnemy();
+        }
+
         enemyManager.update();
         towerManager.update();
+    }
+
+    private boolean isWaveTimerOver() {
+        return waveManager.isWaveTimerOver();
+    }
+
+    private boolean isThereMoreWaves() {
+        return !waveManager.isThereMoreWaves();
+    }
+
+    private boolean isAllEnemiesDead() {
+        if (waveManager.isWaveFinished()) {
+            for (Enemy enemy : enemyManager.getEnemies()) {
+                if (enemy.isAlive()) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     @Override
@@ -204,5 +243,20 @@ public class Playing extends GameScene implements SceneMethods {
     @Override
     public void mouseDragged(int x, int y) {
 
+    }
+
+    public WaveManager getWaveManager() {
+        return waveManager;
+    }
+
+    private void spawnEnemy() {
+        enemyManager.spawnEnemy(waveManager.getNextEnemy());
+    }
+
+    private boolean isTimeForNewEnemy() {
+        if(waveManager.isTimeForNewEnemy()){
+            return !waveManager.isWaveFinished();
+        }
+        return false;
     }
 }

@@ -38,8 +38,8 @@ public class EnemyManager {
         if (startPoint != null && endPoint != null) {
             generatePath(tileData);
         }
-        addEnemy(GOBLIN);
-        addEnemy(WARRIOR);
+//        addEnemy(GOBLIN);
+//        addEnemy(WARRIOR);
         //enemyTest = new Enemy(64*3, 64*3, 0, 0);
     }
 
@@ -176,8 +176,6 @@ public class EnemyManager {
         //enemyTest.move(0.3f,0);
     }
 
-
-
     public void addEnemy(int enemyType){
         if (!pathFound || pathPoints.isEmpty()) return;
 
@@ -279,5 +277,13 @@ public class EnemyManager {
         int drawY = (int) (enemy.getY() - (float) sprite.getHeight() + tileSize/2);
 
         g.drawImage(sprite, drawX, drawY, null);
+    }
+
+    public void spawnEnemy(int nextEnemy) {
+        addEnemy(nextEnemy);
+    }
+
+    public ArrayList<Enemy> getEnemies() {
+        return enemies;
     }
 }
