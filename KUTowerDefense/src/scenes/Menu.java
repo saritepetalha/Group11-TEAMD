@@ -76,6 +76,7 @@ public class Menu extends GameScene implements SceneMethods {
     public void render(Graphics g) {
         drawBackground(g);
         drawButtons(g);
+        setCustomCursor();
     }
 
     private void drawBackground(Graphics g) {

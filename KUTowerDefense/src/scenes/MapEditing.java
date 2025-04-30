@@ -99,7 +99,7 @@ public class MapEditing extends GameScene implements SceneMethods{
 
     @Override
     public void render(Graphics g) {
-
+        setCustomCursor();
         drawMap(g);
         editTiles.draw(g);
         drawSelectedTile(g);

@@ -170,6 +170,8 @@ public class Playing extends GameScene implements SceneMethods {
         drawMap(g);
         towerManager.draw(g);
         drawTowerButtons(g);
+        playingUI.draw(g);
+        setCustomCursor();
     }
 
 
