@@ -277,6 +277,26 @@ public class EnemyManager {
         int drawY = (int) (enemy.getY() - (float) sprite.getHeight() + tileSize/2);
 
         g.drawImage(sprite, drawX, drawY, null);
+
+        drawHealthBar(g, enemy, drawX, drawY, sprite);
+    }
+
+    private void drawHealthBar(Graphics g, Enemy enemy, int x, int y, BufferedImage sprite) {
+        int healthBarWidth = 50;
+        int healthBarHeight = 6;
+
+        int healthBarX = x + (sprite.getWidth() - healthBarWidth) / 2;
+        int healthBarY = y - 10;
+
+        g.setColor(new Color(255, 0, 0));
+        g.fillRect(healthBarX, healthBarY, healthBarWidth, healthBarHeight);
+
+        g.setColor(new Color(0, 255, 0));
+        int currentHealthWidth = (int) (healthBarWidth * enemy.getHealthBarPercentage());
+        g.fillRect(healthBarX, healthBarY, currentHealthWidth, healthBarHeight);
+
+        g.setColor(Color.BLACK);
+        g.drawRect(healthBarX, healthBarY, healthBarWidth, healthBarHeight);
     }
 
     public void spawnEnemy(int nextEnemy) {
