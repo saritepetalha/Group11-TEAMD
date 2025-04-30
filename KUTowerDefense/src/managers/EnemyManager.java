@@ -60,10 +60,21 @@ public class EnemyManager {
         return x >= 0 && x < cols && y >= 0 && y < rows;
     }
 
+    private boolean isRoadTile(int tileId) {
+        return tileId >= 0 && tileId <= 3 ||
+                tileId >= 6 && tileId <= 7 ||
+                tileId >= 10 && tileId <= 11 ||
+                tileId >= 13 && tileId <= 14;
+    }
 
     private void generatePath(int[][] tileData) {
         // implementation of Breadth-First Search to find path from start to end
-        if (startPoint == null || endPoint == null) return;
+        if (startPoint == null || endPoint == null) {
+            System.out.println("Cannot generate path: Start or end point is null");
+            return;
+        }
+
+        System.out.println("Generating path from " + startPoint + " to " + endPoint);
 
         int rows = tileData.length;
         int cols = tileData[0].length;
@@ -89,6 +100,7 @@ public class EnemyManager {
 
             // check if we reached the end
             if (current.equals(endPoint)) {
+                System.out.println("Found end point!");
                 foundEnd = true;
                 break;
             }
@@ -101,7 +113,7 @@ public class EnemyManager {
                 // check bounds and if it's a valid road and not visited
                 if (isValidPosition(newX, newY, rows, cols) && isRoadTile(tileData[newY][newX]) &&
                         !visited[newY][newX]) {
-
+                    System.out.println("Found valid road tile at: " + newX + "," + newY);
                     GridPoint next = new GridPoint(newX, newY);
                     queue.add(next);
                     visited[newY][newX] = true;
@@ -112,8 +124,12 @@ public class EnemyManager {
 
         // if end found, reconstruct the path
         if (foundEnd) {
+            System.out.println("Reconstructing path...");
             reconstructPath(parent);
             pathFound = true;
+            System.out.println("Path found with " + pathPoints.size() + " points");
+        } else {
+            System.out.println("No path found!");
         }
     }
 
@@ -177,26 +193,31 @@ public class EnemyManager {
     }
 
     public void addEnemy(int enemyType){
-        if (!pathFound || pathPoints.isEmpty()) return;
+        if (!pathFound || pathPoints.isEmpty()) {
+            System.out.println("Cannot add enemy: Path not found or empty");
+            return;
+        }
 
         GridPoint firstPoint = pathPoints.get(0);
 
         // calculate starting position (center of the start tile)
-        int x = firstPoint.getX() * tileSize + tileSize / 2;;
-        int y = firstPoint.getY() * tileSize + tileSize / 2;;
+        int x = firstPoint.getX() * tileSize + tileSize / 2;
+        int y = firstPoint.getY() * tileSize + tileSize / 2;
 
-        Enemy enemy = null;
+        System.out.println("Adding enemy at position: " + x + "," + y);
+
         switch(enemyType){
             case GOBLIN:
+                System.out.println("Adding Goblin");
                 enemies.add(new Goblin(x,y, nextEnemyID++));
                 break;
             case WARRIOR:
+                System.out.println("Adding Warrior");
                 enemies.add(new Warrior(x,y,nextEnemyID++));
                 break;
-        }
-
-        if (enemy != null) {
-            enemies.add(enemy);
+            default:
+                System.out.println("Unknown enemy type: " + enemyType);
+                break;
         }
     }
 

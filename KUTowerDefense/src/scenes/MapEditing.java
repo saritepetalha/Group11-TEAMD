@@ -25,11 +25,12 @@ public class MapEditing extends GameScene implements SceneMethods{
     private boolean drawSelected = false;
     private EditTiles editTiles;
     private int lastTileX, lastTileY, lastTileId, prevDraggedTileX, prevDraggedTileY;
+    private String currentLevelName;
 
     private final Window owner;
     private int mouseX, mouseY;
 
-  
+
     public MapEditing(Game game, Window owner) {
         super(game);
         this.owner = owner;
@@ -99,7 +100,7 @@ public class MapEditing extends GameScene implements SceneMethods{
 
     @Override
     public void render(Graphics g) {
-        setCustomCursor();
+        setCustomCursor(); // Her render işleminde imleci kontrol et
         drawMap(g);
         editTiles.draw(g);
         drawSelectedTile(g);
@@ -366,6 +367,22 @@ public class MapEditing extends GameScene implements SceneMethods{
         }
 
         return originalTile;
+    }
+
+    public void setLevel(int[][] level) {
+        this.level = level;
+    }
+
+    public void setOverlayData(int[][] overlayData) {
+        this.overlayData = overlayData;
+    }
+
+    public void setCurrentLevelName(String name) {
+        this.currentLevelName = name;
+    }
+
+    public String getCurrentLevelName() {
+        return this.currentLevelName;
     }
 
 }

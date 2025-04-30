@@ -127,28 +127,8 @@ public class Menu extends GameScene implements SceneMethods {
             return;
         }
 
-        String[] levelNames = savedLevels.toArray(new String[0]);
-        System.out.println("Available levels: " + String.join(", ", levelNames));
-
-        String selectedLevel = (String) JOptionPane.showInputDialog(
-                null,
-                "Select a level to load:",
-                "Load Level",
-                JOptionPane.QUESTION_MESSAGE,
-                null,
-                levelNames,
-                levelNames[0]
-        );
-
-        if (selectedLevel != null) {
-            System.out.println("Selected level: " + selectedLevel);
-            game.getPlaying().loadLevel(selectedLevel);
-            game.changeGameState(GameStates.PLAYING);
-            System.out.println("Switched to playing mode");
-        } else {
-            System.out.println("No level selected");
-        }
-        System.out.println("=== Dialog Closed ===\n");
+        LoadGameMenu loadGameMenu = new LoadGameMenu(game);
+        loadGameMenu.showMenu();
     }
 
     @Override
