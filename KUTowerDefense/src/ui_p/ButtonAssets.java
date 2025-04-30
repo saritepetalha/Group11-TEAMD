@@ -31,6 +31,8 @@ public class ButtonAssets {
     public static BufferedImage startPointPressedImg;
     public static BufferedImage endPointPressedImg;
 
+    public static BufferedImage statusBarImg;
+
     static {
         loadAll();
     }
@@ -48,6 +50,8 @@ public class ButtonAssets {
         loadButtonImages();
         loadButtonHoverEffectImages();
         loadButtonPressedEffectImages();
+
+        loadStatusBarImages();
     }
 
     private static void loadButtonImageFile() {
@@ -152,6 +156,14 @@ public class ButtonAssets {
         endPointHoverImg = createHoverEffect(endPointImg);
         // create pressed versions with slight offset effect
         endPointPressedImg = createPressedEffect(endPointImg);
+    }
+
+    private static void loadStatusBarImages() {
+        try (InputStream is = LoadSave.class.getResourceAsStream("/UI/Coin_Health_Wave.png")) {
+            statusBarImg = ImageIO.read(is);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 
