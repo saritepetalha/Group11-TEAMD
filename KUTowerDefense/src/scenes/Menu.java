@@ -7,7 +7,8 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Random;
 import javax.imageio.ImageIO;
-
+import javax.swing.*;
+import helpMethods.LoadSave;
 
 import constants.GameDimensions;
 import main.Game;
@@ -16,12 +17,12 @@ import ui_p.TheButton;
 
 public class Menu extends GameScene implements SceneMethods {
     private ArrayList<BufferedImage> sprites = new ArrayList<>();
-	private BufferedImage img;
+    private BufferedImage img;
     private Random random;
     private BufferedImage backgroundImg;
     private TheButton playButton, loadGameButton, mapEditorButton, optionButton, exitButton;
     private Game game;
-    
+
     public Menu(Game game) {
         super(game);
         this.game = game;
@@ -74,6 +75,7 @@ public class Menu extends GameScene implements SceneMethods {
 
     @Override
     public void render(Graphics g) {
+        setCustomCursor();
         drawBackground(g);
         drawButtons(g);
     }
@@ -99,7 +101,7 @@ public class Menu extends GameScene implements SceneMethods {
         if (playButton.getBounds().contains(x, y)) {
             game.changeGameState(GameStates.PLAYING);
         } else if (loadGameButton.getBounds().contains(x, y)) {
-            game.changeGameState(GameStates.LOADED);
+            showLoadGameDialog();
         } else if (mapEditorButton.getBounds().contains(x, y)) {
             game.changeGameState(GameStates.EDIT);
         } else if (optionButton.getBounds().contains(x, y)) {
@@ -107,6 +109,26 @@ public class Menu extends GameScene implements SceneMethods {
         } else if (exitButton.getBounds().contains(x, y)) {
             System.exit(0);
         }
+    }
+
+    private void showLoadGameDialog() {
+        System.out.println("\n=== Level Loading Dialog ===");
+        ArrayList<String> savedLevels = LoadSave.getSavedLevels();
+        System.out.println("Number of levels found: " + savedLevels.size());
+
+        if (savedLevels.isEmpty()) {
+            System.out.println("No saved levels found!");
+            JOptionPane.showMessageDialog(
+                    null,
+                    "No saved levels found!\nPlease create a level in Edit Mode first.",
+                    "Warning",
+                    JOptionPane.WARNING_MESSAGE
+            );
+            return;
+        }
+
+        LoadGameMenu loadGameMenu = new LoadGameMenu(game);
+        loadGameMenu.showMenu();
     }
 
     @Override
@@ -161,7 +183,7 @@ public class Menu extends GameScene implements SceneMethods {
 
 
     private int getRandomInt() {
-		return random.nextInt(sprites.size());
-	}
+        return random.nextInt(sprites.size());
+    }
 
 }

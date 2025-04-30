@@ -18,7 +18,7 @@ public class GameScreen extends JPanel {
 
 	public GameScreen(Game game) {
 		this.game = game;
-		setPanelSize();	
+		setPanelSize();
 	}
 
 	public void initInputs() {
@@ -31,7 +31,7 @@ public class GameScreen extends JPanel {
 
 		requestFocus();
 	}
-	
+
 
 	public void setPanelSize() {
 		int width, height;
@@ -64,10 +64,12 @@ public class GameScreen extends JPanel {
 				break;
 		}
 
-		size = new Dimension (width, height);
+		size = new Dimension(width, height);
 		setMinimumSize(size);
 		setMaximumSize(size);
 		setPreferredSize(size);
+
+		setCursor(game.getCursor());
 
 		revalidate();  // ensures proper refresh
 		repaint();
@@ -76,14 +78,7 @@ public class GameScreen extends JPanel {
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
 		game.getRender().render(g);
-		
-
 
 	}
-	
-
-	
-	
-	
 
 }

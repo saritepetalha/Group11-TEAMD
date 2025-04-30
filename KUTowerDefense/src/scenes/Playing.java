@@ -86,10 +86,10 @@ public class Playing extends GameScene implements SceneMethods {
             System.out.println("Level not found, creating default level.");
             for (int i = 0; i < lvl.length; i++) {
                 for (int j = 0; j < lvl[i].length; j++) {
-                    if (i == 4) { // Orta satır
-                        lvl[i][j] = 13; // Yol
+                    if (i == 4) {
+                        lvl[i][j] = 13;
                     } else {
-                        lvl[i][j] = 5; // Çimen
+                        lvl[i][j] = 5;
                     }
                 }
             }
@@ -99,7 +99,41 @@ public class Playing extends GameScene implements SceneMethods {
     }
 
     public void loadLevel(String levelName) {
-        level = LoadSave.getLevelData(levelName);
+        int[][] loadedLevel = LoadSave.loadLevel(levelName);
+        if (loadedLevel != null) {
+            System.out.println("Loading level: " + levelName);
+            this.level = loadedLevel;
+
+            this.overlay = new int[loadedLevel.length][loadedLevel[0].length];
+            System.out.println("Overlay size: " + overlay.length + "x" + overlay[0].length);
+
+            boolean foundStart = false;
+            boolean foundEnd = false;
+
+            for (int i = 0; i < loadedLevel.length; i++) {
+                for (int j = 0; j < loadedLevel[i].length; j++) {
+                    if (loadedLevel[i][j] == 1) {
+                        overlay[i][j] = 1;
+                        foundStart = true;
+                        System.out.println("Start point found at: " + i + "," + j);
+                    } else if (loadedLevel[i][j] == 2) {
+                        overlay[i][j] = 2;
+                        foundEnd = true;
+                        System.out.println("End point found at: " + i + "," + j);
+                    }
+                }
+            }
+
+            if (!foundStart || !foundEnd) {
+                System.out.println("Warning: Start or end point not found in level!");
+            }
+
+            System.out.println("Updating EnemyManager with new level and overlay");
+            enemyManager = new EnemyManager(this, overlay, level);
+
+            System.out.println("Resetting WaveManager");
+            waveManager = new WaveManager(this);
+        }
     }
 
     public void drawTowerButtons(Graphics g) {
@@ -125,10 +159,14 @@ public class Playing extends GameScene implements SceneMethods {
         waveManager.update();
 
         if (isAllEnemiesDead()) {
+            System.out.println("All enemies are dead");
             if (isThereMoreWaves()) {
+                System.out.println("There are more waves");
                 if (!waveManager.isWaveTimerOver()) {
+                    System.out.println("Starting wave timer");
                     waveManager.startTimer();
                 } else {
+                    System.out.println("Wave timer over, incrementing wave index");
                     waveManager.incrementWaveIndex();
                     enemyManager.getEnemies().clear();
                     waveManager.resetEnemyIndex();
@@ -136,7 +174,8 @@ public class Playing extends GameScene implements SceneMethods {
             }
         }
 
-        if (isTimeForNewEnemy()){
+        if (isTimeForNewEnemy()) {
+            System.out.println("Spawning new enemy");
             spawnEnemy();
         }
 
@@ -170,6 +209,7 @@ public class Playing extends GameScene implements SceneMethods {
         drawMap(g);
         towerManager.draw(g);
         drawTowerButtons(g);
+        playingUI.draw(g);
     }
 
 
@@ -315,5 +355,11 @@ public class Playing extends GameScene implements SceneMethods {
             return !waveManager.isWaveFinished();
         }
         return false;
+    }
+
+    public void startEnemySpawning() {
+        waveManager.resetWaveIndex();
+        waveManager.resetEnemyIndex();
+        waveManager.startTimer();
     }
 }
