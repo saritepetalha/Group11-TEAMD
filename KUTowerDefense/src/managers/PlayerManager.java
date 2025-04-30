@@ -6,8 +6,6 @@ public class PlayerManager {
     private int health;
     private int shield;
 
-
-
     public PlayerManager() {
         this.gold = 100;
         this.health = MAX_HEALTH;
