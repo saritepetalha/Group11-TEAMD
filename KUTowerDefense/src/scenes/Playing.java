@@ -8,24 +8,25 @@ import enemies.Enemy;
 import helpMethods.LoadSave;
 import main.Game;
 
-import managers.TileManager;
-import managers.TowerManager;
+import managers.*;
 
-import managers.WaveManager;
 import ui_p.DeadTree;
 
-import managers.EnemyManager;
 import ui_p.PlayingBar;
+import ui_p.PlayingUI;
 
 public class Playing extends GameScene implements SceneMethods {
     private int[][] level;
     private int[][] overlay;
+
     private PlayingBar bottomPlayingBar;
+    private PlayingUI playingUI;
     private int mouseX, mouseY;
     private List<DeadTree> trees;
     private WaveManager waveManager;
     private TowerManager towerManager;
     private TileManager tileManager;
+    private PlayerManager playerManager;
 
     private EnemyManager enemyManager;
 
@@ -34,6 +35,7 @@ public class Playing extends GameScene implements SceneMethods {
         super(game);
         loadDefaultLevel();
         this.tileManager = tileManager;
+        this.playerManager = new PlayerManager();
 
         towerManager = new TowerManager(this);
 
@@ -62,13 +64,20 @@ public class Playing extends GameScene implements SceneMethods {
 
         bottomPlayingBar = new PlayingBar(0, GameDimensions.GAME_HEIGHT, GameDimensions.GAME_WIDTH, 100, this);
 
+        playingUI = new PlayingUI(this);
+        updateUIResources();    // Update the UI with player's starting resources
+    }
+
+    private void updateUIResources() {
+        playingUI.setGoldAmount(playerManager.getGold());
+        playingUI.setHealthAmount(playerManager.getHealth());
+        playingUI.setShieldAmount(playerManager.getShield());
     }
 
     public void saveLevel(String filename) {
         LoadSave.saveLevel(filename,level);
 
     }
-
 
     private void loadDefaultLevel() {
         int[][] lvl = LoadSave.getLevelData("defaultlevel");
@@ -132,6 +141,7 @@ public class Playing extends GameScene implements SceneMethods {
 
         enemyManager.update();
         towerManager.update();
+        updateUIResources();
     }
 
     private boolean isWaveTimerOver() {
@@ -158,6 +168,8 @@ public class Playing extends GameScene implements SceneMethods {
         drawMap(g);
         towerManager.draw(g);
         drawTowerButtons(g);
+
+        playingUI.draw(g);
 
     }
 
@@ -224,25 +236,71 @@ public class Playing extends GameScene implements SceneMethods {
             }
         }
 
-
     }
 
     public TowerManager getTowerManager() {
         return towerManager;
     }
 
-    @Override
-    public void mouseMoved(int x, int y) {}
+    public PlayingUI getPlayingUI() {return playingUI;
+    }
 
     @Override
-    public void mousePressed(int x, int y) {}
+    public void mouseMoved(int x, int y) {
+        playingUI.mouseMoved(x, y);
+    }
 
     @Override
-    public void mouseReleased(int x, int y) {}
+    public void mousePressed(int x, int y) {
+        playingUI.mousePressed(x, y);
+    }
 
     @Override
-    public void mouseDragged(int x, int y) {
+    public void mouseReleased(int x, int y) {
+        playingUI.mouseReleased();
+    }
 
+    @Override
+    public void mouseDragged(int x, int y) {}
+
+    // Add helper methods to handle control button actions
+    private void handlePauseButton(boolean isPressed) {
+        // Toggle game pause state based on button state
+        if (isPressed) {
+            // Game is now paused
+            System.out.println("Game paused");
+            // TODO: Implement actual pause functionality
+        } else {
+            // Game is now unpaused
+            System.out.println("Game resumed");
+            // TODO: Implement actual resume functionality
+        }
+    }
+
+    private void handleFastForwardButton(boolean isPressed) {
+        // Toggle game speed based on button state
+        if (isPressed) {
+            // Game is now in fast forward mode
+            System.out.println("Game speed increased");
+            // TODO: Implement actual speed increase functionality
+        } else {
+            // Game is now at normal speed
+            System.out.println("Game speed normal");
+            // TODO: Implement actual speed reset functionality
+        }
+    }
+
+    private void handleOptionsButton(boolean isPressed) {
+        // Show/hide options menu based on button state
+        if (isPressed) {
+            // Show options menu
+            System.out.println("Options menu opened");
+            // TODO: Implement actual options menu display
+        } else {
+            // Hide options menu
+            System.out.println("Options menu closed");
+            // TODO: Implement actual options menu hiding
+        }
     }
 
     public WaveManager getWaveManager() {
