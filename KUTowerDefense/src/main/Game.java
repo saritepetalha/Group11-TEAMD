@@ -5,6 +5,8 @@ import java.awt.Cursor;
 import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 
 import managers.TileManager;
 import scenes.*;
@@ -58,7 +60,7 @@ public class Game extends JFrame implements Runnable{
 		gamescreen.setPanelSize(); // adjust GameScreen size
 		pack();                    // resize JFrame according to new dimensions
 		setLocationRelativeTo(null); // re-center the window
-		setCustomCursor();
+		setCustomCursor(); // her durum değişikliğinde imleci yeniden ayarla
 	}
 
 	private void initClasses() {
@@ -172,16 +174,25 @@ public class Game extends JFrame implements Runnable{
 
 	private void setCustomCursor() {
 		try {
-			java.io.InputStream is = getClass().getResourceAsStream("/UI/01.png");
+			java.io.InputStream is = getClass().getResourceAsStream("/UI/cursor.png");
 			if (is == null) {
 				return;
 			}
 
-			BufferedImage cursorImg = javax.imageio.ImageIO.read(is);
+			BufferedImage originalImg = javax.imageio.ImageIO.read(is);
+
+			int newWidth = originalImg.getWidth() / 2;
+			int newHeight = originalImg.getHeight() / 2;
+
+			BufferedImage resizedImg = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_ARGB);
+			Graphics2D g2d = resizedImg.createGraphics();
+			g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+			g2d.drawImage(originalImg, 0, 0, newWidth, newHeight, null);
+			g2d.dispose();
 
 			Cursor customCursor = Toolkit.getDefaultToolkit().createCustomCursor(
-					cursorImg,
-					new Point(0, 0),
+					resizedImg,
+					new Point(newWidth/2, newHeight/2),
 					"Custom Cursor"
 			);
 
@@ -199,10 +210,20 @@ public class Game extends JFrame implements Runnable{
 				return Cursor.getDefaultCursor();
 			}
 
-			BufferedImage cursorImg = javax.imageio.ImageIO.read(is);
+			BufferedImage originalImg = javax.imageio.ImageIO.read(is);
+
+			int newWidth = originalImg.getWidth() / 2;
+			int newHeight = originalImg.getHeight() / 2;
+
+			BufferedImage resizedImg = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_ARGB);
+			Graphics2D g2d = resizedImg.createGraphics();
+			g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+			g2d.drawImage(originalImg, 0, 0, newWidth, newHeight, null);
+			g2d.dispose();
+
 			return Toolkit.getDefaultToolkit().createCustomCursor(
-					cursorImg,
-					new Point(0, 0),
+					resizedImg,
+					new Point(newWidth/2, newHeight/2),
 					"Custom Cursor"
 			);
 
