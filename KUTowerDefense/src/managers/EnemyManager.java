@@ -5,7 +5,7 @@ import enemies.Enemy;
 import enemies.*;
 import scenes.Playing;
 import helpMethods.LoadSave;
-import objects.Point;
+import objects.GridPoint;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -22,8 +22,8 @@ public class EnemyManager {
     private BufferedImage[] enemyImages;
     //private Enemy enemyTest;
     private ArrayList<Enemy> enemies = new ArrayList<>();
-    private ArrayList<Point> pathPoints = new ArrayList<>();
-    private Point startPoint, endPoint;
+    private ArrayList<GridPoint> pathPoints = new ArrayList<>();
+    private GridPoint startPoint, endPoint;
     private int tileSize = GameDimensions.TILE_DISPLAY_SIZE;
     private int nextEnemyID = 0;
     private boolean pathFound = false;
@@ -47,10 +47,10 @@ public class EnemyManager {
         for (int y = 0; y < overlayData.length; y++) {
             for (int x = 0; x < overlayData[y].length; x++) {
                 if (overlayData[y][x] == START_POINT) {
-                    startPoint = new Point(x, y);
+                    startPoint = new GridPoint(x, y);
                 }
                 else if (overlayData[y][x] == END_POINT) {
-                    endPoint = new Point(x, y);
+                    endPoint = new GridPoint(x, y);
                 }
             }
         }
@@ -74,10 +74,10 @@ public class EnemyManager {
 
         // initialize visited array and parent map for path reconstruction
         boolean[][] visited = new boolean[rows][cols];
-        Point[][] parent = new Point[rows][cols];
+        GridPoint[][] parent = new GridPoint[rows][cols];
 
         // BFS queue
-        Queue<Point> queue = new LinkedList<>();
+        Queue<GridPoint> queue = new LinkedList<>();
         queue.add(startPoint);
         visited[startPoint.getY()][startPoint.getX()] = true;
 
@@ -85,7 +85,7 @@ public class EnemyManager {
 
         // BFS to find path
         while (!queue.isEmpty() && !foundEnd) {
-            Point current = queue.poll();
+            GridPoint current = queue.poll();
 
             // check if we reached the end
             if (current.equals(endPoint)) {
@@ -102,7 +102,7 @@ public class EnemyManager {
                 if (isValidPosition(newX, newY, rows, cols) && isRoadTile(tileData[newY][newX]) &&
                         !visited[newY][newX]) {
 
-                    Point next = new Point(newX, newY);
+                    GridPoint next = new GridPoint(newX, newY);
                     queue.add(next);
                     visited[newY][newX] = true;
                     parent[newY][newX] = current;
@@ -123,15 +123,15 @@ public class EnemyManager {
     from the start point to the end point. During BFS, each visited tile's parent is recorded, allowing us to trace back
     the path once the end point is reached. This reconstructed path is then used to guide enemy movement.
      */
-    private void reconstructPath(Point[][] parent) {
+    private void reconstructPath(GridPoint[][] parent) {
         // clear existing path points
         pathPoints.clear();
 
         // start from the end and work backward
-        Point current = endPoint;
+        GridPoint current = endPoint;
 
         // temporary list to store reversed path
-        ArrayList<Point> reversedPath = new ArrayList<>();
+        ArrayList<GridPoint> reversedPath = new ArrayList<>();
         reversedPath.add(current);
 
         // follow parent pointers back to start
@@ -181,7 +181,7 @@ public class EnemyManager {
     public void addEnemy(int enemyType){
         if (!pathFound || pathPoints.isEmpty()) return;
 
-        Point firstPoint = pathPoints.get(0);
+        GridPoint firstPoint = pathPoints.get(0);
 
         // calculate starting position (center of the start tile)
         int x = firstPoint.getX() * tileSize + tileSize / 2;;
@@ -212,8 +212,8 @@ public class EnemyManager {
         }
 
         // get current path point and next path point
-        Point currentPoint = pathPoints.get(pathIndex);
-        Point nextPoint = pathPoints.get(pathIndex + 1);
+        GridPoint currentPoint = pathPoints.get(pathIndex);
+        GridPoint nextPoint = pathPoints.get(pathIndex + 1);
 
         // calculate target position
         int targetX = nextPoint.getX() * tileSize + tileSize / 2;
