@@ -112,6 +112,8 @@ public class Playing extends GameScene implements SceneMethods {
 
             for (int i = 0; i < loadedLevel.length; i++) {
                 for (int j = 0; j < loadedLevel[i].length; j++) {
+                    overlay[i][j] = 0;
+
                     if (loadedLevel[i][j] == 1) {
                         overlay[i][j] = 1;
                         foundStart = true;
@@ -133,6 +135,7 @@ public class Playing extends GameScene implements SceneMethods {
 
             System.out.println("Resetting WaveManager");
             waveManager = new WaveManager(this);
+            startEnemySpawning();
         }
     }
 
