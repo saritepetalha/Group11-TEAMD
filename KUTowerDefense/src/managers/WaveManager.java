@@ -14,6 +14,10 @@ public class WaveManager {
     private int enemySpawnTick = enemySpawnTickLimit;
     private int enemyIndex;
     private int waveIndex;
+    private boolean waveStartTimer;
+    private int waveTickLimit = 60 * 5; // 5 seconds
+    private int waveTick = 0;
+    private boolean waveTickTimerOver;
 
     public WaveManager(Playing playing) {
         this.playing = playing;
@@ -24,6 +28,18 @@ public class WaveManager {
         if (enemySpawnTick <= enemySpawnTickLimit) {
             enemySpawnTick++;
         }
+        if (waveStartTimer) {
+            waveTick++;
+            if (waveTick >= waveTickLimit) {
+                waveTickTimerOver = false;
+            }
+        }
+    }
+
+    public void incrementWaveIndex() {
+        waveIndex++;
+        waveTickTimerOver = false;
+        waveStartTimer = false;
     }
 
     public int getNextEnemy(){
@@ -33,6 +49,7 @@ public class WaveManager {
 
     private void createWaves(){
         waves.add(new Wave(new ArrayList<Integer>(Arrays.asList(0, 0, 0, 0, 0, 0, 0, 0, 0, 1))));
+        waves.add(new Wave(new ArrayList<Integer>(Arrays.asList(1, 0, 1, 0, 0, 0, 0, 0, 0, 1))));
     }
 
     public ArrayList<Wave> getWaves() {
@@ -46,5 +63,21 @@ public class WaveManager {
     public boolean isWaveFinished() {
         if (waves.isEmpty() || waveIndex >= waves.size()) return true;
         return waves.get(waveIndex).getEnemyList().size() <= enemyIndex;
+    }
+
+    public boolean isThereMoreWaves() {
+        return (waveIndex + 1) < waves.size();
+    }
+
+    public void startTimer() {
+        waveStartTimer = true;
+    }
+
+    public boolean isWaveTimerOver() {
+        return waveTickTimerOver;
+    }
+
+    public void resetEnemyIndex() {
+        enemyIndex = 0;
     }
 }

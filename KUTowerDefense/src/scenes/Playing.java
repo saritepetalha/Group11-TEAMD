@@ -4,6 +4,7 @@ import java.awt.*;
 import java.util.List;
 
 import constants.GameDimensions;
+import enemies.Enemy;
 import helpMethods.LoadSave;
 import main.Game;
 
@@ -114,12 +115,42 @@ public class Playing extends GameScene implements SceneMethods {
     public void update() {
         waveManager.update();
 
+        if (isAllEnemiesDead()) {
+            if (isThereMoreWaves()) {
+                waveManager.startTimer();
+                if(isWaveTimerOver()){
+                    waveManager.incrementWaveIndex();
+                    enemyManager.getEnemies().clear();
+                    waveManager.resetEnemyIndex();
+                }
+            }
+        }
+
         if (isTimeForNewEnemy()){
             spawnEnemy();
         }
 
         enemyManager.update();
         towerManager.update();
+    }
+
+    private boolean isWaveTimerOver() {
+        return waveManager.isWaveTimerOver();
+    }
+
+    private boolean isThereMoreWaves() {
+        return !waveManager.isThereMoreWaves();
+    }
+
+    private boolean isAllEnemiesDead() {
+        if (waveManager.isWaveFinished()) {
+            for (Enemy enemy : enemyManager.getEnemies()) {
+                if (enemy.isAlive()) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     @Override

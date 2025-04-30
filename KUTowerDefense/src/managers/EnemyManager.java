@@ -282,4 +282,8 @@ public class EnemyManager {
     public void spawnEnemy(int nextEnemy) {
         addEnemy(nextEnemy);
     }
+
+    public ArrayList<Enemy> getEnemies() {
+        return enemies;
+    }
 }
