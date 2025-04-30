@@ -14,6 +14,7 @@ public class Game extends JFrame implements Runnable{
 	private final double FPS_SET = 120.0;
 	private final double UPS_SET = 60.0;
 
+
 	private Render render;
 	private Intro intro;
 	private Menu menu;
