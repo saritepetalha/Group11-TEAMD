@@ -76,22 +76,16 @@ public class LoadSave {
     //This funcion gets the created level's data from Levels folder under resources
     //FRONT END IS NOT IMPLEMENTED YET
     public static int[][] getLevelData(String fileName) {
-        File file = new File("resources/Levels/" + fileName + ".json");
-        if (!file.exists()) {
-            System.err.println("Level file not found: " + file.getPath());
+        InputStream is = LoadSave.class.getResourceAsStream("/Levels/" + fileName + ".json");
+        if (is == null) {
+            System.err.println("Level file not found: /Levels/" + fileName + ".json");
             return null;
         }
 
-        try (Reader reader = new FileReader(file)) {
-            // 1) Parse the JSON root object
+        try (Reader reader = new InputStreamReader(is)) {
             JsonObject root = GSON.fromJson(reader, JsonObject.class);
-
-            // 2) Get the "tiles" JsonArray
             JsonArray tilesJson = root.getAsJsonArray("tiles");
-
-            // 3) Deserialize that JsonArray directly into int[][] 
             return GSON.fromJson(tilesJson, int[][].class);
-
         } catch (IOException e) {
             e.printStackTrace();
             return null;

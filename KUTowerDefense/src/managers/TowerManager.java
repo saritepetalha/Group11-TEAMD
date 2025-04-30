@@ -1,6 +1,6 @@
 package managers;
 
-import dimensions.GameDimensions;
+import constants.GameDimensions;
 import helpMethods.LoadSave;
 import objects.Tower;
 import scenes.Playing;
