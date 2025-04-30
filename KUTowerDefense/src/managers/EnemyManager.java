@@ -38,8 +38,8 @@ public class EnemyManager {
         if (startPoint != null && endPoint != null) {
             generatePath(tileData);
         }
-        addEnemy(GOBLIN);
-        addEnemy(WARRIOR);
+//        addEnemy(GOBLIN);
+//        addEnemy(WARRIOR);
         //enemyTest = new Enemy(64*3, 64*3, 0, 0);
     }
 
@@ -148,6 +148,13 @@ public class EnemyManager {
     }
 
     public void update(){
+
+        updateWaveManager();
+
+        if (isTimeForNewEnemy()){
+            spawnEnemy();
+        }
+
         for (Enemy enemy:enemies){
             enemy.move(0.3f, 0);
         }
@@ -176,6 +183,20 @@ public class EnemyManager {
         //enemyTest.move(0.3f,0);
     }
 
+    private void updateWaveManager() {
+        playing.getWaveManager().update();
+    }
+
+    private void spawnEnemy() {
+        addEnemy(playing.getWaveManager().getNextEnemy());
+    }
+
+    private boolean isTimeForNewEnemy() {
+        if(playing.getWaveManager().isTimeForNewEnemy()){
+            return !playing.getWaveManager().isWaveFinished();
+        }
+        return false;
+    }
 
 
     public void addEnemy(int enemyType){

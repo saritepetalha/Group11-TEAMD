@@ -10,6 +10,7 @@ import main.Game;
 import managers.TileManager;
 import managers.TowerManager;
 
+import managers.WaveManager;
 import ui_p.DeadTree;
 
 import managers.EnemyManager;
@@ -21,7 +22,7 @@ public class Playing extends GameScene implements SceneMethods {
     private PlayingBar bottomPlayingBar;
     private int mouseX, mouseY;
     private List<DeadTree> trees;
-
+    private WaveManager waveManager;
     private TowerManager towerManager;
     private TileManager tileManager;
 
@@ -52,6 +53,7 @@ public class Playing extends GameScene implements SceneMethods {
         };
 
         enemyManager = new EnemyManager(this, overlay, level);
+        waveManager = new WaveManager(this);
 
         if(towerManager.findDeadTrees(level) != null) {
             trees = towerManager.findDeadTrees(level);
@@ -204,5 +206,9 @@ public class Playing extends GameScene implements SceneMethods {
     @Override
     public void mouseDragged(int x, int y) {
 
+    }
+
+    public WaveManager getWaveManager() {
+        return waveManager;
     }
 }
