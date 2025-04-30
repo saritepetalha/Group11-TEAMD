@@ -46,8 +46,7 @@ public class KeyboardListener implements KeyListener {
 
             // If in playing state, clear the tile selection
             if (GameStates.gameState == GameStates.PLAYING) {
-                mapEditing.setDrawSelected(false);
-                mapEditing.setSelectedTile(null);
+                game.getPlaying().getSelectedDeadTree().setShowChoices(false);
             }
 
         }

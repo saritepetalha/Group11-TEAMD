@@ -1,6 +1,7 @@
 package scenes;
 
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.util.List;
 
 import constants.GameDimensions;
@@ -28,12 +29,14 @@ public class Playing extends GameScene implements SceneMethods {
     private TileManager tileManager;
 
     private EnemyManager enemyManager;
+    private DeadTree selectedDeadTree;
 
 
     public Playing(Game game, TileManager tileManager) {
         super(game);
         loadDefaultLevel();
         this.tileManager = tileManager;
+        this.selectedDeadTree = null;
 
         towerManager = new TowerManager(this);
 
@@ -181,7 +184,6 @@ public class Playing extends GameScene implements SceneMethods {
 
     @Override
     public void mouseClicked(int x, int y) {
-
         this.mouseX = x;
         this.mouseY = y;
 
@@ -195,6 +197,7 @@ public class Playing extends GameScene implements SceneMethods {
                     tree.setShowChoices(false);
                     trees.remove(tree);
                     modifyTile(tileX, tileY, "ARCHER");
+                    setSelectedDeadTree(null);
                     return;
                 }
                 if (tree.getMageButton().isMousePressed(mouseX, mouseY)) {
@@ -202,6 +205,7 @@ public class Playing extends GameScene implements SceneMethods {
                     tree.setShowChoices(false);
                     trees.remove(tree);
                     modifyTile(tileX, tileY, "MAGE");
+                    setSelectedDeadTree(null);
                     return;
                 }
                 if (tree.getArtilleryButton().isMousePressed(mouseX, mouseY)) {
@@ -209,6 +213,7 @@ public class Playing extends GameScene implements SceneMethods {
                     tree.setShowChoices(false);
                     trees.remove(tree);
                     modifyTile(tileX, tileY, "ARTILERRY");
+                    setSelectedDeadTree(null);
                     return;
                 }
             }
@@ -220,6 +225,7 @@ public class Playing extends GameScene implements SceneMethods {
                     other.setShowChoices(false);
                 }
                 tree.setShowChoices(true);
+                setSelectedDeadTree(tree);
                 return;
             }
         }
@@ -248,6 +254,10 @@ public class Playing extends GameScene implements SceneMethods {
     public WaveManager getWaveManager() {
         return waveManager;
     }
+
+    public DeadTree getSelectedDeadTree() {return selectedDeadTree;}
+
+    public void setSelectedDeadTree(DeadTree deadTree) {this.selectedDeadTree = deadTree;}
 
     private void spawnEnemy() {
         enemyManager.spawnEnemy(waveManager.getNextEnemy());

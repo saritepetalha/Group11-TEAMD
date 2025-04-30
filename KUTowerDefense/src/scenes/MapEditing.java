@@ -7,6 +7,7 @@ import helpMethods.LevelBuilder;
 import main.Game;
 import managers.TileManager;
 import objects.Tile;
+import objects.Tower;
 import ui_p.ButtonAssets;
 import ui_p.EditTiles;
 
@@ -28,6 +29,8 @@ public class MapEditing extends GameScene implements SceneMethods{
 
     private final Window owner;
     private int mouseX, mouseY;
+
+    private Tower selectedTower;
 
   
     public MapEditing(Game game, Window owner) {
