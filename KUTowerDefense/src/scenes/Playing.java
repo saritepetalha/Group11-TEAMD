@@ -126,8 +126,9 @@ public class Playing extends GameScene implements SceneMethods {
 
         if (isAllEnemiesDead()) {
             if (isThereMoreWaves()) {
-                waveManager.startTimer();
-                if(isWaveTimerOver()){
+                if (!waveManager.isWaveTimerOver()) {
+                    waveManager.startTimer();
+                } else {
                     waveManager.incrementWaveIndex();
                     enemyManager.getEnemies().clear();
                     waveManager.resetEnemyIndex();
@@ -149,18 +150,19 @@ public class Playing extends GameScene implements SceneMethods {
     }
 
     private boolean isThereMoreWaves() {
-        return !waveManager.isThereMoreWaves();
+        return waveManager.isThereMoreWaves();
     }
 
     private boolean isAllEnemiesDead() {
         if (waveManager.isWaveFinished()) {
             for (Enemy enemy : enemyManager.getEnemies()) {
-                if (enemy.isAlive()) {
+                if (enemy.isAlive() || !enemy.hasReachedEnd()) {
                     return false;
                 }
             }
+            return true;
         }
-        return true;
+        return false;
     }
 
     @Override
@@ -168,9 +170,6 @@ public class Playing extends GameScene implements SceneMethods {
         drawMap(g);
         towerManager.draw(g);
         drawTowerButtons(g);
-
-        playingUI.draw(g);
-
     }
 
 
