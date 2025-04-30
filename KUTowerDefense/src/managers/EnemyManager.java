@@ -7,11 +7,16 @@ import scenes.MapEditing;
 import scenes.Playing;
 import helpMethods.LoadSave;
 import constants.Constants;
+import objects.Point;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Queue;
+import java.util.LinkedList;
+
 import static constants.Constants.PathPoints.*;
+import static constants.Constants.Tiles.*;
 
 public class EnemyManager {
     private Playing playing;
@@ -58,9 +63,89 @@ public class EnemyManager {
 
 
     private void generatePath(int[][] tileData) {
+        // implementation of Breadth-First Search to find path from start to end
+        if (startPoint == null || endPoint == null) return;
+
+        int rows = tileData.length;
+        int cols = tileData[0].length;
+
+        // direction arrays for 4-directional movement
+        int[] dx = {-1, 0, 1, 0}; // left, up, right, down
+        int[] dy = {0, -1, 0, 1};
+
+        // initialize visited array and parent map for path reconstruction
+        boolean[][] visited = new boolean[rows][cols];
+        Point[][] parent = new Point[rows][cols];
+
+        // BFS queue
+        Queue<Point> queue = new LinkedList<>();
+        queue.add(startPoint);
+        visited[startPoint.getY()][startPoint.getX()] = true;
+
+        boolean foundEnd = false;
+
+        // BFS to find path
+        while (!queue.isEmpty() && !foundEnd) {
+            Point current = queue.poll();
+
+            // check if we reached the end
+            if (current.equals(endPoint)) {
+                foundEnd = true;
+                break;
+            }
+
+            // try all four directions respectively
+            for (int i = 0; i < 4; i++) {
+                int newX = current.getX() + dx[i];
+                int newY = current.getY() + dy[i];
+
+                // check bounds and if it's a valid road and not visited
+                if (isValidPosition(newX, newY, rows, cols) && isRoadTile(tileData[newY][newX]) &&
+                        !visited[newY][newX]) {
+
+                    Point next = new Point(newX, newY);
+                    queue.add(next);
+                    visited[newY][newX] = true;
+                    parent[newY][newX] = current;
+                }
+            }
+        }
+
+        // if end found, reconstruct the path
+        if (foundEnd) {
+            reconstructPath(parent);
+            pathFound = true;
+        }
     }
 
+
+    /*
+    The primary goal of this method is to reconstruct the shortest path found by the Breadth-First Search (BFS) algorithm
+    from the start point to the end point. During BFS, each visited tile's parent is recorded, allowing us to trace back
+    the path once the end point is reached. This reconstructed path is then used to guide enemy movement.
+     */
     private void reconstructPath(Point[][] parent) {
+        // clear existing path points
+        pathPoints.clear();
+
+        // start from the end and work backward
+        Point current = endPoint;
+
+        // temporary list to store reversed path
+        ArrayList<Point> reversedPath = new ArrayList<>();
+        reversedPath.add(current);
+
+        // follow parent pointers back to start
+        while (!current.equals(startPoint)) {
+            current = parent[current.getY()][current.getX()];
+            if (current == null) break;
+            reversedPath.add(current);
+        }
+
+        // reverse the path to get start-to-end order
+        for (int i = reversedPath.size() - 1; i >= 0; i--) {
+            pathPoints.add(reversedPath.get(i));
+        }
     }
 
     public void update(){
@@ -100,8 +185,8 @@ public class EnemyManager {
         Point firstPoint = pathPoints.get(0);
 
         // calculate starting position (center of the start tile)
-        int x = (int) (firstPoint.getX() * tileSize);
-        int y = (int) (firstPoint.getY() * tileSize);
+        int x = firstPoint.getX() * tileSize;
+        int y = firstPoint.getY() * tileSize;
 
         Enemy enemy = null;
         switch(enemyType){
@@ -132,8 +217,8 @@ public class EnemyManager {
         Point nextPoint = pathPoints.get(pathIndex + 1);
 
         // calculate target position
-        int targetX = (int) (nextPoint.getX() * tileSize);
-        int targetY = (int) (nextPoint.getY() * tileSize);
+        int targetX = nextPoint.getX() * tileSize;
+        int targetY = nextPoint.getY() * tileSize;
 
         // calculate direction to move
         float xDiff = targetX - e.getX();
