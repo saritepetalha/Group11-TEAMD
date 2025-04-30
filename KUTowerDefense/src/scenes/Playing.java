@@ -13,6 +13,7 @@ import managers.TileManager;
 import managers.TowerManager;
 
 import managers.WaveManager;
+import objects.Tower;
 import ui_p.DeadTree;
 
 import managers.EnemyManager;
@@ -29,7 +30,9 @@ public class Playing extends GameScene implements SceneMethods {
     private TileManager tileManager;
 
     private EnemyManager enemyManager;
+
     private DeadTree selectedDeadTree;
+    private Tower displayedTower;
 
 
     public Playing(Game game, TileManager tileManager) {
@@ -162,6 +165,7 @@ public class Playing extends GameScene implements SceneMethods {
         towerManager.draw(g);
         drawTowerButtons(g);
         drawHighlight(g);
+        drawDisplayedTower(g);
     }
 
     private void drawHighlight(Graphics g) {
@@ -181,6 +185,17 @@ public class Playing extends GameScene implements SceneMethods {
         g2d.drawRect(mouseX, mouseY, 64, 64);
 
         g2d.dispose();
+    }
+
+    private void drawDisplayedTower(Graphics g) {
+        if (displayedTower != null) {
+            drawDisplayedTowerBorder(g);
+        }
+    }
+
+    private void drawDisplayedTowerBorder(Graphics g) {
+        g.setColor(Color.CYAN);
+        g.drawRect(displayedTower.getX(), displayedTower.getY(), 64, 64);
     }
 
     private void modifyTile(int x, int y, String tile) {
@@ -248,6 +263,13 @@ public class Playing extends GameScene implements SceneMethods {
             }
         }
 
+        for (Tower tower: towerManager.getTowers()) {
+            if (tower.isClicked(mouseX, mouseY)) {
+                displayedTower = tower;
+                return;
+            }
+        }
+
 
     }
 
@@ -280,6 +302,8 @@ public class Playing extends GameScene implements SceneMethods {
 
     public void setSelectedDeadTree(DeadTree deadTree) {this.selectedDeadTree = deadTree;}
 
+    public Tower getDisplayedTower() {return displayedTower;}
+
     private void spawnEnemy() {
         enemyManager.spawnEnemy(waveManager.getNextEnemy());
     }
@@ -290,4 +314,6 @@ public class Playing extends GameScene implements SceneMethods {
         }
         return false;
     }
+
+    public void setDisplayedTower(Tower tower) {displayedTower = tower;}
 }

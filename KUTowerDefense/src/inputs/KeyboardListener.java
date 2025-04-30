@@ -49,6 +49,10 @@ public class KeyboardListener implements KeyListener {
             if (GameStates.gameState == GameStates.PLAYING) {
                 if (game.getPlaying().getSelectedDeadTree() != null) {
                     game.getPlaying().getSelectedDeadTree().setShowChoices(false);
+                    game.getPlaying().setSelectedDeadTree(null);
+                }
+                if (game.getPlaying().getDisplayedTower() != null) {
+                    game.getPlaying().setDisplayedTower(null);
                 }
             }
 

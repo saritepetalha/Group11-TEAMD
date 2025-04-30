@@ -74,6 +74,8 @@ public class TowerManager {
         towers.add(new Tower(x, y, BOMB));
     }
 
+    public ArrayList<Tower> getTowers() {return towers;}
+
 
 }
 
