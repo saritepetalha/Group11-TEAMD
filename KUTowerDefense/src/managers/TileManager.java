@@ -1,7 +1,6 @@
 package managers;
 
 import constants.GameDimensions;
-import main.Game;
 import objects.Tile;
 
 import java.awt.*;
@@ -9,7 +8,6 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import helpMethods.LoadSave;
 import ui_p.ButtonAssets;
-import constants.GameDimensions;
 
 public class TileManager {
     public Tile

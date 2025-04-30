@@ -3,10 +3,8 @@ package managers;
 import constants.GameDimensions;
 import enemies.Enemy;
 import enemies.*;
-import scenes.MapEditing;
 import scenes.Playing;
 import helpMethods.LoadSave;
-import constants.Constants;
 import objects.Point;
 
 import java.awt.*;
@@ -17,6 +15,7 @@ import java.util.LinkedList;
 
 import static constants.Constants.PathPoints.*;
 import static constants.Constants.Tiles.*;
+import static constants.Constants.Enemies.*;
 
 public class EnemyManager {
     private Playing playing;
@@ -39,8 +38,8 @@ public class EnemyManager {
         if (startPoint != null && endPoint != null) {
             generatePath(tileData);
         }
-        //addEnemy(64*3, 64*3, Constants.Enemies.GOBLIN);
-        //addEnemy(64*3, 64*3, Constants.Enemies.WARRIOR);
+        addEnemy(GOBLIN);
+        addEnemy(WARRIOR);
         //enemyTest = new Enemy(64*3, 64*3, 0, 0);
     }
 
@@ -185,15 +184,15 @@ public class EnemyManager {
         Point firstPoint = pathPoints.get(0);
 
         // calculate starting position (center of the start tile)
-        int x = firstPoint.getX() * tileSize;
-        int y = firstPoint.getY() * tileSize;
+        int x = firstPoint.getX() * tileSize + tileSize / 2;;
+        int y = firstPoint.getY() * tileSize + tileSize / 2;;
 
         Enemy enemy = null;
         switch(enemyType){
-            case Constants.Enemies.GOBLIN:
+            case GOBLIN:
                 enemies.add(new Goblin(x,y, nextEnemyID++));
                 break;
-            case Constants.Enemies.WARRIOR:
+            case WARRIOR:
                 enemies.add(new Warrior(x,y,nextEnemyID++));
                 break;
         }
@@ -217,8 +216,8 @@ public class EnemyManager {
         Point nextPoint = pathPoints.get(pathIndex + 1);
 
         // calculate target position
-        int targetX = nextPoint.getX() * tileSize;
-        int targetY = nextPoint.getY() * tileSize;
+        int targetX = nextPoint.getX() * tileSize + tileSize / 2;
+        int targetY = nextPoint.getY() * tileSize + tileSize / 2;
 
         // calculate direction to move
         float xDiff = targetX - e.getX();
@@ -241,13 +240,13 @@ public class EnemyManager {
 
     public void draw(Graphics g){
         for (Enemy enemy: enemies){
+            enemy.updateAnimationTick();
             drawEnemy(enemy, g);
         }
-        //drawEnemy(enemyTest, g);
     }
 
     // method to extract all enemy animation frames (6 goblin + 6 warrior)
-    // returns an array: 0-5 goblin, 6-11 warrior
+    // returns an array: 0-5 goblin animation, 6-11 warrior animation
     public static BufferedImage[] extractEnemyFrames() {
         BufferedImage[] enemyFrames = new BufferedImage[12];
 
@@ -259,17 +258,26 @@ public class EnemyManager {
         for (int i = 0; i < 6; i++) {
             // goblin frames
             BufferedImage goblinFrame = goblinSheet.getSubimage(i * 192, 0, 192, 192);
-            enemyFrames[i] = goblinFrame.getSubimage(64, 64, 64, 64); // center 64x64
+            enemyFrames[i] = goblinFrame.getSubimage(30, 40, 120, 100); // center 64x64
 
             // warrior frames
             BufferedImage warriorFrame = warriorSheet.getSubimage(i * 192, 0, 192, 192);
-            enemyFrames[6 + i] = warriorFrame.getSubimage(64, 64, 64, 64); // center 64x64
+            enemyFrames[6 + i] = warriorFrame.getSubimage(30, 40,120, 100); // center 64x64
         }
 
         return enemyFrames;
     }
 
     private void drawEnemy(Enemy enemy, Graphics g){
-        g.drawImage(enemyImages[enemy.getEnemyType()], (int) enemy.getX(), (int) enemy.getY(), null);
+        int baseIndex = enemy.getEnemyType() * 6; // Goblin=0, Warrior=1 → 0 or 6
+        int frame = baseIndex + enemy.getAnimationIndex();
+
+        BufferedImage sprite = enemyImages[frame];
+
+        // ALIGNMENT LOGIC MUST BE CHANGED TO A CONSISTENT ONE
+        int drawX = (int) (enemy.getX() - (float) sprite.getWidth() / 2);
+        int drawY = (int) (enemy.getY() - (float) sprite.getHeight() + tileSize/2);
+
+        g.drawImage(sprite, drawX, drawY, null);
     }
 }

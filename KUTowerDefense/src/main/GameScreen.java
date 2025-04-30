@@ -49,7 +49,7 @@ public class GameScreen extends JPanel {
 
 			// must be changed to normal game mode, since the editting mode is now on the playing case I didn't change it
 			case PLAYING:
-				width = GameDimensions.TOTAL_GAME_WIDTH;	//width = GameDimensions.GAME_WIDTH
+				width = GameDimensions.GAME_WIDTH;
 				height = GameDimensions.GAME_HEIGHT;
 				break;
 

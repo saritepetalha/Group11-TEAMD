@@ -7,7 +7,6 @@ import main.GameStates;
 
 import java.awt.event.KeyEvent;
 
-import static main.GameStates.*;
 
 public class KeyboardListener implements KeyListener {
 

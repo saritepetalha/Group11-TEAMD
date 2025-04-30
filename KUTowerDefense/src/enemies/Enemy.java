@@ -14,6 +14,11 @@ public abstract class Enemy {
     private boolean reachedEnd = false;
     private Rectangle boundary;    // for hit box
 
+    // for animation of enemies' walking
+    private int animationIndex = 0;
+    private int animationTick = 0;
+    private int animationSpeed = 10; // lower is faster
+
     public Enemy(float x, float y, int id, int enemyType, float speed){
         this.x = x;
         this.y = y;
@@ -46,6 +51,22 @@ public abstract class Enemy {
         this.y = y;
         updateBounds();
     }
+
+    public void updateAnimationTick() {
+        animationTick++;
+        if (animationTick >= animationSpeed) {
+            animationTick = 0;
+            animationIndex++;
+            if (animationIndex >= 6) {
+                animationIndex = 0;
+            }
+        }
+    }
+
+    public int getAnimationIndex() {
+        return animationIndex;
+    }
+
 
     public float getX() {
         return x;
