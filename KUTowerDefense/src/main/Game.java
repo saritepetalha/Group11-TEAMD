@@ -1,14 +1,5 @@
 package main;
 
-import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.io.InputStream;
-
-import helpMethods.LoadSave;
-import inputs.MyMouseListener;
-import inputs.KeyboardListener;
-
-import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 
 import managers.TileManager;

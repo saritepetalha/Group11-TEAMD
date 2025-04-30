@@ -1,9 +1,6 @@
 package ui_p;
 
 import helpMethods.LoadSave;
-import main.Game;
-import managers.TowerManager;
-import scenes.SceneMethods;
 
 import javax.imageio.ImageIO;
 import java.awt.*;

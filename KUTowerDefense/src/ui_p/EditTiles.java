@@ -11,7 +11,6 @@ import main.Game;
 import popUps.DialogueFactory;
 import scenes.MapEditing;
 import objects.Tile;
-import javax.imageio.ImageIO;
 import javax.swing.*;
 
 public class EditTiles extends Bar {

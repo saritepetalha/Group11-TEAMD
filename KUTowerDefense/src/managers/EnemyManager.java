@@ -3,10 +3,8 @@ package managers;
 import constants.GameDimensions;
 import enemies.Enemy;
 import enemies.*;
-import scenes.MapEditing;
 import scenes.Playing;
 import helpMethods.LoadSave;
-import constants.Constants;
 import objects.Point;
 
 import java.awt.*;

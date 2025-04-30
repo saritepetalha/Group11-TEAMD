@@ -1,8 +1,6 @@
 package scenes;
 
 import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.util.ArrayList;
 import java.util.List;
 
 import constants.GameDimensions;
@@ -11,13 +9,9 @@ import main.Game;
 
 import managers.TileManager;
 import managers.TowerManager;
-import objects.Tower;
-import ui_p.DeadTree;
-import ui_p.EditTiles;
-import ui_p.TheButton;
 
-import static main.GameStates.*;
-import objects.Tile;
+import ui_p.DeadTree;
+
 import managers.EnemyManager;
 import ui_p.PlayingBar;
 
