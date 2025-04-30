@@ -3,23 +3,27 @@ package managers;
 import constants.GameDimensions;
 import enemies.Enemy;
 import enemies.*;
-import scenes.MapEditing;
 import scenes.Playing;
 import helpMethods.LoadSave;
-import constants.Constants;
+import objects.GridPoint;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Queue;
+import java.util.LinkedList;
+
 import static constants.Constants.PathPoints.*;
+import static constants.Constants.Tiles.*;
+import static constants.Constants.Enemies.*;
 
 public class EnemyManager {
     private Playing playing;
     private BufferedImage[] enemyImages;
     //private Enemy enemyTest;
     private ArrayList<Enemy> enemies = new ArrayList<>();
-    private ArrayList<Point> pathPoints = new ArrayList<>();
-    private Point startPoint, endPoint;
+    private ArrayList<GridPoint> pathPoints = new ArrayList<>();
+    private GridPoint startPoint, endPoint;
     private int tileSize = GameDimensions.TILE_DISPLAY_SIZE;
     private int nextEnemyID = 0;
     private boolean pathFound = false;
@@ -34,8 +38,8 @@ public class EnemyManager {
         if (startPoint != null && endPoint != null) {
             generatePath(tileData);
         }
-        //addEnemy(64*3, 64*3, Constants.Enemies.GOBLIN);
-        //addEnemy(64*3, 64*3, Constants.Enemies.WARRIOR);
+        addEnemy(GOBLIN);
+        addEnemy(WARRIOR);
         //enemyTest = new Enemy(64*3, 64*3, 0, 0);
     }
 
@@ -43,10 +47,10 @@ public class EnemyManager {
         for (int y = 0; y < overlayData.length; y++) {
             for (int x = 0; x < overlayData[y].length; x++) {
                 if (overlayData[y][x] == START_POINT) {
-                    startPoint = new Point(x, y);
+                    startPoint = new GridPoint(x, y);
                 }
                 else if (overlayData[y][x] == END_POINT) {
-                    endPoint = new Point(x, y);
+                    endPoint = new GridPoint(x, y);
                 }
             }
         }
@@ -58,9 +62,89 @@ public class EnemyManager {
 
 
     private void generatePath(int[][] tileData) {
+        // implementation of Breadth-First Search to find path from start to end
+        if (startPoint == null || endPoint == null) return;
+
+        int rows = tileData.length;
+        int cols = tileData[0].length;
+
+        // direction arrays for 4-directional movement
+        int[] dx = {-1, 0, 1, 0}; // left, up, right, down
+        int[] dy = {0, -1, 0, 1};
+
+        // initialize visited array and parent map for path reconstruction
+        boolean[][] visited = new boolean[rows][cols];
+        GridPoint[][] parent = new GridPoint[rows][cols];
+
+        // BFS queue
+        Queue<GridPoint> queue = new LinkedList<>();
+        queue.add(startPoint);
+        visited[startPoint.getY()][startPoint.getX()] = true;
+
+        boolean foundEnd = false;
+
+        // BFS to find path
+        while (!queue.isEmpty() && !foundEnd) {
+            GridPoint current = queue.poll();
+
+            // check if we reached the end
+            if (current.equals(endPoint)) {
+                foundEnd = true;
+                break;
+            }
+
+            // try all four directions respectively
+            for (int i = 0; i < 4; i++) {
+                int newX = current.getX() + dx[i];
+                int newY = current.getY() + dy[i];
+
+                // check bounds and if it's a valid road and not visited
+                if (isValidPosition(newX, newY, rows, cols) && isRoadTile(tileData[newY][newX]) &&
+                        !visited[newY][newX]) {
+
+                    GridPoint next = new GridPoint(newX, newY);
+                    queue.add(next);
+                    visited[newY][newX] = true;
+                    parent[newY][newX] = current;
+                }
+            }
+        }
+
+        // if end found, reconstruct the path
+        if (foundEnd) {
+            reconstructPath(parent);
+            pathFound = true;
+        }
     }
 
-    private void reconstructPath(Point[][] parent) {
+
+    /*
+    The primary goal of this method is to reconstruct the shortest path found by the Breadth-First Search (BFS) algorithm
+    from the start point to the end point. During BFS, each visited tile's parent is recorded, allowing us to trace back
+    the path once the end point is reached. This reconstructed path is then used to guide enemy movement.
+     */
+    private void reconstructPath(GridPoint[][] parent) {
+        // clear existing path points
+        pathPoints.clear();
+
+        // start from the end and work backward
+        GridPoint current = endPoint;
+
+        // temporary list to store reversed path
+        ArrayList<GridPoint> reversedPath = new ArrayList<>();
+        reversedPath.add(current);
+
+        // follow parent pointers back to start
+        while (!current.equals(startPoint)) {
+            current = parent[current.getY()][current.getX()];
+            if (current == null) break;
+            reversedPath.add(current);
+        }
+
+        // reverse the path to get start-to-end order
+        for (int i = reversedPath.size() - 1; i >= 0; i--) {
+            pathPoints.add(reversedPath.get(i));
+        }
     }
 
     public void update(){
@@ -97,18 +181,18 @@ public class EnemyManager {
     public void addEnemy(int enemyType){
         if (!pathFound || pathPoints.isEmpty()) return;
 
-        Point firstPoint = pathPoints.get(0);
+        GridPoint firstPoint = pathPoints.get(0);
 
         // calculate starting position (center of the start tile)
-        int x = (int) (firstPoint.getX() * tileSize);
-        int y = (int) (firstPoint.getY() * tileSize);
+        int x = firstPoint.getX() * tileSize + tileSize / 2;;
+        int y = firstPoint.getY() * tileSize + tileSize / 2;;
 
         Enemy enemy = null;
         switch(enemyType){
-            case Constants.Enemies.GOBLIN:
+            case GOBLIN:
                 enemies.add(new Goblin(x,y, nextEnemyID++));
                 break;
-            case Constants.Enemies.WARRIOR:
+            case WARRIOR:
                 enemies.add(new Warrior(x,y,nextEnemyID++));
                 break;
         }
@@ -128,12 +212,12 @@ public class EnemyManager {
         }
 
         // get current path point and next path point
-        Point currentPoint = pathPoints.get(pathIndex);
-        Point nextPoint = pathPoints.get(pathIndex + 1);
+        GridPoint currentPoint = pathPoints.get(pathIndex);
+        GridPoint nextPoint = pathPoints.get(pathIndex + 1);
 
         // calculate target position
-        int targetX = (int) (nextPoint.getX() * tileSize);
-        int targetY = (int) (nextPoint.getY() * tileSize);
+        int targetX = nextPoint.getX() * tileSize + tileSize / 2;
+        int targetY = nextPoint.getY() * tileSize + tileSize / 2;
 
         // calculate direction to move
         float xDiff = targetX - e.getX();
@@ -156,13 +240,13 @@ public class EnemyManager {
 
     public void draw(Graphics g){
         for (Enemy enemy: enemies){
+            enemy.updateAnimationTick();
             drawEnemy(enemy, g);
         }
-        //drawEnemy(enemyTest, g);
     }
 
     // method to extract all enemy animation frames (6 goblin + 6 warrior)
-    // returns an array: 0-5 goblin, 6-11 warrior
+    // returns an array: 0-5 goblin animation, 6-11 warrior animation
     public static BufferedImage[] extractEnemyFrames() {
         BufferedImage[] enemyFrames = new BufferedImage[12];
 
@@ -174,17 +258,26 @@ public class EnemyManager {
         for (int i = 0; i < 6; i++) {
             // goblin frames
             BufferedImage goblinFrame = goblinSheet.getSubimage(i * 192, 0, 192, 192);
-            enemyFrames[i] = goblinFrame.getSubimage(64, 64, 64, 64); // center 64x64
+            enemyFrames[i] = goblinFrame.getSubimage(30, 40, 120, 100); // center 64x64
 
             // warrior frames
             BufferedImage warriorFrame = warriorSheet.getSubimage(i * 192, 0, 192, 192);
-            enemyFrames[6 + i] = warriorFrame.getSubimage(64, 64, 64, 64); // center 64x64
+            enemyFrames[6 + i] = warriorFrame.getSubimage(30, 40,120, 100); // center 64x64
         }
 
         return enemyFrames;
     }
 
     private void drawEnemy(Enemy enemy, Graphics g){
-        g.drawImage(enemyImages[enemy.getEnemyType()], (int) enemy.getX(), (int) enemy.getY(), null);
+        int baseIndex = enemy.getEnemyType() * 6; // Goblin=0, Warrior=1 → 0 or 6
+        int frame = baseIndex + enemy.getAnimationIndex();
+
+        BufferedImage sprite = enemyImages[frame];
+
+        // ALIGNMENT LOGIC MUST BE CHANGED TO A CONSISTENT ONE
+        int drawX = (int) (enemy.getX() - (float) sprite.getWidth() / 2);
+        int drawY = (int) (enemy.getY() - (float) sprite.getHeight() + tileSize/2);
+
+        g.drawImage(sprite, drawX, drawY, null);
     }
 }

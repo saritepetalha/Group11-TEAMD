@@ -11,7 +11,7 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 
-import static dimensions.TowerConstants.Towers.*;
+import static constants.TowerConstants.Towers.*;
 
 public class TowerManager {
     private Playing playing;

@@ -11,12 +11,18 @@ import java.util.ArrayList;
 
 public class ButtonAssets {
     // static to only load once per run!
-    public static BufferedImage buttonSheetImg;
-    public static BufferedImage yellowHoverImg;
-    public static BufferedImage pressedImg;
+
     public static BufferedImage modeLabelImg;
     public static BufferedImage modeImage;
+
+    public static BufferedImage buttonSheetImg;
     public static ArrayList<BufferedImage> buttonImages = new ArrayList<>();
+
+    public static BufferedImage buttonHoverEffectImg;
+    public static ArrayList<BufferedImage> buttonHoverEffectImages = new ArrayList<>();
+
+    public static BufferedImage buttonPressedEffectImg;
+    public static ArrayList<BufferedImage> buttonPressedEffectImages = new ArrayList<>();
 
     public static BufferedImage startPointImg;
     public static BufferedImage endPointImg;
@@ -30,35 +36,39 @@ public class ButtonAssets {
     }
 
     private static void loadAll() {
-        loadButtonImageFile();
-        loadYellowBorderImage();
-        loadPressedButtonImage();
         loadModeImageFile();
         loadModeImage();
-        loadButtonImages();
         loadStartPointImg();
         loadEndPointImg();
+
+        loadButtonImageFile();
+        loadButtonHoverEffectImageFile();
+        loadButtonPressedEffectImageFile();
+
+        loadButtonImages();
+        loadButtonHoverEffectImages();
+        loadButtonPressedEffectImages();
     }
 
     private static void loadButtonImageFile() {
-        try (InputStream is = LoadSave.class.getResourceAsStream("/UI/kutowerbuttons4.png")) {
+        try (InputStream is = LoadSave.class.getResourceAsStream("/UI/buttonNormalAssets.png")) {
             buttonSheetImg = ImageIO.read(is);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private static void loadYellowBorderImage() {
-        try (InputStream is = LoadSave.class.getResourceAsStream("/UI/Button_Hover.png")) {
-            yellowHoverImg = ImageIO.read(is);
+    private static void loadButtonPressedEffectImageFile() {
+        try (InputStream is = LoadSave.class.getResourceAsStream("/UI/buttonPressedAssets.png")) {
+            buttonPressedEffectImg = ImageIO.read(is);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private static void loadPressedButtonImage() {
-        try (InputStream is = LoadSave.class.getResourceAsStream("/UI/Button_Blue_Pressed.png")) {
-            pressedImg = ImageIO.read(is);
+    private static void loadButtonHoverEffectImageFile() {
+        try (InputStream is = LoadSave.class.getResourceAsStream("/UI/buttonHoveredAssets.png")) {
+            buttonHoverEffectImg = ImageIO.read(is);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -77,13 +87,40 @@ public class ButtonAssets {
     }
 
     private static void loadButtonImages() {
-        int tileSize = 64;
+        int tileHeight = 681;
+        int tileWidth = 605;
         buttonImages.clear();
         for (int y = 0; y < 4; y++) {
             for (int x = 0; x < 4; x++) {
-                int subX = x * tileSize;
-                int subY = y * tileSize;
-                buttonImages.add(buttonSheetImg.getSubimage(subX, subY, tileSize, tileSize));
+                int subX = x * tileWidth;
+                int subY = y * tileHeight;
+                buttonImages.add(buttonSheetImg.getSubimage(subX, subY, tileWidth, tileHeight));
+            }
+        }
+    }
+
+    private static void loadButtonHoverEffectImages() {
+        int tileHeight = 701;
+        int tileWidth = 627;
+        buttonHoverEffectImages.clear();
+        for (int y = 0; y < 4; y++) {
+            for (int x = 0; x < 4; x++) {
+                int subX = x * tileWidth;
+                int subY = y * tileHeight;
+                buttonHoverEffectImages.add(buttonHoverEffectImg.getSubimage(subX, subY, tileWidth, tileHeight));
+            }
+        }
+    }
+
+    private static void loadButtonPressedEffectImages() {
+        int tileHeight = 654;
+        int tileWidth = 678;
+        buttonPressedEffectImages.clear();
+        for (int y = 0; y < 4; y++) {
+            for (int x = 0; x < 4; x++) {
+                int subX = x * tileWidth;
+                int subY = y * tileHeight;
+                buttonPressedEffectImages.add(buttonPressedEffectImg.getSubimage(subX, subY, tileWidth, tileHeight));
             }
         }
     }

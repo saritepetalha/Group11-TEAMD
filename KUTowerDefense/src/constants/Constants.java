@@ -178,9 +178,12 @@ public class Constants {
 
     public static class Tiles {
         public static final int GRASS_TILE = 1;
-        public static final int ROAD_TILE = 2;
-        public static final int EMPTY_LOT = 3; // where tower can be built
-        public static final int PREBUILT_TOWER = 4;
-        public static final int DECORATIVE = 5;
+        public static final int EMPTY_LOT = 2; // where tower can be built
+        public static final int PREBUILT_TOWER = 3;
+        public static final int DECORATIVE = 4;
+
+        public static boolean isRoadTile(int tile) {
+            return tile >= 0 && tile <= 14 && tile != 5;
+        }
     }
 }
