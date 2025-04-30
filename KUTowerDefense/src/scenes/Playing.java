@@ -161,9 +161,27 @@ public class Playing extends GameScene implements SceneMethods {
         drawMap(g);
         towerManager.draw(g);
         drawTowerButtons(g);
-
+        drawHighlight(g);
     }
 
+    private void drawHighlight(Graphics g) {
+        Graphics2D g2d = (Graphics2D) g.create();
+
+        // Set transparency level (0.0f = fully transparent, 1.0f = fully opaque)
+        float alpha = 0.2f; // Adjust the transparency as needed
+        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+
+        // Set fill color to white
+        g2d.setColor(Color.WHITE);
+        g2d.fillRect(mouseX, mouseY, 64, 64);
+
+        // Optional: draw white border with full opacity
+        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));
+        g2d.setColor(Color.WHITE);
+        g2d.drawRect(mouseX, mouseY, 64, 64);
+
+        g2d.dispose();
+    }
 
     private void modifyTile(int x, int y, String tile) {
 
@@ -238,7 +256,10 @@ public class Playing extends GameScene implements SceneMethods {
     }
 
     @Override
-    public void mouseMoved(int x, int y) {}
+    public void mouseMoved(int x, int y) {
+        mouseX = (x / 64) * 64;
+        mouseY = (y / 64) * 64;
+    }
 
     @Override
     public void mousePressed(int x, int y) {}

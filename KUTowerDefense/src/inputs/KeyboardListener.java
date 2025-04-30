@@ -4,6 +4,7 @@ import java.awt.event.KeyListener;
 
 import main.Game;
 import main.GameStates;
+import ui_p.DeadTree;
 
 import java.awt.event.KeyEvent;
 
@@ -46,7 +47,9 @@ public class KeyboardListener implements KeyListener {
 
             // If in playing state, clear the tile selection
             if (GameStates.gameState == GameStates.PLAYING) {
-                game.getPlaying().getSelectedDeadTree().setShowChoices(false);
+                if (game.getPlaying().getSelectedDeadTree() != null) {
+                    game.getPlaying().getSelectedDeadTree().setShowChoices(false);
+                }
             }
 
         }
