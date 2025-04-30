@@ -86,10 +86,10 @@ public class Playing extends GameScene implements SceneMethods {
             System.out.println("Level not found, creating default level.");
             for (int i = 0; i < lvl.length; i++) {
                 for (int j = 0; j < lvl[i].length; j++) {
-                    if (i == 4) { // Orta satır
-                        lvl[i][j] = 13; // Yol
+                    if (i == 4) {
+                        lvl[i][j] = 13;
                     } else {
-                        lvl[i][j] = 5; // Çimen
+                        lvl[i][j] = 5;
                     }
                 }
             }
@@ -99,7 +99,21 @@ public class Playing extends GameScene implements SceneMethods {
     }
 
     public void loadLevel(String levelName) {
-        level = LoadSave.getLevelData(levelName);
+        int[][] loadedLevel = LoadSave.loadLevel(levelName);
+        if (loadedLevel != null) {
+            this.level = loadedLevel;
+            this.overlay = new int[loadedLevel.length][loadedLevel[0].length];
+            for (int i = 0; i < loadedLevel.length; i++) {
+                for (int j = 0; j < loadedLevel[i].length; j++) {
+                    if (loadedLevel[i][j] == 1) {
+                        overlay[i][j] = 1;
+                    } else if (loadedLevel[i][j] == 2) {
+                        overlay[i][j] = 2;
+                    }
+                }
+            }
+            enemyManager = new EnemyManager(this, overlay, level);
+        }
     }
 
     public void drawTowerButtons(Graphics g) {
@@ -170,8 +184,6 @@ public class Playing extends GameScene implements SceneMethods {
         drawMap(g);
         towerManager.draw(g);
         drawTowerButtons(g);
-        playingUI.draw(g);
-        setCustomCursor();
     }
 
 

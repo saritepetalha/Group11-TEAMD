@@ -60,7 +60,7 @@ public class Game extends JFrame implements Runnable{
 		gamescreen.setPanelSize(); // adjust GameScreen size
 		pack();                    // resize JFrame according to new dimensions
 		setLocationRelativeTo(null); // re-center the window
-		setCustomCursor(); // her durum değişikliğinde imleci yeniden ayarla
+		setCustomCursor();
 	}
 
 	private void initClasses() {
