@@ -77,6 +77,7 @@ public class WaveManager {
         waveTick = 0;
         waveTickTimerOver = false;
         System.out.println("Wave tick: " + waveTick + ", Wave tick limit: " + waveTickLimit);
+        enemySpawnTick = enemySpawnTickLimit;
     }
 
     public boolean isWaveTimerOver() {

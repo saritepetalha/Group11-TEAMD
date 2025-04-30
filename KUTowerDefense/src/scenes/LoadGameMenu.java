@@ -64,6 +64,8 @@ public class LoadGameMenu extends JFrame {
                     game.getMapEditing().setLevel(levelData);
                     game.getMapEditing().setOverlayData(new int[levelData.length][levelData[0].length]);
                     game.getMapEditing().setCurrentLevelName(selectedLevel);
+                }else if (mode == GameStates.PLAYING) {
+                    game.getPlaying().loadLevel(selectedLevel);
                 }
                 game.changeGameState(mode);
             }
