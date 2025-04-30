@@ -112,6 +112,12 @@ public class Playing extends GameScene implements SceneMethods {
     }
 
     public void update() {
+        waveManager.update();
+
+        if (isTimeForNewEnemy()){
+            spawnEnemy();
+        }
+
         enemyManager.update();
         towerManager.update();
     }
@@ -210,5 +216,16 @@ public class Playing extends GameScene implements SceneMethods {
 
     public WaveManager getWaveManager() {
         return waveManager;
+    }
+
+    private void spawnEnemy() {
+        enemyManager.spawnEnemy(waveManager.getNextEnemy());
+    }
+
+    private boolean isTimeForNewEnemy() {
+        if(waveManager.isTimeForNewEnemy()){
+            return !waveManager.isWaveFinished();
+        }
+        return false;
     }
 }

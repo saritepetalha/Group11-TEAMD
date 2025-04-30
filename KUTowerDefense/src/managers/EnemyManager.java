@@ -148,13 +148,6 @@ public class EnemyManager {
     }
 
     public void update(){
-
-        updateWaveManager();
-
-        if (isTimeForNewEnemy()){
-            spawnEnemy();
-        }
-
         for (Enemy enemy:enemies){
             enemy.move(0.3f, 0);
         }
@@ -182,22 +175,6 @@ public class EnemyManager {
         enemies.removeAll(enemiesToRemove);
         //enemyTest.move(0.3f,0);
     }
-
-    private void updateWaveManager() {
-        playing.getWaveManager().update();
-    }
-
-    private void spawnEnemy() {
-        addEnemy(playing.getWaveManager().getNextEnemy());
-    }
-
-    private boolean isTimeForNewEnemy() {
-        if(playing.getWaveManager().isTimeForNewEnemy()){
-            return !playing.getWaveManager().isWaveFinished();
-        }
-        return false;
-    }
-
 
     public void addEnemy(int enemyType){
         if (!pathFound || pathPoints.isEmpty()) return;
@@ -300,5 +277,9 @@ public class EnemyManager {
         int drawY = (int) (enemy.getY() - (float) sprite.getHeight() + tileSize/2);
 
         g.drawImage(sprite, drawX, drawY, null);
+    }
+
+    public void spawnEnemy(int nextEnemy) {
+        addEnemy(nextEnemy);
     }
 }
