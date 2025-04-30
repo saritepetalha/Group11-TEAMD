@@ -32,86 +32,15 @@ public class EditTiles extends Bar {
 
     private TheButton startPoint, endPoint;
 
-    /*
-    private ArrayList<BufferedImage> ButtonImages = new ArrayList<>();
-    private static BufferedImage buttonSheetImg;
-    private static BufferedImage yellowHoverImg;
-    private static BufferedImage modeLabelImg;
-    private static BufferedImage pressedImg;
-    private BufferedImage modeImage;*/
-
     public EditTiles(int x, int y, int width, int height, MapEditing mapEditing, Game game, Window owner) {
         super(x, y, width, height);
         this.mapEditing = mapEditing;
         this.game = game;
         this.owner = owner;
 
-        /*
-        loadButtonImageFile();
-        loadButtonImages();
-
-        loadYellowBorderImage();
-        loadPressedButtonImage();
-
-        loadModeImageFile();
-        loadModeImage();*/
-
         initButtons();
     }
 
-
-    /*
-    public static void loadPressedButtonImage() {
-        InputStream is = LoadSave.class.getResourceAsStream("/UI/Button_Blue_Pressed.png");
-        try {
-            pressedImg = ImageIO.read(is);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static void loadYellowBorderImage() {
-        InputStream is = LoadSave.class.getResourceAsStream("/UI/Button_Hover.png");
-        try {
-            yellowHoverImg = ImageIO.read(is);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static void loadButtonImageFile() {
-        InputStream is = LoadSave.class.getResourceAsStream("/UI/kutowerbuttons4.png");
-        try {
-            buttonSheetImg = ImageIO.read(is);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static void loadModeImageFile() {
-        InputStream is = LoadSave.class.getResourceAsStream("/UI/Button_Blue_3Slides.png");
-        try {
-            modeLabelImg = ImageIO.read(is);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void loadButtonImages() {
-        int tileSize = 64;
-
-        for (int y = 0; y < 4; y++) {
-            for (int x = 0; x < 4; x++) {
-                int subX = x * tileSize;
-                int subY = y * tileSize;
-                ButtonImages.add(buttonSheetImg.getSubimage(subX, subY, tileSize, tileSize));
-            }
-        }
-    }
-
-    private void loadModeImage() {
-        modeImage = modeLabelImg.getSubimage(0, 0, 192, 64);
-    }*/
 
     private void initButtons() {
         backMenu = new TheButton("Back",

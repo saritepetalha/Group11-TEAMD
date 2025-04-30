@@ -28,8 +28,8 @@ public class LoadSave {
     public static BufferedImage getEnemyAtlas(String enemyType) {
         BufferedImage img = null;
         String path = switch (enemyType.toLowerCase()) {
-            case "warrior" -> "/EnemyAssets/Goblin_Red.png";
-            case "goblin" -> "/EnemyAssets/Warrior_Blue.png";
+            case "warrior" -> "/EnemyAssets/Warrior_Blue.png";
+            case "goblin" -> "/EnemyAssets/Goblin_Red.png";
             default -> throw new IllegalArgumentException("Unknown enemy type: " + enemyType);
         };
 
@@ -51,12 +51,17 @@ public class LoadSave {
     //As in the location of the enemy groups, location of towers etc.
     //THIS FUNCTION'S LOGIC CHANGED TO IMPLEMENT SAVE LEVEL LOGIC
     public static void createLevel(String fileName, int[][] tiles) {
-        File levelsFolder = new File("resources/Levels");
+        // get the absolute path to the target directory
+        String userDir = System.getProperty("user.dir");
+        File levelsFolder = new File(userDir, "resources/Levels");
+
+        //File levelsFolder = new File("resources/Levels");
         if (!levelsFolder.exists()) {
             levelsFolder.mkdirs();
         }
 
-        File file = new File("resources/Levels/" + fileName + ".json");
+        File file = new File(levelsFolder, fileName + ".json");
+        //File file = new File("resources/Levels/" + fileName + ".json");
         Gson gson = new GsonBuilder()
                 .setPrettyPrinting()
                 .create();
@@ -66,6 +71,7 @@ public class LoadSave {
 
         // write it out
         try (Writer w = new FileWriter(file)) {
+            System.out.println("Saving level to: " + file.getAbsolutePath());
             System.out.println(gson.toJson(root));
             gson.toJson(root, w);
         } catch (IOException e) {
@@ -76,15 +82,31 @@ public class LoadSave {
     //This funcion gets the created level's data from Levels folder under resources
     //FRONT END IS NOT IMPLEMENTED YET
     public static int[][] getLevelData(String fileName) {
+        /*
         File file = new File("resources/Levels/" + fileName + ".json");
         if (!file.exists()) {
             System.err.println("Level file not found: " + file.getPath());
             return null;
-        }
+        }*/
 
-        try (Reader reader = new FileReader(file)) {
+        try {
+            // Load from classpath resources
+            InputStream is = LoadSave.class.getResourceAsStream("/Levels/" + fileName + ".json");
+            if (is == null) {
+                System.err.println("Level file not found: /Levels/" + fileName + ".json");
+
+                // Fallback to file system for backward compatibility
+                File file = new File("resources/Levels/" + fileName + ".json");
+                if (!file.exists()) {
+                    System.err.println("Level file not found in file system either: " + file.getPath());
+                    return null;
+                }
+                is = new FileInputStream(file);
+            }
+
+        //try (Reader reader = new FileReader(file)) {
             // 1) Parse the JSON root object
-            JsonObject root = GSON.fromJson(reader, JsonObject.class);
+            JsonObject root = GSON.fromJson(new InputStreamReader(is), JsonObject.class);
 
             // 2) Get the "tiles" JsonArray
             JsonArray tilesJson = root.getAsJsonArray("tiles");
@@ -105,7 +127,12 @@ public class LoadSave {
 
     public static ArrayList<String> getSavedLevels() {
         ArrayList<String> levelNames = new ArrayList<>();
-        File levelsFolder = new File("resources/Levels");
+
+        // g the absolute path to the target directory
+        String userDir = System.getProperty("user.dir");
+        File levelsFolder = new File(userDir, "resources/Levels");
+
+        //File levelsFolder = new File("resources/Levels");
         
         if (!levelsFolder.exists()) {
             levelsFolder.mkdirs();
