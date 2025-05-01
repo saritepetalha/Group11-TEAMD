@@ -188,10 +188,36 @@ public class Playing extends GameScene implements SceneMethods {
     }
 
     private void drawDisplayedTower(Graphics g) {
-        if (displayedTower != null) {
-            drawDisplayedTowerBorder(g);
-        }
+        if (displayedTower == null) return;
+        drawDisplayedTowerBorder(g);
+        drawDisplayedTowerRange(g);
     }
+
+    private void drawDisplayedTowerRange(Graphics g) {
+        Graphics2D g2d = (Graphics2D) g.create();
+
+        int range = (int) displayedTower.getRange();
+        int centerX = displayedTower.getX() + 32;
+        int centerY = displayedTower.getY() + 32;
+        int topLeftX = centerX - range / 2;
+        int topLeftY = centerY - range / 2;
+
+        // Brown fill (solid)
+        Color brownFill = new Color(139, 69, 19, 60); // SaddleBrown
+        g2d.setColor(brownFill);
+        g2d.fillOval(topLeftX, topLeftY, range, range);
+
+        float[] dashPattern = {10f, 5f}; // 10px dash, 5px gap
+
+        // Yellow outline (semi-transparent)
+        Color yellowOutline = new Color(255, 255, 0); // Yellow with 50% opacity
+        g2d.setColor(yellowOutline);
+        g2d.setStroke(new BasicStroke(2, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, dashPattern, 0));
+        g2d.drawOval(topLeftX, topLeftY, range, range);
+
+        g2d.dispose();
+    }
+
 
     private void drawDisplayedTowerBorder(Graphics g) {
         g.setColor(Color.CYAN);

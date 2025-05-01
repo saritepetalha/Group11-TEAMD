@@ -33,15 +33,15 @@ public class Tower {
         damage = Constants.Towers.getStartDamage(type);
     }
 
-    private float getDamage() {
+    public float getDamage() {
         return damage;
     }
 
-    private float getRange() {
+    public float getRange() {
         return range;
     }
 
-    private float getCooldown() {
+    public float getCooldown() {
         return cooldown;
     }
 
