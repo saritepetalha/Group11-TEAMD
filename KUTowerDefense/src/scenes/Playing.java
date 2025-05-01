@@ -222,6 +222,7 @@ public class Playing extends GameScene implements SceneMethods {
         drawTowerButtons(g);
         drawHighlight(g);
         drawDisplayedTower(g);
+        playingUI.draw(g);
     }
 
     private void drawHighlight(Graphics g) {
@@ -272,8 +273,6 @@ public class Playing extends GameScene implements SceneMethods {
         g2d.drawOval(topLeftX, topLeftY, range * 2, range * 2);
 
         g2d.dispose();
-      
-        playingUI.draw(g);
 
     }
 
@@ -365,15 +364,18 @@ public class Playing extends GameScene implements SceneMethods {
 
     public EnemyManager getEnemyManager() {
         return enemyManager;
+    }
 
-    public PlayingUI getPlayingUI() {return playingUI;
+    public PlayingUI getPlayingUI() {
+        return playingUI;
     }
 
     @Override
     public void mouseMoved(int x, int y) {
         mouseX = (x / 64) * 64;
         mouseY = (y / 64) * 64;
-        //playingUI.mouseMoved(x, y);
+
+        playingUI.mouseMoved(x, y);
 
     }
 

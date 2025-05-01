@@ -149,7 +149,7 @@ public class Constants {
                 case GOBLIN:
                     return 100;
                 case WARRIOR:
-                    return 400;
+                    return 200;
             }
             return 0;
         }
