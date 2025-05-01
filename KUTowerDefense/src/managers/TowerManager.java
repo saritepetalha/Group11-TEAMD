@@ -41,7 +41,16 @@ public class TowerManager {
         attackEnemyIfInRange();
     }
 
+
+    public void update(float speedMultiplier) {
+        attackEnemyIfInRange(speedMultiplier);
+    }
+
     private void attackEnemyIfInRange() {
+        attackEnemyIfInRange(1.0f);
+    }
+
+    private void attackEnemyIfInRange(float speedMultiplier) {
         for (Tower tower : towers) {
             for (Enemy enemy : playing.getEnemyManager().getEnemies()) {
                 if (enemy.isAlive()) {

@@ -36,6 +36,10 @@ public class Playing extends GameScene implements SceneMethods {
     private DeadTree selectedDeadTree;
     private Tower displayedTower;
 
+    private boolean gamePaused = false;
+    private boolean gameSpeedIncreased = false;
+    private boolean optionsMenuOpen = false;
+    private float gameSpeedMultiplier = 1.0f;
 
     public Playing(Game game, TileManager tileManager) {
         super(game);
@@ -159,42 +163,46 @@ public class Playing extends GameScene implements SceneMethods {
                 g.drawImage(tileManager.getSprite(level[i][j]), j * GameDimensions.TILE_DISPLAY_SIZE, i * GameDimensions.TILE_DISPLAY_SIZE, null);
             }
         }
-        enemyManager.draw(g);
 
     }
 
     public void update() {
-        waveManager.update();
 
-        if (isAllEnemiesDead()) {
-            System.out.println("All enemies are dead");
-            if (isThereMoreWaves()) {
-                System.out.println("There are more waves");
-                if (!waveManager.isWaveTimerOver()) {
-                    System.out.println("Starting wave timer");
-                    waveManager.startTimer();
-                } else {
-                    System.out.println("Wave timer over, incrementing wave index");
-                    waveManager.incrementWaveIndex();
-                    enemyManager.getEnemies().clear();
-                    waveManager.resetEnemyIndex();
+        if (!gamePaused) {
+            waveManager.update();
+
+            if (isAllEnemiesDead()) {
+                System.out.println("All enemies are dead");
+                if (isThereMoreWaves()) {
+                    System.out.println("There are more waves");
+                    if (!waveManager.isWaveTimerOver()) {
+                        System.out.println("Starting wave timer");
+                        waveManager.startTimer();
+                    } else {
+                        System.out.println("Wave timer over, incrementing wave index");
+                        waveManager.incrementWaveIndex();
+                        enemyManager.getEnemies().clear();
+                        waveManager.resetEnemyIndex();
+                    }
                 }
             }
-        }
 
-        if (isTimeForNewEnemy()) {
-            System.out.println("Spawning new enemy");
-            spawnEnemy();
-        }
+            if (isTimeForNewEnemy()) {
+                System.out.println("Spawning new enemy");
+                spawnEnemy();
+            }
 
-        enemyManager.update();
-        towerManager.update();
-        updateUIResources();
+            enemyManager.update(gameSpeedMultiplier);
+            towerManager.update(gameSpeedMultiplier);
+            updateUIResources();
 
-        // check if game over
-        if (!playerManager.isAlive()) {
-            handleGameOver();
+            // check if game over
+            if (!playerManager.isAlive()) {
+                handleGameOver();
+            }
         }
+        // Check button states from PlayingUI even when paused
+        checkButtonStates();
     }
 
     private boolean isWaveTimerOver() {
@@ -221,10 +229,18 @@ public class Playing extends GameScene implements SceneMethods {
     public void render(Graphics g) {
         drawMap(g);
         towerManager.draw(g);
+        enemyManager.draw(g, gamePaused);         // pass the paused state to enemyManager.draw
         drawTowerButtons(g);
         drawHighlight(g);
         drawDisplayedTower(g);
         playingUI.draw(g);
+
+        if (optionsMenuOpen) {
+            drawOptionsMenu(g);
+        }
+        if (gamePaused) {
+            drawPauseOverlay(g);
+        }
     }
 
     private void drawHighlight(Graphics g) {
@@ -394,43 +410,64 @@ public class Playing extends GameScene implements SceneMethods {
     @Override
     public void mouseDragged(int x, int y) {}
 
+    private void checkButtonStates() {
+        // Check the states of control buttons
+        if (playingUI.getPauseButton().isMousePressed()) {
+            handlePauseButton(true);
+        } else {
+            handlePauseButton(false);
+        }
+
+        if (playingUI.getFastForwardButton().isMousePressed()) {
+            handleFastForwardButton(true);
+        } else {
+            handleFastForwardButton(false);
+        }
+
+        if (playingUI.getOptionsButton().isMousePressed()) {
+            handleOptionsButton(true);
+        } else {
+            handleOptionsButton(false);
+        }
+    }
+
     // Add helper methods to handle control button actions
     private void handlePauseButton(boolean isPressed) {
         // Toggle game pause state based on button state
         if (isPressed) {
             // Game is now paused
-            System.out.println("Game paused");
-            // TODO: Implement actual pause functionality
+            gamePaused = true;
         } else {
             // Game is now unpaused
-            System.out.println("Game resumed");
-            // TODO: Implement actual resume functionality
+            gamePaused = false;
         }
     }
 
     private void handleFastForwardButton(boolean isPressed) {
         // Toggle game speed based on button state
-        if (isPressed) {
+        if (isPressed && !gameSpeedIncreased) {
             // Game is now in fast forward mode
+            gameSpeedIncreased = true;
+            gameSpeedMultiplier = 2.0f; // Double game speed
             System.out.println("Game speed increased");
-            // TODO: Implement actual speed increase functionality
-        } else {
+        } else if (!isPressed && gameSpeedIncreased) {
             // Game is now at normal speed
+            gameSpeedIncreased = false;
+            gameSpeedMultiplier = 1.0f; // Normal game speed
             System.out.println("Game speed normal");
-            // TODO: Implement actual speed reset functionality
         }
     }
 
     private void handleOptionsButton(boolean isPressed) {
         // Show/hide options menu based on button state
-        if (isPressed) {
+        if (isPressed && !optionsMenuOpen) {
             // Show options menu
+            optionsMenuOpen = true;
             System.out.println("Options menu opened");
-            // TODO: Implement actual options menu display
-        } else {
+        } else if (!isPressed && optionsMenuOpen) {
             // Hide options menu
+            optionsMenuOpen = false;
             System.out.println("Options menu closed");
-            // TODO: Implement actual options menu hiding
         }
     }
 
@@ -491,6 +528,112 @@ public class Playing extends GameScene implements SceneMethods {
                 e.printStackTrace();
             }
         }).start();
+    }
+
+    private void drawPauseOverlay(Graphics g) {
+        // Create a semi-transparent overlay
+        Graphics2D g2d = (Graphics2D) g;
+
+        // Semi-transparent black overlay
+        g2d.setColor(new Color(0, 0, 0, 150));
+        g2d.fillRect(0, 0, GameDimensions.GAME_WIDTH, GameDimensions.GAME_HEIGHT);
+
+        // Draw "PAUSED" text
+        g2d.setFont(new Font("Arial", Font.BOLD, 48));
+        String pauseText = "PAUSED";
+
+        // Calculate text position to center it
+        FontMetrics fm = g2d.getFontMetrics();
+        int textWidth = fm.stringWidth(pauseText);
+        int textX = (GameDimensions.GAME_WIDTH - textWidth) / 2;
+        int textY = GameDimensions.GAME_HEIGHT / 2;
+
+        // Draw text shadow
+        g2d.setColor(new Color(0, 0, 0, 200));
+        g2d.drawString(pauseText, textX + 3, textY + 3);
+
+        // Draw text
+        g2d.setColor(Color.WHITE);
+        g2d.drawString(pauseText, textX, textY);
+
+        // Draw hint text
+        g2d.setFont(new Font("Arial", Font.PLAIN, 20));
+        String hintText = "Click pause button again to resume";
+
+        fm = g2d.getFontMetrics();
+        textWidth = fm.stringWidth(hintText);
+        textX = (GameDimensions.GAME_WIDTH - textWidth) / 2;
+        textY = GameDimensions.GAME_HEIGHT / 2 + 50;
+
+        g2d.setColor(new Color(200, 200, 200));
+        g2d.drawString(hintText, textX, textY);
+    }
+
+    private void drawOptionsMenu(Graphics g) {
+        // create a semi-transparent panel for the options menu
+        Graphics2D g2d = (Graphics2D) g;
+
+        int menuWidth = 300;
+        int menuHeight = 280;
+        int menuX = (GameDimensions.GAME_WIDTH - menuWidth) / 2;
+        int menuY = (GameDimensions.GAME_HEIGHT - menuHeight) / 2;
+
+        // draw menu background
+        g2d.setColor(new Color(50, 50, 50, 220));
+        g2d.fillRoundRect(menuX, menuY, menuWidth, menuHeight, 20, 20);
+
+        // draw border
+        g2d.setColor(new Color(200, 200, 200));
+        g2d.setStroke(new BasicStroke(2.0f));
+        g2d.drawRoundRect(menuX, menuY, menuWidth, menuHeight, 20, 20);
+
+        // draw title
+        g2d.setFont(new Font("Arial", Font.BOLD, 28));
+        g2d.setColor(Color.WHITE);
+        String title = "OPTIONS";
+        FontMetrics fm = g2d.getFontMetrics();
+        int titleWidth = fm.stringWidth(title);
+        g2d.drawString(title, menuX + (menuWidth - titleWidth) / 2, menuY + 40);
+
+        // draw options
+        g2d.setFont(new Font("Arial", Font.PLAIN, 20));
+
+        // option items
+        String[] options = {
+                "Sound: ON",
+                "Music: ON",
+                "Difficulty: Normal",
+                "Return to Main Menu"
+        };
+
+        int optionY = menuY + 90;
+        int spacing = 40;
+
+        for (int i = 0; i < options.length; i++) {
+            // draw option background
+            if (i == options.length - 1) {
+                // special styling for the last option
+                g2d.setColor(new Color(80, 80, 120));
+                g2d.fillRoundRect(menuX + 40, optionY + i * spacing - 25, menuWidth - 80, 36, 10, 10);
+                g2d.setColor(new Color(120, 120, 180));
+                g2d.drawRoundRect(menuX + 40, optionY + i * spacing - 25, menuWidth - 80, 36, 10, 10);
+            } else {
+                g2d.setColor(new Color(70, 70, 70));
+                g2d.fillRoundRect(menuX + 30, optionY + i * spacing - 25, menuWidth - 60, 36, 10, 10);
+            }
+
+            // draw option text
+            g2d.setColor(Color.WHITE);
+            g2d.drawString(options[i], menuX + 50, optionY + i * spacing);
+        }
+
+        // draw close button hint
+        g2d.setFont(new Font("MV Boli", Font.ITALIC, 14));
+        g2d.setColor(new Color(200, 200, 200));
+        String closeHint = "Click Options button again to close";
+        fm = g2d.getFontMetrics();
+        int hintWidth = fm.stringWidth(closeHint);
+        g2d.drawString(closeHint, menuX + (menuWidth - hintWidth) / 2, menuY + menuHeight - 20);
     }
 
 }

@@ -288,4 +288,16 @@ public class PlayingUI {
     public void mouseReleased() {
     }
 
+    public TheButton getPauseButton() {
+        return pauseButton;
+    }
+
+    public TheButton getFastForwardButton() {
+        return fastForwardButton;
+    }
+
+    public TheButton getOptionsButton() {
+        return optionsButton;
+    }
+
 }

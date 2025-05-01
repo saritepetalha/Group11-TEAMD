@@ -159,10 +159,10 @@ public class EnemyManager {
         }
     }
 
-    public void update(){
+    public void update(float speedMultiplier){
         for (Enemy enemy:enemies) {
             if (enemy.isAlive()) {
-                enemy.move(0.3f, 0);
+                enemy.move(0.3f * speedMultiplier , 0);
             }
         }
 
@@ -182,7 +182,7 @@ public class EnemyManager {
                 continue;
             }
 
-            moveEnemy(e);
+            moveEnemy(e, speedMultiplier);
         }
 
         // remove dead enemies
@@ -218,7 +218,7 @@ public class EnemyManager {
         }
     }
 
-    private void moveEnemy(Enemy e) {
+    private void moveEnemy(Enemy e, float speedMultiplier) {
         int pathIndex = e.getCurrentPathIndex();
 
         // if enemy has reached the last path point, it has reached the end
@@ -241,14 +241,14 @@ public class EnemyManager {
         float distance = (float) Math.sqrt(xDiff * xDiff + yDiff * yDiff);
 
         // if enemy is very close to the path point, move to next path point
-        if (distance < e.getSpeed()) {
+        if (distance < e.getSpeed() * speedMultiplier) {
             e.setCurrentPathIndex(pathIndex + 1);
             return;
         }
 
         // calculate movement speed components
-        float xSpeed = (xDiff / distance) * e.getSpeed();
-        float ySpeed = (yDiff / distance) * e.getSpeed();
+        float xSpeed = (xDiff / distance) * e.getSpeed() * speedMultiplier;
+        float ySpeed = (yDiff / distance) * e.getSpeed() * speedMultiplier;
 
         e.move(xSpeed, ySpeed);
     }
@@ -258,7 +258,18 @@ public class EnemyManager {
             if (enemy.isAlive()) {
                 enemy.updateAnimationTick();
                 drawEnemy(enemy, g);
-                //drawHealthBar(enemy, g);
+            }
+        }
+    }
+
+    public void draw(Graphics g, boolean gamePaused){
+        for (Enemy enemy: enemies){
+            if (enemy.isAlive()) {
+                // only update animation if game is not paused
+                if (!gamePaused) {
+                    enemy.updateAnimationTick();
+                }
+                drawEnemy(enemy, g);
             }
         }
     }
