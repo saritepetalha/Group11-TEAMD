@@ -27,6 +27,7 @@ public class EnemyManager {
     private int tileSize = GameDimensions.TILE_DISPLAY_SIZE;
     private int nextEnemyID = 0;
     private boolean pathFound = false;
+    private int HealthBarWidth = 40;
 
     public EnemyManager(Playing playing, int[][] overlayData, int [][] tileData) {
         this.playing = playing;
@@ -164,8 +165,10 @@ public class EnemyManager {
     }
 
     public void update(){
-        for (Enemy enemy:enemies){
-            enemy.move(0.3f, 0);
+        for (Enemy enemy:enemies) {
+            if (enemy.isAlive()) {
+                enemy.move(0.3f, 0);
+            }
         }
 
         if (!pathFound || pathPoints.isEmpty()) return;
@@ -256,12 +259,23 @@ public class EnemyManager {
         e.move(xSpeed, ySpeed);
     }
 
-
     public void draw(Graphics g){
         for (Enemy enemy: enemies){
-            enemy.updateAnimationTick();
-            drawEnemy(enemy, g);
+            if (enemy.isAlive()) {
+                enemy.updateAnimationTick();
+                drawEnemy(enemy, g);
+                drawHealthBar(enemy, g);
+            }
         }
+    }
+
+    private void drawHealthBar(Enemy enemy, Graphics g) {
+        g.setColor(Color.RED);
+        g.fillRect((int) enemy.getX() + 8 - (getNewHealthBarWidht(enemy) / 2) ,(int) enemy.getY() - 56, getNewHealthBarWidht(enemy), 6);
+    }
+
+    private int getNewHealthBarWidht(Enemy enemy) {
+        return (int) (HealthBarWidth * enemy.getHealthBarPercentage());
     }
 
     // method to extract all enemy animation frames (6 goblin + 6 warrior)

@@ -1,6 +1,7 @@
 package scenes;
 
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.util.List;
 
 import constants.GameDimensions;
@@ -9,6 +10,9 @@ import helpMethods.LoadSave;
 import main.Game;
 
 import managers.*;
+
+import managers.WaveManager;
+import objects.Tower;
 
 import ui_p.DeadTree;
 
@@ -30,13 +34,17 @@ public class Playing extends GameScene implements SceneMethods {
 
     private EnemyManager enemyManager;
 
+    private DeadTree selectedDeadTree;
+    private Tower displayedTower;
+
 
     public Playing(Game game, TileManager tileManager) {
         super(game);
         loadDefaultLevel();
         this.tileManager = tileManager;
+        this.selectedDeadTree = null;
         this.playerManager = new PlayerManager();
-
+      
         towerManager = new TowerManager(this);
 
         //OVERLAY IS HARDCODED BECAUSE IT IS NOT LOADED WITH LOAD DEFAULT LEVEL METHOD YET
@@ -212,9 +220,68 @@ public class Playing extends GameScene implements SceneMethods {
         drawMap(g);
         towerManager.draw(g);
         drawTowerButtons(g);
-        playingUI.draw(g);
+        drawHighlight(g);
+        drawDisplayedTower(g);
     }
 
+    private void drawHighlight(Graphics g) {
+        Graphics2D g2d = (Graphics2D) g.create();
+
+        // Set transparency level (0.0f = fully transparent, 1.0f = fully opaque)
+        float alpha = 0.2f; // Adjust the transparency as needed
+        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+
+        // Set fill color to white
+        g2d.setColor(Color.WHITE);
+        g2d.fillRect(mouseX, mouseY, 64, 64);
+
+        // Optional: draw white border with full opacity
+        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));
+        g2d.setColor(Color.WHITE);
+        g2d.drawRect(mouseX, mouseY, 64, 64);
+
+        g2d.dispose();
+    }
+
+    private void drawDisplayedTower(Graphics g) {
+        if (displayedTower == null) return;
+        drawDisplayedTowerBorder(g);
+        drawDisplayedTowerRange(g);
+    }
+
+    private void drawDisplayedTowerRange(Graphics g) {
+        Graphics2D g2d = (Graphics2D) g.create();
+
+        int range = (int) displayedTower.getRange();
+        int centerX = displayedTower.getX() + 32;
+        int centerY = displayedTower.getY() + 32;
+        int topLeftX = centerX - range;
+        int topLeftY = centerY - range;
+
+        // Brown fill (solid)
+        Color brownFill = new Color(139, 69, 19, 60); // SaddleBrown
+        g2d.setColor(brownFill);
+        g2d.fillOval(topLeftX, topLeftY, range * 2, range * 2);
+
+        float[] dashPattern = {10f, 5f}; // 10px dash, 5px gap
+
+        // Yellow outline (semi-transparent)
+        Color yellowOutline = new Color(255, 255, 0); // Yellow with 50% opacity
+        g2d.setColor(yellowOutline);
+        g2d.setStroke(new BasicStroke(2, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, dashPattern, 0));
+        g2d.drawOval(topLeftX, topLeftY, range * 2, range * 2);
+
+        g2d.dispose();
+      
+        playingUI.draw(g);
+
+    }
+
+
+    private void drawDisplayedTowerBorder(Graphics g) {
+        g.setColor(Color.CYAN);
+        g.drawRect(displayedTower.getX(), displayedTower.getY(), 64, 64);
+    }
 
     private void modifyTile(int x, int y, String tile) {
 
@@ -235,13 +302,13 @@ public class Playing extends GameScene implements SceneMethods {
 
     @Override
     public void mouseClicked(int x, int y) {
-
         this.mouseX = x;
         this.mouseY = y;
+        displayedTower = null;
 
         boolean clickedOnTree = false;
-        for(DeadTree tree: trees){
-            if (tree.isShowChoices()){
+        for(DeadTree tree: trees) {
+            if (tree.isShowChoices()) {
                 int tileX = tree.getX();
                 int tileY = tree.getY();
                 if (tree.getArcherButton().isMousePressed(mouseX, mouseY)) {
@@ -249,6 +316,7 @@ public class Playing extends GameScene implements SceneMethods {
                     tree.setShowChoices(false);
                     trees.remove(tree);
                     modifyTile(tileX, tileY, "ARCHER");
+                    setSelectedDeadTree(null);
                     return;
                 }
                 if (tree.getMageButton().isMousePressed(mouseX, mouseY)) {
@@ -256,6 +324,7 @@ public class Playing extends GameScene implements SceneMethods {
                     tree.setShowChoices(false);
                     trees.remove(tree);
                     modifyTile(tileX, tileY, "MAGE");
+                    setSelectedDeadTree(null);
                     return;
                 }
                 if (tree.getArtilleryButton().isMousePressed(mouseX, mouseY)) {
@@ -263,6 +332,7 @@ public class Playing extends GameScene implements SceneMethods {
                     tree.setShowChoices(false);
                     trees.remove(tree);
                     modifyTile(tileX, tileY, "ARTILERRY");
+                    setSelectedDeadTree(null);
                     return;
                 }
             }
@@ -274,6 +344,15 @@ public class Playing extends GameScene implements SceneMethods {
                     other.setShowChoices(false);
                 }
                 tree.setShowChoices(true);
+                setSelectedDeadTree(tree);
+                displayedTower = null;
+                return;
+            }
+        }
+
+        for (Tower tower: towerManager.getTowers()) {
+            if (tower.isClicked(mouseX, mouseY)) {
+                displayedTower = tower;
                 return;
             }
         }
@@ -284,12 +363,18 @@ public class Playing extends GameScene implements SceneMethods {
         return towerManager;
     }
 
+    public EnemyManager getEnemyManager() {
+        return enemyManager;
+
     public PlayingUI getPlayingUI() {return playingUI;
     }
 
     @Override
     public void mouseMoved(int x, int y) {
-        playingUI.mouseMoved(x, y);
+        mouseX = (x / 64) * 64;
+        mouseY = (y / 64) * 64;
+        //playingUI.mouseMoved(x, y);
+
     }
 
     @Override
@@ -349,6 +434,12 @@ public class Playing extends GameScene implements SceneMethods {
         return waveManager;
     }
 
+    public DeadTree getSelectedDeadTree() {return selectedDeadTree;}
+
+    public void setSelectedDeadTree(DeadTree deadTree) {this.selectedDeadTree = deadTree;}
+
+    public Tower getDisplayedTower() {return displayedTower;}
+
     private void spawnEnemy() {
         enemyManager.spawnEnemy(waveManager.getNextEnemy());
     }
@@ -359,6 +450,8 @@ public class Playing extends GameScene implements SceneMethods {
         }
         return false;
     }
+
+    public void setDisplayedTower(Tower tower) {displayedTower = tower;}
 
     public void startEnemySpawning() {
         waveManager.resetWaveIndex();

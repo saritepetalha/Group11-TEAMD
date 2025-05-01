@@ -1,18 +1,21 @@
 package enemies;
 
+import constants.Constants;
+
 import java.awt.*;
 import static constants.Constants.*;
 
 public abstract class Enemy {
-    private float x,y;          // using floats to have much more control when dealing with speed of the enemies
-    private int id;
-    private int health;
-    private int maxHealth;
-    private int enemyType;
-    private int currentPathIndex = 0;
-    private float speed;
-    private boolean reachedEnd = false;
-    private Rectangle boundary;    // for hit box
+    protected float x,y;          // using floats to have much more control when dealing with speed of the enemies
+    protected int id;
+    protected int health;
+    protected int maxHealth;
+    protected int enemyType;
+    protected int currentPathIndex = 0;
+    protected float speed;
+    protected boolean reachedEnd = false;
+    protected Rectangle boundary;    // for hit box
+    protected boolean alive = true;
 
     // for animation of enemies' walking
     private int animationIndex = 0;
@@ -32,7 +35,9 @@ public abstract class Enemy {
         maxHealth = health;
     }
 
-    protected abstract void initializeHealth();
+    private void initializeHealth() {
+        health = Constants.Enemies.getStartHealth(enemyType);
+    }
 
     public void move(float x, float y){
         this.x += x;
@@ -102,12 +107,14 @@ public abstract class Enemy {
         this.health = health;
     }
 
-    public boolean isAlive(){return health > 0;}
-
     public void hurt(int damage){
         this.health -= damage;
-        if(health <= 0) health = 0;
+        if(health <= 0) {
+            alive = false;
+        }
     }
+
+    public boolean isAlive() {return alive;}
 
     public int getEnemyType() {return enemyType;}
 
@@ -121,6 +128,6 @@ public abstract class Enemy {
 
     public void setCurrentPathIndex(int currentPathIndex) {this.currentPathIndex = currentPathIndex;}
 
-    public float getHealthBarPercentage() {return (float) health/maxHealth;}
+    public float getHealthBarPercentage() {return health / (float) maxHealth;}
 
 }

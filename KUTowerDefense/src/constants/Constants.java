@@ -62,7 +62,7 @@ public class Constants {
             return "";
         }
 
-        public static int getStartDamage(int towerType) {
+        public static float getStartDamage(int towerType) {
             switch (towerType) {
                 case ARCHER:
                     return 10;
