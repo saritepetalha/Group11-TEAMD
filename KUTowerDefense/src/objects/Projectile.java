@@ -10,7 +10,7 @@ public class Projectile {
     public Projectile(float x, float y, int id, int projectileType) {
         pos = new Point2D.Float(x,y);
         this.id = id;
-        this.projectileType = projectileType;
+        this.projectileType = projectileType;   //0 arrow, 1 cannonball, 2 magicbolt
     }
 
     public boolean isActive() {

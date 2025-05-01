@@ -1,5 +1,6 @@
 package managers;
 
+import helpMethods.LoadSave;
 import objects.Projectile;
 import scenes.Playing;
 
@@ -14,11 +15,15 @@ public class ProjectileManager {
 
     public ProjectileManager(Playing playing) {
         this.playing = playing;
+        importImages();
 
     }
 
     private void importImages() {
-
+        proj_imgs = new BufferedImage[3];
+        for (int i = 0; i < 3; i++) {
+            proj_imgs[i] = LoadSave.getTowerMaterial(i, 24, 24);
+        }
     }
 
     public void update() {
@@ -26,7 +31,9 @@ public class ProjectileManager {
     }
 
     public void draw(Graphics g) {
-
+        for (BufferedImage i: proj_imgs) {
+            g.drawImage(i, 300, 300, null);
+        }
     }
 
 }
