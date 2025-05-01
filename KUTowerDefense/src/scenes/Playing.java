@@ -199,13 +199,13 @@ public class Playing extends GameScene implements SceneMethods {
         int range = (int) displayedTower.getRange();
         int centerX = displayedTower.getX() + 32;
         int centerY = displayedTower.getY() + 32;
-        int topLeftX = centerX - range / 2;
-        int topLeftY = centerY - range / 2;
+        int topLeftX = centerX - range;
+        int topLeftY = centerY - range;
 
         // Brown fill (solid)
         Color brownFill = new Color(139, 69, 19, 60); // SaddleBrown
         g2d.setColor(brownFill);
-        g2d.fillOval(topLeftX, topLeftY, range, range);
+        g2d.fillOval(topLeftX, topLeftY, range * 2, range * 2);
 
         float[] dashPattern = {10f, 5f}; // 10px dash, 5px gap
 
@@ -213,7 +213,7 @@ public class Playing extends GameScene implements SceneMethods {
         Color yellowOutline = new Color(255, 255, 0); // Yellow with 50% opacity
         g2d.setColor(yellowOutline);
         g2d.setStroke(new BasicStroke(2, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, dashPattern, 0));
-        g2d.drawOval(topLeftX, topLeftY, range, range);
+        g2d.drawOval(topLeftX, topLeftY, range * 2, range * 2);
 
         g2d.dispose();
     }
@@ -245,10 +245,11 @@ public class Playing extends GameScene implements SceneMethods {
     public void mouseClicked(int x, int y) {
         this.mouseX = x;
         this.mouseY = y;
+        displayedTower = null;
 
         boolean clickedOnTree = false;
-        for(DeadTree tree: trees){
-            if (tree.isShowChoices()){
+        for(DeadTree tree: trees) {
+            if (tree.isShowChoices()) {
                 int tileX = tree.getX();
                 int tileY = tree.getY();
                 if (tree.getArcherButton().isMousePressed(mouseX, mouseY)) {
@@ -296,12 +297,14 @@ public class Playing extends GameScene implements SceneMethods {
                 return;
             }
         }
-
-
     }
 
     public TowerManager getTowerManager() {
         return towerManager;
+    }
+
+    public EnemyManager getEnemyManager() {
+        return enemyManager;
     }
 
     @Override

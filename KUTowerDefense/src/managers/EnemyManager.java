@@ -149,8 +149,10 @@ public class EnemyManager {
     }
 
     public void update(){
-        for (Enemy enemy:enemies){
-            enemy.move(0.3f, 0);
+        for (Enemy enemy:enemies) {
+            if (enemy.isAlive()) {
+                enemy.move(0.3f, 0);
+            }
         }
 
         if (!pathFound || pathPoints.isEmpty()) return;
@@ -236,12 +238,13 @@ public class EnemyManager {
         e.move(xSpeed, ySpeed);
     }
 
-
     public void draw(Graphics g){
         for (Enemy enemy: enemies){
-            enemy.updateAnimationTick();
-            drawEnemy(enemy, g);
-            drawHealthBar(enemy, g);
+            if (enemy.isAlive()) {
+                enemy.updateAnimationTick();
+                drawEnemy(enemy, g);
+                drawHealthBar(enemy, g);
+            }
         }
     }
 

@@ -1,10 +1,12 @@
 package managers;
 
 import constants.GameDimensions;
+import enemies.Enemy;
 import helpMethods.LoadSave;
 import objects.Tower;
 import scenes.Playing;
 import ui_p.DeadTree;
+import helpMethods.Utils;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -36,7 +38,26 @@ public class TowerManager {
     }
 
     public void update() {
+        attackEnemyIfInRange();
+    }
 
+    private void attackEnemyIfInRange() {
+        for (Tower tower : towers) {
+            for (Enemy enemy : playing.getEnemyManager().getEnemies()) {
+                if (enemy.isAlive()) {
+                    if (isEnemyInRange(tower, enemy)) {
+                        enemy.hurt(1);
+                    } else {
+
+                    }
+                }
+            }
+        }
+    }
+
+    private boolean isEnemyInRange(Tower tower, Enemy enemy) {
+        int range = Utils.GetHypo(tower.getX(), tower.getY(), enemy.getX(), enemy.getY());
+        return range < tower.getRange();
     }
 
     public BufferedImage[] getTowerImages() {
