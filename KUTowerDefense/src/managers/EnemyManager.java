@@ -8,26 +8,24 @@ import helpMethods.LoadSave;
 import objects.GridPoint;
 
 import java.awt.*;
+import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Queue;
 import java.util.LinkedList;
 
 import static constants.Constants.PathPoints.*;
-import static constants.Constants.Tiles.*;
 import static constants.Constants.Enemies.*;
 
 public class EnemyManager {
     private Playing playing;
     private BufferedImage[] enemyImages;
-    //private Enemy enemyTest;
     private ArrayList<Enemy> enemies = new ArrayList<>();
     private ArrayList<GridPoint> pathPoints = new ArrayList<>();
     private GridPoint startPoint, endPoint;
     private int tileSize = GameDimensions.TILE_DISPLAY_SIZE;
     private int nextEnemyID = 0;
     private boolean pathFound = false;
-    private int HealthBarWidth = 40;
 
     public EnemyManager(Playing playing, int[][] overlayData, int [][] tileData) {
         this.playing = playing;
@@ -39,9 +37,6 @@ public class EnemyManager {
         if (startPoint != null && endPoint != null) {
             generatePath(tileData);
         }
-//        addEnemy(GOBLIN);
-//        addEnemy(WARRIOR);
-        //enemyTest = new Enemy(64*3, 64*3, 0, 0);
     }
 
     private void findStartAndEndPoints(int[][] overlayData) {
@@ -264,18 +259,9 @@ public class EnemyManager {
             if (enemy.isAlive()) {
                 enemy.updateAnimationTick();
                 drawEnemy(enemy, g);
-                drawHealthBar(enemy, g);
+                //drawHealthBar(enemy, g);
             }
         }
-    }
-
-    private void drawHealthBar(Enemy enemy, Graphics g) {
-        g.setColor(Color.RED);
-        g.fillRect((int) enemy.getX() + 8 - (getNewHealthBarWidht(enemy) / 2) ,(int) enemy.getY() - 56, getNewHealthBarWidht(enemy), 6);
-    }
-
-    private int getNewHealthBarWidht(Enemy enemy) {
-        return (int) (HealthBarWidth * enemy.getHealthBarPercentage());
     }
 
     // method to extract all enemy animation frames (6 goblin + 6 warrior)
@@ -317,23 +303,41 @@ public class EnemyManager {
     }
 
     private void drawHealthBar(Graphics g, Enemy enemy, int x, int y, BufferedImage sprite) {
-        int healthBarWidth = 50;
-        int healthBarHeight = 6;
+        int healthBarWidth = 40; //enemy.getHealth()/3
+        int healthBarHeight = 4;
 
-        int healthBarX = x + (sprite.getWidth() - healthBarWidth) / 2;
-        int healthBarY = y - 10;
+        int healthBarX = x + (sprite.getWidth() + 15 - healthBarWidth) / 2;
 
-        g.setColor(new Color(255, 0, 0));
+        // different enemy types get bars in different positions
+        boolean drawAbove = enemy.getEnemyType() % 2 == 1; // even types below, odd types above
+
+        int healthBarY;
+        if (drawAbove) {
+            healthBarY = y - 8;
+        } else {
+            healthBarY = y + sprite.getHeight() + 2;
+        }
+
+        // draw white rounded contour frame
+        Graphics2D g2d = (Graphics2D) g;
+        g2d.setColor(Color.WHITE);
+        g2d.setStroke(new BasicStroke(1.5f));
+        RoundRectangle2D roundedRect = new RoundRectangle2D.Float(
+                healthBarX - 1, healthBarY - 1,
+                healthBarWidth + 2, healthBarHeight + 2,
+                4, 4);
+        g2d.draw(roundedRect);
+
+        // draw black background of health bar
+        g.setColor(Color.BLACK);
         g.fillRect(healthBarX, healthBarY, healthBarWidth, healthBarHeight);
 
-        g.setColor(new Color(0, 255, 0));
+        // draw red health indicator
+        g.setColor(new Color(255, 0, 0));
         int currentHealthWidth = (int) (healthBarWidth * enemy.getHealthBarPercentage());
         g.fillRect(healthBarX, healthBarY, currentHealthWidth, healthBarHeight);
 
-        g.setColor(Color.BLACK);
-        g.drawRect(healthBarX, healthBarY, healthBarWidth, healthBarHeight);
     }
-
     public void spawnEnemy(int nextEnemy) {
         addEnemy(nextEnemy);
     }
