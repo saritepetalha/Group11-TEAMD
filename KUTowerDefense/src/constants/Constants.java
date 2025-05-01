@@ -3,7 +3,7 @@ package constants;
 public class Constants {
     public static class Projectiles {
         public static final int ARROW = 0;
-        public static final int CANONNBALL = 1;
+        public static final int CANNONBALL = 1;
         public static final int MAGICBOLT = 2;
 
         // speeds (pixels per tick/frame)
@@ -11,7 +11,7 @@ public class Constants {
             switch (type) {
                 case ARROW:
                     return 8f;
-                case CANONNBALL:
+                case CANNONBALL:
                     return 4f; // slower, but Area of Effect
                 case MAGICBOLT:
                     return 6f;
@@ -24,7 +24,7 @@ public class Constants {
             switch (type) {
                 case ARROW:
                     return 10;
-                case CANONNBALL:
+                case CANNONBALL:
                     return 20;
                 case MAGICBOLT:
                     return 15;
@@ -62,7 +62,7 @@ public class Constants {
             return "";
         }
 
-        public static float getStartDamage(int towerType) {
+        public static int getStartDamage(int towerType) {
             switch (towerType) {
                 case ARCHER:
                     return 10;

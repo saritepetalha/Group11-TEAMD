@@ -4,12 +4,16 @@ import java.awt.geom.Point2D;
 
 public class Projectile {
     private Point2D.Float pos;
-    private int id, projectileType;
+    private int id, projectileType, damage;
     private boolean active = true;
+    private float xSpeed, ySpeed;
 
-    public Projectile(float x, float y, int id, int projectileType) {
+    public Projectile(float x, float y, float xSpeed, float ySpeed, int id, int damage, int projectileType) {
         pos = new Point2D.Float(x,y);
         this.id = id;
+        this.damage = damage;
+        this.xSpeed = xSpeed;
+        this.ySpeed = ySpeed;
         this.projectileType = projectileType;   //0 arrow, 1 cannonball, 2 magicbolt
     }
 
@@ -37,10 +41,13 @@ public class Projectile {
         return projectileType;
     }
 
-    public void move(float x, float y) {
-        pos.x += x;
-        pos.y += y;
+    public void move() {
+        pos.x += xSpeed;
+        pos.y += ySpeed;
     }
 
+    public int getDamage() {
+        return damage;
+    }
 
 }

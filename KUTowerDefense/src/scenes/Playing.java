@@ -464,4 +464,8 @@ public class Playing extends GameScene implements SceneMethods {
         waveManager.resetEnemyIndex();
         waveManager.startTimer();
     }
+
+    public void shootEnemy(Tower tower, Enemy enemy) {
+        projectileManager.newProjectile(tower, enemy);
+    }
 }
