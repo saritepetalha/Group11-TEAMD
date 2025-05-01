@@ -177,7 +177,7 @@ public class EnemyManager {
             }
 
             if (e.hasReachedEnd()) {
-                //playing.enemyReachedEnd(); will be implemented soon
+                playing.enemyReachedEnd(e);
                 enemiesToRemove.add(e);
                 continue;
             }
@@ -187,7 +187,6 @@ public class EnemyManager {
 
         // remove dead enemies
         enemies.removeAll(enemiesToRemove);
-        //enemyTest.move(0.3f,0);
     }
 
     public void addEnemy(int enemyType){

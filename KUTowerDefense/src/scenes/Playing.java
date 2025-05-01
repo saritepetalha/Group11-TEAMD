@@ -23,7 +23,6 @@ public class Playing extends GameScene implements SceneMethods {
     private int[][] level;
     private int[][] overlay;
 
-    private PlayingBar bottomPlayingBar;
     private PlayingUI playingUI;
     private int mouseX, mouseY;
     private List<DeadTree> trees;
@@ -69,8 +68,6 @@ public class Playing extends GameScene implements SceneMethods {
         if(towerManager.findDeadTrees(level) != null) {
             trees = towerManager.findDeadTrees(level);
         }
-
-        bottomPlayingBar = new PlayingBar(0, GameDimensions.GAME_HEIGHT, GameDimensions.GAME_WIDTH, 100, this);
 
         playingUI = new PlayingUI(this);
         updateUIResources();    // Update the UI with player's starting resources
@@ -193,6 +190,11 @@ public class Playing extends GameScene implements SceneMethods {
         enemyManager.update();
         towerManager.update();
         updateUIResources();
+
+        // check if game over
+        if (!playerManager.isAlive()) {
+            handleGameOver();
+        }
     }
 
     private boolean isWaveTimerOver() {
@@ -460,4 +462,35 @@ public class Playing extends GameScene implements SceneMethods {
         waveManager.resetEnemyIndex();
         waveManager.startTimer();
     }
+
+    public void enemyReachedEnd(Enemy enemy) {
+        System.out.println("Enemy reached end: " + enemy.getId());
+
+        // each enemy that reaches the end causes 1 damage
+        playerManager.takeDamage(1);
+
+        // update UI to show new shield/health values
+        updateUIResources();
+    }
+
+    private void handleGameOver() {
+        System.out.println("Game Over!");
+
+        // stop any ongoing waves/spawning
+        waveManager.resetWaveIndex();
+        enemyManager.getEnemies().clear();
+
+        // for now, we'll just wait 2 seconds and return to the menu, we will implement a proper game over screen soon
+
+        // use a separate thread to avoid blocking the game loop
+        new Thread(() -> {
+            try {
+                Thread.sleep(2000);
+                game.changeGameState(main.GameStates.MENU);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
 }
