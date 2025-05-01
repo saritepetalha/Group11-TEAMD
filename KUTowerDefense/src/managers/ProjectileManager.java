@@ -25,7 +25,7 @@ public class ProjectileManager {
 
     }
 
-    public draw(Graphics g) {
+    public void draw(Graphics g) {
 
     }
 
