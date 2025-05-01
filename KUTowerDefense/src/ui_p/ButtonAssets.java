@@ -32,7 +32,7 @@ public class ButtonAssets {
     public static BufferedImage endPointPressedImg;
 
     public static BufferedImage statusBarImg;
-
+    public static BufferedImage waveImg;
     static {
         loadAll();
     }
@@ -52,6 +52,7 @@ public class ButtonAssets {
         loadButtonPressedEffectImages();
 
         loadStatusBarImages();
+        loadWaveImage();
     }
 
     private static void loadButtonImageFile() {
@@ -159,8 +160,16 @@ public class ButtonAssets {
     }
 
     private static void loadStatusBarImages() {
-        try (InputStream is = LoadSave.class.getResourceAsStream("/UI/Coin_Health_Wave.png")) {
+        try (InputStream is = LoadSave.class.getResourceAsStream("/UI/Coin_Health_Shield.png")) {
             statusBarImg = ImageIO.read(is);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void loadWaveImage() {
+        try (InputStream is = LoadSave.class.getResourceAsStream("/UI/Wave.png")) {
+            waveImg = ImageIO.read(is);
         } catch (IOException e) {
             e.printStackTrace();
         }
