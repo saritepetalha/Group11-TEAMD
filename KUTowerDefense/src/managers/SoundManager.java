@@ -1,6 +1,7 @@
 package managers;
 
 import javax.sound.sampled.*;
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -48,9 +49,11 @@ public class SoundManager {
                 return;
             }
 
-            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(soundStream);
+            InputStream bufferedIn = new BufferedInputStream(soundStream);
+            AudioInputStream audioStream = AudioSystem.getAudioInputStream(bufferedIn);
+
             Clip clip = AudioSystem.getClip();
-            clip.open(audioInputStream);
+            clip.open(audioStream);
 
             soundClips.put(soundName, clip);
             System.out.println("Loaded sound: " + soundName);
@@ -74,10 +77,8 @@ public class SoundManager {
         clip.stop();
         clip.setFramePosition(0);
 
-        // Set volume
         setClipVolume(clip, volume);
-
-        // Play the sound
+        
         clip.start();
     }
 
