@@ -1,6 +1,7 @@
 package enemies;
 
 import constants.Constants;
+import managers.SoundManager;
 
 import java.awt.*;
 import static constants.Constants.*;
@@ -110,7 +111,16 @@ public abstract class Enemy {
     public void hurt(int damage){
         this.health -= damage;
         if(health <= 0) {
+            playDeathSound();
             alive = false;
+        }
+    }
+
+    private void playDeathSound() {
+        if (enemyType == Constants.Enemies.GOBLIN) {
+            SoundManager.getInstance().playRandomGoblinDeathSound();
+        } else if (enemyType == Constants.Enemies.WARRIOR) {
+            SoundManager.getInstance().playWarriorDeathSound();
         }
     }
 
