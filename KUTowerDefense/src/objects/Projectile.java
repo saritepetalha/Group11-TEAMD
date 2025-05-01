@@ -33,16 +33,8 @@ public class Projectile {
         return id;
     }
 
-    public void setId(int id) {
-        this.id = id;
-    }
-
     public int getProjectileType() {
         return projectileType;
-    }
-
-    public void setProjectileType(int projectileType) {
-        this.projectileType = projectileType;
     }
 
     public void move(float x, float y) {
