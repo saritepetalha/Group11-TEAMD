@@ -259,6 +259,7 @@ public class Playing extends GameScene implements SceneMethods {
                 }
                 tree.setShowChoices(true);
                 setSelectedDeadTree(tree);
+                displayedTower = null;
                 return;
             }
         }

@@ -1,5 +1,7 @@
 package enemies;
 
+import constants.Constants;
+
 import java.awt.*;
 import static constants.Constants.*;
 
@@ -32,7 +34,9 @@ public abstract class Enemy {
         maxHealth = health;
     }
 
-    protected abstract void initializeHealth();
+    protected void initializeHealth() {
+        health = Constants.Enemies.getStartHealth(enemyType);
+    }
 
     public void move(float x, float y){
         this.x += x;
