@@ -27,6 +27,7 @@ public class Options extends GameScene implements SceneMethods {
         g.setColor(Color.BLUE);
         g.fillRect(0, 0, GameDimensions.GAME_WIDTH, GameDimensions.GAME_HEIGHT);
         drawButtons(g);
+        setCustomCursor();
     }
 
     private void drawButtons(Graphics g) {

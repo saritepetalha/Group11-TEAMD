@@ -364,13 +364,15 @@ public class EditTiles extends Bar {
             mapEditing.resetAllTiles();
         }
         else if (save.getBounds().contains(x, y)) {
-            DialogueFactory dialogs = new DialogueFactory((JFrame) owner);      // owner = the main window
-            String levelName        = dialogs.createSaveLevelDialog()  // returns Dialog<String>
-                    .showAndWait();           // blocks, waits for user
-
-            /* 2) validate & save */
-            if (levelName != null && !levelName.trim().isEmpty()) {
-                saveLevel(levelName.trim());
+            String currentLevel = mapEditing.getCurrentLevelName();
+            if (currentLevel != null) {
+                saveLevel(currentLevel);
+            } else {
+                String levelName = JOptionPane.showInputDialog(owner, "Enter level name:");
+                if (levelName != null && !levelName.trim().isEmpty()) {
+                    mapEditing.setCurrentLevelName(levelName.trim());
+                    saveLevel(levelName.trim());
+                }
             }
         }
         else if (startPoint.getBounds().contains(x, y)) {

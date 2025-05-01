@@ -31,7 +31,9 @@ public class WaveManager {
         if (waveStartTimer) {
             waveTick++;
             if (waveTick >= waveTickLimit) {
-                waveTickTimerOver = false;
+                System.out.println("Wave timer over, starting new wave");
+                waveTickTimerOver = true;
+                waveTick = 0;
             }
         }
     }
@@ -70,7 +72,12 @@ public class WaveManager {
     }
 
     public void startTimer() {
+        System.out.println("Wave timer started");
         waveStartTimer = true;
+        waveTick = 0;
+        waveTickTimerOver = false;
+        System.out.println("Wave tick: " + waveTick + ", Wave tick limit: " + waveTickLimit);
+        enemySpawnTick = enemySpawnTickLimit;
     }
 
     public boolean isWaveTimerOver() {
@@ -79,5 +86,31 @@ public class WaveManager {
 
     public void resetEnemyIndex() {
         enemyIndex = 0;
+    }
+
+    public int getWaveIndex() {
+        return waveIndex;
+    }
+
+    public float getTimeLeft() {
+        return (waveTickLimit - waveTick) / 60f;
+    }
+
+    public boolean isWaveTimerStarted() {
+        return waveStartTimer;
+    }
+
+    public String getWaveTickLimit() {
+        return String.valueOf(waveTickLimit / 60);
+    }
+
+    public String getWaveTick() {
+        return String.valueOf(waveTick / 60);
+    }
+
+    public void resetWaveIndex() {
+        waveIndex = 0;
+        waveTickTimerOver = false;
+        waveStartTimer = false;
     }
 }

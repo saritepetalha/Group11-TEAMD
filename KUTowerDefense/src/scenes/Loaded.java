@@ -54,6 +54,7 @@ public class Loaded extends GameScene implements SceneMethods {
         for (TheButton button : levelButtons) {
             button.draw(g);
         }
+        setCustomCursor();
     }
 
     @Override

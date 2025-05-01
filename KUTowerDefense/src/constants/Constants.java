@@ -186,4 +186,9 @@ public class Constants {
             return tile >= 0 && tile <= 14 && tile != 5;
         }
     }
+
+    public static class Player{
+        public static final int MAX_HEALTH = 10;
+        public static final int MAX_SHIELD = 25;
+    }
 }

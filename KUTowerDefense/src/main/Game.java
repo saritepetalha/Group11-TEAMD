@@ -1,12 +1,18 @@
 package main;
 
 import javax.swing.JFrame;
+import java.awt.Cursor;
+import java.awt.Point;
+import java.awt.Toolkit;
+import java.awt.image.BufferedImage;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 
 import managers.TileManager;
 import scenes.*;
 
 public class Game extends JFrame implements Runnable{
-	
+
 	private GameScreen gamescreen;
 
 	private Thread gameThread;
@@ -31,6 +37,7 @@ public class Game extends JFrame implements Runnable{
 		setResizable(false);
 		initClasses();
 		createDefaultLevel();
+		setCustomCursor();
 
 		add(gamescreen);
 		pack();
@@ -53,6 +60,7 @@ public class Game extends JFrame implements Runnable{
 		gamescreen.setPanelSize(); // adjust GameScreen size
 		pack();                    // resize JFrame according to new dimensions
 		setLocationRelativeTo(null); // re-center the window
+		setCustomCursor();
 	}
 
 	private void initClasses() {
@@ -66,7 +74,7 @@ public class Game extends JFrame implements Runnable{
 		loaded = new Loaded(this);
 		tileManager = new TileManager();
 	}
-	
+
 
 	public void start() {
 		gameThread = new Thread(this);
@@ -97,14 +105,14 @@ public class Game extends JFrame implements Runnable{
 	}
 
 	public static void main(String[] args) {
-		
+
 		System.out.println("HELLO");
 		Game game = new Game();
 		game.gamescreen.initInputs();
 		game.start();
 	}
 
-	
+
 	@Override
 	public void run() {
 		double timePerFrame = 1000000000.0 / FPS_SET;
@@ -113,9 +121,9 @@ public class Game extends JFrame implements Runnable{
 		long lastFrame = System.nanoTime();
 		long lastUpdate = System.nanoTime();
 		int frames = 0;
-		long lastTimeCheck = System.currentTimeMillis(); 
+		long lastTimeCheck = System.currentTimeMillis();
 		int updates = 0;
-		
+
 		long now;
 		while (true) {
 
@@ -123,7 +131,7 @@ public class Game extends JFrame implements Runnable{
 			if (now - lastFrame >= timePerFrame) {
 				repaint();
 				lastFrame = now;
-	
+
 				frames++;
 			}
 
@@ -162,5 +170,66 @@ public class Game extends JFrame implements Runnable{
 	public MapEditing getMapEditing() { return mapEditing; }
 
 	public TileManager getTileManager() { return tileManager;
+	}
+
+	private void setCustomCursor() {
+		try {
+			java.io.InputStream is = getClass().getResourceAsStream("/UI/cursor.png");
+			if (is == null) {
+				return;
+			}
+
+			BufferedImage originalImg = javax.imageio.ImageIO.read(is);
+
+			int newWidth = originalImg.getWidth() / 2;
+			int newHeight = originalImg.getHeight() / 2;
+
+			BufferedImage resizedImg = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_ARGB);
+			Graphics2D g2d = resizedImg.createGraphics();
+			g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+			g2d.drawImage(originalImg, 0, 0, newWidth, newHeight, null);
+			g2d.dispose();
+
+			Cursor customCursor = Toolkit.getDefaultToolkit().createCustomCursor(
+					resizedImg,
+					new Point(newWidth/2, newHeight/2),
+					"Custom Cursor"
+			);
+
+			setCursor(customCursor);
+
+		} catch (java.io.IOException e) {
+			System.err.println("Error loading cursor image: " + e.getMessage());
+		}
+	}
+
+	public Cursor getCursor() {
+		try {
+			java.io.InputStream is = getClass().getResourceAsStream("/UI/01.png");
+			if (is == null) {
+				return Cursor.getDefaultCursor();
+			}
+
+			BufferedImage originalImg = javax.imageio.ImageIO.read(is);
+
+			int newWidth = originalImg.getWidth() / 2;
+			int newHeight = originalImg.getHeight() / 2;
+
+			BufferedImage resizedImg = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_ARGB);
+			Graphics2D g2d = resizedImg.createGraphics();
+			g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+			g2d.drawImage(originalImg, 0, 0, newWidth, newHeight, null);
+			g2d.dispose();
+
+			return Toolkit.getDefaultToolkit().createCustomCursor(
+					resizedImg,
+					new Point(newWidth/2, newHeight/2),
+					"Custom Cursor"
+			);
+
+		} catch (java.io.IOException e) {
+			System.err.println("Error loading cursor image: " + e.getMessage());
+			return Cursor.getDefaultCursor();
+		}
 	}
 }

@@ -9,25 +9,28 @@ import enemies.Enemy;
 import helpMethods.LoadSave;
 import main.Game;
 
-import managers.TileManager;
-import managers.TowerManager;
+import managers.*;
 
 import managers.WaveManager;
 import objects.Tower;
+
 import ui_p.DeadTree;
 
-import managers.EnemyManager;
 import ui_p.PlayingBar;
+import ui_p.PlayingUI;
 
 public class Playing extends GameScene implements SceneMethods {
     private int[][] level;
     private int[][] overlay;
+
     private PlayingBar bottomPlayingBar;
+    private PlayingUI playingUI;
     private int mouseX, mouseY;
     private List<DeadTree> trees;
     private WaveManager waveManager;
     private TowerManager towerManager;
     private TileManager tileManager;
+    private PlayerManager playerManager;
 
     private EnemyManager enemyManager;
 
@@ -40,7 +43,8 @@ public class Playing extends GameScene implements SceneMethods {
         loadDefaultLevel();
         this.tileManager = tileManager;
         this.selectedDeadTree = null;
-
+        this.playerManager = new PlayerManager();
+      
         towerManager = new TowerManager(this);
 
         //OVERLAY IS HARDCODED BECAUSE IT IS NOT LOADED WITH LOAD DEFAULT LEVEL METHOD YET
@@ -68,13 +72,20 @@ public class Playing extends GameScene implements SceneMethods {
 
         bottomPlayingBar = new PlayingBar(0, GameDimensions.GAME_HEIGHT, GameDimensions.GAME_WIDTH, 100, this);
 
+        playingUI = new PlayingUI(this);
+        updateUIResources();    // Update the UI with player's starting resources
+    }
+
+    private void updateUIResources() {
+        playingUI.setGoldAmount(playerManager.getGold());
+        playingUI.setHealthAmount(playerManager.getHealth());
+        playingUI.setShieldAmount(playerManager.getShield());
     }
 
     public void saveLevel(String filename) {
         LoadSave.saveLevel(filename,level);
 
     }
-
 
     private void loadDefaultLevel() {
         int[][] lvl = LoadSave.getLevelData("defaultlevel");
@@ -83,10 +94,10 @@ public class Playing extends GameScene implements SceneMethods {
             System.out.println("Level not found, creating default level.");
             for (int i = 0; i < lvl.length; i++) {
                 for (int j = 0; j < lvl[i].length; j++) {
-                    if (i == 4) { // Orta satır
-                        lvl[i][j] = 13; // Yol
+                    if (i == 4) {
+                        lvl[i][j] = 13;
                     } else {
-                        lvl[i][j] = 5; // Çimen
+                        lvl[i][j] = 5;
                     }
                 }
             }
@@ -96,7 +107,44 @@ public class Playing extends GameScene implements SceneMethods {
     }
 
     public void loadLevel(String levelName) {
-        level = LoadSave.getLevelData(levelName);
+        int[][] loadedLevel = LoadSave.loadLevel(levelName);
+        if (loadedLevel != null) {
+            System.out.println("Loading level: " + levelName);
+            this.level = loadedLevel;
+
+            this.overlay = new int[loadedLevel.length][loadedLevel[0].length];
+            System.out.println("Overlay size: " + overlay.length + "x" + overlay[0].length);
+
+            boolean foundStart = false;
+            boolean foundEnd = false;
+
+            for (int i = 0; i < loadedLevel.length; i++) {
+                for (int j = 0; j < loadedLevel[i].length; j++) {
+                    overlay[i][j] = 0;
+
+                    if (loadedLevel[i][j] == 1) {
+                        overlay[i][j] = 1;
+                        foundStart = true;
+                        System.out.println("Start point found at: " + i + "," + j);
+                    } else if (loadedLevel[i][j] == 2) {
+                        overlay[i][j] = 2;
+                        foundEnd = true;
+                        System.out.println("End point found at: " + i + "," + j);
+                    }
+                }
+            }
+
+            if (!foundStart || !foundEnd) {
+                System.out.println("Warning: Start or end point not found in level!");
+            }
+
+            System.out.println("Updating EnemyManager with new level and overlay");
+            enemyManager = new EnemyManager(this, overlay, level);
+
+            System.out.println("Resetting WaveManager");
+            waveManager = new WaveManager(this);
+            startEnemySpawning();
+        }
     }
 
     public void drawTowerButtons(Graphics g) {
@@ -122,9 +170,14 @@ public class Playing extends GameScene implements SceneMethods {
         waveManager.update();
 
         if (isAllEnemiesDead()) {
+            System.out.println("All enemies are dead");
             if (isThereMoreWaves()) {
-                waveManager.startTimer();
-                if(isWaveTimerOver()){
+                System.out.println("There are more waves");
+                if (!waveManager.isWaveTimerOver()) {
+                    System.out.println("Starting wave timer");
+                    waveManager.startTimer();
+                } else {
+                    System.out.println("Wave timer over, incrementing wave index");
                     waveManager.incrementWaveIndex();
                     enemyManager.getEnemies().clear();
                     waveManager.resetEnemyIndex();
@@ -132,12 +185,14 @@ public class Playing extends GameScene implements SceneMethods {
             }
         }
 
-        if (isTimeForNewEnemy()){
+        if (isTimeForNewEnemy()) {
+            System.out.println("Spawning new enemy");
             spawnEnemy();
         }
 
         enemyManager.update();
         towerManager.update();
+        updateUIResources();
     }
 
     private boolean isWaveTimerOver() {
@@ -145,18 +200,19 @@ public class Playing extends GameScene implements SceneMethods {
     }
 
     private boolean isThereMoreWaves() {
-        return !waveManager.isThereMoreWaves();
+        return waveManager.isThereMoreWaves();
     }
 
     private boolean isAllEnemiesDead() {
         if (waveManager.isWaveFinished()) {
             for (Enemy enemy : enemyManager.getEnemies()) {
-                if (enemy.isAlive()) {
+                if (enemy.isAlive() || !enemy.hasReachedEnd()) {
                     return false;
                 }
             }
+            return true;
         }
-        return true;
+        return false;
     }
 
     @Override
@@ -216,6 +272,9 @@ public class Playing extends GameScene implements SceneMethods {
         g2d.drawOval(topLeftX, topLeftY, range * 2, range * 2);
 
         g2d.dispose();
+      
+        playingUI.draw(g);
+
     }
 
 
@@ -297,6 +356,7 @@ public class Playing extends GameScene implements SceneMethods {
                 return;
             }
         }
+
     }
 
     public TowerManager getTowerManager() {
@@ -305,23 +365,69 @@ public class Playing extends GameScene implements SceneMethods {
 
     public EnemyManager getEnemyManager() {
         return enemyManager;
+
+    public PlayingUI getPlayingUI() {return playingUI;
     }
 
     @Override
     public void mouseMoved(int x, int y) {
         mouseX = (x / 64) * 64;
         mouseY = (y / 64) * 64;
+        //playingUI.mouseMoved(x, y);
+
     }
 
     @Override
-    public void mousePressed(int x, int y) {}
+    public void mousePressed(int x, int y) {
+        playingUI.mousePressed(x, y);
+    }
 
     @Override
-    public void mouseReleased(int x, int y) {}
+    public void mouseReleased(int x, int y) {
+        playingUI.mouseReleased();
+    }
 
     @Override
-    public void mouseDragged(int x, int y) {
+    public void mouseDragged(int x, int y) {}
 
+    // Add helper methods to handle control button actions
+    private void handlePauseButton(boolean isPressed) {
+        // Toggle game pause state based on button state
+        if (isPressed) {
+            // Game is now paused
+            System.out.println("Game paused");
+            // TODO: Implement actual pause functionality
+        } else {
+            // Game is now unpaused
+            System.out.println("Game resumed");
+            // TODO: Implement actual resume functionality
+        }
+    }
+
+    private void handleFastForwardButton(boolean isPressed) {
+        // Toggle game speed based on button state
+        if (isPressed) {
+            // Game is now in fast forward mode
+            System.out.println("Game speed increased");
+            // TODO: Implement actual speed increase functionality
+        } else {
+            // Game is now at normal speed
+            System.out.println("Game speed normal");
+            // TODO: Implement actual speed reset functionality
+        }
+    }
+
+    private void handleOptionsButton(boolean isPressed) {
+        // Show/hide options menu based on button state
+        if (isPressed) {
+            // Show options menu
+            System.out.println("Options menu opened");
+            // TODO: Implement actual options menu display
+        } else {
+            // Hide options menu
+            System.out.println("Options menu closed");
+            // TODO: Implement actual options menu hiding
+        }
     }
 
     public WaveManager getWaveManager() {
@@ -346,4 +452,10 @@ public class Playing extends GameScene implements SceneMethods {
     }
 
     public void setDisplayedTower(Tower tower) {displayedTower = tower;}
+
+    public void startEnemySpawning() {
+        waveManager.resetWaveIndex();
+        waveManager.resetEnemyIndex();
+        waveManager.startTimer();
+    }
 }
