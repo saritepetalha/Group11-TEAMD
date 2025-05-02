@@ -1,0 +1,71 @@
+{
+  "startingGold": 300,
+  "startingPlayerHP": 15,
+  "enemyStats": {
+    "KNIGHT": {
+      "hitPoints": 80,
+      "moveSpeed": 1.0,
+      "goldReward": 12
+    },
+    "GOBLIN": {
+      "hitPoints": 30,
+      "moveSpeed": 1.5,
+      "goldReward": 5
+    }
+  },
+  "towerStats": {
+    "ARTILLERY": {
+      "buildCost": 120,
+      "range": 2.5,
+      "fireRate": 0.6,
+      "aoeRadius": 1.5,
+      "damage": 25
+    },
+    "ARCHER": {
+      "buildCost": 60,
+      "range": 3.5,
+      "fireRate": 1.2,
+      "aoeRadius": 0.0,
+      "damage": 15
+    },
+    "MAGE": {
+      "buildCost": 90,
+      "range": 3.0,
+      "fireRate": 0.9,
+      "aoeRadius": 0.0,
+      "damage": 20
+    }
+  },
+  "waves": [
+    {
+      "groups": [
+        {
+          "composition": {
+            "GOBLIN": 8
+          },
+          "intraEnemyDelay": 0.5
+        }
+      ],
+      "intraGroupDelay": 0.0
+    },
+    {
+      "groups": [
+        {
+          "composition": {
+            "GOBLIN": 8
+          },
+          "intraEnemyDelay": 0.5
+        },
+        {
+          "composition": {
+            "KNIGHT": 2,
+            "GOBLIN": 5
+          },
+          "intraEnemyDelay": 0.4
+        }
+      ],
+      "intraGroupDelay": 1.5
+    }
+  ],
+  "interWaveDelay": 8.0
+}

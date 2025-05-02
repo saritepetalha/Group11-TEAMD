@@ -36,7 +36,7 @@ public final class OptionsIO {
     // ---------------------------------------------------------------------
 
     /**
-     * Loads options from disk.  If the file doesn’t exist, a new one is
+     * Loads options from disk.  If the file doesn’t exist or is empty/corrupt, a new one is
      * created with {@link GameOptions#defaults()}.
      *
      * @return never {@code null}
@@ -44,7 +44,7 @@ public final class OptionsIO {
     public static GameOptions load() {
         synchronized (GSON) {        // Gson is not 100 % threadsafe
             try {
-                if (Files.notExists(CONFIG_PATH)) {
+                if (Files.notExists(CONFIG_PATH) || Files.size(CONFIG_PATH) == 0) {
                     GameOptions defaults = GameOptions.defaults();
                     save(defaults);  // creates folders + file
                     return defaults;
@@ -52,12 +52,20 @@ public final class OptionsIO {
 
                 try (var reader = Files.newBufferedReader(CONFIG_PATH,
                         StandardCharsets.UTF_8)) {
-                    return GSON.fromJson(reader, GameOptions.class);
+                    GameOptions opts = GSON.fromJson(reader, GameOptions.class);
+                    if (opts == null) {
+                        // JSON was empty or only whitespace
+                        opts = GameOptions.defaults();
+                        save(opts);
+                    }
+                    return opts;
                 }
             } catch (IOException | RuntimeException ex) {
                 ex.printStackTrace();
                 // Fallback – keep the game runnable even if JSON is corrupt
-                return GameOptions.defaults();
+                GameOptions defaults = GameOptions.defaults();
+                save(defaults);
+                return defaults;
             }
         }
     }
@@ -93,3 +101,4 @@ public final class OptionsIO {
         save(GameOptions.defaults());
     }
 }
+
