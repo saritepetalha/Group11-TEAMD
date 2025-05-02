@@ -123,6 +123,9 @@ public class Constants {
     public static class Enemies {
         public static final int GOBLIN = 0;
         public static final int WARRIOR = 1;
+        public static final int BARREL = 2;
+        public static final int TNT = 3;
+        public static final int TROLL = 4;
 
         public static int getReward(int enemyType) {
             switch (enemyType) {
@@ -130,6 +133,13 @@ public class Constants {
                     return 5;
                 case WARRIOR:
                     return 25;
+                case TNT:
+                    return 2;
+                case BARREL:
+                    return 15;
+                case TROLL:
+                    return 10;
+
             }
             return 0;
         }
@@ -140,6 +150,12 @@ public class Constants {
                     return 0.85f;  // faster
                 case WARRIOR:
                     return 0.45f;  // slower, tanky
+                case BARREL:
+                    return 0.6f;
+                case TNT:
+                    return 1.2f;
+                case TROLL:
+                    return 0.25f;
             }
             return 0;
         }
@@ -150,6 +166,12 @@ public class Constants {
                     return 100;
                 case WARRIOR:
                     return 200;
+                case BARREL:
+                    return 150;
+                case TNT:
+                    return 50;
+                case TROLL:
+                    return 300;
             }
             return 0;
         }

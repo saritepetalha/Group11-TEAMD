@@ -159,10 +159,10 @@ public class EnemyManager {
         }
     }
 
-    public void update(){
+    public void update(float speedMultiplier){
         for (Enemy enemy:enemies) {
             if (enemy.isAlive()) {
-                enemy.move(0.3f, 0);
+                enemy.move(0.3f * speedMultiplier , 0);
             }
         }
 
@@ -177,17 +177,16 @@ public class EnemyManager {
             }
 
             if (e.hasReachedEnd()) {
-                //playing.enemyReachedEnd(); will be implemented soon
+                playing.enemyReachedEnd(e);
                 enemiesToRemove.add(e);
                 continue;
             }
 
-            moveEnemy(e);
+            moveEnemy(e, speedMultiplier);
         }
 
         // remove dead enemies
         enemies.removeAll(enemiesToRemove);
-        //enemyTest.move(0.3f,0);
     }
 
     public void addEnemy(int enemyType){
@@ -219,7 +218,7 @@ public class EnemyManager {
         }
     }
 
-    private void moveEnemy(Enemy e) {
+    private void moveEnemy(Enemy e, float speedMultiplier) {
         int pathIndex = e.getCurrentPathIndex();
 
         // if enemy has reached the last path point, it has reached the end
@@ -242,14 +241,14 @@ public class EnemyManager {
         float distance = (float) Math.sqrt(xDiff * xDiff + yDiff * yDiff);
 
         // if enemy is very close to the path point, move to next path point
-        if (distance < e.getSpeed()) {
+        if (distance < e.getSpeed() * speedMultiplier) {
             e.setCurrentPathIndex(pathIndex + 1);
             return;
         }
 
         // calculate movement speed components
-        float xSpeed = (xDiff / distance) * e.getSpeed();
-        float ySpeed = (yDiff / distance) * e.getSpeed();
+        float xSpeed = (xDiff / distance) * e.getSpeed() * speedMultiplier;
+        float ySpeed = (yDiff / distance) * e.getSpeed() * speedMultiplier;
 
         e.move(xSpeed, ySpeed);
     }
@@ -259,7 +258,18 @@ public class EnemyManager {
             if (enemy.isAlive()) {
                 enemy.updateAnimationTick();
                 drawEnemy(enemy, g);
-                //drawHealthBar(enemy, g);
+            }
+        }
+    }
+
+    public void draw(Graphics g, boolean gamePaused){
+        for (Enemy enemy: enemies){
+            if (enemy.isAlive()) {
+                // only update animation if game is not paused
+                if (!gamePaused) {
+                    enemy.updateAnimationTick();
+                }
+                drawEnemy(enemy, g);
             }
         }
     }
@@ -272,6 +282,8 @@ public class EnemyManager {
         // load both sprite atlases
         BufferedImage goblinSheet = LoadSave.getEnemyAtlas("goblin");
         BufferedImage warriorSheet = LoadSave.getEnemyAtlas("warrior");
+        BufferedImage barrelSheet = LoadSave.getEnemyAtlas("barrel");
+        BufferedImage tntSheet = LoadSave.getEnemyAtlas("tnt");
 
         // each sprite sheet has 6 frames, each frame is 192x192
         for (int i = 0; i < 6; i++) {
@@ -282,6 +294,14 @@ public class EnemyManager {
             // warrior frames
             BufferedImage warriorFrame = warriorSheet.getSubimage(i * 192, 0, 192, 192);
             enemyFrames[6 + i] = warriorFrame.getSubimage(30, 40,120, 100); // center 64x64
+
+            // tnt frames
+            //BufferedImage tntFrame = tntSheet.getSubimage(i * 192, 0, 192, 192);
+            //enemyFrames[12 + i] = tntFrame.getSubimage(30, 40, 120, 100);
+
+            // barrel frames
+            //BufferedImage barrelFrame = barrelSheet.getSubimage(i * 192, 0, 192, 192);
+            //enemyFrames[18 + i] = barrelFrame.getSubimage(30, 40, 120, 100);
         }
 
         return enemyFrames;
