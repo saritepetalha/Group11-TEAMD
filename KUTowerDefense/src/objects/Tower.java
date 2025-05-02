@@ -6,8 +6,8 @@ import java.awt.*;
 
 public class Tower {
 
-    private int x, y, type, ID;
-    private float damage, range, cooldown;
+    private int x, y, type, ID, countDownClock, damage;
+    private float range, cooldown;
     private static int num = 0;
 
     public Tower(int x, int y, int type) {
@@ -33,7 +33,7 @@ public class Tower {
         damage = Constants.Towers.getStartDamage(type);
     }
 
-    public float getDamage() {
+    public int getDamage() {
         return damage;
     }
 
@@ -63,4 +63,15 @@ public class Tower {
         return ID;
     }
 
+    public boolean isCooldownOver() {
+        return countDownClock >= cooldown;
+    }
+
+    public void resetCooldown() {
+        countDownClock = 0;
+    }
+
+    public void update() {
+        countDownClock ++;
+    }
 }

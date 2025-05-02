@@ -51,14 +51,23 @@ public class TowerManager {
     }
 
     private void attackEnemyIfInRange(float speedMultiplier) {
-        for (Tower tower : towers) {
-            for (Enemy enemy : playing.getEnemyManager().getEnemies()) {
-                if (enemy.isAlive()) {
-                    if (isEnemyInRange(tower, enemy)) {
-                        enemy.hurt(1);
-                    } else {
 
+        for (Tower tower : towers) {
+            tower.update();
+            attackEnemyIfInRange(tower);
+        }
+    }
+
+    private void attackEnemyIfInRange(Tower tower) {
+        for (Enemy enemy : playing.getEnemyManager().getEnemies()) {
+            if (enemy.isAlive()) {
+                if (isEnemyInRange(tower, enemy)) {
+                    if (tower.isCooldownOver()){
+                        playing.shootEnemy(tower, enemy);
+                        tower.resetCooldown();
                     }
+                } else {
+                    // PASS
                 }
             }
         }

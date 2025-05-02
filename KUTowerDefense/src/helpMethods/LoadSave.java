@@ -1,6 +1,7 @@
 package helpMethods;
 
 import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.ArrayList;
@@ -43,6 +44,36 @@ public class LoadSave {
         }
 
         return img;
+    }
+
+    public static BufferedImage getTowerMaterial(int projectileType, int width, int height) {
+        BufferedImage img = null;
+        String path = switch (projectileType) {
+            case 0 -> "/TowerAssets/arrow.png";
+            case 1 -> "/TowerAssets/cannonball.png";
+            case 2 -> "/TowerAssets/magicbolt.png";
+
+            default -> throw new IllegalArgumentException("Unknown projectile type: " + projectileType);
+        };
+
+        InputStream is = LoadSave.class.getResourceAsStream(path);
+
+        try {
+            img = ImageIO.read(is);
+            img = resizeImage(img, width, height);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return img;
+    }
+
+    private static BufferedImage resizeImage(BufferedImage originalImage, int width, int height) {
+        BufferedImage resizedImage = new BufferedImage(width, height, originalImage.getType());
+        Graphics2D g = resizedImage.createGraphics();
+        g.drawImage(originalImage, 0, 0, width, height, null);
+        g.dispose();
+        return resizedImage;
     }
 
 
