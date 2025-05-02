@@ -171,7 +171,7 @@ public class Playing extends GameScene implements SceneMethods {
     public void update() {
         if (!gamePaused) {
             waveManager.update();
-            projectileManager.update()
+            projectileManager.update();
 
             if (isAllEnemiesDead()) {
                 System.out.println("All enemies are dead");
