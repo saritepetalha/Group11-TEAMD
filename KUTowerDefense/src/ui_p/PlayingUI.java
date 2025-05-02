@@ -26,7 +26,6 @@ public class PlayingUI {
 
     public PlayingUI(Playing playing) {
         this.playing = playing;
-
         initButtons();
     }
 
@@ -59,11 +58,14 @@ public class PlayingUI {
     }
 
     public void draw(Graphics g) {
-        // Draw left side UI (gold, health, shield)
+        // draw left side UI (gold, health, shield)
         drawStatusBars(g);
 
-        // Draw right side control buttons
+        // draw right side control buttons
         drawControlButtons(g);
+
+        // draw wave indicator on the right
+        drawWaveIndicator(g);
     }
 
     private void drawStatusBars(Graphics g) {
@@ -84,7 +86,7 @@ public class PlayingUI {
         if (statusBarImg != null) {
             int imgWidth = statusBarImg.getWidth();
             int imgHeight = statusBarImg.getHeight();
-            g.drawImage(statusBarImg, barX + 10, barY + 10, imgWidth / 2, imgHeight / 2, null);
+            g.drawImage(statusBarImg, barX + 10, barY + 13, imgWidth / 10, imgHeight / 10, null);
         }
 
         // draw Gold bar with 3-slide button
@@ -94,6 +96,27 @@ public class PlayingUI {
         // draw Shield bar with 3-slide button
         drawSlideButton(g, shieldAmount + "/25", barX + 50, barY + 85, buttonWidth, buttonHeight, shieldAmount, MAX_SHIELD);
     }
+
+    private void drawWaveIndicator(Graphics g) {
+        int buttonSpacing = 8;
+        int barWidth = 120;
+        int barHeight = 32;
+        int iconSize = 32;
+        int startX = GameDimensions.GAME_WIDTH - barWidth - iconSize - buttonSpacing - 10;
+        int startY = buttonSize + 16;
+        int currentWave = playing.getWaveManager().getWaveIndex() + 1;
+        int totalWaves = playing.getWaveManager().getWaves().size();
+
+        // draw wave icon
+        g.drawImage(ButtonAssets.waveImg, startX, startY, iconSize, iconSize, null);
+
+        // Draw wave progress bar
+        drawSlideButton(g,currentWave + "/" + totalWaves,
+                startX + iconSize + buttonSpacing, startY,
+                barWidth, barHeight,
+                currentWave, totalWaves);
+    }
+
 
     private void drawSlideButton(Graphics g, String text, int x, int y, int width, int height, int value, int maxValue) {
         Graphics2D g2d = (Graphics2D) g;
@@ -263,6 +286,18 @@ public class PlayingUI {
     }
 
     public void mouseReleased() {
+    }
+
+    public TheButton getPauseButton() {
+        return pauseButton;
+    }
+
+    public TheButton getFastForwardButton() {
+        return fastForwardButton;
+    }
+
+    public TheButton getOptionsButton() {
+        return optionsButton;
     }
 
 }

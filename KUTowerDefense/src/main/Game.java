@@ -7,6 +7,7 @@ import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import managers.SoundManager;
 
 import managers.TileManager;
 import scenes.*;
@@ -64,6 +65,7 @@ public class Game extends JFrame implements Runnable{
 	}
 
 	private void initClasses() {
+		SoundManager.getInstance();
 		gamescreen = new GameScreen(this);
 		render = new Render(this);
 		intro = new Intro(this);

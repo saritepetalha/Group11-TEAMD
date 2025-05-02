@@ -497,7 +497,10 @@ public class EditTiles extends Bar {
         trash.resetBooleans();
         save.resetBooleans();
 
-        mapEditing.setSelectedTile(null);
+        // only clear the selected tile if not switching to Fill mode
+        if (activeButton != fill) {
+            mapEditing.setSelectedTile(null);
+        }
         activeButton.setMousePressed(true);
     }
 
