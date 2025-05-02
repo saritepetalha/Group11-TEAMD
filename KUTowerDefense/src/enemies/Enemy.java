@@ -28,7 +28,7 @@ public abstract class Enemy {
         this.id = id;
         this.enemyType = enemyType;
         this.speed = speed;
-        boundary = new Rectangle((int)x, (int)y, 64, 64);
+        boundary = new Rectangle((int)x, (int)y, 32, 32);
 
         // initialize health based on enemy type
         initializeHealth();

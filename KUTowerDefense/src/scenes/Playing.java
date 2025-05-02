@@ -31,6 +31,7 @@ public class Playing extends GameScene implements SceneMethods {
     private TowerManager towerManager;
     private TileManager tileManager;
     private PlayerManager playerManager;
+    private ProjectileManager projectileManager;
 
     private EnemyManager enemyManager;
 
@@ -46,6 +47,7 @@ public class Playing extends GameScene implements SceneMethods {
         this.playerManager = new PlayerManager();
       
         towerManager = new TowerManager(this);
+        projectileManager = new ProjectileManager(this);
 
         //OVERLAY IS HARDCODED BECAUSE IT IS NOT LOADED WITH LOAD DEFAULT LEVEL METHOD YET
         //IT HAS TO BE LOADED FIRST TO HAVE ENEMY MANAGER. FOR JUST NOW IT IS HARDCODED
@@ -168,6 +170,7 @@ public class Playing extends GameScene implements SceneMethods {
 
     public void update() {
         waveManager.update();
+        projectileManager.update();
 
         if (isAllEnemiesDead()) {
             System.out.println("All enemies are dead");
@@ -220,6 +223,7 @@ public class Playing extends GameScene implements SceneMethods {
         drawMap(g);
         towerManager.draw(g);
         drawTowerButtons(g);
+        projectileManager.draw(g);
         drawHighlight(g);
         drawDisplayedTower(g);
         playingUI.draw(g);
@@ -459,5 +463,9 @@ public class Playing extends GameScene implements SceneMethods {
         waveManager.resetWaveIndex();
         waveManager.resetEnemyIndex();
         waveManager.startTimer();
+    }
+
+    public void shootEnemy(Tower tower, Enemy enemy) {
+        projectileManager.newProjectile(tower, enemy);
     }
 }
