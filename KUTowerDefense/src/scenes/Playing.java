@@ -48,7 +48,7 @@ public class Playing extends GameScene implements SceneMethods {
         this.tileManager = tileManager;
         this.selectedDeadTree = null;
         this.playerManager = new PlayerManager();
-      
+
         towerManager = new TowerManager(this);
         projectileManager = new ProjectileManager(this);
 
@@ -238,13 +238,6 @@ public class Playing extends GameScene implements SceneMethods {
         drawHighlight(g);
         drawDisplayedTower(g);
         playingUI.draw(g);
-
-        if (optionsMenuOpen) {
-            drawOptionsMenu(g);
-        }
-        if (gamePaused) {
-            drawPauseOverlay(g);
-        }
     }
 
     private void drawHighlight(Graphics g) {
@@ -412,7 +405,9 @@ public class Playing extends GameScene implements SceneMethods {
     }
 
     @Override
-    public void mouseDragged(int x, int y) {}
+    public void mouseDragged(int x, int y) {
+        playingUI.mouseDragged(x, y);
+    }
 
     private void checkButtonStates() {
         // Check the states of control buttons
@@ -534,113 +529,20 @@ public class Playing extends GameScene implements SceneMethods {
         }).start();
     }
 
-    private void drawPauseOverlay(Graphics g) {
-        // Create a semi-transparent overlay
-        Graphics2D g2d = (Graphics2D) g;
-
-        // Semi-transparent black overlay
-        g2d.setColor(new Color(0, 0, 0, 150));
-        g2d.fillRect(0, 0, GameDimensions.GAME_WIDTH, GameDimensions.GAME_HEIGHT);
-
-        // Draw "PAUSED" text
-        g2d.setFont(new Font("Arial", Font.BOLD, 48));
-        String pauseText = "PAUSED";
-
-        // Calculate text position to center it
-        FontMetrics fm = g2d.getFontMetrics();
-        int textWidth = fm.stringWidth(pauseText);
-        int textX = (GameDimensions.GAME_WIDTH - textWidth) / 2;
-        int textY = GameDimensions.GAME_HEIGHT / 2;
-
-        // Draw text shadow
-        g2d.setColor(new Color(0, 0, 0, 200));
-        g2d.drawString(pauseText, textX + 3, textY + 3);
-
-        // Draw text
-        g2d.setColor(Color.WHITE);
-        g2d.drawString(pauseText, textX, textY);
-
-        // Draw hint text
-        g2d.setFont(new Font("Arial", Font.PLAIN, 20));
-        String hintText = "Click pause button again to resume";
-
-        fm = g2d.getFontMetrics();
-        textWidth = fm.stringWidth(hintText);
-        textX = (GameDimensions.GAME_WIDTH - textWidth) / 2;
-        textY = GameDimensions.GAME_HEIGHT / 2 + 50;
-
-        g2d.setColor(new Color(200, 200, 200));
-        g2d.drawString(hintText, textX, textY);
-    }
-
-    private void drawOptionsMenu(Graphics g) {
-        // create a semi-transparent panel for the options menu
-        Graphics2D g2d = (Graphics2D) g;
-
-        int menuWidth = 300;
-        int menuHeight = 280;
-        int menuX = (GameDimensions.GAME_WIDTH - menuWidth) / 2;
-        int menuY = (GameDimensions.GAME_HEIGHT - menuHeight) / 2;
-
-        // draw menu background
-        g2d.setColor(new Color(50, 50, 50, 220));
-        g2d.fillRoundRect(menuX, menuY, menuWidth, menuHeight, 20, 20);
-
-        // draw border
-        g2d.setColor(new Color(200, 200, 200));
-        g2d.setStroke(new BasicStroke(2.0f));
-        g2d.drawRoundRect(menuX, menuY, menuWidth, menuHeight, 20, 20);
-
-        // draw title
-        g2d.setFont(new Font("Arial", Font.BOLD, 28));
-        g2d.setColor(Color.WHITE);
-        String title = "OPTIONS";
-        FontMetrics fm = g2d.getFontMetrics();
-        int titleWidth = fm.stringWidth(title);
-        g2d.drawString(title, menuX + (menuWidth - titleWidth) / 2, menuY + 40);
-
-        // draw options
-        g2d.setFont(new Font("Arial", Font.PLAIN, 20));
-
-        // option items
-        String[] options = {
-                "Sound: ON",
-                "Music: ON",
-                "Difficulty: Normal",
-                "Return to Main Menu"
-        };
-
-        int optionY = menuY + 90;
-        int spacing = 40;
-
-        for (int i = 0; i < options.length; i++) {
-            // draw option background
-            if (i == options.length - 1) {
-                // special styling for the last option
-                g2d.setColor(new Color(80, 80, 120));
-                g2d.fillRoundRect(menuX + 40, optionY + i * spacing - 25, menuWidth - 80, 36, 10, 10);
-                g2d.setColor(new Color(120, 120, 180));
-                g2d.drawRoundRect(menuX + 40, optionY + i * spacing - 25, menuWidth - 80, 36, 10, 10);
-            } else {
-                g2d.setColor(new Color(70, 70, 70));
-                g2d.fillRoundRect(menuX + 30, optionY + i * spacing - 25, menuWidth - 60, 36, 10, 10);
-            }
-
-            // draw option text
-            g2d.setColor(Color.WHITE);
-            g2d.drawString(options[i], menuX + 50, optionY + i * spacing);
-        }
-
-        // draw close button hint
-        g2d.setFont(new Font("MV Boli", Font.ITALIC, 14));
-        g2d.setColor(new Color(200, 200, 200));
-        String closeHint = "Click Options button again to close";
-        fm = g2d.getFontMetrics();
-        int hintWidth = fm.stringWidth(closeHint);
-        g2d.drawString(closeHint, menuX + (menuWidth - hintWidth) / 2, menuY + menuHeight - 20);
-    }
-
     public void shootEnemy(Tower tower, Enemy enemy) {
         projectileManager.newProjectile(tower, enemy);
+    }
+
+    public boolean isGamePaused() {
+        return gamePaused;
+    }
+
+    public boolean isOptionsMenuOpen() {
+        return optionsMenuOpen;
+    }
+
+    public void returnToMainMenu() {
+        System.out.println("Returning to main menu");
+        game.changeGameState(main.GameStates.MENU);
     }
 }
