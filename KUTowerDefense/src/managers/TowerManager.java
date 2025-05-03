@@ -10,13 +10,12 @@ import objects.Tower;
 import scenes.Playing;
 import ui_p.DeadTree;
 import helpMethods.Utils;
+import ui_p.LiveTree;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
-
-//import static constants.TowerConstants.Towers.*;
 
 public class TowerManager {
     private Playing playing;
@@ -103,6 +102,21 @@ public class TowerManager {
         }
         return trees;
     }
+    public List<LiveTree> findLiveTrees(int[][] level){
+
+        List<LiveTree> trees = new ArrayList<>();
+        for (int row = 0; row < level.length; row++) {
+            for (int col = 0; col < level[row].length; col++) {
+                if (level[row][col] == 16 || level[row][col] == 17 || level[row][col] == 18) {
+                    int x = col * GameDimensions.TILE_DISPLAY_SIZE;
+                    int y = row * GameDimensions.TILE_DISPLAY_SIZE;
+                    trees.add(new LiveTree(x, y));
+                }
+            }
+        }
+        return trees;
+    }
+
 
     public void buildArcherTower(int x, int y) {
         towers.add(new ArcherTower(x, y));

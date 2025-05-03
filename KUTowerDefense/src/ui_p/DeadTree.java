@@ -11,14 +11,13 @@ import java.util.ArrayList;
 
 public class DeadTree {
 
-    int x,y, mouseX, mouseY;
-    boolean showChoices = false;
-    TheButton mageButton, archerButton, artilleryButton;
+    public int x,y;
+    public boolean showChoices = false;
+    public TheButton mageButton, archerButton, artilleryButton;
     private ArrayList<TheButton> theButtons = new ArrayList<>();
     private ArrayList<BufferedImage> ButtonImages = new ArrayList<>();
 
     private static BufferedImage buttonSheetImg;
-    private static BufferedImage modeLabelImg;
 
 
     public DeadTree(int x, int y) {

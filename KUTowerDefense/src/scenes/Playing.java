@@ -1,7 +1,6 @@
 package scenes;
 
 import java.awt.*;
-import java.awt.event.KeyEvent;
 import java.util.List;
 
 import constants.GameDimensions;
@@ -16,8 +15,8 @@ import objects.Tower;
 
 import ui_p.DeadTree;
 
-import ui_p.PlayingBar;
 import ui_p.PlayingUI;
+import ui_p.LiveTree;
 
 public class Playing extends GameScene implements SceneMethods {
     private int[][] level;
@@ -25,7 +24,8 @@ public class Playing extends GameScene implements SceneMethods {
 
     private PlayingUI playingUI;
     private int mouseX, mouseY;
-    private List<DeadTree> trees;
+    private List<DeadTree> deadTrees;
+    private List<LiveTree> liveTrees;
     private WaveManager waveManager;
     private TowerManager towerManager;
     private TileManager tileManager;
@@ -35,6 +35,7 @@ public class Playing extends GameScene implements SceneMethods {
     private EnemyManager enemyManager;
 
     private DeadTree selectedDeadTree;
+    private LiveTree selectedLiveTree;
     private Tower displayedTower;
 
     private boolean gamePaused = false;
@@ -72,8 +73,12 @@ public class Playing extends GameScene implements SceneMethods {
         waveManager = new WaveManager(this);
 
         if(towerManager.findDeadTrees(level) != null) {
-            trees = towerManager.findDeadTrees(level);
+            deadTrees = towerManager.findDeadTrees(level);
         }
+        if(towerManager.findLiveTrees(level) != null) {
+            liveTrees = towerManager.findLiveTrees(level);
+        }
+
 
         playingUI = new PlayingUI(this);
         updateUIResources();    // Update the UI with player's starting resources
@@ -151,8 +156,13 @@ public class Playing extends GameScene implements SceneMethods {
     }
 
     public void drawTowerButtons(Graphics g) {
-        for (DeadTree deadTree : trees) {
+        for (DeadTree deadTree : deadTrees) {
             deadTree.draw(g);
+        }
+    }
+    public void drawLiveTreeButtons(Graphics g) {
+        for (LiveTree live : liveTrees) {
+            live.draw(g);
         }
     }
 
@@ -234,6 +244,7 @@ public class Playing extends GameScene implements SceneMethods {
         towerManager.draw(g);
         enemyManager.draw(g, gamePaused);         // pass the paused state to enemyManager.draw
         drawTowerButtons(g);
+        drawLiveTreeButtons(g);
         projectileManager.draw(g);
         drawHighlight(g);
         drawDisplayedTower(g);
@@ -315,11 +326,16 @@ public class Playing extends GameScene implements SceneMethods {
         else if (tile.equals("MAGE")) {
             level[y][x] = 20;
         }
-        if (tile.equals("ARTILERRY")) {
+        else if (tile.equals("ARTILERRY")) {
             level[y][x] = 21;
+        }
+        else if (tile.equals("DEADTREE")) {
+            level[y][x] = 15;
         }
 
     }
+
+    // ... (previous unchanged code remains here)
 
     @Override
     public void mouseClicked(int x, int y) {
@@ -327,58 +343,100 @@ public class Playing extends GameScene implements SceneMethods {
         this.mouseY = y;
         displayedTower = null;
 
-        boolean clickedOnTree = false;
-        for(DeadTree tree: trees) {
+        handleDeadTreeButtonClicks();
+        handleDeadTreeSelection();
+        handleLiveTreeButtonClicks();
+        handleLiveTreeSelection();
+        handleTowerClick();
+    }
+
+    private void handleDeadTreeButtonClicks() {
+        for (DeadTree tree : deadTrees) {
             if (tree.isShowChoices()) {
                 int tileX = tree.getX();
                 int tileY = tree.getY();
+
                 if (tree.getArcherButton().isMousePressed(mouseX, mouseY)) {
-                    towerManager.buildArcherTower(tree.getX(), tree.getY());
-                    tree.setShowChoices(false);
-                    trees.remove(tree);
+                    towerManager.buildArcherTower(tileX, tileY);
+                    closeAllTreeChoices();
+                    deadTrees.remove(tree);
                     modifyTile(tileX, tileY, "ARCHER");
-                    setSelectedDeadTree(null);
                     return;
                 }
                 if (tree.getMageButton().isMousePressed(mouseX, mouseY)) {
-                    towerManager.buildMageTower(tree.getX(), tree.getY());
-                    tree.setShowChoices(false);
-                    trees.remove(tree);
+                    towerManager.buildMageTower(tileX, tileY);
+                    closeAllTreeChoices();
+                    deadTrees.remove(tree);
                     modifyTile(tileX, tileY, "MAGE");
-                    setSelectedDeadTree(null);
                     return;
                 }
                 if (tree.getArtilleryButton().isMousePressed(mouseX, mouseY)) {
-                    towerManager.buildArtilerryTower(tree.getX(), tree.getY());
-                    tree.setShowChoices(false);
-                    trees.remove(tree);
+                    towerManager.buildArtilerryTower(tileX, tileY);
+                    closeAllTreeChoices();
+                    deadTrees.remove(tree);
                     modifyTile(tileX, tileY, "ARTILERRY");
-                    setSelectedDeadTree(null);
                     return;
                 }
             }
         }
+    }
 
-        for (DeadTree tree : trees) {
+    private void handleDeadTreeSelection() {
+        for (DeadTree tree : deadTrees) {
             if (tree.isClicked(mouseX, mouseY)) {
-                for (DeadTree other : trees) {
-                    other.setShowChoices(false);
-                }
+                closeAllTreeChoices();
                 tree.setShowChoices(true);
                 setSelectedDeadTree(tree);
-                displayedTower = null;
                 return;
             }
         }
+    }
 
-        for (Tower tower: towerManager.getTowers()) {
+    private void handleLiveTreeButtonClicks() {
+        for (LiveTree tree : liveTrees) {
+            if (tree.isShowChoices()) {
+                int tileX = tree.getX();
+                int tileY = tree.getY();
+
+                if (tree.getFireButton().isMousePressed(mouseX, mouseY)) {
+                    liveTrees.remove(tree);
+                    deadTrees.add(new DeadTree(tileX, tileY));
+                    closeAllTreeChoices();
+                    modifyTile(tileX, tileY, "DEADTREE");
+                    return;
+                }
+            }
+        }
+    }
+
+    private void handleLiveTreeSelection() {
+        for (LiveTree tree : liveTrees) {
+            if (tree.isClicked(mouseX, mouseY)) {
+                closeAllTreeChoices();
+                tree.setShowChoices(true);
+                return;
+            }
+        }
+    }
+
+    private void handleTowerClick() {
+        for (Tower tower : towerManager.getTowers()) {
             if (tower.isClicked(mouseX, mouseY)) {
                 displayedTower = tower;
                 return;
             }
         }
-
     }
+
+    private void closeAllTreeChoices() {
+        for (DeadTree tree : deadTrees) {
+            tree.setShowChoices(false);
+        }
+        for (LiveTree tree : liveTrees) {
+            tree.setShowChoices(false);
+        }
+    }
+
 
     public TowerManager getTowerManager() {
         return towerManager;
