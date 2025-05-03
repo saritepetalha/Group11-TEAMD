@@ -3,6 +3,9 @@ package managers;
 import constants.GameDimensions;
 import enemies.Enemy;
 import helpMethods.LoadSave;
+import objects.ArcherTower;
+import objects.ArtilleryTower;
+import objects.MageTower;
 import objects.Tower;
 import scenes.Playing;
 import ui_p.DeadTree;
@@ -13,7 +16,7 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 
-import static constants.TowerConstants.Towers.*;
+//import static constants.TowerConstants.Towers.*;
 
 public class TowerManager {
     private Playing playing;
@@ -102,15 +105,15 @@ public class TowerManager {
     }
 
     public void buildArcherTower(int x, int y) {
-        towers.add(new Tower(x, y, ARCHER));
+        towers.add(new ArcherTower(x, y));
     }
 
     public void buildMageTower(int x, int y) {
-        towers.add(new Tower(x, y, SPELL));
+        towers.add(new MageTower(x, y));
     }
 
     public void buildArtilerryTower(int x, int y) {
-        towers.add(new Tower(x, y, BOMB));
+        towers.add(new ArtilleryTower(x, y));
     }
 
     public ArrayList<Tower> getTowers() {return towers;}
