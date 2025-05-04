@@ -1,7 +1,12 @@
 package scenes;
 
 import java.awt.*;
+
+import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+
 import java.awt.event.MouseWheelEvent;
+
 import java.util.List;
 import java.util.ArrayList;
 
@@ -17,7 +22,10 @@ import objects.Tower;
 
 import ui_p.DeadTree;
 
+import ui_p.FireAnimation;
+
 import ui_p.PlayingUI;
+import ui_p.LiveTree;
 
 import managers.AudioManager;
 
@@ -27,7 +35,8 @@ public class Playing extends GameScene implements SceneMethods {
 
     private PlayingUI playingUI;
     private int mouseX, mouseY;
-    private List<DeadTree> trees;
+    private List<DeadTree> deadTrees;
+    private List<LiveTree> liveTrees;
     private WaveManager waveManager;
     private TowerManager towerManager;
     private TileManager tileManager;
@@ -44,12 +53,18 @@ public class Playing extends GameScene implements SceneMethods {
     private boolean optionsMenuOpen = false;
     private float gameSpeedMultiplier = 1.0f;
 
+    private final TreeInteractionManager treeInteractionManager;
+    private final FireAnimationManager fireAnimationManager;
+
+
     public Playing(Game game, TileManager tileManager) {
         super(game);
         this.tileManager = tileManager;
         loadDefaultLevel();
 
         projectileManager = new ProjectileManager(this);
+        treeInteractionManager = new TreeInteractionManager(this);
+        fireAnimationManager = new FireAnimationManager();
 
         // Use the same constructor that was working before
         waveManager = new WaveManager(this);
@@ -74,18 +89,18 @@ public class Playing extends GameScene implements SceneMethods {
         this.selectedDeadTree = null;
 
         if(towerManager.findDeadTrees(level) != null) {
-            trees = towerManager.findDeadTrees(level);
-        } else {
-            trees = new ArrayList<>();
+            deadTrees = towerManager.findDeadTrees(level);
         }
-
+        if(towerManager.findLiveTrees(level) != null) {
+            liveTrees = towerManager.findLiveTrees(level);
+        }
         // Initialize UI
         playingUI = new PlayingUI(this);
         updateUIResources();
 
     }
 
-    private void updateUIResources() {
+    public void updateUIResources() {
         playingUI.setGoldAmount(playerManager.getGold());
         playingUI.setHealthAmount(playerManager.getHealth());
         playingUI.setShieldAmount(playerManager.getShield());
@@ -157,8 +172,13 @@ public class Playing extends GameScene implements SceneMethods {
     }
 
     public void drawTowerButtons(Graphics g) {
-        for (DeadTree deadTree : trees) {
+        for (DeadTree deadTree : deadTrees) {
             deadTree.draw(g);
+        }
+    }
+    public void drawLiveTreeButtons(Graphics g) {
+        for (LiveTree live : liveTrees) {
+            live.draw(g);
         }
     }
 
@@ -178,6 +198,7 @@ public class Playing extends GameScene implements SceneMethods {
         if (!gamePaused) {
             waveManager.update();
             projectileManager.update();
+            fireAnimationManager.update();
 
             if (isAllEnemiesDead()) {
                 System.out.println("All enemies are dead");
@@ -242,9 +263,11 @@ public class Playing extends GameScene implements SceneMethods {
         towerManager.draw(g);
         enemyManager.draw(g, gamePaused);         // pass the paused state to enemyManager.draw
         drawTowerButtons(g);
+        drawLiveTreeButtons(g);
         projectileManager.draw(g);
         drawHighlight(g);
         drawDisplayedTower(g);
+        fireAnimationManager.draw(g);
         playingUI.draw(g);
     }
 
@@ -305,7 +328,7 @@ public class Playing extends GameScene implements SceneMethods {
         g.drawRect(displayedTower.getX(), displayedTower.getY(), 64, 64);
     }
 
-    private void modifyTile(int x, int y, String tile) {
+    public void modifyTile(int x, int y, String tile) {
 
         x /= 64;
         y /= 64;
@@ -316,11 +339,16 @@ public class Playing extends GameScene implements SceneMethods {
         else if (tile.equals("MAGE")) {
             level[y][x] = 20;
         }
-        if (tile.equals("ARTILERRY")) {
+        else if (tile.equals("ARTILERRY")) {
             level[y][x] = 21;
+        }
+        else if (tile.equals("DEADTREE")) {
+            level[y][x] = 15;
         }
 
     }
+
+    // ... (previous unchanged code remains here)
 
     @Override
     public void mouseClicked(int x, int y) {
@@ -328,63 +356,23 @@ public class Playing extends GameScene implements SceneMethods {
         this.mouseY = y;
         displayedTower = null;
 
-        boolean clickedOnTree = false;
-        for(DeadTree tree: trees) {
-            if (tree.isShowChoices()) {
-                int tileX = tree.getX();
-                int tileY = tree.getY();
-                if (tree.getArcherButton().isMousePressed(mouseX, mouseY)) {
-                    playButtonClickSound();
-                    towerManager.buildArcherTower(tree.getX(), tree.getY());
-                    tree.setShowChoices(false);
-                    trees.remove(tree);
-                    modifyTile(tileX, tileY, "ARCHER");
-                    setSelectedDeadTree(null);
-                    return;
-                }
-                if (tree.getMageButton().isMousePressed(mouseX, mouseY)) {
-                    playButtonClickSound();
-                    towerManager.buildMageTower(tree.getX(), tree.getY());
-                    tree.setShowChoices(false);
-                    trees.remove(tree);
-                    modifyTile(tileX, tileY, "MAGE");
-                    setSelectedDeadTree(null);
-                    return;
-                }
-                if (tree.getArtilleryButton().isMousePressed(mouseX, mouseY)) {
-                    playButtonClickSound();
-                    towerManager.buildArtilerryTower(tree.getX(), tree.getY());
-                    tree.setShowChoices(false);
-                    trees.remove(tree);
-                    modifyTile(tileX, tileY, "ARTILERRY");
-                    setSelectedDeadTree(null);
-                    return;
-                }
-            }
-        }
+        treeInteractionManager.handleDeadTreeInteraction(mouseX, mouseY);
+        treeInteractionManager.handleLiveTreeInteraction(mouseX, mouseY);
 
-        for (DeadTree tree : trees) {
-            if (tree.isClicked(mouseX, mouseY)) {
-                playButtonClickSound();
-                for (DeadTree other : trees) {
-                    other.setShowChoices(false);
-                }
-                tree.setShowChoices(true);
-                setSelectedDeadTree(tree);
-                displayedTower = null;
-                return;
-            }
-        }
+        handleTowerClick();
+    }
 
-        for (Tower tower: towerManager.getTowers()) {
+    private void handleTowerClick() {
+        for (Tower tower : towerManager.getTowers()) {
             if (tower.isClicked(mouseX, mouseY)) {
                 playButtonClickSound();
                 displayedTower = tower;
                 return;
             }
         }
-
     }
+
+
 
     public TowerManager getTowerManager() {
         return towerManager;
@@ -594,5 +582,21 @@ public class Playing extends GameScene implements SceneMethods {
         System.out.println("Returning to main menu");
         game.changeGameState(main.GameStates.MENU);
 
+    }
+
+    public FireAnimationManager getFireAnimationManager() {
+        return fireAnimationManager;
+    }
+
+    public List<DeadTree> getDeadTrees() {
+        return deadTrees;
+    }
+
+    public List<LiveTree> getLiveTrees() {
+        return liveTrees;
+    }
+
+    public PlayerManager getPlayerManager() {
+        return playerManager;
     }
 }

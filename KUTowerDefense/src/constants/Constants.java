@@ -33,6 +33,8 @@ public class Constants {
         }
     }
 
+    public static final int BURN_TREE_COST = 50;
+
     public static class Towers {
         public static final int ARCHER = 0;
         public static final int ARTILLERY = 1;

@@ -4,46 +4,36 @@ import constants.Constants;
 
 import java.awt.*;
 
-public class Tower {
+public abstract class Tower {
 
-    private int x, y, type, ID, countDownClock, damage;
+    private int x, y, ID, countDownClock, damage;
     private float range, cooldown;
     private static int num = 0;
+    public abstract int getType();
 
-    public Tower(int x, int y, int type) {
+    public Tower(int x, int y) {
         this.x = x;
         this.y = y;
-        this.type = type;
         this.ID = num;
         num++;
-        setDefaultDamage();
-        setDefaultRange();
-        setDefaultCooldown();
     }
 
-    private void setDefaultCooldown() {
-        cooldown = Constants.Towers.getCooldown(type);
+    public abstract float getCooldown();
+    public abstract float getRange();
+    public abstract int getDamage();
+
+    protected void setDefaultCooldown() {
+        cooldown = Constants.Towers.getCooldown(getType());
     }
 
-    private void setDefaultRange() {
-        range = Constants.Towers.getRange(type);
+    protected void setDefaultRange() {
+        range = Constants.Towers.getRange(getType());
     }
 
-    private void setDefaultDamage() {
-        damage = Constants.Towers.getStartDamage(type);
+    protected void setDefaultDamage() {
+        damage = Constants.Towers.getStartDamage(getType());
     }
 
-    public int getDamage() {
-        return damage;
-    }
-
-    public float getRange() {
-        return range;
-    }
-
-    public float getCooldown() {
-        return cooldown;
-    }
 
     public boolean isClicked(int mouseX, int mouseY) {
         Rectangle bounds = new Rectangle(x, y, 64, 64);
@@ -55,9 +45,6 @@ public class Tower {
     }
     public int getY() {
         return y;
-    }
-    public int getType() {
-        return type;
     }
     public int getID() {
         return ID;
