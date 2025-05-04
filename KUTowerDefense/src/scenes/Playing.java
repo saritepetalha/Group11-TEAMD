@@ -545,6 +545,7 @@ public class Playing extends GameScene implements SceneMethods {
         }).start();
     }
 
+
     // Add a method to handle victory
     private void handleVictory() {
         System.out.println("Victory!");
@@ -590,5 +591,22 @@ public class Playing extends GameScene implements SceneMethods {
      */
     public void mouseWheelMoved(MouseWheelEvent e) {
         playingUI.mouseWheelMoved(e);
+
+    public void shootEnemy(Tower tower, Enemy enemy) {
+        projectileManager.newProjectile(tower, enemy);
+    }
+
+    public boolean isGamePaused() {
+        return gamePaused;
+    }
+
+    public boolean isOptionsMenuOpen() {
+        return optionsMenuOpen;
+    }
+
+    public void returnToMainMenu() {
+        System.out.println("Returning to main menu");
+        game.changeGameState(main.GameStates.MENU);
+
     }
 }

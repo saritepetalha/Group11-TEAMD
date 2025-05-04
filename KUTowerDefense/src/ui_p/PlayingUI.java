@@ -49,6 +49,7 @@ public class PlayingUI {
     private Map<String, Rectangle> musicOptionRects = new HashMap<>();
     private String[] musicOptions;
 
+
     private int buttonSize = GameDimensions.ButtonSize.SMALL.getSize();
 
     // Add scroll variables for music dropdown
@@ -98,6 +99,7 @@ public class PlayingUI {
         mainMenuButton = new TheButton("Main Menu",
                 0, 0, 200, 40, null);
 
+
         // Initialize volumes from AudioManager
         soundVolume = (int)(AudioManager.getInstance().getSoundVolume() * 100);
         musicVolume = (int)(AudioManager.getInstance().getMusicVolume() * 100);
@@ -105,6 +107,7 @@ public class PlayingUI {
         // Get available music tracks
         musicOptions = AudioManager.getInstance().getAvailableMusicTracks();
         Arrays.sort(musicOptions); // Sort alphabetically
+
     }
 
     public void draw(Graphics g) {
@@ -376,7 +379,8 @@ public class PlayingUI {
         int difficultyWidth = 90;
         int difficultyHeight = 15;
         int difficultyY = startY + spacing * 2 + 5;
-
+=======
+   
         // Display the correct difficulty image
         if (currentDifficulty.equals("Normal") && ButtonAssets.difficultyNormalImg != null) {
             g2d.drawImage(ButtonAssets.difficultyNormalImg, controlX, difficultyY, difficultyWidth, difficultyHeight, null);
@@ -573,6 +577,7 @@ public class PlayingUI {
         g2d.drawRect(thumbRectX, thumbRectY, thumbWidth, thumbHeight);
     }
 
+
     public void setGoldAmount(int goldAmount) {
         this.goldAmount = goldAmount;
     }
@@ -629,6 +634,7 @@ public class PlayingUI {
             toggleButtonState(pauseButton);
         } else if (fastForwardButton.getBounds().contains(mouseX, mouseY)) {
             AudioManager.getInstance().playButtonClickSound();
+
             toggleButtonState(fastForwardButton);
         } else if (optionsButton.getBounds().contains(mouseX, mouseY)) {
             AudioManager.getInstance().playButtonClickSound();
@@ -721,6 +727,7 @@ public class PlayingUI {
                     sliderDragging = true;
                     updateSliderValue(mouseX);
                 }
+
             }
         }
     }
@@ -742,6 +749,7 @@ public class PlayingUI {
 
     public void mouseReleased() {
         // stop slider dragging
+
         sliderDragging = false;
         currentSlider = "";
     }
@@ -908,4 +916,5 @@ public class PlayingUI {
             }
         }
     }
+
 }

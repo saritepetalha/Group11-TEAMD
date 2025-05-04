@@ -145,7 +145,6 @@ public class Game extends JFrame implements Runnable{
 	}
 
 	public static void main(String[] args) {
-
 		System.out.println("HELLO");
 		Game game = new Game();
 		game.gamescreen.initInputs();
