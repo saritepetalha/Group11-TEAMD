@@ -1,8 +1,9 @@
 package scenes;
 
 import java.awt.*;
-import java.awt.event.KeyEvent;
+import java.awt.event.MouseWheelEvent;
 import java.util.List;
+import java.util.ArrayList;
 
 import constants.GameDimensions;
 import enemies.Enemy;
@@ -16,8 +17,9 @@ import objects.Tower;
 
 import ui_p.DeadTree;
 
-import ui_p.PlayingBar;
 import ui_p.PlayingUI;
+
+import managers.AudioManager;
 
 public class Playing extends GameScene implements SceneMethods {
     private int[][] level;
@@ -44,18 +46,15 @@ public class Playing extends GameScene implements SceneMethods {
 
     public Playing(Game game, TileManager tileManager) {
         super(game);
-        loadDefaultLevel();
         this.tileManager = tileManager;
-        this.selectedDeadTree = null;
-        this.playerManager = new PlayerManager();
-      
-        towerManager = new TowerManager(this);
+        loadDefaultLevel();
+
         projectileManager = new ProjectileManager(this);
 
-        //OVERLAY IS HARDCODED BECAUSE IT IS NOT LOADED WITH LOAD DEFAULT LEVEL METHOD YET
-        //IT HAS TO BE LOADED FIRST TO HAVE ENEMY MANAGER. FOR JUST NOW IT IS HARDCODED
-        //JSON FILE WILL HAVE INFORMATION ON THAT
+        // Use the same constructor that was working before
+        waveManager = new WaveManager(this);
 
+        // Set up the overlay for pathfinding
         this.overlay = new int[][]{
                 {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
                 {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -69,14 +68,21 @@ public class Playing extends GameScene implements SceneMethods {
         };
 
         enemyManager = new EnemyManager(this, overlay, level);
-        waveManager = new WaveManager(this);
+        towerManager = new TowerManager(this);
+        playerManager = new PlayerManager();
+
+        this.selectedDeadTree = null;
 
         if(towerManager.findDeadTrees(level) != null) {
             trees = towerManager.findDeadTrees(level);
+        } else {
+            trees = new ArrayList<>();
         }
 
+        // Initialize UI
         playingUI = new PlayingUI(this);
-        updateUIResources();    // Update the UI with player's starting resources
+        updateUIResources();
+
     }
 
     private void updateUIResources() {
@@ -186,7 +192,9 @@ public class Playing extends GameScene implements SceneMethods {
                         enemyManager.getEnemies().clear();
                         waveManager.resetEnemyIndex();
                     }
-
+                } else {
+                    // No more waves and all enemies dead = victory!
+                    handleVictory();
                 }
             }
 
@@ -238,13 +246,6 @@ public class Playing extends GameScene implements SceneMethods {
         drawHighlight(g);
         drawDisplayedTower(g);
         playingUI.draw(g);
-
-        if (optionsMenuOpen) {
-            drawOptionsMenu(g);
-        }
-        if (gamePaused) {
-            drawPauseOverlay(g);
-        }
     }
 
     private void drawHighlight(Graphics g) {
@@ -333,6 +334,7 @@ public class Playing extends GameScene implements SceneMethods {
                 int tileX = tree.getX();
                 int tileY = tree.getY();
                 if (tree.getArcherButton().isMousePressed(mouseX, mouseY)) {
+                    playButtonClickSound();
                     towerManager.buildArcherTower(tree.getX(), tree.getY());
                     tree.setShowChoices(false);
                     trees.remove(tree);
@@ -341,6 +343,7 @@ public class Playing extends GameScene implements SceneMethods {
                     return;
                 }
                 if (tree.getMageButton().isMousePressed(mouseX, mouseY)) {
+                    playButtonClickSound();
                     towerManager.buildMageTower(tree.getX(), tree.getY());
                     tree.setShowChoices(false);
                     trees.remove(tree);
@@ -349,6 +352,7 @@ public class Playing extends GameScene implements SceneMethods {
                     return;
                 }
                 if (tree.getArtilleryButton().isMousePressed(mouseX, mouseY)) {
+                    playButtonClickSound();
                     towerManager.buildArtilerryTower(tree.getX(), tree.getY());
                     tree.setShowChoices(false);
                     trees.remove(tree);
@@ -361,6 +365,7 @@ public class Playing extends GameScene implements SceneMethods {
 
         for (DeadTree tree : trees) {
             if (tree.isClicked(mouseX, mouseY)) {
+                playButtonClickSound();
                 for (DeadTree other : trees) {
                     other.setShowChoices(false);
                 }
@@ -373,6 +378,7 @@ public class Playing extends GameScene implements SceneMethods {
 
         for (Tower tower: towerManager.getTowers()) {
             if (tower.isClicked(mouseX, mouseY)) {
+                playButtonClickSound();
                 displayedTower = tower;
                 return;
             }
@@ -412,7 +418,9 @@ public class Playing extends GameScene implements SceneMethods {
     }
 
     @Override
-    public void mouseDragged(int x, int y) {}
+    public void mouseDragged(int x, int y) {
+        playingUI.mouseDragged(x, y);
+    }
 
     private void checkButtonStates() {
         // Check the states of control buttons
@@ -517,6 +525,9 @@ public class Playing extends GameScene implements SceneMethods {
     private void handleGameOver() {
         System.out.println("Game Over!");
 
+        // Play a random lose sound
+        AudioManager.getInstance().playRandomLoseSound();
+
         // stop any ongoing waves/spawning
         waveManager.resetWaveIndex();
         enemyManager.getEnemies().clear();
@@ -526,7 +537,7 @@ public class Playing extends GameScene implements SceneMethods {
         // use a separate thread to avoid blocking the game loop
         new Thread(() -> {
             try {
-                Thread.sleep(2000);
+                Thread.sleep(3000);
                 game.changeGameState(main.GameStates.MENU);
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -534,113 +545,50 @@ public class Playing extends GameScene implements SceneMethods {
         }).start();
     }
 
-    private void drawPauseOverlay(Graphics g) {
-        // Create a semi-transparent overlay
-        Graphics2D g2d = (Graphics2D) g;
+    // Add a method to handle victory
+    private void handleVictory() {
+        System.out.println("Victory!");
 
-        // Semi-transparent black overlay
-        g2d.setColor(new Color(0, 0, 0, 150));
-        g2d.fillRect(0, 0, GameDimensions.GAME_WIDTH, GameDimensions.GAME_HEIGHT);
+        // Play a random victory sound
+        AudioManager.getInstance().playRandomVictorySound();
 
-        // Draw "PAUSED" text
-        g2d.setFont(new Font("Arial", Font.BOLD, 48));
-        String pauseText = "PAUSED";
-
-        // Calculate text position to center it
-        FontMetrics fm = g2d.getFontMetrics();
-        int textWidth = fm.stringWidth(pauseText);
-        int textX = (GameDimensions.GAME_WIDTH - textWidth) / 2;
-        int textY = GameDimensions.GAME_HEIGHT / 2;
-
-        // Draw text shadow
-        g2d.setColor(new Color(0, 0, 0, 200));
-        g2d.drawString(pauseText, textX + 3, textY + 3);
-
-        // Draw text
-        g2d.setColor(Color.WHITE);
-        g2d.drawString(pauseText, textX, textY);
-
-        // Draw hint text
-        g2d.setFont(new Font("Arial", Font.PLAIN, 20));
-        String hintText = "Click pause button again to resume";
-
-        fm = g2d.getFontMetrics();
-        textWidth = fm.stringWidth(hintText);
-        textX = (GameDimensions.GAME_WIDTH - textWidth) / 2;
-        textY = GameDimensions.GAME_HEIGHT / 2 + 50;
-
-        g2d.setColor(new Color(200, 200, 200));
-        g2d.drawString(hintText, textX, textY);
-    }
-
-    private void drawOptionsMenu(Graphics g) {
-        // create a semi-transparent panel for the options menu
-        Graphics2D g2d = (Graphics2D) g;
-
-        int menuWidth = 300;
-        int menuHeight = 280;
-        int menuX = (GameDimensions.GAME_WIDTH - menuWidth) / 2;
-        int menuY = (GameDimensions.GAME_HEIGHT - menuHeight) / 2;
-
-        // draw menu background
-        g2d.setColor(new Color(50, 50, 50, 220));
-        g2d.fillRoundRect(menuX, menuY, menuWidth, menuHeight, 20, 20);
-
-        // draw border
-        g2d.setColor(new Color(200, 200, 200));
-        g2d.setStroke(new BasicStroke(2.0f));
-        g2d.drawRoundRect(menuX, menuY, menuWidth, menuHeight, 20, 20);
-
-        // draw title
-        g2d.setFont(new Font("Arial", Font.BOLD, 28));
-        g2d.setColor(Color.WHITE);
-        String title = "OPTIONS";
-        FontMetrics fm = g2d.getFontMetrics();
-        int titleWidth = fm.stringWidth(title);
-        g2d.drawString(title, menuX + (menuWidth - titleWidth) / 2, menuY + 40);
-
-        // draw options
-        g2d.setFont(new Font("Arial", Font.PLAIN, 20));
-
-        // option items
-        String[] options = {
-                "Sound: ON",
-                "Music: ON",
-                "Difficulty: Normal",
-                "Return to Main Menu"
-        };
-
-        int optionY = menuY + 90;
-        int spacing = 40;
-
-        for (int i = 0; i < options.length; i++) {
-            // draw option background
-            if (i == options.length - 1) {
-                // special styling for the last option
-                g2d.setColor(new Color(80, 80, 120));
-                g2d.fillRoundRect(menuX + 40, optionY + i * spacing - 25, menuWidth - 80, 36, 10, 10);
-                g2d.setColor(new Color(120, 120, 180));
-                g2d.drawRoundRect(menuX + 40, optionY + i * spacing - 25, menuWidth - 80, 36, 10, 10);
-            } else {
-                g2d.setColor(new Color(70, 70, 70));
-                g2d.fillRoundRect(menuX + 30, optionY + i * spacing - 25, menuWidth - 60, 36, 10, 10);
+        // use a separate thread to avoid blocking the game loop
+        new Thread(() -> {
+            try {
+                Thread.sleep(5000);
+                game.changeGameState(main.GameStates.MENU);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
-
-            // draw option text
-            g2d.setColor(Color.WHITE);
-            g2d.drawString(options[i], menuX + 50, optionY + i * spacing);
-        }
-
-        // draw close button hint
-        g2d.setFont(new Font("MV Boli", Font.ITALIC, 14));
-        g2d.setColor(new Color(200, 200, 200));
-        String closeHint = "Click Options button again to close";
-        fm = g2d.getFontMetrics();
-        int hintWidth = fm.stringWidth(closeHint);
-        g2d.drawString(closeHint, menuX + (menuWidth - hintWidth) / 2, menuY + menuHeight - 20);
+        }).start();
     }
 
     public void shootEnemy(Tower tower, Enemy enemy) {
         projectileManager.newProjectile(tower, enemy);
+    }
+
+    public boolean isGamePaused() {
+        return gamePaused;
+    }
+
+    public boolean isOptionsMenuOpen() {
+        return optionsMenuOpen;
+    }
+
+    public void returnToMainMenu() {
+        game.changeGameState(main.GameStates.MENU);
+    }
+
+    @Override
+    public void playButtonClickSound() {
+        AudioManager.getInstance().playButtonClickSound();
+    }
+
+    /**
+     * Handles mouse wheel events and forwards them to PlayingUI
+     * @param e The mouse wheel event
+     */
+    public void mouseWheelMoved(MouseWheelEvent e) {
+        playingUI.mouseWheelMoved(e);
     }
 }

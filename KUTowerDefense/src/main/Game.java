@@ -7,7 +7,7 @@ import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
-import managers.SoundManager;
+import managers.AudioManager;
 
 import managers.TileManager;
 import scenes.*;
@@ -57,15 +57,49 @@ public class Game extends JFrame implements Runnable{
 	}
 
 	public void changeGameState(GameStates newState) {
+		// Save the previous state for potential return
+		GameStates previousState = GameStates.gameState;
+
+		// Set the new state
 		GameStates.gameState = newState;
 		gamescreen.setPanelSize(); // adjust GameScreen size
 		pack();                    // resize JFrame according to new dimensions
 		setLocationRelativeTo(null); // re-center the window
 		setCustomCursor();
+
+		// Handle music based on state transitions
+		AudioManager audioManager = AudioManager.getInstance();
+
+		// Only change music if we're not toggling between menu/edit/options
+		boolean isMenuRelatedToggle = (
+				// Going between menu-related states
+				(previousState == GameStates.MENU && (newState == GameStates.OPTIONS || newState == GameStates.EDIT)) ||
+						// Coming back to menu from options or edit
+						((previousState == GameStates.OPTIONS || previousState == GameStates.EDIT) && newState == GameStates.MENU)
+		);
+
+		// Skip music change if we're just toggling between menu-related states
+		if (!isMenuRelatedToggle) {
+			switch (newState) {
+				case MENU:
+					audioManager.playMusic("lonelyhood");
+					break;
+				case PLAYING:
+					audioManager.playRandomGameMusic();
+					break;
+				case INTRO:
+					break;
+				case OPTIONS:
+				case EDIT:
+				case LOADED:
+				default:
+					break;
+			}
+		}
 	}
 
 	private void initClasses() {
-		SoundManager.getInstance();
+		AudioManager.getInstance();
 		gamescreen = new GameScreen(this);
 		render = new Render(this);
 		intro = new Intro(this);
@@ -75,6 +109,10 @@ public class Game extends JFrame implements Runnable{
 		mapEditing = new MapEditing(this, this);
 		loaded = new Loaded(this);
 		tileManager = new TileManager();
+
+		if (GameStates.gameState != GameStates.INTRO) {
+			AudioManager.getInstance().playRandomGameMusic();
+		}
 	}
 
 
@@ -112,6 +150,11 @@ public class Game extends JFrame implements Runnable{
 		Game game = new Game();
 		game.gamescreen.initInputs();
 		game.start();
+
+		// Play music right away, but only if we're not in the intro
+		if (GameStates.gameState != GameStates.INTRO) {
+			AudioManager.getInstance().playRandomGameMusic();
+		}
 	}
 
 

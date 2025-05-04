@@ -59,16 +59,36 @@ public class TheButton {
         return x;
     }
 
+    public void setX(int x) {
+        this.x = x;
+        this.bounds = new Rectangle(x, y, width, height);
+    }
+
     public int getY() {
         return y;
+    }
+
+    public void setY(int y) {
+        this.y = y;
+        this.bounds = new Rectangle(x, y, width, height);
     }
 
     public int getWidth() {
         return width;
     }
 
+    public void setWidth(int width) {
+        this.width = width;
+        this.bounds = new Rectangle(x, y, width, height);
+    }
+
     public int getHeight() {
         return height;
+    }
+
+    public void setHeight(int height) {
+        this.height = height;
+        this.bounds = new Rectangle(x, y, width, height);
     }
 
     public void draw(Graphics g) {
@@ -226,9 +246,12 @@ public class TheButton {
         mousePressed = false;
     }
 
+    public void resetButtonState() {
+        mouseOver = false;
+        mousePressed = false;
+    }
+
     public void setText(String text) {
         this.text = text;
     }
-
-
 }

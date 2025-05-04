@@ -4,7 +4,6 @@ import java.awt.event.KeyListener;
 
 import main.Game;
 import main.GameStates;
-import ui_p.DeadTree;
 
 import java.awt.event.KeyEvent;
 
@@ -25,17 +24,17 @@ public class KeyboardListener implements KeyListener {
     public void keyPressed(KeyEvent e) {
         // if in intro, any key skips to menu
         if (GameStates.gameState == GameStates.INTRO) {
-            GameStates.gameState = GameStates.MENU;
             game.getIntro().stopMusic();
+            game.changeGameState(GameStates.MENU);
             return;
         }
 
         if (e.getKeyCode() == KeyEvent.VK_A) {
-            GameStates.gameState = GameStates.MENU;
+            game.changeGameState(GameStates.MENU);
         } else if (e.getKeyCode() == KeyEvent.VK_S) {
-            GameStates.gameState = GameStates.PLAYING;
+            game.changeGameState(GameStates.PLAYING);
         } else if (e.getKeyCode() == KeyEvent.VK_D) {
-            GameStates.gameState = GameStates.OPTIONS;
+            game.changeGameState(GameStates.OPTIONS);
         } else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
             System.out.println("ESC key pressed - clearing tile selection");
 
@@ -55,7 +54,6 @@ public class KeyboardListener implements KeyListener {
                     game.getPlaying().setDisplayedTower(null);
                 }
             }
-
         }
     }
 

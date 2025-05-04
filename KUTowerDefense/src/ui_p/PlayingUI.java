@@ -3,9 +3,14 @@ package ui_p;
 import constants.GameDimensions;
 import static constants.Constants.Player.*;
 import scenes.Playing;
+import managers.AudioManager;
 
 import java.awt.*;
+import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 public class PlayingUI {
     private Playing playing;
@@ -17,12 +22,38 @@ public class PlayingUI {
     private int healthAmount;
     private int shieldAmount;
 
+    // Mouse position
+    private int mouseX;
+    private int mouseY;
+
     // playing ui buttons
     private TheButton fastForwardButton;
     private TheButton pauseButton;
     private TheButton optionsButton;
 
+    // options menu back button
+    private TheButton backOptionsButton;
+    private TheButton mainMenuButton;
+
+    // option values (WILL BE CHANGED TO BE READ FROM FILE)
+    private int soundVolume = 50;
+    private int musicVolume = 50;
+    private boolean sliderDragging = false;
+    private String currentSlider = "";
+    private String currentDifficulty = "Normal";
+
+    // Music selection dropdown
+    private boolean musicDropdownOpen = false;
+    private String currentMusic = "Select Music";
+    private Rectangle musicDropdownRect;
+    private Map<String, Rectangle> musicOptionRects = new HashMap<>();
+    private String[] musicOptions;
+
     private int buttonSize = GameDimensions.ButtonSize.SMALL.getSize();
+
+    // Add scroll variables for music dropdown
+    private int musicDropdownScrollOffset = 0;
+    private int musicDropdownVisibleItems = 8; // Number of visible items in dropdown
 
     public PlayingUI(Playing playing) {
         this.playing = playing;
@@ -55,6 +86,25 @@ public class PlayingUI {
                 buttonSize,
                 buttonSize,
                 ButtonAssets.buttonImages.get(1));
+
+        backOptionsButton = new TheButton("Back",
+                GameDimensions.GAME_WIDTH / 2 + ButtonAssets.optionsMenuImg.getWidth() / 4,
+                GameDimensions.GAME_HEIGHT / 2 - ButtonAssets.optionsMenuImg.getHeight() / 3,
+                buttonSize,
+                buttonSize,
+                ButtonAssets.backOptionsImg);
+
+        // Initialize main menu button
+        mainMenuButton = new TheButton("Main Menu",
+                0, 0, 200, 40, null);
+
+        // Initialize volumes from AudioManager
+        soundVolume = (int)(AudioManager.getInstance().getSoundVolume() * 100);
+        musicVolume = (int)(AudioManager.getInstance().getMusicVolume() * 100);
+
+        // Get available music tracks
+        musicOptions = AudioManager.getInstance().getAvailableMusicTracks();
+        Arrays.sort(musicOptions); // Sort alphabetically
     }
 
     public void draw(Graphics g) {
@@ -66,6 +116,16 @@ public class PlayingUI {
 
         // draw wave indicator on the right
         drawWaveIndicator(g);
+
+        // Draw pause overlay if game is paused
+        if (playing.isGamePaused()) {
+            drawPauseOverlay(g);
+        }
+
+        // Draw options menu if it's open
+        if (playing.isOptionsMenuOpen()) {
+            drawOptionsMenu(g);
+        }
     }
 
     private void drawStatusBars(Graphics g) {
@@ -231,6 +291,287 @@ public class PlayingUI {
         }
     }
 
+    /**
+     * Draws the pause overlay when the game is paused
+     */
+    public void drawPauseOverlay(Graphics g) {
+        Graphics2D g2d = (Graphics2D) g;
+
+        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+
+        g2d.setColor(new Color(0, 0, 0, 150));
+        g2d.fillRect(0, 0, GameDimensions.GAME_WIDTH, GameDimensions.GAME_HEIGHT);
+
+        Font pauseFont = helpMethods.FontLoader.loadMedodicaFont(64f);
+        g2d.setFont(pauseFont);
+        String pauseText = "PAUSED";
+
+        FontMetrics fm = g2d.getFontMetrics();
+        int textWidth = fm.stringWidth(pauseText);
+        int textX = (GameDimensions.GAME_WIDTH - textWidth) / 2;
+        int textY = GameDimensions.GAME_HEIGHT / 2;
+
+        g2d.setColor(new Color(0, 0, 0, 200));
+        g2d.drawString(pauseText, textX + 3, textY + 3);
+
+        g2d.setColor(Color.WHITE);
+        g2d.drawString(pauseText, textX, textY);
+
+        Font hintFont = helpMethods.FontLoader.loadMedodicaFont(32f);
+        g2d.setFont(hintFont);
+        String hintText = "Click pause button again to resume";
+
+        fm = g2d.getFontMetrics();
+        textWidth = fm.stringWidth(hintText);
+        textX = (GameDimensions.GAME_WIDTH - textWidth) / 2;
+        textY = GameDimensions.GAME_HEIGHT / 2 + 50;
+
+        g2d.setColor(new Color(200, 200, 200));
+        g2d.drawString(hintText, textX, textY);
+    }
+
+    /**
+     * Draws the options menu with the new UI assets
+     */
+    public void drawOptionsMenu(Graphics g) {
+        Graphics2D g2d = (Graphics2D) g.create();
+
+        BufferedImage optionsImg = ButtonAssets.optionsMenuImg;
+        int menuWidth = optionsImg.getWidth() / 2;
+        int menuHeight = optionsImg.getHeight() / 2;
+        int menuX = (GameDimensions.GAME_WIDTH - menuWidth) / 2;
+        int menuY = (GameDimensions.GAME_HEIGHT - menuHeight) / 2;
+
+        // Draw semi-transparent background overlay
+        g2d.setColor(new Color(0, 0, 0, 150));
+        g2d.fillRect(0, 0, GameDimensions.GAME_WIDTH, GameDimensions.GAME_HEIGHT);
+
+        g2d.drawImage(optionsImg, menuX, menuY, menuWidth, menuHeight, null);
+
+        // Draw back button
+        if (ButtonAssets.backOptionsImg != null) {
+            int backButtonX = menuX + menuWidth - buttonSize;
+            int backButtonY = menuY + 10;
+
+            // Update button position
+            backOptionsButton.setX(backButtonX);
+            backOptionsButton.setY(backButtonY);
+
+            g2d.drawImage(ButtonAssets.backOptionsImg, backButtonX, backButtonY, buttonSize, buttonSize, null);
+
+            if (backOptionsButton.isMouseOver()) {
+                g2d.setColor(new Color(255, 255, 255, 80));
+                g2d.fillOval(backButtonX, backButtonY, buttonSize, buttonSize);
+            }
+        }
+
+        int startY = menuY + menuHeight / 4 + 10;
+        int spacing = menuHeight / 6;
+        int controlX = menuX + menuWidth / 2 + 10;
+
+        // 1. Sound slider
+        drawSlider(g2d, controlX, startY, 70, 20, soundVolume, "sound");
+
+        // 2. Difficulty display - positioned after the music slider
+        int difficultyWidth = 90;
+        int difficultyHeight = 15;
+        int difficultyY = startY + spacing * 2 + 5;
+
+        // Display the correct difficulty image
+        if (currentDifficulty.equals("Normal") && ButtonAssets.difficultyNormalImg != null) {
+            g2d.drawImage(ButtonAssets.difficultyNormalImg, controlX, difficultyY, difficultyWidth, difficultyHeight, null);
+        } else if (currentDifficulty.equals("Easy") && ButtonAssets.difficultyEasyImg != null) {
+            g2d.drawImage(ButtonAssets.difficultyEasyImg, controlX, difficultyY, difficultyWidth, difficultyHeight, null);
+        } else if (currentDifficulty.equals("Hard") && ButtonAssets.difficultyHardImg != null) {
+            g2d.drawImage(ButtonAssets.difficultyHardImg, controlX, difficultyY, difficultyWidth, difficultyHeight, null);
+        } else {
+            // Fallback if images are not available
+            g2d.setColor(new Color(80, 80, 200));
+            g2d.fillRoundRect(controlX, difficultyY, difficultyWidth, difficultyHeight, 10, 10);
+            g2d.setColor(Color.WHITE);
+            g2d.drawString(currentDifficulty, controlX + 30, difficultyY + 12);
+        }
+
+        // 3. Music selection dropdown
+        int dropdownY = startY + spacing / 2; // Positioned between sound slider and music slider
+        int dropdownWidth = 120;
+        int dropdownHeight = 23;
+
+        g2d.setColor(new Color(60, 60, 60));
+        g2d.fillRoundRect(controlX - 10, dropdownY, dropdownWidth, dropdownHeight, 5, 5);
+
+        g2d.setColor(Color.WHITE);
+        Font dropdownFont = helpMethods.FontLoader.loadMedodicaFont(14f);
+        g2d.setFont(dropdownFont);
+
+        // Truncate music name if it's too long
+        String displayName = currentMusic;
+        if (g2d.getFontMetrics().stringWidth(displayName) > dropdownWidth - 20) {
+            int charWidth = g2d.getFontMetrics().charWidth('W');
+            int maxChars = (dropdownWidth - 25) / charWidth;
+            if (displayName.length() > maxChars) {
+                displayName = displayName.substring(0, maxChars - 3) + "...";
+            }
+        }
+
+        g2d.drawString(displayName, controlX - 5, dropdownY + 17); // Adjusted text position
+
+        g2d.setColor(Color.WHITE);
+        int arrowX = controlX + dropdownWidth - 20;
+        int arrowY = dropdownY + 12;
+        g2d.fillPolygon(
+                new int[]{arrowX, arrowX + 8, arrowX + 4},
+                new int[]{arrowY, arrowY, arrowY + 5},
+                3);
+
+        musicDropdownRect = new Rectangle(controlX - 10, dropdownY, dropdownWidth, dropdownHeight);
+
+        if (musicDropdownOpen && musicOptions != null && musicOptions.length > 0) {
+            musicOptionRects.clear();
+            int optionHeight = 25; // Made taller
+
+            // calculate dropdown dimensions
+            int totalMusicOptions = musicOptions.length;
+            int visibleItems = Math.min(musicDropdownVisibleItems, totalMusicOptions);
+            int totalDropdownHeight = optionHeight * visibleItems;
+
+            // Ensure scroll offset is within bounds
+            int maxScrollOffset = Math.max(0, totalMusicOptions - musicDropdownVisibleItems);
+            musicDropdownScrollOffset = Math.max(0, Math.min(musicDropdownScrollOffset, maxScrollOffset));
+
+            // ensure the dropdown appears above all other UI elements
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.95f));
+
+            // create scrolling dropdown container
+            g2d.setColor(new Color(50, 50, 60, 245));
+            g2d.fillRoundRect(controlX, dropdownY + dropdownHeight, dropdownWidth, totalDropdownHeight, 5, 5);
+
+            // draw scrollbar if needed
+            if (totalMusicOptions > musicDropdownVisibleItems) {
+                int scrollbarWidth = 8;
+                int scrollbarHeight = totalDropdownHeight - 4;
+                int scrollbarX = controlX + dropdownWidth - scrollbarWidth - 5;
+                int scrollbarY = dropdownY + dropdownHeight + 2;
+
+                // scrollbar background
+                g2d.setColor(new Color(30, 30, 40));
+                g2d.fillRoundRect(scrollbarX, scrollbarY, scrollbarWidth, scrollbarHeight, 4, 4);
+
+                // scrollbar handle
+                float handleRatio = (float)musicDropdownVisibleItems / totalMusicOptions;
+                int handleHeight = Math.max(20, (int)(scrollbarHeight * handleRatio));
+                int handleY = scrollbarY + (int)((scrollbarHeight - handleHeight) * ((float)musicDropdownScrollOffset / maxScrollOffset));
+
+                g2d.setColor(new Color(150, 150, 200));
+                g2d.fillRoundRect(scrollbarX, handleY, scrollbarWidth, handleHeight, 4, 4);
+            }
+
+            // draw up/down scroll indicators if needed
+            if (musicDropdownScrollOffset > 0) {
+                // up arrow
+                g2d.setColor(new Color(200, 200, 255));
+                int upArrowX = controlX + dropdownWidth / 2;
+                int upArrowY = dropdownY + dropdownHeight + 10;
+                g2d.fillPolygon(
+                        new int[]{upArrowX - 8, upArrowX + 8, upArrowX},
+                        new int[]{upArrowY + 6, upArrowY + 6, upArrowY},
+                        3
+                );
+            }
+
+            if (musicDropdownScrollOffset < maxScrollOffset) {
+                // down arrow
+                g2d.setColor(new Color(200, 200, 255));
+                int downArrowX = controlX + dropdownWidth / 2;
+                int downArrowY = dropdownY + dropdownHeight + totalDropdownHeight - 10;
+                g2d.fillPolygon(
+                        new int[]{downArrowX - 8, downArrowX + 8, downArrowX},
+                        new int[]{downArrowY - 6, downArrowY - 6, downArrowY},
+                        3
+                );
+            }
+
+            g2d.setColor(Color.WHITE);
+
+            // draw visible options based on scroll offset
+            for (int i = 0; i < visibleItems; i++) {
+                int optionIndex = i + musicDropdownScrollOffset;
+                if (optionIndex >= totalMusicOptions) break;
+
+                String option = musicOptions[optionIndex];
+                int optionY = dropdownY + dropdownHeight + (i * optionHeight);
+
+                Rectangle optionRect = new Rectangle(controlX - 10, optionY, dropdownWidth, optionHeight);
+                musicOptionRects.put(option, optionRect);
+
+                // truncate option name if it's too long
+                String displayOption = option;
+                if (g2d.getFontMetrics().stringWidth(displayOption) > dropdownWidth - 25) {
+                    int charWidth = g2d.getFontMetrics().charWidth('W');
+                    int maxChars = (dropdownWidth - 30) / charWidth;
+                    if (displayOption.length() > maxChars) {
+                        displayOption = displayOption.substring(0, maxChars - 3) + "...";
+                    }
+                }
+
+                // highlight the option if mouse is over it
+                if (optionRect.contains(mouseX, mouseY)) {
+                    g2d.setColor(new Color(100, 100, 255));
+                    g2d.fillRect(optionRect.x, optionRect.y, optionRect.width, optionRect.height);
+                    g2d.setColor(Color.WHITE);
+                }
+
+                g2d.drawString(displayOption, controlX - 5, optionY + 17);
+            }
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
+        }
+
+        // 4. Music slider - now positioned after the music dropdown
+        drawSlider(g2d, controlX, startY + spacing, 70, 20, musicVolume, "music");
+
+
+        // 5. Return to Main Menu - no visible button, just hitbox
+        int btnWidth = 242;
+        int btnHeight = 38;
+        int btnX = menuX + (menuWidth - btnWidth) / 2;
+        int btnY = startY + spacing * 3;
+
+        // Update main menu button position
+        mainMenuButton.setX(btnX);
+        mainMenuButton.setY(btnY);
+        mainMenuButton.setWidth(btnWidth);
+        mainMenuButton.setHeight(btnHeight);
+
+        // Draw invisible hitbox for hover/pressed feedback only if mouse is over
+        if (mainMenuButton.isMouseOver()) {
+            g2d.setColor(new Color(255, 255, 255, 40));
+            g2d.fillRoundRect(btnX, btnY, btnWidth, btnHeight, 15, 15);
+        }
+    }
+
+    /**
+     * Draws a slider for options menu
+     */
+    private void drawSlider(Graphics2D g2d, int x, int y, int width, int height, int value, String id) {
+        g2d.setColor(new Color(60, 60, 60));
+        g2d.fillRoundRect(x, y + height / 2 - 1, width, 2, 2, 2);
+
+        int thumbX = x + (width * value / 100);
+        int thumbWidth = 8;
+        int thumbHeight = height;
+
+        g2d.setColor(new Color(80, 180, 255));
+        g2d.fillRoundRect(x, y + height / 2 - 1, thumbX - x, 2, 2, 2);
+
+        int thumbRectX = thumbX - thumbWidth / 2;
+        int thumbRectY = y;
+
+        g2d.setColor(new Color(220, 220, 220));
+        g2d.fillRect(thumbRectX, thumbRectY, thumbWidth, thumbHeight);
+
+        g2d.setColor(new Color(100, 100, 100));
+        g2d.drawRect(thumbRectX, thumbRectY, thumbWidth, thumbHeight);
+    }
 
     public void setGoldAmount(int goldAmount) {
         this.goldAmount = goldAmount;
@@ -246,10 +587,15 @@ public class PlayingUI {
 
     // add methods to handle mouse hover and press for control buttons
     public void mouseMoved(int mouseX, int mouseY) {
+        this.mouseX = mouseX;
+        this.mouseY = mouseY;
+
         // reset all hover states
         pauseButton.setMouseOver(false);
         fastForwardButton.setMouseOver(false);
         optionsButton.setMouseOver(false);
+        backOptionsButton.setMouseOver(false);
+        mainMenuButton.setMouseOver(false);
 
         // check which button is hovered
         if (pauseButton.getBounds().contains(mouseX, mouseY)) {
@@ -258,17 +604,124 @@ public class PlayingUI {
             fastForwardButton.setMouseOver(true);
         } else if (optionsButton.getBounds().contains(mouseX, mouseY)) {
             optionsButton.setMouseOver(true);
+        } else if (playing.isOptionsMenuOpen()) {
+            if (isMouseOverButton(backOptionsButton, mouseX, mouseY)) {
+                backOptionsButton.setMouseOver(true);
+            }
+            // only set hover for main menu button if music dropdown is closed
+            else if (!musicDropdownOpen && isMouseOverButton(mainMenuButton, mouseX, mouseY)) {
+                mainMenuButton.setMouseOver(true);
+            }
         }
     }
 
+    private boolean isMouseOverButton(TheButton button, int mouseX, int mouseY) {
+        return (mouseX >= button.getX() && mouseX <= button.getX() + button.getWidth() &&
+                mouseY >= button.getY() && mouseY <= button.getY() + button.getHeight());
+    }
+
     public void mousePressed(int mouseX, int mouseY) {
-        // check which button is pressed
+        this.mouseX = mouseX;
+        this.mouseY = mouseY;
+
         if (pauseButton.getBounds().contains(mouseX, mouseY)) {
+            AudioManager.getInstance().playButtonClickSound();
             toggleButtonState(pauseButton);
-        } else if (fastForwardButton.getBounds().contains(mouseX, mouseY)){
+        } else if (fastForwardButton.getBounds().contains(mouseX, mouseY)) {
+            AudioManager.getInstance().playButtonClickSound();
             toggleButtonState(fastForwardButton);
         } else if (optionsButton.getBounds().contains(mouseX, mouseY)) {
+            AudioManager.getInstance().playButtonClickSound();
             toggleButtonState(optionsButton);
+        } else if (playing.isOptionsMenuOpen()) {
+            if (isMouseOverButton(backOptionsButton, mouseX, mouseY)) {
+                AudioManager.getInstance().playButtonClickSound();
+                toggleButtonState(backOptionsButton);
+                musicDropdownOpen = false;
+                return;
+            }
+
+            // check if clicking on music dropdown
+            if (musicDropdownRect != null && musicDropdownRect.contains(mouseX, mouseY)) {
+                musicDropdownOpen = !musicDropdownOpen;
+                // reset scroll position when opening dropdown
+                if (musicDropdownOpen) {
+                    musicDropdownScrollOffset = 0;
+                }
+            }
+            // check if clicking on a music option
+            else if (musicDropdownOpen) {
+                // check if clicking on scroll up button
+                int upArrowX = musicDropdownRect.x + musicDropdownRect.width / 2;
+                int upArrowY = musicDropdownRect.y + musicDropdownRect.height + 10;
+                Rectangle upArrowBounds = new Rectangle(upArrowX - 10, upArrowY - 5, 20, 10);
+
+                // check if clicking on scroll down button
+                int visibleItems = Math.min(musicDropdownVisibleItems, musicOptions.length);
+                int optionHeight = 25;
+                int totalDropdownHeight = optionHeight * visibleItems;
+                int downArrowX = upArrowX;
+                int downArrowY = musicDropdownRect.y + musicDropdownRect.height + totalDropdownHeight - 10;
+                Rectangle downArrowBounds = new Rectangle(downArrowX - 10, downArrowY - 5, 20, 10);
+
+                if (musicDropdownScrollOffset > 0 && upArrowBounds.contains(mouseX, mouseY)) {
+                    // Scroll up
+                    musicDropdownScrollOffset = Math.max(0, musicDropdownScrollOffset - 1);
+                } else if (musicDropdownScrollOffset < Math.max(0, musicOptions.length - musicDropdownVisibleItems)
+                        && downArrowBounds.contains(mouseX, mouseY)) {
+                    // Scroll down
+                    musicDropdownScrollOffset = Math.min(
+                            musicOptions.length - musicDropdownVisibleItems,
+                            musicDropdownScrollOffset + 1
+                    );
+                } else {
+                    // check if clicking on a music option
+                    for (Map.Entry<String, Rectangle> entry : musicOptionRects.entrySet()) {
+                        if (entry.getValue().contains(mouseX, mouseY)) {
+                            currentMusic = entry.getKey();
+                            AudioManager.getInstance().playMusic(currentMusic);
+                            musicDropdownOpen = false;
+                            break;
+                        }
+                    }
+
+                    // if not clicking on any option, check if clicking on scrollbar
+                    int scrollbarWidth = 8;
+                    int scrollbarX = musicDropdownRect.x + musicDropdownRect.width - scrollbarWidth - 5;
+                    int scrollbarY = musicDropdownRect.y + musicDropdownRect.height + 2;
+                    int scrollbarHeight = totalDropdownHeight - 4;
+                    Rectangle scrollbarBounds = new Rectangle(scrollbarX, scrollbarY, scrollbarWidth, scrollbarHeight);
+
+                    if (musicOptions.length > musicDropdownVisibleItems && scrollbarBounds.contains(mouseX, mouseY)) {
+                        // calculate new scroll position based on click position
+                        float clickPositionRatio = (float)(mouseY - scrollbarY) / scrollbarHeight;
+                        musicDropdownScrollOffset = (int)(clickPositionRatio *
+                                (musicOptions.length - musicDropdownVisibleItems));
+                        musicDropdownScrollOffset = Math.max(0, Math.min(
+                                musicOptions.length - musicDropdownVisibleItems,
+                                musicDropdownScrollOffset
+                        ));
+                    }
+                }
+            }
+            // if clicking outside dropdown while it's open, close it
+            else if (musicDropdownOpen && !musicDropdownRect.contains(mouseX, mouseY)) {
+                musicDropdownOpen = false;
+            }
+            // pnly process other buttons if dropdown is closed
+            else if (!musicDropdownOpen) {
+                if (isMouseOverButton(mainMenuButton, mouseX, mouseY)) {
+                    toggleButtonState(mainMenuButton);
+                    playing.returnToMainMenu();
+                }
+
+                // check slider interaction
+                currentSlider = getSliderAtPosition(mouseX, mouseY);
+                if (!currentSlider.isEmpty()) {
+                    sliderDragging = true;
+                    updateSliderValue(mouseX);
+                }
+            }
         }
     }
 
@@ -282,10 +735,120 @@ public class PlayingUI {
             if (button != pauseButton) pauseButton.setMousePressed(false);
             if (button != fastForwardButton) fastForwardButton.setMousePressed(false);
             if (button != optionsButton) optionsButton.setMousePressed(false);
+            if (button != backOptionsButton) backOptionsButton.setMousePressed(false);
+            if (button != mainMenuButton) mainMenuButton.setMousePressed(false);
         }
     }
 
     public void mouseReleased() {
+        // stop slider dragging
+        sliderDragging = false;
+        currentSlider = "";
+    }
+
+    public void mouseDragged(int mouseX, int mouseY) {
+        int prevMouseY = this.mouseY;
+        this.mouseX = mouseX;
+        this.mouseY = mouseY;
+
+        // handle slider dragging
+        if (sliderDragging && !currentSlider.isEmpty()) {
+            updateSliderValue(mouseX);
+        }
+
+        // handle music dropdown scrolling via drag
+        if (musicDropdownOpen && musicOptions.length > musicDropdownVisibleItems) {
+            int optionHeight = 25;
+            int visibleItems = Math.min(musicDropdownVisibleItems, musicOptions.length);
+            int totalDropdownHeight = optionHeight * visibleItems;
+
+            // create dropdown area rectangle
+            Rectangle dropdownArea = new Rectangle(
+                    musicDropdownRect.x,
+                    musicDropdownRect.y + musicDropdownRect.height,
+                    musicDropdownRect.width,
+                    totalDropdownHeight
+            );
+
+            // check if dragging inside dropdown area or scrollbar
+            if (dropdownArea.contains(mouseX, mouseY) ||
+                    (mouseX >= dropdownArea.x + dropdownArea.width - 15 &&
+                            mouseY >= dropdownArea.y && mouseY <= dropdownArea.y + dropdownArea.height)) {
+
+                // calculate drag distance and direction
+                int dragDistance = mouseY - prevMouseY;
+
+                if (Math.abs(dragDistance) > 5) {  // threshold to avoid micro-scrolls
+                    // calculate scroll movement (negative = scroll up, positive = scroll down)
+                    int scrollMove = dragDistance > 0 ? 1 : -1;
+
+                    // update scroll offset
+                    musicDropdownScrollOffset += scrollMove;
+
+                    // ensure scroll offset is within bounds
+                    int maxScrollOffset = Math.max(0, musicOptions.length - musicDropdownVisibleItems);
+                    musicDropdownScrollOffset = Math.max(0, Math.min(musicDropdownScrollOffset, maxScrollOffset));
+                }
+            }
+        }
+    }
+
+    /**
+     * Check if mouse is over a slider and return the slider's ID if true
+     */
+    private String getSliderAtPosition(int mouseX, int mouseY) {
+        if (!playing.isOptionsMenuOpen()) return "";
+
+        BufferedImage optionsImg = ButtonAssets.optionsMenuImg;
+        int menuWidth = optionsImg.getWidth() / 2;
+        int menuHeight = optionsImg.getHeight() / 2;
+        int menuX = (GameDimensions.GAME_WIDTH - menuWidth) / 2;
+        int menuY = (GameDimensions.GAME_HEIGHT - menuHeight) / 2;
+
+        int startY = menuY + menuHeight / 4 + 10;
+        int spacing = menuHeight / 6;
+        int controlX = menuX + menuWidth / 2 + 10;
+        int sliderWidth = 70;
+        int sliderHeight = 20;
+
+        // make the hitbox taller to be easier to click
+        int hitboxHeight = sliderHeight * 2;
+
+        // check sound slider with increased hitbox
+        Rectangle soundSlider = new Rectangle(controlX, startY - hitboxHeight/2, sliderWidth, hitboxHeight);
+        if (soundSlider.contains(mouseX, mouseY)) return "sound";
+
+        // check music slider with increased hitbox
+        Rectangle musicSlider = new Rectangle(controlX, startY + spacing - hitboxHeight/2, sliderWidth, hitboxHeight);
+        if (musicSlider.contains(mouseX, mouseY)) return "music";
+
+        return "";
+    }
+
+    /**
+     * Update slider values when dragging
+     */
+    public void updateSliderValue(int mouseX) {
+        if (!sliderDragging || currentSlider.isEmpty()) return;
+
+        BufferedImage optionsImg = ButtonAssets.optionsMenuImg;
+        int menuWidth = optionsImg.getWidth() / 2;
+        int menuX = (GameDimensions.GAME_WIDTH - menuWidth) / 2;
+        int controlX = menuX + menuWidth / 2 + 10;
+        int sliderWidth = 70;
+
+        int value = (int) (((float)(mouseX - controlX) / sliderWidth) * 100);
+        value = Math.max(0, Math.min(100, value));
+
+        //System.out.println("value: " + value);
+
+        if (currentSlider.equals("sound")) {
+            soundVolume = value;
+            AudioManager.getInstance().setSoundVolume(value / 100.0f);
+        } else if (currentSlider.equals("music")) {
+            musicVolume = value;
+            AudioManager.getInstance().setMusicVolume(value / 100.0f);
+        }
     }
 
     public TheButton getPauseButton() {
@@ -300,4 +863,49 @@ public class PlayingUI {
         return optionsButton;
     }
 
+    public TheButton getBackOptionsButton() {
+        return backOptionsButton;
+    }
+
+    public TheButton getMainMenuButton() {
+        return mainMenuButton;
+    }
+
+    /**
+     * Handle mouse wheel scrolling over the music dropdown
+     * @param e The mouse wheel event
+     */
+    public void mouseWheelMoved(MouseWheelEvent e) {
+        if (playing.isOptionsMenuOpen() && musicDropdownOpen && musicOptions.length > musicDropdownVisibleItems) {
+            int mouseX = e.getX();
+            int mouseY = e.getY();
+
+            // calculate dropdown dimensions
+            int optionHeight = 25;
+            int visibleItems = Math.min(musicDropdownVisibleItems, musicOptions.length);
+            int totalDropdownHeight = optionHeight * visibleItems;
+
+            // create dropdown area rectangle
+            Rectangle dropdownArea = new Rectangle(
+                    musicDropdownRect.x,
+                    musicDropdownRect.y + musicDropdownRect.height,
+                    musicDropdownRect.width,
+                    totalDropdownHeight
+            );
+
+            // check if mouse is over the dropdown area
+            if (dropdownArea.contains(mouseX, mouseY)) {
+                // get scroll direction (positive for scroll down, negative for scroll up)
+                int scrollDirection = e.getWheelRotation();
+
+                // update scroll offset based on wheel rotation
+                // multiply by 2 for faster scrolling
+                musicDropdownScrollOffset += scrollDirection * 2;
+
+                // ensure scroll offset is within bounds
+                int maxScrollOffset = Math.max(0, musicOptions.length - musicDropdownVisibleItems);
+                musicDropdownScrollOffset = Math.max(0, Math.min(musicDropdownScrollOffset, maxScrollOffset));
+            }
+        }
+    }
 }

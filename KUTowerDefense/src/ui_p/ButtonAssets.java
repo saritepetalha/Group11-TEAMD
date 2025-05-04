@@ -33,6 +33,20 @@ public class ButtonAssets {
 
     public static BufferedImage statusBarImg;
     public static BufferedImage waveImg;
+
+    // New UI assets for options menu
+    public static BufferedImage optionsMenuImg;
+    public static BufferedImage backOptionsImg;
+
+    // Difficulty images
+    public static BufferedImage difficultyNormalImg;
+    public static BufferedImage difficultyEasyImg;
+    public static BufferedImage difficultyHardImg;
+
+    // Music button images
+    public static BufferedImage regularMusicImg;
+    public static BufferedImage pressedMusicImg;
+
     static {
         loadAll();
     }
@@ -53,6 +67,12 @@ public class ButtonAssets {
 
         loadStatusBarImages();
         loadWaveImage();
+
+        // Load new UI assets
+        loadOptionsMenuImg();
+        loadBackOptionsImg();
+        loadDifficultyImages();
+        loadMusicButtonImages();
     }
 
     private static void loadButtonImageFile() {
@@ -175,6 +195,62 @@ public class ButtonAssets {
         }
     }
 
+    // Load options menu background image
+    private static void loadOptionsMenuImg() {
+        try (InputStream is = LoadSave.class.getResourceAsStream("/UI/Options_UI.png")) {
+            optionsMenuImg = ImageIO.read(is);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Load back button for options menu
+    private static void loadBackOptionsImg() {
+        try (InputStream is = LoadSave.class.getResourceAsStream("/UI/BackOptions.png")) {
+            backOptionsImg = ImageIO.read(is);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Load difficulty images
+    private static void loadDifficultyImages() {
+        // Load Normal difficulty
+        try (InputStream is = LoadSave.class.getResourceAsStream("/UI/Normal.png")) {
+            difficultyNormalImg = ImageIO.read(is);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // Load Easy difficulty
+        try (InputStream is = LoadSave.class.getResourceAsStream("/UI/Easy.png")) {
+            difficultyEasyImg = ImageIO.read(is);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // Load Hard difficulty (note: file is named "Hard..png" with two dots)
+        try (InputStream is = LoadSave.class.getResourceAsStream("/UI/Hard.png")) {
+            difficultyHardImg = ImageIO.read(is);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Load music button images
+    private static void loadMusicButtonImages() {
+        try (InputStream is = LoadSave.class.getResourceAsStream("/UI/RegularMusic.png")) {
+            regularMusicImg = ImageIO.read(is);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try (InputStream is = LoadSave.class.getResourceAsStream("/UI/PressedMusic.png")) {
+            pressedMusicImg = ImageIO.read(is);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     // helper method to create hover effect by overlaying yellow highlight
     private static BufferedImage createHoverEffect(BufferedImage original) {
@@ -196,6 +272,5 @@ public class ButtonAssets {
         g2d.dispose();
         return result;
     }
-
 }
 
