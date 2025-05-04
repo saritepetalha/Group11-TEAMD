@@ -1,8 +1,9 @@
 package scenes;
 
 import java.awt.*;
-import java.awt.event.KeyEvent;
+import java.awt.event.MouseWheelEvent;
 import java.util.List;
+import java.util.ArrayList;
 
 import constants.GameDimensions;
 import enemies.Enemy;
@@ -16,8 +17,9 @@ import objects.Tower;
 
 import ui_p.DeadTree;
 
-import ui_p.PlayingBar;
 import ui_p.PlayingUI;
+
+import managers.AudioManager;
 
 public class Playing extends GameScene implements SceneMethods {
     private int[][] level;
@@ -44,18 +46,15 @@ public class Playing extends GameScene implements SceneMethods {
 
     public Playing(Game game, TileManager tileManager) {
         super(game);
-        loadDefaultLevel();
         this.tileManager = tileManager;
-        this.selectedDeadTree = null;
-        this.playerManager = new PlayerManager();
+        loadDefaultLevel();
 
-        towerManager = new TowerManager(this);
         projectileManager = new ProjectileManager(this);
 
-        //OVERLAY IS HARDCODED BECAUSE IT IS NOT LOADED WITH LOAD DEFAULT LEVEL METHOD YET
-        //IT HAS TO BE LOADED FIRST TO HAVE ENEMY MANAGER. FOR JUST NOW IT IS HARDCODED
-        //JSON FILE WILL HAVE INFORMATION ON THAT
+        // Use the same constructor that was working before
+        waveManager = new WaveManager(this);
 
+        // Set up the overlay for pathfinding
         this.overlay = new int[][]{
                 {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
                 {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -69,14 +68,21 @@ public class Playing extends GameScene implements SceneMethods {
         };
 
         enemyManager = new EnemyManager(this, overlay, level);
-        waveManager = new WaveManager(this);
+        towerManager = new TowerManager(this);
+        playerManager = new PlayerManager();
+
+        this.selectedDeadTree = null;
 
         if(towerManager.findDeadTrees(level) != null) {
             trees = towerManager.findDeadTrees(level);
+        } else {
+            trees = new ArrayList<>();
         }
 
+        // Initialize UI
         playingUI = new PlayingUI(this);
-        updateUIResources();    // Update the UI with player's starting resources
+        updateUIResources();
+
     }
 
     private void updateUIResources() {
@@ -186,7 +192,9 @@ public class Playing extends GameScene implements SceneMethods {
                         enemyManager.getEnemies().clear();
                         waveManager.resetEnemyIndex();
                     }
-
+                } else {
+                    // No more waves and all enemies dead = victory!
+                    handleVictory();
                 }
             }
 
@@ -326,6 +334,7 @@ public class Playing extends GameScene implements SceneMethods {
                 int tileX = tree.getX();
                 int tileY = tree.getY();
                 if (tree.getArcherButton().isMousePressed(mouseX, mouseY)) {
+                    playButtonClickSound();
                     towerManager.buildArcherTower(tree.getX(), tree.getY());
                     tree.setShowChoices(false);
                     trees.remove(tree);
@@ -334,6 +343,7 @@ public class Playing extends GameScene implements SceneMethods {
                     return;
                 }
                 if (tree.getMageButton().isMousePressed(mouseX, mouseY)) {
+                    playButtonClickSound();
                     towerManager.buildMageTower(tree.getX(), tree.getY());
                     tree.setShowChoices(false);
                     trees.remove(tree);
@@ -342,6 +352,7 @@ public class Playing extends GameScene implements SceneMethods {
                     return;
                 }
                 if (tree.getArtilleryButton().isMousePressed(mouseX, mouseY)) {
+                    playButtonClickSound();
                     towerManager.buildArtilerryTower(tree.getX(), tree.getY());
                     tree.setShowChoices(false);
                     trees.remove(tree);
@@ -354,6 +365,7 @@ public class Playing extends GameScene implements SceneMethods {
 
         for (DeadTree tree : trees) {
             if (tree.isClicked(mouseX, mouseY)) {
+                playButtonClickSound();
                 for (DeadTree other : trees) {
                     other.setShowChoices(false);
                 }
@@ -366,6 +378,7 @@ public class Playing extends GameScene implements SceneMethods {
 
         for (Tower tower: towerManager.getTowers()) {
             if (tower.isClicked(mouseX, mouseY)) {
+                playButtonClickSound();
                 displayedTower = tower;
                 return;
             }
@@ -512,6 +525,9 @@ public class Playing extends GameScene implements SceneMethods {
     private void handleGameOver() {
         System.out.println("Game Over!");
 
+        // Play a random lose sound
+        AudioManager.getInstance().playRandomLoseSound();
+
         // stop any ongoing waves/spawning
         waveManager.resetWaveIndex();
         enemyManager.getEnemies().clear();
@@ -521,7 +537,26 @@ public class Playing extends GameScene implements SceneMethods {
         // use a separate thread to avoid blocking the game loop
         new Thread(() -> {
             try {
-                Thread.sleep(2000);
+                Thread.sleep(3000);
+                game.changeGameState(main.GameStates.MENU);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
+
+    // Add a method to handle victory
+    private void handleVictory() {
+        System.out.println("Victory!");
+
+        // Play a random victory sound
+        AudioManager.getInstance().playRandomVictorySound();
+
+        // use a separate thread to avoid blocking the game loop
+        new Thread(() -> {
+            try {
+                Thread.sleep(5000);
                 game.changeGameState(main.GameStates.MENU);
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -542,7 +577,36 @@ public class Playing extends GameScene implements SceneMethods {
     }
 
     public void returnToMainMenu() {
+        game.changeGameState(main.GameStates.MENU);
+    }
+
+    @Override
+    public void playButtonClickSound() {
+        AudioManager.getInstance().playButtonClickSound();
+    }
+
+    /**
+     * Handles mouse wheel events and forwards them to PlayingUI
+     * @param e The mouse wheel event
+     */
+    public void mouseWheelMoved(MouseWheelEvent e) {
+        playingUI.mouseWheelMoved(e);
+
+    public void shootEnemy(Tower tower, Enemy enemy) {
+        projectileManager.newProjectile(tower, enemy);
+    }
+
+    public boolean isGamePaused() {
+        return gamePaused;
+    }
+
+    public boolean isOptionsMenuOpen() {
+        return optionsMenuOpen;
+    }
+
+    public void returnToMainMenu() {
         System.out.println("Returning to main menu");
         game.changeGameState(main.GameStates.MENU);
+
     }
 }

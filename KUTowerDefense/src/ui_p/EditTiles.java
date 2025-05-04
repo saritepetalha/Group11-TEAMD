@@ -8,6 +8,7 @@ import static main.GameStates.MENU;
 
 import constants.GameDimensions;
 import main.Game;
+import managers.AudioManager;
 import popUps.DialogueFactory;
 import scenes.MapEditing;
 import objects.Tile;
@@ -347,23 +348,29 @@ public class EditTiles extends Bar {
 
     public void mouseClicked(int x, int y) {
         if (backMenu.getBounds().contains(x, y)) {
+            AudioManager.getInstance().playButtonClickSound();
             game.changeGameState(MENU);
         }
         else if (draw.getBounds().contains(x, y)) {
+            AudioManager.getInstance().playButtonClickSound();
             currentMode = "Draw";
         }
         else if (erase.getBounds().contains(x, y)) {
+            AudioManager.getInstance().playButtonClickSound();
             currentMode = "Erase";
         }
         else if (fill.getBounds().contains(x, y)) {
+            AudioManager.getInstance().playButtonClickSound();
             currentMode = "Fill";
             mapEditing.fillAllTiles();
         }
         else if (trash.getBounds().contains(x, y)) {
+            AudioManager.getInstance().playButtonClickSound();
             currentMode = "Trash";
             mapEditing.resetAllTiles();
         }
         else if (save.getBounds().contains(x, y)) {
+            AudioManager.getInstance().playButtonClickSound();
             String currentLevel = mapEditing.getCurrentLevelName();
             if (currentLevel != null) {
                 saveLevel(currentLevel);

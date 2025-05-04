@@ -1,7 +1,7 @@
 package enemies;
 
 import constants.Constants;
-import managers.SoundManager;
+import managers.AudioManager;
 
 import java.awt.*;
 import static constants.Constants.*;
@@ -118,9 +118,9 @@ public abstract class Enemy {
 
     private void playDeathSound() {
         if (enemyType == Constants.Enemies.GOBLIN) {
-            SoundManager.getInstance().playRandomGoblinDeathSound();
+            AudioManager.getInstance().playRandomGoblinDeathSound();
         } else if (enemyType == Constants.Enemies.WARRIOR) {
-            SoundManager.getInstance().playWarriorDeathSound();
+            AudioManager.getInstance().playWarriorDeathSound();
         }
     }
 

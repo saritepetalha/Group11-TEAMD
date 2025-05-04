@@ -43,6 +43,11 @@ public class ButtonAssets {
     public static BufferedImage difficultyEasyImg;
     public static BufferedImage difficultyHardImg;
 
+    // Music button images
+    public static BufferedImage regularMusicImg;
+    public static BufferedImage pressedMusicImg;
+
+
     static {
         loadAll();
     }
@@ -68,6 +73,9 @@ public class ButtonAssets {
         loadOptionsMenuImg();
         loadBackOptionsImg();
         loadDifficultyImages();
+
+        loadMusicButtonImages();
+
     }
 
     private static void loadButtonImageFile() {
@@ -224,9 +232,25 @@ public class ButtonAssets {
             e.printStackTrace();
         }
 
-        // Load Hard difficulty
+        // Load Hard difficulty 
         try (InputStream is = LoadSave.class.getResourceAsStream("/UI/Hard.png")) {
             difficultyHardImg = ImageIO.read(is);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    // Load music button images
+    private static void loadMusicButtonImages() {
+        try (InputStream is = LoadSave.class.getResourceAsStream("/UI/RegularMusic.png")) {
+            regularMusicImg = ImageIO.read(is);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try (InputStream is = LoadSave.class.getResourceAsStream("/UI/PressedMusic.png")) {
+            pressedMusicImg = ImageIO.read(is);
         } catch (IOException e) {
             e.printStackTrace();
         }

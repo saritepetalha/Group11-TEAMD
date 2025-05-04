@@ -249,7 +249,7 @@ public class Intro {
 
     private void startMusic() {
         try {
-            InputStream audioSrc = getClass().getResourceAsStream("/Audio/intro_music.wav");
+            InputStream audioSrc = getClass().getResourceAsStream("/Audio/Music/intro_music.wav");
             InputStream bufferedIn = new BufferedInputStream(audioSrc);
             AudioInputStream audioStream = AudioSystem.getAudioInputStream(bufferedIn);
 
