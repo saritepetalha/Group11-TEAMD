@@ -5,9 +5,11 @@ import main.GameStates;
 
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelListener;
+import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseEvent;
 
-public class MyMouseListener implements MouseListener, MouseMotionListener {
+public class MyMouseListener implements MouseListener, MouseMotionListener, MouseWheelListener {
     private Game game;
 
     public MyMouseListener(Game game) {
@@ -66,7 +68,7 @@ public class MyMouseListener implements MouseListener, MouseMotionListener {
         else if (e.getButton() == MouseEvent.BUTTON3) {
             System.out.println("Right mouse button was clicked");
         }
-        
+
     }
 
     @Override
@@ -98,6 +100,23 @@ public class MyMouseListener implements MouseListener, MouseMotionListener {
         }
         else if (GameStates.gameState == GameStates.EDIT) {
             game.getMapEditing().mouseReleased(e.getX(), e.getY());
+        }
+    }
+
+    @Override
+    public void mouseWheelMoved(MouseWheelEvent e) {
+        // Forward mouse wheel events to the appropriate scene
+        if (GameStates.gameState == GameStates.PLAYING) {
+            game.getPlaying().mouseWheelMoved(e);
+        }
+        else if (GameStates.gameState == GameStates.MENU) {
+            // Add mouseWheelMoved method to Menu class if needed
+        }
+        else if (GameStates.gameState == GameStates.OPTIONS) {
+            // Add mouseWheelMoved method to Options class if needed
+        }
+        else if (GameStates.gameState == GameStates.EDIT) {
+            // Add mouseWheelMoved method to MapEditing class if needed
         }
     }
 

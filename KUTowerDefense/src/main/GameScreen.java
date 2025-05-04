@@ -27,6 +27,7 @@ public class GameScreen extends JPanel {
 
 		addMouseListener(myMouseListener);
 		addMouseMotionListener(myMouseListener);
+		addMouseWheelListener(myMouseListener);
 		addKeyListener(keyboardListener);
 
 		requestFocus();
@@ -73,6 +74,7 @@ public class GameScreen extends JPanel {
 
 		revalidate();  // ensures proper refresh
 		repaint();
+
 	}
 
 	public void paintComponent(Graphics g) {

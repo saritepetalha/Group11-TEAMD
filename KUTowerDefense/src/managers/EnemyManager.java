@@ -282,6 +282,8 @@ public class EnemyManager {
         // load both sprite atlases
         BufferedImage goblinSheet = LoadSave.getEnemyAtlas("goblin");
         BufferedImage warriorSheet = LoadSave.getEnemyAtlas("warrior");
+        BufferedImage barrelSheet = LoadSave.getEnemyAtlas("barrel");
+        BufferedImage tntSheet = LoadSave.getEnemyAtlas("tnt");
 
         // each sprite sheet has 6 frames, each frame is 192x192
         for (int i = 0; i < 6; i++) {
@@ -292,6 +294,14 @@ public class EnemyManager {
             // warrior frames
             BufferedImage warriorFrame = warriorSheet.getSubimage(i * 192, 0, 192, 192);
             enemyFrames[6 + i] = warriorFrame.getSubimage(30, 40,120, 100); // center 64x64
+
+            // tnt frames
+            //BufferedImage tntFrame = tntSheet.getSubimage(i * 192, 0, 192, 192);
+            //enemyFrames[12 + i] = tntFrame.getSubimage(30, 40, 120, 100);
+
+            // barrel frames
+            //BufferedImage barrelFrame = barrelSheet.getSubimage(i * 192, 0, 192, 192);
+            //enemyFrames[18 + i] = barrelFrame.getSubimage(30, 40, 120, 100);
         }
 
         return enemyFrames;

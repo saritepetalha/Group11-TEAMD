@@ -32,6 +32,9 @@ public class LoadSave {
         String path = switch (enemyType.toLowerCase()) {
             case "warrior" -> "/EnemyAssets/Warrior_Blue.png";
             case "goblin" -> "/EnemyAssets/Goblin_Red.png";
+            case "barrel" -> "/EnemyAssets/Barrel_Purple.png";
+            case "tnt" -> "/EnemyAssets/TNT_Red.png";
+            case "troll" -> "/EnemyAssets/Troll_1.png";
             default -> throw new IllegalArgumentException("Unknown enemy type: " + enemyType);
         };
 
