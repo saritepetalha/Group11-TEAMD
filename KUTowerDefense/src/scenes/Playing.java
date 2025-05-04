@@ -45,9 +45,8 @@ public class Playing extends GameScene implements SceneMethods {
     private boolean optionsMenuOpen = false;
     private float gameSpeedMultiplier = 1.0f;
 
-    private List<FireAnimation> fireAnimations = new ArrayList<>();
-    private TreeInteractionManager treeInteractionManager;
-    private FireAnimationManager fireAnimationManager;
+    private final TreeInteractionManager treeInteractionManager;
+    private final FireAnimationManager fireAnimationManager;
 
 
     public Playing(Game game, TileManager tileManager) {
@@ -93,7 +92,7 @@ public class Playing extends GameScene implements SceneMethods {
         updateUIResources();    // Update the UI with player's starting resources
     }
 
-    private void updateUIResources() {
+    public void updateUIResources() {
         playingUI.setGoldAmount(playerManager.getGold());
         playingUI.setHealthAmount(playerManager.getHealth());
         playingUI.setShieldAmount(playerManager.getShield());
@@ -722,5 +721,9 @@ public class Playing extends GameScene implements SceneMethods {
 
     public List<LiveTree> getLiveTrees() {
         return liveTrees;
+    }
+
+    public PlayerManager getPlayerManager() {
+        return playerManager;
     }
 }
