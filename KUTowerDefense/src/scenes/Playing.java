@@ -359,74 +359,7 @@ public class Playing extends GameScene implements SceneMethods {
         handleTowerClick();
     }
 
-    private void handleDeadTreeButtonClicks() {
-        for (DeadTree tree : deadTrees) {
-            if (tree.isShowChoices()) {
-                int tileX = tree.getX();
-                int tileY = tree.getY();
 
-                if (tree.getArcherButton().isMousePressed(mouseX, mouseY)) {
-                    towerManager.buildArcherTower(tileX, tileY);
-                    closeAllTreeChoices();
-                    deadTrees.remove(tree);
-                    modifyTile(tileX, tileY, "ARCHER");
-                    return;
-                }
-                if (tree.getMageButton().isMousePressed(mouseX, mouseY)) {
-                    towerManager.buildMageTower(tileX, tileY);
-                    closeAllTreeChoices();
-                    deadTrees.remove(tree);
-                    modifyTile(tileX, tileY, "MAGE");
-                    return;
-                }
-                if (tree.getArtilleryButton().isMousePressed(mouseX, mouseY)) {
-                    towerManager.buildArtilerryTower(tileX, tileY);
-                    closeAllTreeChoices();
-                    deadTrees.remove(tree);
-                    modifyTile(tileX, tileY, "ARTILERRY");
-                    return;
-                }
-            }
-        }
-    }
-
-    private void handleDeadTreeSelection() {
-        for (DeadTree tree : deadTrees) {
-            if (tree.isClicked(mouseX, mouseY)) {
-                closeAllTreeChoices();
-                tree.setShowChoices(true);
-                setSelectedDeadTree(tree);
-                return;
-            }
-        }
-    }
-
-    private void handleLiveTreeButtonClicks() {
-        for (LiveTree tree : liveTrees) {
-            if (tree.isShowChoices()) {
-                int tileX = tree.getX();
-                int tileY = tree.getY();
-
-                if (tree.getFireButton().isMousePressed(mouseX, mouseY)) {
-                    liveTrees.remove(tree);
-                    deadTrees.add(new DeadTree(tileX, tileY));
-                    closeAllTreeChoices();
-                    modifyTile(tileX, tileY, "DEADTREE");
-                    return;
-                }
-            }
-        }
-    }
-
-    private void handleLiveTreeSelection() {
-        for (LiveTree tree : liveTrees) {
-            if (tree.isClicked(mouseX, mouseY)) {
-                closeAllTreeChoices();
-                tree.setShowChoices(true);
-                return;
-            }
-        }
-    }
 
     private void handleTowerClick() {
         for (Tower tower : towerManager.getTowers()) {
@@ -437,14 +370,6 @@ public class Playing extends GameScene implements SceneMethods {
         }
     }
 
-    private void closeAllTreeChoices() {
-        for (DeadTree tree : deadTrees) {
-            tree.setShowChoices(false);
-        }
-        for (LiveTree tree : liveTrees) {
-            tree.setShowChoices(false);
-        }
-    }
 
 
     public TowerManager getTowerManager() {
