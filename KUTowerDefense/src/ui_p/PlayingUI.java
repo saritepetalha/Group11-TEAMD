@@ -379,8 +379,7 @@ public class PlayingUI {
         int difficultyWidth = 90;
         int difficultyHeight = 15;
         int difficultyY = startY + spacing * 2 + 5;
-=======
-   
+
         // Display the correct difficulty image
         if (currentDifficulty.equals("Normal") && ButtonAssets.difficultyNormalImg != null) {
             g2d.drawImage(ButtonAssets.difficultyNormalImg, controlX, difficultyY, difficultyWidth, difficultyHeight, null);

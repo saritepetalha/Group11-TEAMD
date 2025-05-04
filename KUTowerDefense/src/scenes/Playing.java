@@ -564,21 +564,6 @@ public class Playing extends GameScene implements SceneMethods {
         }).start();
     }
 
-    public void shootEnemy(Tower tower, Enemy enemy) {
-        projectileManager.newProjectile(tower, enemy);
-    }
-
-    public boolean isGamePaused() {
-        return gamePaused;
-    }
-
-    public boolean isOptionsMenuOpen() {
-        return optionsMenuOpen;
-    }
-
-    public void returnToMainMenu() {
-        game.changeGameState(main.GameStates.MENU);
-    }
 
     @Override
     public void playButtonClickSound() {
@@ -591,6 +576,7 @@ public class Playing extends GameScene implements SceneMethods {
      */
     public void mouseWheelMoved(MouseWheelEvent e) {
         playingUI.mouseWheelMoved(e);
+    }
 
     public void shootEnemy(Tower tower, Enemy enemy) {
         projectileManager.newProjectile(tower, enemy);
