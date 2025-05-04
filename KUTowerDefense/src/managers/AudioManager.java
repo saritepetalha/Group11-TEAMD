@@ -37,19 +37,23 @@ public class AudioManager {
     private final Random random = new Random();
 
     // Sound constants
-    public static final String GOBLIN_DEATH_1 = "Goblin_Death1";
-    public static final String GOBLIN_DEATH_2 = "Goblin_Death2";
-    public static final String WARRIOR_DEATH = "Warrior_Death";
+    public static final String GOBLIN_DEATH_1 = "GoblinDeath1";
+    public static final String GOBLIN_DEATH_2 = "GoblinDeath2";
+    public static final String GOBLIN_DEATH_3 = "GoblinDeath3";
+    public static final String WARRIOR_DEATH = "WarriorDeath";
+    public static final String TROLL_DEATH = "TrollDeath";
 
     // Victory/Lose sound constants
-    public static final String VICTORY_1 = "victory1";
-    public static final String VICTORY_2 = "victory2";
-    public static final String VICTORY_3 = "victory3";
-    public static final String VICTORY_4 = "victory4";
+    public static final String WIN_1 = "win1";
+    public static final String WIN_2 = "win2";
+    public static final String WIN_3 = "win3";
+    public static final String WIN_4 = "win4";
+    public static final String WIN_5 = "win5";
     public static final String LOSE_1 = "lose1";
     public static final String LOSE_2 = "lose2";
     public static final String LOSE_3 = "lose3";
     public static final String LOSE_4 = "lose4";
+    public static final String LOSE_5 = "lose5";
 
     // Singleton instance
     private static AudioManager instance;
@@ -105,22 +109,23 @@ public class AudioManager {
         //loadSound("tower_build", "tower_build.wav");
         //loadSound("tower_shoot", "tower_shoot.wav");
         loadSound("button_click", "button_click.wav");
+        loadSound(GOBLIN_DEATH_1, "GoblinDeath1.wav");
+        loadSound(GOBLIN_DEATH_2, "GoblinDeath2.wav");
+        loadSound(GOBLIN_DEATH_3, "GoblinDeath3.wav");
+        loadSound(WARRIOR_DEATH, "WarriorDeath.wav");
+        loadSound(TROLL_DEATH, "TrollDeath.wav");
         //loadSound("wave_start", "wave_start.wav");
-
-        // load enemy-specific sounds
-        loadSound(GOBLIN_DEATH_1, "/Audio/" + GOBLIN_DEATH_1 + ".wav");
-        loadSound(GOBLIN_DEATH_2, "/Audio/" + GOBLIN_DEATH_2 + ".wav");
-        loadSound(WARRIOR_DEATH, "/Audio/" + WARRIOR_DEATH + ".wav");
-
         // Load victory and lose sounds
-        loadSound(VICTORY_1, VICTORY_1 + ".wav");
-        loadSound(VICTORY_2, VICTORY_2 + ".wav");
-        loadSound(VICTORY_3, VICTORY_3 + ".wav");
-        loadSound(VICTORY_4, VICTORY_4 + ".wav");
+        loadSound(WIN_1, WIN_1 + ".wav");
+        loadSound(WIN_2, WIN_2 + ".wav");
+        loadSound(WIN_3, WIN_3 + ".wav");
+        loadSound(WIN_4, WIN_4 + ".wav");
+        loadSound(WIN_5, WIN_5 + ".wav");
         loadSound(LOSE_1, LOSE_1 + ".wav");
         loadSound(LOSE_2, LOSE_2 + ".wav");
         loadSound(LOSE_3, LOSE_3 + ".wav");
         loadSound(LOSE_4, LOSE_4 + ".wav");
+        loadSound(LOSE_5, LOSE_5 + ".wav");
     }
 
     private void loadMusic(String name, String filename) {
@@ -149,16 +154,26 @@ public class AudioManager {
 
     private void loadSound(String name, String filename) {
         try {
-            String path = filename.startsWith("/") ? filename : SFX_PATH + filename;
-            Clip clip = loadClip(path);
-            if (clip != null) {
-                soundClips.put(name, clip);
-                System.out.println("Loaded sound: " + name);
-            }
+            String fullPath = SFX_PATH + filename;
+
+            InputStream is = getClass().getResourceAsStream(fullPath);
+            if (is == null) throw new IllegalArgumentException("Sound not found: " + fullPath);
+
+            BufferedInputStream bis = new BufferedInputStream(is);
+            AudioInputStream audioStream = AudioSystem.getAudioInputStream(bis);
+
+            Clip clip = AudioSystem.getClip();
+            clip.open(audioStream);
+
+            soundClips.put(name, clip);
+            System.out.println("Loaded sound: " + name);
+
         } catch (Exception e) {
             System.err.println("Failed to load sound: " + name + " - " + e.getMessage());
         }
     }
+
+
 
     private Clip loadClip(String path) {
         try (InputStream is = LoadSave.class.getResourceAsStream(path);
@@ -214,17 +229,24 @@ public class AudioManager {
     public void playRandomGoblinDeathSound() {
         if (soundMuted) return;
 
-        if (random.nextDouble() < 0.75) {
+        if (random.nextDouble() < 0.50) {
             playSound(GOBLIN_DEATH_1);
-        } else {
+        } else if (0.5 < random.nextDouble() && random.nextDouble() < 0.75) {
             playSound(GOBLIN_DEATH_2);
-        }
+        }else
+            playSound(GOBLIN_DEATH_3);
     }
 
     public void playWarriorDeathSound() {
         if (soundMuted) return;
 
         playSound(WARRIOR_DEATH);
+    }
+
+    public void playTrollDeathSound() {
+        if (soundMuted) return;
+
+        playSound(TROLL_DEATH);
     }
 
     private void setClipVolume(Clip clip, float volume) {
@@ -300,12 +322,7 @@ public class AudioManager {
 
     public void playRandomGameMusic() {
         String[] gameMusic = {
-                "accumula_town", "bounce_beanstalk", "dreams_hopes", "dirtmouth",
-                "elinia", "forest_interlude", "frappe_snowland", "grape_garden",
-                "hailfire_peaks", "hateno_village", "inside_castle", "interstellar",
-                "maple_treeway", "nimue", "norune_village", "refugee_camp",
-                "river_life", "spring", "soaring_sky", "summer_fields",
-                "temple_time", "white_palace", "wistful_wild"
+                "bounce_beanstalk", "dirtmouth","wistful_wild"
         };
 
         int index = (int)(Math.random() * gameMusic.length);

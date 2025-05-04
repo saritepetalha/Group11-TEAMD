@@ -126,8 +126,8 @@ public class Constants {
         public static final int GOBLIN = 0;
         public static final int WARRIOR = 1;
         public static final int BARREL = 2;
-        public static final int TNT = 3;
-        public static final int TROLL = 4;
+        public static final int TNT = 4;
+        public static final int TROLL = 3;
 
         public static int getReward(int enemyType) {
             switch (enemyType) {
@@ -149,15 +149,15 @@ public class Constants {
         public static float getSpeed(int enemyType) {
             switch (enemyType) {
                 case GOBLIN:
-                    return 0.85f;  // faster
+                    return 0.85f;
                 case WARRIOR:
-                    return 0.45f;  // slower, tanky
+                    return 0.45f;
                 case BARREL:
                     return 0.6f;
                 case TNT:
                     return 1.2f;
                 case TROLL:
-                    return 0.25f;
+                    return 0.15f;
             }
             return 0;
         }

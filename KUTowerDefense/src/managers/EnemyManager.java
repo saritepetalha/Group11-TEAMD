@@ -160,9 +160,10 @@ public class EnemyManager {
     }
 
     public void update(float speedMultiplier){
-        for (Enemy enemy:enemies) {
+        for (Enemy enemy : enemies) {
             if (enemy.isAlive()) {
-                enemy.move(0.3f * speedMultiplier , 0);
+                // adjust animation speed when game speed changes
+                enemy.adjustAnimationForGameSpeed(speedMultiplier);
             }
         }
 
@@ -206,11 +207,23 @@ public class EnemyManager {
         switch(enemyType){
             case GOBLIN:
                 System.out.println("Adding Goblin");
-                enemies.add(new Goblin(x,y, nextEnemyID++));
+                enemies.add(new Goblin(x, y, nextEnemyID++));
                 break;
             case WARRIOR:
                 System.out.println("Adding Warrior");
-                enemies.add(new Warrior(x,y,nextEnemyID++));
+                enemies.add(new Warrior(x, y, nextEnemyID++));
+                break;
+            case TNT:
+                System.out.println("Adding TNT");
+                enemies.add(new TNT(x, y, nextEnemyID++));
+                break;
+            case BARREL:
+                System.out.println("Adding Barrel");
+                enemies.add(new Barrel(x, y, nextEnemyID++));
+                break;
+            case TROLL:
+                System.out.println("Adding Troll");
+                enemies.add(new Troll(x, y, nextEnemyID++));
                 break;
             default:
                 System.out.println("Unknown enemy type: " + enemyType);
@@ -256,6 +269,7 @@ public class EnemyManager {
     public void draw(Graphics g){
         for (Enemy enemy: enemies){
             if (enemy.isAlive()) {
+                // Update animation in normal speed
                 enemy.updateAnimationTick();
                 drawEnemy(enemy, g);
             }
@@ -274,59 +288,147 @@ public class EnemyManager {
         }
     }
 
-    // method to extract all enemy animation frames (6 goblin + 6 warrior)
-    // returns an array: 0-5 goblin animation, 6-11 warrior animation
+    // updated method to extract all enemy animation frames
     public static BufferedImage[] extractEnemyFrames() {
-        BufferedImage[] enemyFrames = new BufferedImage[12];
+        // need space for: 6 goblin + 6 warrior + 6 tnt + 3 barrel + 10 troll = 31 frames
+        BufferedImage[] enemyFrames = new BufferedImage[31];
 
-        // load both sprite atlases
         BufferedImage goblinSheet = LoadSave.getEnemyAtlas("goblin");
         BufferedImage warriorSheet = LoadSave.getEnemyAtlas("warrior");
         BufferedImage barrelSheet = LoadSave.getEnemyAtlas("barrel");
         BufferedImage tntSheet = LoadSave.getEnemyAtlas("tnt");
+        BufferedImage trollSheet = LoadSave.getEnemyAtlas("troll");
 
-        // each sprite sheet has 6 frames, each frame is 192x192
+        // Extract goblin frames (6 frames)
         for (int i = 0; i < 6; i++) {
-            // goblin frames
             BufferedImage goblinFrame = goblinSheet.getSubimage(i * 192, 0, 192, 192);
-            enemyFrames[i] = goblinFrame.getSubimage(30, 40, 120, 100); // center 64x64
+            enemyFrames[i] = goblinFrame.getSubimage(20, 50, 120, 92);
+        }
 
-            // warrior frames
+        // Extract warrior frames (6 frames)
+        for (int i = 0; i < 6; i++) {
             BufferedImage warriorFrame = warriorSheet.getSubimage(i * 192, 0, 192, 192);
-            enemyFrames[6 + i] = warriorFrame.getSubimage(30, 40,120, 100); // center 64x64
+            enemyFrames[6 + i] = warriorFrame.getSubimage(50, 40, 120, 100);
+        }
 
-            // tnt frames
-            //BufferedImage tntFrame = tntSheet.getSubimage(i * 192, 0, 192, 192);
-            //enemyFrames[12 + i] = tntFrame.getSubimage(30, 40, 120, 100);
+        // Extract TNT frames (6 frames)
+        for (int i = 0; i < 6; i++) {
+            // TNT: 1344x192 sized walk animation asset with 6 respective sprites
+            BufferedImage tntFrame = tntSheet.getSubimage(i * 192, 0, 192, 192);
+            enemyFrames[12 + i] = tntFrame.getSubimage(60, 60, 100, 72);
+        }
 
-            // barrel frames
-            //BufferedImage barrelFrame = barrelSheet.getSubimage(i * 192, 0, 192, 192);
-            //enemyFrames[18 + i] = barrelFrame.getSubimage(30, 40, 120, 100);
+        // Extract barrel frames (3 frames)
+        for (int i = 0; i < 3; i++) {
+            BufferedImage barrelFrame = barrelSheet.getSubimage(i * 128, 0, 128, 128);
+            enemyFrames[18 + i] = barrelFrame.getSubimage(15, 15,100, 100);
+        }
+
+        // Extract troll frames (10 frames)
+        for (int i = 0; i < 10; i++) {
+            BufferedImage trollFrame = trollSheet.getSubimage(i * 401, 0, 401, 268);
+            enemyFrames[21 + i] = trollFrame.getSubimage(0, 0, 401, 268);
         }
 
         return enemyFrames;
     }
 
     private void drawEnemy(Enemy enemy, Graphics g){
-        int baseIndex = enemy.getEnemyType() * 6; // Goblin=0, Warrior=1 → 0 or 6
+        // Calculate base index based on enemy type and get animation frame
+        int baseIndex;
+
+        // Map enemy types to their frame positions in the array
+        switch (enemy.getEnemyType()) {
+            case GOBLIN:
+                baseIndex = 0;
+                break;
+            case WARRIOR:
+                baseIndex = 6;
+                break;
+            case TNT:
+                baseIndex = 12;
+                break;
+            case BARREL:
+                baseIndex = 18;
+                break;
+            case TROLL:
+                baseIndex = 21;
+                break;
+            default:
+                baseIndex = 0;
+                break;
+        }
+
         int frame = baseIndex + enemy.getAnimationIndex();
+
+        // ensure frame is within bounds and handle special case for barrel (only 3 frames)
+        if (enemy.getEnemyType() == BARREL && enemy.getAnimationIndex() >= 3) {
+            frame = baseIndex + (enemy.getAnimationIndex() % 3);
+        } else if (frame >= enemyImages.length) {
+            frame = baseIndex;
+        }
 
         BufferedImage sprite = enemyImages[frame];
 
-        // ALIGNMENT LOGIC MUST BE CHANGED TO A CONSISTENT ONE
-        int drawX = (int) (enemy.getX() - (float) sprite.getWidth() / 2);
-        int drawY = (int) (enemy.getY() - (float) sprite.getHeight() + tileSize/2);
+        // adjust drawing based on enemy size
+        int drawX, drawY;
+        int drawWidth, drawHeight;
+        Enemy.Size size = enemy.getSize();
 
-        g.drawImage(sprite, drawX, drawY, null);
+        // calculate position and scale based on enemy size
+        switch (size) {
+            case SMALL:
+                // small enemies (goblin, tnt) - 60% of original size
+                drawWidth = (int)(sprite.getWidth() * 0.6);
+                drawHeight = (int)(sprite.getHeight() * 0.6);
+                drawX = (int)(enemy.getX() - drawWidth/2 - 10);
+                drawY = (int)(enemy.getY() - drawHeight/2 - 10);
+                break;
+            case MEDIUM:
+                // medium enemies (warrior, barrel) - 80% of original size
+                drawWidth = (int)(sprite.getWidth() * 0.8);
+                drawHeight = (int)(sprite.getHeight() * 0.8);
+                if (enemy.getEnemyType() == BARREL) {
+                    drawX = (int)(enemy.getX() - drawWidth/2 - 15);
+                    drawY = (int)(enemy.getY() - drawHeight/2 - 15);
+                } else {
+                    drawX = (int)(enemy.getX() - drawWidth/2 - 25);
+                    drawY = (int)(enemy.getY() - drawHeight/2 - 25);
+                }
+                break;
+            case LARGE:
+                // large enemies (troll) - larger size with adjusted position
+                if (enemy.getEnemyType() == TROLL) {
+                    drawWidth = (int)(sprite.getWidth() * 0.4);
+                    drawHeight = (int)(sprite.getHeight() * 0.4);
+                    drawX = (int)(enemy.getX() - drawWidth/2 - 40);
+                    drawY = (int)(enemy.getY() - drawHeight/2 - 40);
+                } else {
+                    drawWidth = (int)(sprite.getWidth() * 0.5);
+                    drawHeight = (int)(sprite.getHeight() * 0.5);
+                    drawX = (int)(enemy.getX() - drawWidth/2 - 50);
+                    drawY = (int)(enemy.getY() - drawHeight/2 - 50);
+                }
+                break;
+            default:
+                // default 100% size
+                drawWidth = sprite.getWidth();
+                drawHeight = sprite.getHeight();
+                drawX = (int)(enemy.getX() - drawWidth/2);
+                drawY = (int)(enemy.getY() - drawHeight/2);
+                break;
+        }
 
-        drawHealthBar(g, enemy, drawX, drawY, sprite);
+        // draw the enemy with appropriate size
+        g.drawImage(sprite, drawX, drawY, drawWidth, drawHeight, null);
+        drawHealthBar(g, enemy, drawX, drawY, drawWidth, drawHeight);
     }
 
-    private void drawHealthBar(Graphics g, Enemy enemy, int x, int y, BufferedImage sprite) {
+    private void drawHealthBar(Graphics g, Enemy enemy, int x, int y, int width, int height) {
         int healthBarWidth = 40; //enemy.getHealth()/3
         int healthBarHeight = 4;
 
-        int healthBarX = x + (sprite.getWidth() + 15 - healthBarWidth) / 2;
+        int healthBarX = x + (width - healthBarWidth) / 2;
 
         // different enemy types get bars in different positions
         boolean drawAbove = enemy.getEnemyType() % 2 == 1; // even types below, odd types above
@@ -335,7 +437,7 @@ public class EnemyManager {
         if (drawAbove) {
             healthBarY = y - 8;
         } else {
-            healthBarY = y + sprite.getHeight() + 2;
+            healthBarY = y + height + 2;
         }
 
         // draw white rounded contour frame
@@ -356,7 +458,6 @@ public class EnemyManager {
         g.setColor(new Color(255, 0, 0));
         int currentHealthWidth = (int) (healthBarWidth * enemy.getHealthBarPercentage());
         g.fillRect(healthBarX, healthBarY, currentHealthWidth, healthBarHeight);
-
     }
     public void spawnEnemy(int nextEnemy) {
         addEnemy(nextEnemy);

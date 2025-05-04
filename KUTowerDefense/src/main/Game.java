@@ -85,6 +85,8 @@ public class Game extends JFrame implements Runnable{
 					audioManager.playMusic("lonelyhood");
 					break;
 				case PLAYING:
+					// Reset the playing state when starting a new game
+					playing.resetGameState();
 					audioManager.playRandomGameMusic();
 					break;
 				case INTRO:

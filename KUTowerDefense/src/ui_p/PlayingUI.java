@@ -173,7 +173,7 @@ public class PlayingUI {
         // draw wave icon
         g.drawImage(ButtonAssets.waveImg, startX, startY, iconSize, iconSize, null);
 
-        // Draw wave progress bar
+        // draw wave progress bar
         drawSlideButton(g,currentWave + "/" + totalWaves,
                 startX + iconSize + buttonSpacing, startY,
                 barWidth, barHeight,
@@ -345,18 +345,17 @@ public class PlayingUI {
         int menuX = (GameDimensions.GAME_WIDTH - menuWidth) / 2;
         int menuY = (GameDimensions.GAME_HEIGHT - menuHeight) / 2;
 
-        // Draw semi-transparent background overlay
+        // draw semi-transparent background overlay
         g2d.setColor(new Color(0, 0, 0, 150));
         g2d.fillRect(0, 0, GameDimensions.GAME_WIDTH, GameDimensions.GAME_HEIGHT);
 
         g2d.drawImage(optionsImg, menuX, menuY, menuWidth, menuHeight, null);
 
-        // Draw back button
+        // draw back button
         if (ButtonAssets.backOptionsImg != null) {
             int backButtonX = menuX + menuWidth - buttonSize;
             int backButtonY = menuY + 10;
 
-            // Update button position
             backOptionsButton.setX(backButtonX);
             backOptionsButton.setY(backButtonY);
 
@@ -380,7 +379,7 @@ public class PlayingUI {
         int difficultyHeight = 15;
         int difficultyY = startY + spacing * 2 + 5;
 
-        // Display the correct difficulty image
+        // display the correct difficulty image
         if (currentDifficulty.equals("Normal") && ButtonAssets.difficultyNormalImg != null) {
             g2d.drawImage(ButtonAssets.difficultyNormalImg, controlX, difficultyY, difficultyWidth, difficultyHeight, null);
         } else if (currentDifficulty.equals("Easy") && ButtonAssets.difficultyEasyImg != null) {
@@ -388,14 +387,14 @@ public class PlayingUI {
         } else if (currentDifficulty.equals("Hard") && ButtonAssets.difficultyHardImg != null) {
             g2d.drawImage(ButtonAssets.difficultyHardImg, controlX, difficultyY, difficultyWidth, difficultyHeight, null);
         } else {
-            // Fallback if images are not available
+            // fallback if images are not available
             g2d.setColor(new Color(80, 80, 200));
             g2d.fillRoundRect(controlX, difficultyY, difficultyWidth, difficultyHeight, 10, 10);
             g2d.setColor(Color.WHITE);
             g2d.drawString(currentDifficulty, controlX + 30, difficultyY + 12);
         }
 
-        // 3. Music selection dropdown
+        // 3. music selection dropdown
         int dropdownY = startY + spacing / 2; // Positioned between sound slider and music slider
         int dropdownWidth = 120;
         int dropdownHeight = 23;
@@ -407,7 +406,7 @@ public class PlayingUI {
         Font dropdownFont = helpMethods.FontLoader.loadMedodicaFont(14f);
         g2d.setFont(dropdownFont);
 
-        // Truncate music name if it's too long
+        // truncate music name if it's too long
         String displayName = currentMusic;
         if (g2d.getFontMetrics().stringWidth(displayName) > dropdownWidth - 20) {
             int charWidth = g2d.getFontMetrics().charWidth('W');
@@ -417,7 +416,7 @@ public class PlayingUI {
             }
         }
 
-        g2d.drawString(displayName, controlX - 5, dropdownY + 17); // Adjusted text position
+        g2d.drawString(displayName, controlX, dropdownY + 17); // Adjusted text position
 
         g2d.setColor(Color.WHITE);
         int arrowX = controlX + dropdownWidth - 20;
@@ -438,7 +437,7 @@ public class PlayingUI {
             int visibleItems = Math.min(musicDropdownVisibleItems, totalMusicOptions);
             int totalDropdownHeight = optionHeight * visibleItems;
 
-            // Ensure scroll offset is within bounds
+            // ensure scroll offset is within bounds
             int maxScrollOffset = Math.max(0, totalMusicOptions - musicDropdownVisibleItems);
             musicDropdownScrollOffset = Math.max(0, Math.min(musicDropdownScrollOffset, maxScrollOffset));
 
@@ -447,7 +446,7 @@ public class PlayingUI {
 
             // create scrolling dropdown container
             g2d.setColor(new Color(50, 50, 60, 245));
-            g2d.fillRoundRect(controlX, dropdownY + dropdownHeight, dropdownWidth, totalDropdownHeight, 5, 5);
+            g2d.fillRoundRect(controlX - 10, dropdownY + dropdownHeight, dropdownWidth, totalDropdownHeight, 5, 5);
 
             // draw scrollbar if needed
             if (totalMusicOptions > musicDropdownVisibleItems) {
@@ -524,12 +523,12 @@ public class PlayingUI {
                     g2d.setColor(Color.WHITE);
                 }
 
-                g2d.drawString(displayOption, controlX - 5, optionY + 17);
+                g2d.drawString(displayOption, controlX + 5, optionY + 17);
             }
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
         }
 
-        // 4. Music slider - now positioned after the music dropdown
+        // 4. Music slider
         drawSlider(g2d, controlX, startY + spacing, 70, 20, musicVolume, "music");
 
 
@@ -539,13 +538,12 @@ public class PlayingUI {
         int btnX = menuX + (menuWidth - btnWidth) / 2;
         int btnY = startY + spacing * 3;
 
-        // Update main menu button position
         mainMenuButton.setX(btnX);
         mainMenuButton.setY(btnY);
         mainMenuButton.setWidth(btnWidth);
         mainMenuButton.setHeight(btnHeight);
 
-        // Draw invisible hitbox for hover/pressed feedback only if mouse is over
+        // draw invisible hitbox for hover/pressed feedback only if mouse is over
         if (mainMenuButton.isMouseOver()) {
             g2d.setColor(new Color(255, 255, 255, 40));
             g2d.fillRoundRect(btnX, btnY, btnWidth, btnHeight, 15, 15);
@@ -716,6 +714,7 @@ public class PlayingUI {
             // pnly process other buttons if dropdown is closed
             else if (!musicDropdownOpen) {
                 if (isMouseOverButton(mainMenuButton, mouseX, mouseY)) {
+                    AudioManager.getInstance().playButtonClickSound();
                     toggleButtonState(mainMenuButton);
                     playing.returnToMainMenu();
                 }
