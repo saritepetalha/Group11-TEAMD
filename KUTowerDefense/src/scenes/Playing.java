@@ -1,6 +1,8 @@
 package scenes;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 import java.util.List;
 
 import constants.GameDimensions;
@@ -15,6 +17,7 @@ import objects.Tower;
 
 import ui_p.DeadTree;
 
+import ui_p.FireAnimation;
 import ui_p.PlayingUI;
 import ui_p.LiveTree;
 
@@ -35,13 +38,17 @@ public class Playing extends GameScene implements SceneMethods {
     private EnemyManager enemyManager;
 
     private DeadTree selectedDeadTree;
-    private LiveTree selectedLiveTree;
     private Tower displayedTower;
 
     private boolean gamePaused = false;
     private boolean gameSpeedIncreased = false;
     private boolean optionsMenuOpen = false;
     private float gameSpeedMultiplier = 1.0f;
+
+    private List<FireAnimation> fireAnimations = new ArrayList<>();
+    private TreeInteractionManager treeInteractionManager;
+    private FireAnimationManager fireAnimationManager;
+
 
     public Playing(Game game, TileManager tileManager) {
         super(game);
@@ -52,6 +59,8 @@ public class Playing extends GameScene implements SceneMethods {
       
         towerManager = new TowerManager(this);
         projectileManager = new ProjectileManager(this);
+        treeInteractionManager = new TreeInteractionManager(this);
+        fireAnimationManager = new FireAnimationManager();
 
         //OVERLAY IS HARDCODED BECAUSE IT IS NOT LOADED WITH LOAD DEFAULT LEVEL METHOD YET
         //IT HAS TO BE LOADED FIRST TO HAVE ENEMY MANAGER. FOR JUST NOW IT IS HARDCODED
@@ -182,6 +191,7 @@ public class Playing extends GameScene implements SceneMethods {
         if (!gamePaused) {
             waveManager.update();
             projectileManager.update();
+            fireAnimationManager.update();
 
             if (isAllEnemiesDead()) {
                 System.out.println("All enemies are dead");
@@ -248,6 +258,7 @@ public class Playing extends GameScene implements SceneMethods {
         projectileManager.draw(g);
         drawHighlight(g);
         drawDisplayedTower(g);
+        fireAnimationManager.draw(g);
         playingUI.draw(g);
 
         if (optionsMenuOpen) {
@@ -315,7 +326,7 @@ public class Playing extends GameScene implements SceneMethods {
         g.drawRect(displayedTower.getX(), displayedTower.getY(), 64, 64);
     }
 
-    private void modifyTile(int x, int y, String tile) {
+    public void modifyTile(int x, int y, String tile) {
 
         x /= 64;
         y /= 64;
@@ -343,10 +354,9 @@ public class Playing extends GameScene implements SceneMethods {
         this.mouseY = y;
         displayedTower = null;
 
-        handleDeadTreeButtonClicks();
-        handleDeadTreeSelection();
-        handleLiveTreeButtonClicks();
-        handleLiveTreeSelection();
+        treeInteractionManager.handleDeadTreeInteraction(mouseX, mouseY);
+        treeInteractionManager.handleLiveTreeInteraction(mouseX, mouseY);
+
         handleTowerClick();
     }
 
@@ -700,5 +710,17 @@ public class Playing extends GameScene implements SceneMethods {
 
     public void shootEnemy(Tower tower, Enemy enemy) {
         projectileManager.newProjectile(tower, enemy);
+    }
+
+    public FireAnimationManager getFireAnimationManager() {
+        return fireAnimationManager;
+    }
+
+    public List<DeadTree> getDeadTrees() {
+        return deadTrees;
+    }
+
+    public List<LiveTree> getLiveTrees() {
+        return liveTrees;
     }
 }

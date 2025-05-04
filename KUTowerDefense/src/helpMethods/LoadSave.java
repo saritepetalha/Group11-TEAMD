@@ -196,4 +196,18 @@ public class LoadSave {
             return null;
         }
     }
+
+    public static BufferedImage getImageFromPath(String path) {
+        BufferedImage img = null;
+        InputStream is = LoadSave.class.getResourceAsStream(path);
+
+        try {
+            img = ImageIO.read(is);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return img;
+    }
+
 }
