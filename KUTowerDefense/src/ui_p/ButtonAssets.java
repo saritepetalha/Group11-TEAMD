@@ -30,6 +30,7 @@ public class ButtonAssets {
     public static BufferedImage endPointHoverImg;
     public static BufferedImage startPointPressedImg;
     public static BufferedImage endPointPressedImg;
+    public static BufferedImage fourWayRoadImg;
 
     public static BufferedImage statusBarImg;
     public static BufferedImage waveImg;
@@ -57,6 +58,7 @@ public class ButtonAssets {
         loadModeImage();
         loadStartPointImg();
         loadEndPointImg();
+        loadFourWayRoadImage();
 
         loadButtonImageFile();
         loadButtonHoverEffectImageFile();
@@ -109,6 +111,15 @@ public class ButtonAssets {
             e.printStackTrace();
         }
     }
+
+    public static void loadFourWayRoadImage() {
+        try (InputStream is = LoadSave.class.getResourceAsStream("/Tiles/RoadFourWay.png")) {
+            fourWayRoadImg = ImageIO.read(is);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     private static void loadModeImage() {
         modeImage = modeLabelImg.getSubimage(0, 0, 192, 64);
@@ -165,6 +176,7 @@ public class ButtonAssets {
         }
         return img;
     }
+
 
     public static void loadStartPointImg() {
         startPointImg = loadImage("/UI/startPoint192x192.png");

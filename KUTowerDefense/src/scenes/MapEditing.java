@@ -302,12 +302,19 @@ public class MapEditing extends GameScene implements SceneMethods{
         }
     }
 
+    /**
+     * Reset the road tracking when starting a new drag operation
+     */
     @Override
     public void mousePressed(int x, int y) {
         if( x >= GameDimensions.GAME_WIDTH){
             editTiles.mousePressed(x,y);
         }
+        isFirstTile = true;
+        prevDx = 0;
+        prevDy = 0;
     }
+
 
     @Override
     public void mouseReleased(int x, int y) {
@@ -321,27 +328,88 @@ public class MapEditing extends GameScene implements SceneMethods{
         }
     }
 
+    // Track the previous direction to detect changes
+    private int prevDx = 0;
+    private int prevDy = 0;
+    private boolean isFirstTile = true;
+
+    /**
+     * Modified changeTile method with road crossing detection
+     */
     private void changeTile(int x, int y) {
         if (selectedTile != null) {
             int tileX = x / GameDimensions.TILE_DISPLAY_SIZE;
             int tileY = y / GameDimensions.TILE_DISPLAY_SIZE;
 
-            if (lastTileX == tileX && lastTileY == tileY && lastTileId == selectedTile.getId()) {
+            // Skip if it's the same tile we just placed
+            if (lastTileX == tileX && lastTileY == tileY) {
                 return;
             }
 
+            // Only handle road tiles
             if (!selectedTile.getName().contains("Road")) {
                 return;
             }
 
+            // Calculate direction of movement
             int dx = tileX - prevDraggedTileX;
             int dy = tileY - prevDraggedTileY;
 
+            // Only process if we've actually moved to a different tile
             if (dx != 0 || dy != 0) {
-                Tile tileToPlace = getAutoConvertedTile(selectedTile, dx, dy);
+                // Normalize movement to single unit (prevents diagonal placement)
+                if (Math.abs(dx) > Math.abs(dy)) {
+                    // Horizontal movement is dominant
+                    dx = dx > 0 ? 1 : -1;
+                    dy = 0;
+                } else {
+                    // Vertical movement is dominant
+                    dx = 0;
+                    dy = dy > 0 ? 1 : -1;
+                }
 
+                // Place appropriate tile based on current and previous direction
+                Tile tileToPlace;
+
+                // Check if we're crossing an existing road
+                Tile existingTile = tileManager.getTile(level[tileY][tileX]);
+                boolean isRoadTile = existingTile != null && existingTile.getName().contains("Road");
+
+                if (isRoadTile) {
+                    // We're crossing an existing road, determine what type of crossing
+                    tileToPlace = handleRoadCrossing(existingTile, dx, dy);
+                } else if (isFirstTile) {
+                    // First tile placement - use the selected tile type
+                    tileToPlace = getBasicRoadTile(dx, dy);
+                    isFirstTile = false;
+                } else if (dx != prevDx || dy != prevDy) {
+                    // Direction changed - place a curve
+                    tileToPlace = getCurvedRoadTile(prevDx, prevDy, dx, dy);
+
+                    // If there was a valid previous tile, we might need to adjust the previous tile
+                    if (prevDraggedTileX >= 0 && prevDraggedTileY >= 0) {
+                        // Only update the previous tile if it was a straight road
+                        String prevTileName = tileManager.getTile(level[prevDraggedTileY][prevDraggedTileX]).getName();
+                        if (prevTileName.contains("FlatRoad")) {
+                            // Place the curve at the previous position
+                            level[prevDraggedTileY][prevDraggedTileX] = tileToPlace.getId();
+
+                            // And continue with a straight road in the new direction
+                            tileToPlace = getBasicRoadTile(dx, dy);
+                        }
+                    }
+                } else {
+                    // Continuing in the same direction - place a straight road
+                    tileToPlace = getBasicRoadTile(dx, dy);
+                }
+
+                // Place the tile
                 level[tileY][tileX] = tileToPlace.getId();
                 lastTileId = tileToPlace.getId();
+
+                // Store current position and direction for next time
+                prevDx = dx;
+                prevDy = dy;
             }
 
             lastTileX = tileX;
@@ -351,24 +419,92 @@ public class MapEditing extends GameScene implements SceneMethods{
         }
     }
 
-    private Tile getAutoConvertedTile(Tile originalTile, int dx, int dy) {
-        String name = originalTile.getName();
+    /**
+     * Handles the case when we're crossing an existing road
+     * Returns the appropriate tile based on the existing road and the new direction
+     */
+    private Tile handleRoadCrossing(Tile existingTile, int dx, int dy) {
+        String tileName = existingTile.getName();
 
-        if (!name.startsWith("CurvedRoad")) {
-            return originalTile;
+        // Already a four-way crossing, keep it that way
+        if (tileName.contains("FourWay")) {
+            return tileManager.RoadFourWay;
         }
 
-        if (dx == 1 && dy == 0) {
-            return tileManager.FlatRoadHorizontal;
-        } else if (dx == -1 && dy == 0) {
-            return tileManager.FlatRoadHorizontal;
-        } else if (dx == 0 && dy == 1) {
-            return tileManager.FlatRoadVertical;
-        } else if (dx == 0 && dy == -1) {
-            return tileManager.FlatRoadVertical;
+        // Check for horizontal crossing vertical
+        if ((tileName.contains("FlatRoadHorizontal") && dy != 0) ||
+                (tileName.contains("FlatRoadVertical") && dx != 0)) {
+            return tileManager.RoadFourWay;
         }
 
-        return originalTile;
+        // For curved roads, it's a bit more complex - we need to check if the new direction
+        // would create a three-way or four-way intersection
+        if (tileName.contains("CurvedRoad")) {
+            // For simplicity, we'll make any crossing of a curved road a four-way intersection
+            // You could add more complex logic here to handle T-junctions if needed
+            return tileManager.RoadFourWay;
+        }
+
+        // If we can't determine a crossing, just use the basic road tile
+        return getBasicRoadTile(dx, dy);
+    }
+
+    /**
+     * Returns a basic straight road tile based on the direction
+     */
+    private Tile getBasicRoadTile(int dx, int dy) {
+        if (dx != 0) {
+            return tileManager.FlatRoadHorizontal;
+        } else {
+            return tileManager.FlatRoadVertical;
+        }
+    }
+
+    /**
+     * Returns the appropriate curved road tile based on the direction change
+     * oldDx/oldDy: The previous direction
+     * newDx/newDy: The new direction
+     */
+    private Tile getCurvedRoadTile(int oldDx, int oldDy, int newDx, int newDy) {
+        // Right to Down
+        if (oldDx == 1 && oldDy == 0 && newDx == 0 && newDy == 1) {
+            return tileManager.CurvedRoadRightDown;
+            //also UpLeft
+        }
+        // Right to Up
+        else if (oldDx == 1 && oldDy == 0 && newDx == 0 && newDy == -1) {
+            return tileManager.CurvedRoadRightUp;
+            //also DownLeft
+        }
+        // Left to Down
+        else if (oldDx == -1 && oldDy == 0 && newDx == 0 && newDy == 1) {
+            return tileManager.CurvedRoadLeftDown;
+            //also UpRight
+        }
+        // Left to Up
+        else if (oldDx == -1 && oldDy == 0 && newDx == 0 && newDy == -1) {
+            return tileManager.CurvedRoadLeftUp;
+            //also DownRight
+        }
+        // Down to Right
+        else if (oldDx == 0 && oldDy == 1 && newDx == 1 && newDy == 0) {
+            return tileManager.CurvedRoadLeftUp;
+        }
+        // Down to Left
+        else if (oldDx == 0 && oldDy == 1 && newDx == -1 && newDy == 0) {
+            return tileManager.CurvedRoadRightUp;
+        }
+        // Up to Right
+        else if (oldDx == 0 && oldDy == -1 && newDx == 1 && newDy == 0) {
+            return tileManager.CurvedRoadLeftDown;
+        }
+        // Up to Left
+        else if (oldDx == 0 && oldDy == -1 && newDx == -1 && newDy == 0) {
+            return tileManager.CurvedRoadRightDown;
+        }
+
+        // Fallback to a straight road if something unexpected happens
+        return getBasicRoadTile(newDx, newDy);
     }
 
     public void setLevel(int[][] level) {

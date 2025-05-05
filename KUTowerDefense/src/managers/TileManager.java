@@ -1,5 +1,6 @@
 package managers;
 
+import constants.Constants;
 import constants.GameDimensions;
 import objects.Tile;
 
@@ -11,14 +12,14 @@ import ui_p.ButtonAssets;
 
 public class TileManager {
     public Tile
-            CurvedRoadNorthWest, CurvedRoadNorth, CurvedRoadNorthEast, FlatRoadUp,
+            CurvedRoadRightUp, CurvedRoadNorth, CurvedRoadLeftDown, FlatRoadUp,
             CurvedRoadWest, Grass, CurvedRoadEast, FlatRoadVertical,
-            CurvedRoadSouthWest, CurvedRoadSouth, CurvedRoadSouthEast, FlatRoadDown,
+            CurvedRoadRightDown, CurvedRoadSouth, CurvedRoadLeftUp, FlatRoadDown,
             FlatRoadLeft, FlatRoadHorizontal, FlatRoadRight, DeadTree,
             Tree1, Tree2, Tree3, Rock1,
             ArtilleryTower, MageTower, House, Rock2,
             CastleTopLeft, CastleTopRight, ArcherTower, Pit,
-            CastleBottomLeft, CastleBottomRight, SmallCastle, Wood;
+            CastleBottomLeft, CastleBottomRight, SmallCastle, Wood, RoadFourWay;
 
     public BufferedImage atlas;
     public ArrayList<Tile> tiles = new ArrayList<>();
@@ -43,9 +44,9 @@ public class TileManager {
     // This method is used to create the tiles from the atlas
     private void createTiles() {
         int id = 0;
-        tiles.add(CurvedRoadNorthWest = new Tile(getSprite(0, 0), id++, "CurvedRoadNorthWest"));
+        tiles.add(CurvedRoadLeftDown = new Tile(getSprite(0, 0), id++, "CurvedRoadLeftDown"));
         tiles.add(CurvedRoadNorth = new Tile(getSprite(1, 0), id++, "CurvedRoadNorth"));
-        tiles.add(CurvedRoadNorthEast = new Tile(getSprite(2, 0), id++, "CurvedRoadNorthEast"));
+        tiles.add(CurvedRoadRightDown = new Tile(getSprite(2, 0), id++, "CurvedRoadRightDown"));
         tiles.add(FlatRoadUp = new Tile(getSprite(3, 0), id++, "FlatRoadUp"));
 
         tiles.add(CurvedRoadWest = new Tile(getSprite(0, 1), id++, "CurvedRoadWest"));
@@ -53,9 +54,9 @@ public class TileManager {
         tiles.add(CurvedRoadEast = new Tile(getSprite(2, 1), id++, "CurvedRoadEast"));
         tiles.add(FlatRoadVertical = new Tile(getSprite(3, 1), id++, "FlatRoadVertical"));
 
-        tiles.add(CurvedRoadSouthWest = new Tile(getSprite(0, 2), id++, "CurvedRoadSouthWest"));
+        tiles.add(CurvedRoadLeftUp = new Tile(getSprite(0, 2), id++, "CurvedRoadLeftUp"));
         tiles.add(CurvedRoadSouth = new Tile(getSprite(1, 2), id++, "CurvedRoadSouth"));
-        tiles.add(CurvedRoadSouthEast = new Tile(getSprite(2, 2), id++, "CurvedRoadSouthEast"));
+        tiles.add(CurvedRoadRightUp = new Tile(getSprite(2, 2), id++, "CurvedRoadRightUp"));
         tiles.add(FlatRoadDown = new Tile(getSprite(3, 2), id++, "FlatRoadDown"));
 
         tiles.add(FlatRoadLeft = new Tile(getSprite(0, 3), id++, "FlatRoadLeft"));
@@ -82,6 +83,12 @@ public class TileManager {
         tiles.add(CastleBottomRight = new Tile(getSprite(1, 7), id++, "Castle")); // bottom-right
         tiles.add(SmallCastle = new Tile(getSprite(2, 7), id++, "SmallCastle"));
         tiles.add(Wood = new Tile(getSprite(3, 7), id++, "Wood"));
+
+        tiles.add(RoadFourWay = new Tile(resizeImage(ButtonAssets.fourWayRoadImg,
+                GameDimensions.TILE_DISPLAY_SIZE,
+                GameDimensions.TILE_DISPLAY_SIZE),
+                id++,"RoadFourWay"));
+
 
     }
 
