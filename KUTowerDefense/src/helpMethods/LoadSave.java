@@ -34,7 +34,7 @@ public class LoadSave {
             case "goblin" -> "/EnemyAssets/Goblin_Red.png";
             case "barrel" -> "/EnemyAssets/Barrel_Purple.png";
             case "tnt" -> "/EnemyAssets/TNT_Red.png";
-            case "troll" -> "/EnemyAssets/Troll_1.png";
+            case "troll" -> "/EnemyAssets/Troll_Green.png";
             default -> throw new IllegalArgumentException("Unknown enemy type: " + enemyType);
         };
 

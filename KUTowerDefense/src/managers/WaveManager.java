@@ -6,6 +6,8 @@ import scenes.Playing;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import static constants.Constants.Enemies.*;
+
 public class WaveManager {
 
     private Playing playing;
@@ -31,7 +33,6 @@ public class WaveManager {
         if (waveStartTimer) {
             waveTick++;
             if (waveTick >= waveTickLimit) {
-                System.out.println("Wave timer over, starting new wave");
                 waveTickTimerOver = true;
                 waveTick = 0;
             }
@@ -42,6 +43,8 @@ public class WaveManager {
         waveIndex++;
         waveTickTimerOver = false;
         waveStartTimer = false;
+        // Reset enemy spawn tick to ensure immediate spawning of the next wave
+        enemySpawnTick = enemySpawnTickLimit;
     }
 
     public int getNextEnemy(){
@@ -50,8 +53,29 @@ public class WaveManager {
     }
 
     private void createWaves(){
-        waves.add(new Wave(new ArrayList<Integer>(Arrays.asList(0, 0, 0, 0, 0, 1, 0, 0, 0, 0))));
-        waves.add(new Wave(new ArrayList<Integer>(Arrays.asList(1, 0, 1, 0, 0, 0, 0, 0, 0, 1))));
+        // Using the constant values from Constants.Enemies for clarity:
+        // GOBLIN = 0, WARRIOR = 1, BARREL = 2, TNT = 3, TROLL = 4
+
+        // Wave 1: Introduction to goblins
+        waves.add(new Wave(new ArrayList<>(Arrays.asList(GOBLIN,GOBLIN, GOBLIN, GOBLIN, GOBLIN))));
+
+        //Wave 2: Mix of goblins and TNT
+        waves.add(new Wave(new ArrayList<>(Arrays.asList(GOBLIN, GOBLIN, TNT, GOBLIN, TNT, GOBLIN))));
+
+        // Wave 3: Introduce barrel
+        waves.add(new Wave(new ArrayList<>(Arrays.asList(GOBLIN, BARREL, GOBLIN, TNT, BARREL, GOBLIN))));
+
+        // Wave 4: Introduce warriors
+        waves.add(new Wave(new ArrayList<>(Arrays.asList(WARRIOR, GOBLIN, BARREL, WARRIOR, TNT, GOBLIN))));
+
+        // Wave 5: Harder mix of existing enemies
+        waves.add(new Wave(new ArrayList<>(Arrays.asList(WARRIOR, WARRIOR, BARREL, TNT, TNT, GOBLIN, GOBLIN, GOBLIN))));
+
+        // Wave 6: Introduce troll
+        waves.add(new Wave(new ArrayList<>(Arrays.asList(TROLL, GOBLIN, GOBLIN, TNT, BARREL))));
+
+        // Wave 7: Final boss wave with multiple trolls
+        waves.add(new Wave(new ArrayList<>(Arrays.asList(WARRIOR, TROLL, BARREL, TNT, TROLL, GOBLIN, GOBLIN))));
     }
 
     public ArrayList<Wave> getWaves() {
@@ -63,8 +87,10 @@ public class WaveManager {
     }
 
     public boolean isWaveFinished() {
-        if (waves.isEmpty() || waveIndex >= waves.size()) return true;
-        return waves.get(waveIndex).getEnemyList().size() <= enemyIndex;
+        if (waves.isEmpty() || waveIndex >= waves.size()) {
+            return true;
+        }
+        return enemyIndex >= waves.get(waveIndex).getEnemyList().size();
     }
 
     public boolean isThereMoreWaves() {
@@ -72,11 +98,9 @@ public class WaveManager {
     }
 
     public void startTimer() {
-        System.out.println("Wave timer started");
         waveStartTimer = true;
         waveTick = 0;
         waveTickTimerOver = false;
-        System.out.println("Wave tick: " + waveTick + ", Wave tick limit: " + waveTickLimit);
         enemySpawnTick = enemySpawnTickLimit;
     }
 
@@ -86,6 +110,12 @@ public class WaveManager {
 
     public void resetEnemyIndex() {
         enemyIndex = 0;
+    }
+
+    public void resetWaveIndex() {
+        waveIndex = 0;
+        waveTickTimerOver = false;
+        waveStartTimer = false;
     }
 
     public int getWaveIndex() {
@@ -106,11 +136,5 @@ public class WaveManager {
 
     public String getWaveTick() {
         return String.valueOf(waveTick / 60);
-    }
-
-    public void resetWaveIndex() {
-        waveIndex = 0;
-        waveTickTimerOver = false;
-        waveStartTimer = false;
     }
 }

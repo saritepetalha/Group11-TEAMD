@@ -2,13 +2,9 @@ package scenes;
 
 import java.awt.*;
 
-import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-
 import java.awt.event.MouseWheelEvent;
 
 import java.util.List;
-import java.util.ArrayList;
 
 import constants.GameDimensions;
 import enemies.Enemy;
@@ -22,7 +18,6 @@ import objects.Tower;
 
 import ui_p.DeadTree;
 
-import ui_p.FireAnimation;
 
 import ui_p.PlayingUI;
 import ui_p.LiveTree;
@@ -56,6 +51,8 @@ public class Playing extends GameScene implements SceneMethods {
     private final TreeInteractionManager treeInteractionManager;
     private final FireAnimationManager fireAnimationManager;
 
+    private boolean gameOverHandled = false;
+    private boolean victoryHandled = false;
 
     public Playing(Game game, TileManager tileManager) {
         super(game);
@@ -201,14 +198,13 @@ public class Playing extends GameScene implements SceneMethods {
             fireAnimationManager.update();
 
             if (isAllEnemiesDead()) {
-                System.out.println("All enemies are dead");
                 if (isThereMoreWaves()) {
-                    System.out.println("There are more waves");
-                    if (!waveManager.isWaveTimerOver()) {
-                        System.out.println("Starting wave timer");
+                    // Check if timer is already started
+                    if (!waveManager.isWaveTimerStarted()) {
                         waveManager.startTimer();
-                    } else {
-                        System.out.println("Wave timer over, incrementing wave index");
+                    }
+                    // Check if timer is over
+                    else if (waveManager.isWaveTimerOver()) {
                         waveManager.incrementWaveIndex();
                         enemyManager.getEnemies().clear();
                         waveManager.resetEnemyIndex();
@@ -220,7 +216,6 @@ public class Playing extends GameScene implements SceneMethods {
             }
 
             if (isTimeForNewEnemy()) {
-                System.out.println("Spawning new enemy");
                 spawnEnemy();
             }
 
@@ -246,14 +241,21 @@ public class Playing extends GameScene implements SceneMethods {
     }
 
     private boolean isAllEnemiesDead() {
-        if (waveManager.isWaveFinished()) {
+        boolean waveFinished = waveManager.isWaveFinished();
+
+        if (waveFinished) {
+            if (enemyManager.getEnemies().isEmpty()) {
+                return true;
+            }
+
             for (Enemy enemy : enemyManager.getEnemies()) {
-                if (enemy.isAlive() || !enemy.hasReachedEnd()) {
+                if (enemy.isAlive() && !enemy.hasReachedEnd()) {
                     return false;
                 }
             }
             return true;
         }
+
         return false;
     }
 
@@ -348,7 +350,6 @@ public class Playing extends GameScene implements SceneMethods {
 
     }
 
-    // ... (previous unchanged code remains here)
 
     @Override
     public void mouseClicked(int x, int y) {
@@ -486,10 +487,10 @@ public class Playing extends GameScene implements SceneMethods {
     }
 
     private boolean isTimeForNewEnemy() {
-        if(waveManager.isTimeForNewEnemy()){
-            return !waveManager.isWaveFinished();
-        }
-        return false;
+        boolean timeElapsed = waveManager.isTimeForNewEnemy();
+        boolean waveHasEnemiesLeft = !waveManager.isWaveFinished();
+
+        return timeElapsed && waveHasEnemiesLeft;
     }
 
     public void setDisplayedTower(Tower tower) {displayedTower = tower;}
@@ -511,7 +512,11 @@ public class Playing extends GameScene implements SceneMethods {
     }
 
     private void handleGameOver() {
+        // Prevent multiple calls to handleGameOver
+        if (gameOverHandled) return;
+
         System.out.println("Game Over!");
+        gameOverHandled = true;
 
         // Play a random lose sound
         AudioManager.getInstance().playRandomLoseSound();
@@ -533,15 +538,18 @@ public class Playing extends GameScene implements SceneMethods {
         }).start();
     }
 
-
-    // Add a method to handle victory
+    // add a method to handle victory
     private void handleVictory() {
-        System.out.println("Victory!");
+        // Prevent multiple calls to handleVictory
+        if (victoryHandled) return;
 
-        // Play a random victory sound
+        System.out.println("Victory!");
+        victoryHandled = true;
+
+        // play a random victory sound
         AudioManager.getInstance().playRandomVictorySound();
 
-        // use a separate thread to avoid blocking the game loop
+        // Return to the menu after a short delay
         new Thread(() -> {
             try {
                 Thread.sleep(5000);
@@ -598,5 +606,20 @@ public class Playing extends GameScene implements SceneMethods {
 
     public PlayerManager getPlayerManager() {
         return playerManager;
+    }
+
+    public void resetGameState() {
+        gameOverHandled = false;
+        victoryHandled = false;
+        gamePaused = false;
+        gameSpeedIncreased = false;
+        optionsMenuOpen = false;
+        gameSpeedMultiplier = 1.0f;
+        enemyManager.getEnemies().clear();
+        displayedTower = null;
+        selectedDeadTree = null;
+        startEnemySpawning();
+        playerManager = new PlayerManager();
+        updateUIResources();
     }
 }
