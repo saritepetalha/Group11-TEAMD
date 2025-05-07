@@ -43,11 +43,14 @@ public class WaveManager {
         waveIndex++;
         waveTickTimerOver = false;
         waveStartTimer = false;
-        // Reset enemy spawn tick to ensure immediate spawning of the next wave
+        enemyIndex = 0; // Reset enemy index for the new wave
         enemySpawnTick = enemySpawnTickLimit;
     }
 
     public int getNextEnemy(){
+        if (waveIndex >= waves.size() || enemyIndex >= waves.get(waveIndex).getEnemyList().size()) {
+            return -1; // No more enemies in current wave
+        }
         enemySpawnTick = 0;
         return waves.get(waveIndex).getEnemyList().get(enemyIndex++);
     }
@@ -94,7 +97,7 @@ public class WaveManager {
     }
 
     public boolean isThereMoreWaves() {
-        return (waveIndex + 1) < waves.size();
+        return waveIndex < waves.size() - 1;
     }
 
     public void startTimer() {

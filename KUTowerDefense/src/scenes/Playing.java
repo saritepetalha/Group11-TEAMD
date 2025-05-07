@@ -199,36 +199,33 @@ public class Playing extends GameScene implements SceneMethods {
 
             if (isAllEnemiesDead()) {
                 if (isThereMoreWaves()) {
-                    // Check if timer is already started
                     if (!waveManager.isWaveTimerStarted()) {
                         waveManager.startTimer();
-                    }
-                    // Check if timer is over
-                    else if (waveManager.isWaveTimerOver()) {
+                    } else if (waveManager.isWaveTimerOver()) {
                         waveManager.incrementWaveIndex();
                         enemyManager.getEnemies().clear();
                         waveManager.resetEnemyIndex();
                     }
                 } else {
-                    // No more waves and all enemies dead = victory!
                     handleVictory();
                 }
             }
 
             if (isTimeForNewEnemy()) {
-                spawnEnemy();
+                int nextEnemy = waveManager.getNextEnemy();
+                if (nextEnemy != -1) {
+                    spawnEnemy();
+                }
             }
 
             enemyManager.update(gameSpeedMultiplier);
             towerManager.update(gameSpeedMultiplier);
             updateUIResources();
 
-            // check if game over
             if (!playerManager.isAlive()) {
                 handleGameOver();
             }
         }
-        // Check button states from PlayingUI even when paused
         checkButtonStates();
     }
 
