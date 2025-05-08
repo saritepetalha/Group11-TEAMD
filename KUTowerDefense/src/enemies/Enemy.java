@@ -226,4 +226,58 @@ public abstract class Enemy {
             this.animationSpeed = baseAnimationSpeed;
         }
     }
+
+    /**
+     * Gets the center X coordinate of the enemy's sprite as drawn on screen
+     * @return The exact center X coordinate of the sprite
+     */
+    public float getSpriteCenterX() {
+        // the adjustment factors are based on how enemies are drawn in EnemyManager.drawEnemy
+        // can be modified
+        switch (size) {
+            case SMALL:
+                return x - 10;
+            case MEDIUM:
+                if (enemyType == Constants.Enemies.BARREL) {
+                    return x - 15;
+                } else {
+                    return x - 25;
+                }
+            case LARGE:
+                if (enemyType == Constants.Enemies.TROLL) {
+                    return x - 40;
+                } else {
+                    return x - 50;
+                }
+            default:
+                return x;
+        }
+    }
+
+    /**
+     * Gets the center Y coordinate of the enemy's sprite as drawn on screen
+     * @return The exact center Y coordinate of the sprite
+     */
+    public float getSpriteCenterY() {
+        // the adjustment factors are based on how enemies are drawn in EnemyManager.drawEnemy
+        // can be modified
+        switch (size) {
+            case SMALL:
+                return y - 10;
+            case MEDIUM:
+                if (enemyType == Constants.Enemies.BARREL) {
+                    return y - 15;
+                } else {
+                    return y - 25;
+                }
+            case LARGE:
+                if (enemyType == Constants.Enemies.TROLL) {
+                    return y - 40;
+                } else {
+                    return y - 50;
+                }
+            default:
+                return y;
+        }
+    }
 }
