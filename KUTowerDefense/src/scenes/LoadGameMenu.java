@@ -60,15 +60,34 @@ public class LoadGameMenu extends JFrame {
         if (selectedLevel != null) {
             int[][] levelData = LoadSave.loadLevel(selectedLevel);
             if (levelData != null) {
-                if (mode == GameStates.EDIT) {
-                    game.getMapEditing().setLevel(levelData);
-                    game.getMapEditing().setOverlayData(new int[levelData.length][levelData[0].length]);
-                    game.getMapEditing().setCurrentLevelName(selectedLevel);
-                }else if (mode == GameStates.PLAYING) {
-                    game.getPlaying().loadLevel(selectedLevel);
+                try {
+                    if (mode == GameStates.EDIT) {
+                        game.getMapEditing().setLevel(levelData);
+                        game.getMapEditing().setOverlayData(new int[levelData.length][levelData[0].length]);
+                        game.getMapEditing().setCurrentLevelName(selectedLevel);
+                    } else if (mode == GameStates.PLAYING) {
+                        game.getPlaying().loadLevel(selectedLevel);
+                    }
+                    game.changeGameState(mode);
+                    dispose();
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(this,
+                            "Error Occured While Uploading: " + e.getMessage(),
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE);
+                    e.printStackTrace();
                 }
-                game.changeGameState(mode);
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        "The selected map could not be uploaded: " + selectedLevel,
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
             }
+        } else {
+            JOptionPane.showMessageDialog(this,
+                    "Please select a map to load.",
+                    "Warning",
+                    JOptionPane.WARNING_MESSAGE);
         }
     }
 

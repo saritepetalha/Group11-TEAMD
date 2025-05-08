@@ -5,6 +5,7 @@ import java.awt.*;
 import java.awt.event.MouseWheelEvent;
 
 import java.util.List;
+import java.util.ArrayList;
 
 import constants.GameDimensions;
 import enemies.Enemy;
@@ -130,52 +131,58 @@ public class Playing extends GameScene implements SceneMethods {
     public void loadLevel(String levelName) {
         int[][] loadedLevel = LoadSave.loadLevel(levelName);
         if (loadedLevel != null) {
-            System.out.println("Loading level: " + levelName);
-            this.level = loadedLevel;
-
-            this.overlay = new int[loadedLevel.length][loadedLevel[0].length];
-            System.out.println("Overlay size: " + overlay.length + "x" + overlay[0].length);
-
+            level = loadedLevel;
+            overlay = new int[loadedLevel.length][loadedLevel[0].length];
             boolean foundStart = false;
             boolean foundEnd = false;
 
             for (int i = 0; i < loadedLevel.length; i++) {
                 for (int j = 0; j < loadedLevel[i].length; j++) {
                     overlay[i][j] = 0;
-
                     if (loadedLevel[i][j] == 1) {
                         overlay[i][j] = 1;
                         foundStart = true;
-                        System.out.println("Start point found at: " + i + "," + j);
                     } else if (loadedLevel[i][j] == 2) {
                         overlay[i][j] = 2;
                         foundEnd = true;
-                        System.out.println("End point found at: " + i + "," + j);
                     }
                 }
             }
 
             if (!foundStart || !foundEnd) {
-                System.out.println("Warning: Start or end point not found in level!");
+                return;
             }
 
-            System.out.println("Updating EnemyManager with new level and overlay");
-            enemyManager = new EnemyManager(this, overlay, level);
+            if (enemyManager != null) {
+                enemyManager.getEnemies().clear();
+            }
+            towerManager = new TowerManager(this);
+            deadTrees = towerManager.findDeadTrees(level);
+            liveTrees = towerManager.findLiveTrees(level);
 
-            System.out.println("Resetting WaveManager");
+            enemyManager = new EnemyManager(this, overlay, level);
             waveManager = new WaveManager(this);
+
+            resetGameState();
             startEnemySpawning();
+
+            updateUIResources();
         }
     }
 
     public void drawTowerButtons(Graphics g) {
-        for (DeadTree deadTree : deadTrees) {
-            deadTree.draw(g);
+        if (deadTrees != null) {
+            for (DeadTree deadTree : deadTrees) {
+                deadTree.draw(g);
+            }
         }
     }
+
     public void drawLiveTreeButtons(Graphics g) {
-        for (LiveTree live : liveTrees) {
-            live.draw(g);
+        if (liveTrees != null) {
+            for (LiveTree live : liveTrees) {
+                live.draw(g);
+            }
         }
     }
 
@@ -354,8 +361,12 @@ public class Playing extends GameScene implements SceneMethods {
         this.mouseY = y;
         displayedTower = null;
 
-        treeInteractionManager.handleDeadTreeInteraction(mouseX, mouseY);
-        treeInteractionManager.handleLiveTreeInteraction(mouseX, mouseY);
+        if (deadTrees != null) {
+            treeInteractionManager.handleDeadTreeInteraction(mouseX, mouseY);
+        }
+        if (liveTrees != null) {
+            treeInteractionManager.handleLiveTreeInteraction(mouseX, mouseY);
+        }
 
         handleTowerClick();
     }
