@@ -27,13 +27,15 @@ public class EnemyManager {
     private int nextEnemyID = 0;
     private boolean pathFound = false;
 
-    public EnemyManager(Playing playing, int[][] overlayData, int [][] tileData) {
+    public EnemyManager(Playing playing, int[][] overlayData, int[][] tileData) {
         this.playing = playing;
         enemyImages = extractEnemyFrames();
-
+        enemies = new ArrayList<>();
+        pathPoints = new ArrayList<>();
+        pathFound = false;
+        startPoint = null;
+        endPoint = null;
         findStartAndEndPoints(overlayData);
-
-        // generate path only if start and end were found
         if (startPoint != null && endPoint != null) {
             generatePath(tileData);
         }
@@ -42,10 +44,10 @@ public class EnemyManager {
     private void findStartAndEndPoints(int[][] overlayData) {
         for (int y = 0; y < overlayData.length; y++) {
             for (int x = 0; x < overlayData[y].length; x++) {
-                if (overlayData[y][x] == START_POINT) {
+                if (overlayData[y][x] == 1) {
                     startPoint = new GridPoint(x, y);
                 }
-                else if (overlayData[y][x] == END_POINT) {
+                else if (overlayData[y][x] == 2) {
                     endPoint = new GridPoint(x, y);
                 }
             }
@@ -57,59 +59,44 @@ public class EnemyManager {
     }
 
     private boolean isRoadTile(int tileId) {
-        return tileId >= 0 && tileId <= 3 ||
-                tileId >= 6 && tileId <= 7 ||
-                tileId >= 10 && tileId <= 11 ||
-                tileId >= 13 && tileId <= 14;
+        return tileId == 13 || tileId == 14;
     }
 
     private void generatePath(int[][] tileData) {
-        // implementation of Breadth-First Search to find path from start to end
         if (startPoint == null || endPoint == null) {
-            System.out.println("Cannot generate path: Start or end point is null");
             return;
         }
-
-        System.out.println("Generating path from " + startPoint + " to " + endPoint);
 
         int rows = tileData.length;
         int cols = tileData[0].length;
 
-        // direction arrays for 4-directional movement
-        int[] dx = {-1, 0, 1, 0}; // left, up, right, down
+        int[] dx = {-1, 0, 1, 0};
         int[] dy = {0, -1, 0, 1};
 
-        // initialize visited array and parent map for path reconstruction
         boolean[][] visited = new boolean[rows][cols];
         GridPoint[][] parent = new GridPoint[rows][cols];
 
-        // BFS queue
         Queue<GridPoint> queue = new LinkedList<>();
         queue.add(startPoint);
         visited[startPoint.getY()][startPoint.getX()] = true;
 
         boolean foundEnd = false;
 
-        // BFS to find path
         while (!queue.isEmpty() && !foundEnd) {
             GridPoint current = queue.poll();
 
-            // check if we reached the end
             if (current.equals(endPoint)) {
-                System.out.println("Found end point!");
                 foundEnd = true;
                 break;
             }
 
-            // try all four directions respectively
             for (int i = 0; i < 4; i++) {
                 int newX = current.getX() + dx[i];
                 int newY = current.getY() + dy[i];
 
-                // check bounds and if it's a valid road and not visited
-                if (isValidPosition(newX, newY, rows, cols) && isRoadTile(tileData[newY][newX]) &&
+                if (isValidPosition(newX, newY, rows, cols) &&
+                        isRoadTile(tileData[newY][newX]) &&
                         !visited[newY][newX]) {
-                    System.out.println("Found valid road tile at: " + newX + "," + newY);
                     GridPoint next = new GridPoint(newX, newY);
                     queue.add(next);
                     visited[newY][newX] = true;
@@ -118,17 +105,11 @@ public class EnemyManager {
             }
         }
 
-        // if end found, reconstruct the path
         if (foundEnd) {
-            System.out.println("Reconstructing path...");
             reconstructPath(parent);
             pathFound = true;
-            System.out.println("Path found with " + pathPoints.size() + " points");
-        } else {
-            System.out.println("No path found!");
         }
     }
-
 
     /*
     The primary goal of this method is to reconstruct the shortest path found by the Breadth-First Search (BFS) algorithm
@@ -136,24 +117,17 @@ public class EnemyManager {
     the path once the end point is reached. This reconstructed path is then used to guide enemy movement.
      */
     private void reconstructPath(GridPoint[][] parent) {
-        // clear existing path points
         pathPoints.clear();
-
-        // start from the end and work backward
         GridPoint current = endPoint;
-
-        // temporary list to store reversed path
         ArrayList<GridPoint> reversedPath = new ArrayList<>();
         reversedPath.add(current);
 
-        // follow parent pointers back to start
         while (!current.equals(startPoint)) {
             current = parent[current.getY()][current.getX()];
             if (current == null) break;
             reversedPath.add(current);
         }
 
-        // reverse the path to get start-to-end order
         for (int i = reversedPath.size() - 1; i >= 0; i--) {
             pathPoints.add(reversedPath.get(i));
         }
@@ -192,7 +166,6 @@ public class EnemyManager {
 
     public void addEnemy(int enemyType){
         if (!pathFound || pathPoints.isEmpty()) {
-            System.out.println("Cannot add enemy: Path not found or empty");
             return;
         }
 
@@ -202,64 +175,54 @@ public class EnemyManager {
         int x = firstPoint.getX() * tileSize + tileSize / 2;
         int y = firstPoint.getY() * tileSize + tileSize / 2;
 
-        System.out.println("Adding enemy at position: " + x + "," + y);
-
-        switch(enemyType){
-            case GOBLIN:
-                System.out.println("Adding Goblin");
-                enemies.add(new Goblin(x, y, nextEnemyID++));
-                break;
-            case WARRIOR:
-                System.out.println("Adding Warrior");
-                enemies.add(new Warrior(x, y, nextEnemyID++));
-                break;
-            case TNT:
-                System.out.println("Adding TNT");
-                enemies.add(new TNT(x, y, nextEnemyID++));
-                break;
-            case BARREL:
-                System.out.println("Adding Barrel");
-                enemies.add(new Barrel(x, y, nextEnemyID++));
-                break;
-            case TROLL:
-                System.out.println("Adding Troll");
-                enemies.add(new Troll(x, y, nextEnemyID++));
-                break;
-            default:
-                System.out.println("Unknown enemy type: " + enemyType);
-                break;
+        try {
+            switch(enemyType){
+                case GOBLIN:
+                    enemies.add(new Goblin(x, y, nextEnemyID++));
+                    break;
+                case WARRIOR:
+                    enemies.add(new Warrior(x, y, nextEnemyID++));
+                    break;
+                case TNT:
+                    enemies.add(new TNT(x, y, nextEnemyID++));
+                    break;
+                case BARREL:
+                    enemies.add(new Barrel(x, y, nextEnemyID++));
+                    break;
+                case TROLL:
+                    enemies.add(new Troll(x, y, nextEnemyID++));
+                    break;
+                default:
+                    break;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
     private void moveEnemy(Enemy e, float speedMultiplier) {
         int pathIndex = e.getCurrentPathIndex();
 
-        // if enemy has reached the last path point, it has reached the end
         if (pathIndex >= pathPoints.size() - 1) {
             e.setReachedEnd(true);
             return;
         }
 
-        // get current path point and next path point
         GridPoint currentPoint = pathPoints.get(pathIndex);
         GridPoint nextPoint = pathPoints.get(pathIndex + 1);
 
-        // calculate target position
         int targetX = nextPoint.getX() * tileSize + tileSize / 2;
         int targetY = nextPoint.getY() * tileSize + tileSize / 2;
 
-        // calculate direction to move
         float xDiff = targetX - e.getX();
         float yDiff = targetY - e.getY();
         float distance = (float) Math.sqrt(xDiff * xDiff + yDiff * yDiff);
 
-        // if enemy is very close to the path point, move to next path point
         if (distance < e.getSpeed() * speedMultiplier) {
             e.setCurrentPathIndex(pathIndex + 1);
             return;
         }
 
-        // calculate movement speed components
         float xSpeed = (xDiff / distance) * e.getSpeed() * speedMultiplier;
         float ySpeed = (yDiff / distance) * e.getSpeed() * speedMultiplier;
 
