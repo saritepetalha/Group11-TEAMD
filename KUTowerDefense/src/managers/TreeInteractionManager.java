@@ -66,6 +66,9 @@ public class TreeInteractionManager {
 
         for (DeadTree tree : playing.getDeadTrees()) {
             if (tree.isClicked(mouseX, mouseY)) {
+                for (LiveTree lt : playing.getLiveTrees()) {
+                    lt.setShowChoices(false);
+                }
                 for (DeadTree other : playing.getDeadTrees()) {
                     other.setShowChoices(false);
                 }

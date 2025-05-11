@@ -213,4 +213,42 @@ public class LoadSave {
         return img;
     }
 
+    public static void saveOverlay(String fileName, int[][] overlay) {
+        File levelsFolder = new File("resources/LevelOverlays");
+        if (!levelsFolder.exists()) {
+            levelsFolder.mkdirs();
+        }
+
+        File file = new File("KUTowerDefense/resources/LevelOverlays/" + fileName + "_overlay.json");
+        Gson gson = new GsonBuilder()
+                .setPrettyPrinting()
+                .create();
+        JsonObject root = new JsonObject();
+        JsonElement overlayJson = gson.toJsonTree(overlay);
+        root.add("overlay", overlayJson);
+
+        try (Writer writer = new FileWriter(file)) {
+            System.out.println("Overlay saved to: " + file.getName());
+            gson.toJson(root, writer);
+        } catch (IOException e) {
+            throw new RuntimeException("Error saving overlay: " + e.getMessage());
+        }
+    }
+
+    public static int[][] loadOverlay(String fileName) {
+        File file = new File("KUTowerDefense/resources/LevelOverlays/" + fileName + "_overlay.json");
+        if (!file.exists()) {
+            System.out.println("Overlay file not found for: " + fileName);
+            return null;
+        }
+
+        Gson gson = new Gson();
+        try (Reader reader = new FileReader(file)) {
+            JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
+            JsonElement overlayElement = root.get("overlay");
+            return gson.fromJson(overlayElement, int[][].class);
+        } catch (IOException e) {
+            throw new RuntimeException("Error loading overlay: " + e.getMessage());
+        }
+    }
 }

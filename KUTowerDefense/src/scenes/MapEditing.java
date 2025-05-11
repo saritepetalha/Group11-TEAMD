@@ -258,6 +258,7 @@ public class MapEditing extends GameScene implements SceneMethods{
 
     public void saveLevel(String filename) {
         LoadSave.saveLevel(filename,level);
+        LoadSave.saveOverlay(currentLevelName, overlayData);
     }
 
     public void setDrawSelected(boolean drawSelected) {

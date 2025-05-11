@@ -21,7 +21,9 @@ public class Render {
                 game.getMenu().render(g);
                 break;
             case PLAYING:
-                game.getPlaying().render(g);
+                if (game.getPlaying() != null) {
+                    game.getPlaying().render(g);
+                }
                 break;
             case OPTIONS:
                 game.getOptions().render(g);
