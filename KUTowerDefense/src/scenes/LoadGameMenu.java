@@ -3,6 +3,8 @@ package scenes;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
+
 import helpMethods.LoadSave;
 import main.Game;
 import main.GameStates;
@@ -66,7 +68,17 @@ public class LoadGameMenu extends JFrame {
                         game.getMapEditing().setOverlayData(new int[levelData.length][levelData[0].length]);
                         game.getMapEditing().setCurrentLevelName(selectedLevel);
                     } else if (mode == GameStates.PLAYING) {
-                        game.getPlaying().loadLevel(selectedLevel);
+                        int[][] overlay = LoadSave.loadOverlay(selectedLevel);
+                        System.out.println("Loaded overlay:");
+                        for (int[] row : overlay) {
+                            System.out.println(Arrays.toString(row));
+                        }
+                        if (overlay == null) {
+                            overlay = new int[levelData.length][levelData[0].length];
+                            overlay[4][0] = 1;
+                            overlay[4][15] = 2;
+                        }
+                        game.startPlayingWithLevel(levelData, overlay);
                     }
                     game.changeGameState(mode);
                     dispose();

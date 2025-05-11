@@ -19,7 +19,9 @@ public class MyMouseListener implements MouseListener, MouseMotionListener, Mous
     @Override
     public void mouseDragged(MouseEvent e) {
         if (GameStates.gameState == GameStates.PLAYING) {
-            game.getPlaying().mouseDragged(e.getX(), e.getY());
+            if (game.getPlaying() != null) {                // ← ADD
+                game.getPlaying().mouseDragged(e.getX(), e.getY());
+            }
         }
         else if (GameStates.gameState == GameStates.MENU) {
             game.getMenu().mouseDragged(e.getX(), e.getY());
@@ -35,7 +37,9 @@ public class MyMouseListener implements MouseListener, MouseMotionListener, Mous
     @Override
     public void mouseMoved(MouseEvent e) {
         if (GameStates.gameState == GameStates.PLAYING) {
-            game.getPlaying().mouseMoved(e.getX(), e.getY());
+            if (game.getPlaying() != null) {
+                game.getPlaying().mouseMoved(e.getX(), e.getY());
+            }
         }
         else if (GameStates.gameState == GameStates.MENU) {
             game.getMenu().mouseMoved(e.getX(), e.getY());
@@ -52,7 +56,9 @@ public class MyMouseListener implements MouseListener, MouseMotionListener, Mous
     public void mouseClicked(MouseEvent e) {
         if (e.getButton() == MouseEvent.BUTTON1) {
             if (GameStates.gameState == GameStates.PLAYING) {
-                game.getPlaying().mouseClicked(e.getX(), e.getY());
+                if (game.getPlaying() != null) {
+                    game.getPlaying().mouseClicked(e.getX(), e.getY());
+                }
             }
             else if (GameStates.gameState == GameStates.MENU) {
                 game.getMenu().mouseClicked(e.getX(), e.getY());
@@ -74,7 +80,9 @@ public class MyMouseListener implements MouseListener, MouseMotionListener, Mous
     @Override
     public void mousePressed(MouseEvent e) {
         if (GameStates.gameState == GameStates.PLAYING) {
-            game.getPlaying().mousePressed(e.getX(), e.getY());
+            if (game.getPlaying() != null) {
+                game.getPlaying().mousePressed(e.getX(), e.getY());
+            }
         }
         else if (GameStates.gameState == GameStates.MENU) {
             game.getMenu().mousePressed(e.getX(), e.getY());
@@ -90,7 +98,9 @@ public class MyMouseListener implements MouseListener, MouseMotionListener, Mous
     @Override
     public void mouseReleased(MouseEvent e) {
         if (GameStates.gameState == GameStates.PLAYING) {
-            game.getPlaying().mouseReleased(e.getX(), e.getY());
+            if (game.getPlaying() != null) {
+                game.getPlaying().mouseReleased(e.getX(), e.getY());
+            }
         }
         else if (GameStates.gameState == GameStates.MENU) {
             game.getMenu().mouseReleased(e.getX(), e.getY());
@@ -107,7 +117,9 @@ public class MyMouseListener implements MouseListener, MouseMotionListener, Mous
     public void mouseWheelMoved(MouseWheelEvent e) {
         // Forward mouse wheel events to the appropriate scene
         if (GameStates.gameState == GameStates.PLAYING) {
-            game.getPlaying().mouseWheelMoved(e);
+            if (game.getPlaying() != null) {
+                game.getPlaying().mouseWheelMoved(e);
+            }
         }
         else if (GameStates.gameState == GameStates.MENU) {
             // Add mouseWheelMoved method to Menu class if needed

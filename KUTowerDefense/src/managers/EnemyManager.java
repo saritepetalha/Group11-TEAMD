@@ -13,6 +13,7 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Queue;
 import java.util.LinkedList;
+import java.util.Set;
 
 import static constants.Constants.PathPoints.*;
 import static constants.Constants.Enemies.*;
@@ -26,6 +27,7 @@ public class EnemyManager {
     private int tileSize = GameDimensions.TILE_DISPLAY_SIZE;
     private int nextEnemyID = 0;
     private boolean pathFound = false;
+    private static final Set<Integer> ROAD_IDS = Set.of(0,1,2,3,4,6,7,8,9,10,11,12,13,14,31);
 
     public EnemyManager(Playing playing, int[][] overlayData, int[][] tileData) {
         this.playing = playing;
@@ -39,6 +41,9 @@ public class EnemyManager {
         if (startPoint != null && endPoint != null) {
             generatePath(tileData);
         }
+        System.out.println("Path found? " + pathFound);
+        System.out.println("Start: " + startPoint + ", End: " + endPoint);
+        System.out.println("Path length: " + pathPoints.size());
     }
 
     private void findStartAndEndPoints(int[][] overlayData) {
@@ -59,7 +64,7 @@ public class EnemyManager {
     }
 
     private boolean isRoadTile(int tileId) {
-        return tileId == 13 || tileId == 14;
+        return ROAD_IDS.contains(tileId);
     }
 
     private void generatePath(int[][] tileData) {
@@ -166,6 +171,7 @@ public class EnemyManager {
 
     public void addEnemy(int enemyType){
         if (!pathFound || pathPoints.isEmpty()) {
+            System.out.println("Enemy added!");
             return;
         }
 
@@ -247,8 +253,10 @@ public class EnemyManager {
                     enemy.updateAnimationTick();
                 }
                 drawEnemy(enemy, g);
+                System.out.println("Drawing " + enemies.size() + " enemies");
             }
         }
+        System.out.println("DRAWING ENEMIES: " + enemies.size());
     }
 
     // updated method to extract all enemy animation frames

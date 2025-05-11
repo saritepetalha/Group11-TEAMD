@@ -49,8 +49,8 @@ public class Playing extends GameScene implements SceneMethods {
     private boolean optionsMenuOpen = false;
     private float gameSpeedMultiplier = 1.0f;
 
-    private final TreeInteractionManager treeInteractionManager;
-    private final FireAnimationManager fireAnimationManager;
+    private TreeInteractionManager treeInteractionManager;
+    private FireAnimationManager fireAnimationManager;
 
     private boolean gameOverHandled = false;
     private boolean victoryHandled = false;
@@ -59,44 +59,35 @@ public class Playing extends GameScene implements SceneMethods {
         super(game);
         this.tileManager = tileManager;
         loadDefaultLevel();
+        initializeManagers();
+    }
+    public Playing(Game game, TileManager tileManager, int[][] customLevel, int[][] customOverlay) {
+        super(game);
+        this.tileManager = tileManager;
+        this.level = customLevel;
+        this.overlay = customOverlay;
+        initializeManagers();
+    }
 
+    private void initializeManagers() {
         projectileManager = new ProjectileManager(this);
         treeInteractionManager = new TreeInteractionManager(this);
         fireAnimationManager = new FireAnimationManager();
-
-        // Use the same constructor that was working before
         waveManager = new WaveManager(this);
-
-        // Set up the overlay for pathfinding
-        this.overlay = new int[][]{
-                {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-                {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-                {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-                {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-                {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2}, // ← start and end points
-                {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-                {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-                {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-                {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-        };
-
         enemyManager = new EnemyManager(this, overlay, level);
         towerManager = new TowerManager(this);
         playerManager = new PlayerManager();
-
         this.selectedDeadTree = null;
 
-        if(towerManager.findDeadTrees(level) != null) {
+        if(towerManager.findDeadTrees(level) != null)
             deadTrees = towerManager.findDeadTrees(level);
-        }
-        if(towerManager.findLiveTrees(level) != null) {
+        if(towerManager.findLiveTrees(level) != null)
             liveTrees = towerManager.findLiveTrees(level);
-        }
-        // Initialize UI
+
         playingUI = new PlayingUI(this);
         updateUIResources();
-
     }
+
 
     public void updateUIResources() {
         playingUI.setGoldAmount(playerManager.getGold());
@@ -126,6 +117,9 @@ public class Playing extends GameScene implements SceneMethods {
             LoadSave.saveLevel("defaultlevel", lvl);
         }
         this.level = lvl;
+        this.overlay = new int[lvl.length][lvl[0].length];
+        overlay[4][0] = 1;
+        overlay[4][15] = 2;
     }
 
     public void loadLevel(String levelName) {
@@ -492,6 +486,7 @@ public class Playing extends GameScene implements SceneMethods {
 
     private void spawnEnemy() {
         enemyManager.spawnEnemy(waveManager.getNextEnemy());
+        System.out.println("Spawning enemy...");
     }
 
     private boolean isTimeForNewEnemy() {

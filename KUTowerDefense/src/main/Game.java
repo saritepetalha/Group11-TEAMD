@@ -15,13 +15,9 @@ import scenes.*;
 public class Game extends JFrame implements Runnable{
 
 	private GameScreen gamescreen;
-
 	private Thread gameThread;
-
 	private final double FPS_SET = 120.0;
 	private final double UPS_SET = 60.0;
-
-
 	private Render render;
 	private Intro intro;
 	private Menu menu;
@@ -86,7 +82,10 @@ public class Game extends JFrame implements Runnable{
 					break;
 				case PLAYING:
 					// Reset the playing state when starting a new game
-					playing.resetGameState();
+					if (playing != null) {
+						playing.resetGameState();
+						audioManager.playRandomGameMusic();
+					}
 					audioManager.playRandomGameMusic();
 					break;
 				case INTRO:
@@ -107,7 +106,9 @@ public class Game extends JFrame implements Runnable{
 		intro = new Intro(this);
 		menu = new Menu(this);
 		options = new Options(this);
-		playing = new Playing(this, this.tileManager);
+		if (playing == null) {
+			playing = new Playing(this, tileManager);
+		}
 		mapEditing = new MapEditing(this, this);
 		loaded = new Loaded(this);
 		tileManager = new TileManager();
@@ -135,7 +136,7 @@ public class Game extends JFrame implements Runnable{
 			case EDIT:
 				break;
 			case PLAYING:
-				playing.update();
+				if (playing != null) playing.update();
 				// playing update logic
 				break;
 			case OPTIONS:
@@ -277,5 +278,9 @@ public class Game extends JFrame implements Runnable{
 			System.err.println("Error loading cursor image: " + e.getMessage());
 			return Cursor.getDefaultCursor();
 		}
+	}
+
+	public void startPlayingWithLevel(int[][] levelData, int[][] overlayData) {
+		this.playing = new Playing(this, tileManager, levelData, overlayData);
 	}
 }
