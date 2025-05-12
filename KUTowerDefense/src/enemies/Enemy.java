@@ -1,5 +1,8 @@
 package enemies;
 
+import config.EnemyStats;
+import config.EnemyType;
+import config.GameOptions;
 import constants.Constants;
 import managers.AudioManager;
 
@@ -53,63 +56,117 @@ public abstract class Enemy {
         maxHealth = health;
     }
 
+    /**
+     * Updates enemy stats based on the provided GameOptions
+     * @param options The GameOptions containing enemy stats
+     */
+    public void updateStatsFromOptions(GameOptions options) {
+        try {
+            if (options == null) {
+                System.out.println("Warning: GameOptions is null, using default stats for enemy ID " + id);
+                return;
+            }
+
+            EnemyType type = getEnemyTypeEnum();
+            if (type == null) {
+                System.out.println("Warning: Could not determine EnemyType for enemy ID " + id + " (type " + enemyType + "), using default stats");
+                return;
+            }
+
+            if (!options.getEnemyStats().containsKey(type)) {
+                System.out.println("Warning: No stats found for enemy type " + type + ", using default stats");
+                return;
+            }
+
+            EnemyStats stats = options.getEnemyStats().get(type);
+            if (stats == null) {
+                System.out.println("Warning: Stats are null for enemy type " + type + ", using default stats");
+                return;
+            }
+
+            // Apply the stats
+            this.health = stats.getHitPoints();
+            this.maxHealth = stats.getHitPoints();
+            this.speed = (float)stats.getMoveSpeed();
+
+            System.out.println("Applied stats for " + type + ": HP=" + health + ", Speed=" + speed);
+        } catch (Exception e) {
+            System.out.println("Error updating enemy stats: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Converts the enemy's integer type to the corresponding EnemyType enum
+     * @return The EnemyType enum value, or null if not found
+     */
+    protected EnemyType getEnemyTypeEnum() {
+        try {
+            switch (enemyType) {
+                case Constants.Enemies.GOBLIN:
+                    return EnemyType.GOBLIN;
+                case Constants.Enemies.WARRIOR:
+                    return EnemyType.WARRIOR;
+                case Constants.Enemies.BARREL:
+                    return EnemyType.BARREL;
+                case Constants.Enemies.TNT:
+                    return EnemyType.TNT;
+                case Constants.Enemies.TROLL:
+                    return EnemyType.TROLL;
+                default:
+                    System.out.println("Unknown enemy type: " + enemyType);
+                    return null;
+            }
+        } catch (Exception e) {
+            System.out.println("Error getting enemy type enum: " + e.getMessage());
+            return null;
+        }
+    }
+
     private void setBoundaryForSize(Size size) {
         switch (size) {
             case SMALL:
-                // smaller hitbox for small enemies
-                boundary = new Rectangle((int)x + 8, (int)y + 8, 24, 24);
+                boundary = new Rectangle((int)x - 16, (int)y - 16, 32, 32);
                 break;
             case MEDIUM:
-                // medium hitbox for medium enemies
-                boundary = new Rectangle((int)x + 4, (int)y + 4, 32, 32);
+                boundary = new Rectangle((int)x - 24, (int)y - 24, 48, 48);
                 break;
             case LARGE:
-                // larger hitbox for large enemies
-                boundary = new Rectangle((int)x, (int)y, 48, 48);
+                boundary = new Rectangle((int)x - 32, (int)y - 32, 64, 64);
                 break;
             default:
-                boundary = new Rectangle((int)x + 4, (int)y + 4, 32, 32);
+                boundary = new Rectangle((int)x - 16, (int)y - 16, 32, 32);
                 break;
         }
     }
 
-    private void initializeHealth() {
+    protected void initializeHealth() {
         health = Constants.Enemies.getStartHealth(enemyType);
     }
 
-    public void move(float x, float y){
-        this.x += x;
-        this.y += y;
+    public void move(float xSpeed, float ySpeed) {
+        this.x += xSpeed;
+        this.y += ySpeed;
 
-        updateBounds();
+        // Update the boundary position
+        updateBoundary();
     }
 
-    private void updateBounds(){
-        // Keep the same offset for each size to ensure consistency
+    private void updateBoundary() {
         switch (size) {
             case SMALL:
-                boundary.x = (int)x + 8;
-                boundary.y = (int)y + 8;
+                boundary.x = (int)x - 16;
+                boundary.y = (int)y - 16;
                 break;
             case MEDIUM:
-                boundary.x = (int)x + 4;
-                boundary.y = (int)y + 4;
+                boundary.x = (int)x - 24;
+                boundary.y = (int)y - 24;
                 break;
             case LARGE:
-                boundary.x = (int)x;
-                boundary.y = (int)y;
-                break;
-            default:
-                boundary.x = (int)x + 4;
-                boundary.y = (int)y + 4;
+                boundary.x = (int)x - 32;
+                boundary.y = (int)y - 32;
                 break;
         }
-    }
-
-    public void setPos(float x, float y){
-        this.x = x;
-        this.y = y;
-        updateBounds();
     }
 
     public void updateAnimationTick() {

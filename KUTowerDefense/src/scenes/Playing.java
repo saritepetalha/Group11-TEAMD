@@ -6,24 +6,24 @@ import java.awt.event.MouseWheelEvent;
 
 import java.util.List;
 import java.util.ArrayList;
+import main.Game;
 
 import constants.GameDimensions;
 import enemies.Enemy;
+
 import helpMethods.LoadSave;
-import main.Game;
+import helpMethods.OptionsIO;
+import config.GameOptions;
 
 import managers.*;
-
 import managers.WaveManager;
+import managers.AudioManager;
+
 import objects.Tower;
 
 import ui_p.DeadTree;
-
-
 import ui_p.PlayingUI;
 import ui_p.LiveTree;
-
-import managers.AudioManager;
 
 public class Playing extends GameScene implements SceneMethods {
     private int[][] level;
@@ -55,9 +55,12 @@ public class Playing extends GameScene implements SceneMethods {
     private boolean gameOverHandled = false;
     private boolean victoryHandled = false;
 
+    private GameOptions gameOptions;
+
     public Playing(Game game, TileManager tileManager) {
         super(game);
         this.tileManager = tileManager;
+        this.gameOptions = OptionsIO.load();
         loadDefaultLevel();
         initializeManagers();
     }
@@ -136,9 +139,11 @@ public class Playing extends GameScene implements SceneMethods {
                     if (loadedLevel[i][j] == 1) {
                         overlay[i][j] = 1;
                         foundStart = true;
+                        System.out.println("Start point found at: " + i + "," + j);
                     } else if (loadedLevel[i][j] == 2) {
                         overlay[i][j] = 2;
                         foundEnd = true;
+                        System.out.println("End point found at: " + i + "," + j);
                     }
                 }
             }
@@ -161,6 +166,45 @@ public class Playing extends GameScene implements SceneMethods {
             startEnemySpawning();
 
             updateUIResources();
+        }
+    }
+
+    /**
+     * Reloads game options from file and applies them to all managers
+     */
+    public void reloadGameOptions() {
+        try {
+            System.out.println("Reloading game options...");
+            this.gameOptions = OptionsIO.load();
+
+            if (gameOptions == null) {
+                System.out.println("Warning: Failed to load game options, using default values");
+                return;
+            }
+
+            // Apply options to all managers
+            if (waveManager != null) {
+                waveManager.reloadFromOptions();
+            } else {
+                System.out.println("Warning: WaveManager is null");
+            }
+
+            if (enemyManager != null) {
+                enemyManager.reloadFromOptions();
+            } else {
+                System.out.println("Warning: EnemyManager is null");
+            }
+
+            if (playerManager != null) {
+                playerManager.reloadFromOptions();
+            } else {
+                System.out.println("Warning: PlayerManager is null");
+            }
+
+            System.out.println("Game options reloaded successfully");
+        } catch (Exception e) {
+            System.out.println("Error reloading game options: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 

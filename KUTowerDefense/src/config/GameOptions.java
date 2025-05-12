@@ -39,9 +39,12 @@ public class GameOptions {
     public static GameOptions defaults() {
         GameOptions o = new GameOptions();
 
-        // Enemy defaults
-        o.enemyStats.put(EnemyType.GOBLIN, new EnemyStats(30, 1.5, 5));
-        o.enemyStats.put(EnemyType.KNIGHT, new EnemyStats(80, 1.0, 12));
+        // Enemy defaults - based on Constants.Enemies values
+        o.enemyStats.put(EnemyType.GOBLIN, new EnemyStats(100, 0.85, 5));
+        o.enemyStats.put(EnemyType.WARRIOR, new EnemyStats(200, 0.45, 25));
+        o.enemyStats.put(EnemyType.BARREL, new EnemyStats(150, 0.6, 15));
+        o.enemyStats.put(EnemyType.TNT, new EnemyStats(50, 1.2, 2));
+        o.enemyStats.put(EnemyType.TROLL, new EnemyStats(300, 0.15, 10));
 
         // Tower defaults
         o.towerStats.put(TowerType.ARCHER,
@@ -51,10 +54,10 @@ public class GameOptions {
         o.towerStats.put(TowerType.MAGE,
                 new TowerStats(90, 3.0, 0.9, 0.0, 20));
 
-        // Waves
+        // Waves - updated to use WARRIOR instead of KNIGHT
         Group g1 = new Group(Map.of(EnemyType.GOBLIN, 8), 0.5);
         Group g2 = new Group(Map.of(EnemyType.GOBLIN, 5,
-                EnemyType.KNIGHT, 2), 0.4);
+                EnemyType.WARRIOR, 2), 0.4);
 
         o.waves.add(new Wave(List.of(g1),               0.0)); // 1-group wave
         o.waves.add(new Wave(List.of(g1, g2),           1.5)); // 2-group wave

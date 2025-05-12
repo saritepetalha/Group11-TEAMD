@@ -4,132 +4,81 @@ import config.GameOptions;
 import constants.GameDimensions;
 import helpMethods.OptionsIO;
 import main.Game;
+import main.GameStates;
+// import managers.AudioManager; // AudioManager is used via SceneMethods default
 import ui_p.GameOptionsUI;
 import ui_p.TheButton;
 
-import java.awt.*;
 import javax.swing.*;
-
-import static main.GameStates.MENU;
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 
 /**
- * The Options scene that displays and manages game configuration settings.
+ * The Options scene that displays and manages game configuration settings
+ * as a JPanel within the main game window.
  */
-public class Options extends GameScene implements SceneMethods {
+public class Options extends JPanel implements SceneMethods {
     private final Game game;
-    private final TheButton backButton;
     private final GameOptionsUI optionsUI;
-    private final JFrame optionsFrame;
 
     public Options(Game game) {
-        super(game);
         this.game = game;
+        setLayout(new BorderLayout());
+        setOpaque(false);
 
-        // Initialize UI components
-        this.backButton = new TheButton("Back", 2, 2, 100, 30);
-        this.optionsUI = new GameOptionsUI(OptionsIO.load());
+        this.optionsUI = new GameOptionsUI(this.game, OptionsIO.load());
+        add(optionsUI, BorderLayout.CENTER);
+    }
 
-        // Create a separate frame for options UI
-        this.optionsFrame = new JFrame("Game Options");
-        this.optionsFrame.setContentPane(optionsUI);
-        this.optionsFrame.setSize(800, 600);
-        this.optionsFrame.setLocationRelativeTo(null);
-        this.optionsFrame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
     }
 
     @Override
     public void render(Graphics g) {
-        // Draw background
-        g.setColor(new Color(70, 120, 200)); // Slightly different blue than the original
-        g.fillRect(0, 0, GameDimensions.GAME_WIDTH, GameDimensions.GAME_HEIGHT);
-
-        // Draw back button
-        backButton.draw(g);
-
-        // Draw help text
-        g.setColor(Color.WHITE);
-        Font originalFont = g.getFont();
-        g.setFont(new Font("Arial", Font.BOLD, 18));
-        g.drawString("Click anywhere (except back button) to open Options", 250, 300);
-        g.setFont(originalFont);
-
-        setCustomCursor();
-
-        // Show options frame if it should be visible
-        if (optionsFrame.isVisible() != optionsActive) {
-            optionsFrame.setVisible(optionsActive);
-        }
-    }
-
-    // Flag to track if options window is active
-    private boolean optionsActive = false;
-
-    @Override
-    public void mouseClicked(int x, int y) {
-        if (backButton.getBounds().contains(x, y)) {
-            // Save options before going back to menu
-            saveOptions();
-
-            // Hide options frame if it's open
-            if (optionsActive) {
-                optionsActive = false;
-                optionsFrame.setVisible(false);
-            }
-
-            game.changeGameState(MENU);
-        } else {
-            // Toggle options frame visibility when clicking anywhere else
-            optionsActive = !optionsActive;
-            optionsFrame.setVisible(optionsActive);
-        }
-    }
-
-    @Override
-    public void mouseMoved(int x, int y) {
-        backButton.setMouseOver(false);
-
-        if (backButton.getBounds().contains(x, y)) {
-            backButton.setMouseOver(true);
-        }
-    }
-
-    @Override
-    public void mousePressed(int x, int y) {
-        if (backButton.getBounds().contains(x, y)) {
-            backButton.setMousePressed(true);
-        }
-    }
-
-    @Override
-    public void mouseReleased(int x, int y) {
-        backButton.resetBooleans();
-    }
-
-    @Override
-    public void mouseDragged(int x, int y) {
-        // Not needed for options screen
+        // This JPanel is managed by GameScreen.
+        // Swing handles painting its child (optionsUI).
+        // Calling repaint() ensures it and its children are redrawn if needed.
+        repaint();
     }
 
     /**
-     * Saves the current options configuration to disk
-     */
-    private void saveOptions() {
-        try {
-            GameOptions options = optionsUI.getGameOptions();
-            OptionsIO.save(options);
-        } catch (Exception e) {
-            System.err.println("Failed to save options: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * Make sure the options frame is hidden when leaving this scene
+     * Saves current options and performs any necessary cleanup before
+     * this panel is removed from the UI
      */
     public void cleanUp() {
-        if (optionsFrame != null && optionsFrame.isVisible()) {
-            optionsFrame.setVisible(false);
-        }
-        optionsActive = false;
+        // Save the current options
+        GameOptions currentOptions = optionsUI.getGameOptions();
+        OptionsIO.save(currentOptions);
+        System.out.println("Options saved during cleanup");
+    }
+
+    // Mouse interaction methods are removed as they were for the old back button in this class.
+    // GameOptionsUI now handles all its own interactions, including its own Back button.
+    @Override
+    public void mouseClicked(int x, int y) { /* No longer needed */ }
+
+    @Override
+    public void mouseMoved(int x, int y) { /* No longer needed */ }
+
+    @Override
+    public void mousePressed(int x, int y) { /* No longer needed */ }
+
+    @Override
+    public void mouseReleased(int x, int y) { /* No longer needed */ }
+
+    @Override
+    public void mouseDragged(int x, int y) { /* No longer needed */ }
+
+    @Override
+    public void playButtonClickSound() {
+        // This is handled by the default implementation in SceneMethods
+    }
+
+    public GameOptionsUI getGameOptionsPanelItself() {
+        return optionsUI;
     }
 }
