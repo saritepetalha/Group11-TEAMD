@@ -7,6 +7,7 @@ public class GameOptions {
     // ---------- Economy & player ----------
     private int startingGold     = 500;
     private int startingPlayerHP = 20;
+    private int startingShield   = 25;
 
     // ---------- Static stats ----------
     private Map<EnemyType, EnemyStats> enemyStats =
@@ -24,6 +25,9 @@ public class GameOptions {
 
     public int getStartingPlayerHP()         { return startingPlayerHP; }
     public void setStartingPlayerHP(int hp)  { this.startingPlayerHP = hp; }
+
+    public int getStartingShield()           { return startingShield; }
+    public void setStartingShield(int s)     { this.startingShield = s; }
 
     public Map<EnemyType, EnemyStats> getEnemyStats() { return enemyStats; }
     public Map<TowerType, TowerStats> getTowerStats() { return towerStats; }
@@ -64,6 +68,7 @@ public class GameOptions {
         o.interWaveDelay     = 8.0;
         o.startingGold       = 300;
         o.startingPlayerHP   = 15;
+        o.startingShield     = 25;
         return o;
     }
 }

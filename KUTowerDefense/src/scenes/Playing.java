@@ -88,6 +88,10 @@ public class Playing extends GameScene implements SceneMethods {
             liveTrees = towerManager.findLiveTrees(level);
 
         playingUI = new PlayingUI(this);
+
+        playingUI.setStartingHealthAmount(gameOptions.getStartingPlayerHP());
+        playingUI.setStartingShieldAmount(gameOptions.getStartingShield());
+
         updateUIResources();
     }
 
@@ -96,6 +100,9 @@ public class Playing extends GameScene implements SceneMethods {
         playingUI.setGoldAmount(playerManager.getGold());
         playingUI.setHealthAmount(playerManager.getHealth());
         playingUI.setShieldAmount(playerManager.getShield());
+
+        playingUI.setStartingHealthAmount(gameOptions.getStartingPlayerHP());
+        playingUI.setStartingShieldAmount(gameOptions.getStartingShield());
     }
 
     public void saveLevel(String filename) {

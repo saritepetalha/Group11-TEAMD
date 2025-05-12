@@ -1,17 +1,23 @@
 package ui_p;
 
 import config.*;
+import helpMethods.FontLoader;
 import helpMethods.OptionsIO;
 import main.Game;
 import main.GameStates;
+import managers.AudioManager;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.MatteBorder;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 import java.util.List;
+import javax.imageio.ImageIO;
 
 /**
  * UI component for editing game options.
@@ -22,43 +28,146 @@ public class GameOptionsUI extends JPanel {
     private final Game game;
     private final GameOptions options;
     private final JTabbedPane tabbedPane;
+    private float backgroundOpacity = 0.15f; // Very transparent background
 
+    // General settings components
     private JTextField startingGoldField;
     private JTextField startingPlayerHPField;
+    private JTextField startingShieldField;
     private JTextField interWaveDelayField;
 
+    // Maps to store the various stat input fields
     private final Map<EnemyType, Map<String, JTextField>> enemyStatFields = new EnumMap<>(EnemyType.class);
     private final Map<TowerType, Map<String, JTextField>> towerStatFields = new EnumMap<>(TowerType.class);
+
+    // Wave editor components
     private final List<WavePanel> wavePanels = new ArrayList<>();
     private JPanel wavesContainer;
 
-    private final Font labelFont = new Font("MV Boli", Font.BOLD, 14);
-    private final Font fieldFont = new Font("MV Boli", Font.PLAIN, 14);
-    private final Font headerFont = new Font("MV Boli", Font.BOLD, 16);
-    private final Font buttonFont = new Font("MV Boli", Font.BOLD, 14);
-    private final Insets generalInsets = new Insets(8, 8, 8, 8);
-    private final Color panelBackgroundColor = new Color(240, 240, 240);
-    private final Color buttonBackgroundColor = new Color(220, 220, 220);
-    private final Color buttonTextColor = Color.BLACK;
+    // Common styling elements
+    private final Font labelFont = FontLoader.loadMedodicaFont(16f);
+    private final Font fieldFont = FontLoader.loadMedodicaFont(16f);
+    private final Font headerFont = FontLoader.loadMedodicaFont(18f);
+    private final Font buttonFont = FontLoader.loadMedodicaFont(16f);
+    private final Font categoryFont = FontLoader.loadMedodicaFont(17f).deriveFont(Font.BOLD);
+    private final Insets generalInsets = new Insets(10, 10, 10, 10);
+    private final Color panelBackgroundColor = new Color(240, 240, 240, 180); // Semi-transparent
+    private final Color buttonBackgroundColor = new Color(60, 120, 190);
+    private final Color buttonTextColor = Color.WHITE;
+    private final Color tabBackgroundColor = new Color(50, 100, 160);
+    private final Color tabTextColor = Color.WHITE;
 
     public GameOptionsUI(Game game, GameOptions options) {
         this.game = game;
         this.options = options;
         setLayout(new BorderLayout(10, 10));
         setBorder(new EmptyBorder(10, 10, 10, 10));
-        setBackground(new Color(225, 225, 225));
+
+        // Make panel transparent to show background
+        setOpaque(true);
 
         tabbedPane = new JTabbedPane();
-        tabbedPane.setFont(headerFont.deriveFont(Font.PLAIN, 14f));
+        tabbedPane.setFont(headerFont.deriveFont(Font.BOLD, 16f));
+        tabbedPane.setOpaque(false);
+
+        // Style the tabbed pane
+        UIManager.put("TabbedPane.selected", tabBackgroundColor);
+        UIManager.put("TabbedPane.contentAreaColor", new Color(245, 245, 245, 180));
+        UIManager.put("TabbedPane.shadow", new Color(0, 0, 0, 100));
+        UIManager.put("TabbedPane.darkShadow", new Color(0, 0, 0, 150));
+        UIManager.put("TabbedPane.light", new Color(255, 255, 255, 100));
+        UIManager.put("TabbedPane.highlight", new Color(255, 255, 255, 150));
+        UIManager.put("TabbedPane.focus", new Color(255, 255, 255, 150));
+        UIManager.put("TabbedPane.selectHighlight", new Color(255, 255, 255, 150));
+        UIManager.put("TabbedPane.tabAreaBackground", new Color(220, 220, 220, 150));
+        UIManager.put("TabbedPane.unselectedBackground", new Color(180, 180, 180, 150));
+
+        // Custom tab renderer for better styling
+        tabbedPane.setUI(new javax.swing.plaf.basic.BasicTabbedPaneUI() {
+            @Override
+            protected void paintTabBackground(Graphics g, int tabPlacement, int tabIndex, int x, int y, int w, int h, boolean isSelected) {
+                Graphics2D g2d = (Graphics2D) g.create();
+                if (isSelected) {
+                    g2d.setColor(tabBackgroundColor);
+                } else {
+                    g2d.setColor(new Color(120, 140, 160));
+                }
+                g2d.fillRect(x, y, w, h);
+                g2d.dispose();
+            }
+
+            @Override
+            protected void paintTabBorder(Graphics g, int tabPlacement, int tabIndex, int x, int y, int w, int h, boolean isSelected) {
+                Graphics2D g2d = (Graphics2D) g.create();
+                g2d.setColor(isSelected ? new Color(40, 80, 120) : new Color(80, 100, 120));
+                g2d.drawRect(x, y, w, h);
+                g2d.dispose();
+            }
+
+            @Override
+            protected void paintContentBorder(Graphics g, int tabPlacement, int selectedIndex) {
+                // Custom content border
+                Graphics2D g2d = (Graphics2D) g.create();
+                g2d.setColor(new Color(40, 80, 120));
+
+                Insets insets = getContentBorderInsets(tabPlacement);
+                int x = insets.left;
+                int y = insets.top;
+                int w = tabbedPane.getWidth() - insets.right - insets.left;
+                int h = tabbedPane.getHeight() - insets.top - insets.bottom;
+
+                g2d.drawRect(x, y, w, h);
+                g2d.dispose();
+            }
+
+            @Override
+            protected void paintFocusIndicator(Graphics g, int tabPlacement, Rectangle[] rects, int tabIndex, Rectangle iconRect, Rectangle textRect, boolean isSelected) {
+                // No focus indicator
+            }
+        });
 
         tabbedPane.addTab("General", createGeneralPanel());
         tabbedPane.addTab("Enemy Stats", createEnemyStatsPanel());
         tabbedPane.addTab("Tower Stats", createTowerStatsPanel());
         tabbedPane.addTab("Wave Config", createWavesPanel());
 
+        // Set tab foreground color
+        for (int i = 0; i < tabbedPane.getTabCount(); i++) {
+            tabbedPane.setForegroundAt(i, tabTextColor);
+        }
+
+        // Add change listener to play sound when tab is changed
+        tabbedPane.addChangeListener(e -> AudioManager.getInstance().playButtonClickSound());
+
         add(tabbedPane, BorderLayout.CENTER);
         add(createButtonPanel(), BorderLayout.SOUTH);
         loadValuesFromOptions();
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+
+        // Draw background image with transparency
+        if (ButtonAssets.backgroundImg != null) {
+            Graphics2D g2d = (Graphics2D) g.create();
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, backgroundOpacity));
+
+            // Scale image to fill panel while maintaining aspect ratio
+            double scaleX = (double) getWidth() / ButtonAssets.backgroundImg.getWidth();
+            double scaleY = (double) getHeight() / ButtonAssets.backgroundImg.getHeight();
+            double scale = Math.max(scaleX, scaleY);
+
+            int scaledWidth = (int) (ButtonAssets.backgroundImg.getWidth() * scale);
+            int scaledHeight = (int) (ButtonAssets.backgroundImg.getHeight() * scale);
+
+            // Center the image
+            int x = (getWidth() - scaledWidth) / 2;
+            int y = (getHeight() - scaledHeight) / 2;
+
+            g2d.drawImage(ButtonAssets.backgroundImg, x, y, scaledWidth, scaledHeight, null);
+            g2d.dispose();
+        }
     }
 
     public GameOptionsUI(GameOptions options) {
@@ -70,6 +179,12 @@ public class GameOptionsUI extends JPanel {
 
     private void styleLabel(JLabel label) {
         label.setFont(labelFont);
+        label.setForeground(new Color(20, 40, 80)); // Dark blue text
+    }
+
+    private void styleCategoryLabel(JLabel label) {
+        label.setFont(categoryFont);
+        label.setForeground(new Color(10, 30, 70)); // Darker blue text for categories
     }
 
     private void styleField(JTextField field) {
@@ -77,9 +192,10 @@ public class GameOptionsUI extends JPanel {
         field.setColumns(8); // Default column width
         field.setHorizontalAlignment(JTextField.RIGHT);
         field.setBorder(BorderFactory.createCompoundBorder(
-                new MatteBorder(1, 1, 1, 1, Color.GRAY),
+                new MatteBorder(1, 1, 1, 1, new Color(60, 100, 160)),
                 new EmptyBorder(2, 5, 2, 5)
         ));
+        field.setBackground(new Color(250, 250, 255)); // Light blue-tinted background
     }
 
     private void styleButton(JButton button) {
@@ -88,9 +204,27 @@ public class GameOptionsUI extends JPanel {
         button.setForeground(buttonTextColor);
         button.setFocusPainted(false);
         button.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(Color.DARK_GRAY, 1),
+                BorderFactory.createLineBorder(new Color(40, 80, 140), 1),
                 new EmptyBorder(5, 15, 5, 15)
         ));
+    }
+
+    /**
+     * Style a button with default hover effects
+     */
+    private void styleButtonWithHoverEffect(JButton button) {
+        styleButton(button);
+
+        // Add hover effect
+        button.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                button.setBackground(new Color(80, 140, 210));
+            }
+
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                button.setBackground(buttonBackgroundColor);
+            }
+        });
     }
 
     /**
@@ -100,32 +234,41 @@ public class GameOptionsUI extends JPanel {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setBackground(panelBackgroundColor);
         panel.setBorder(new EmptyBorder(10,10,10,10));
+        panel.setOpaque(false);
+
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = generalInsets;
         gbc.anchor = GridBagConstraints.WEST;
 
         JLabel goldLabel = new JLabel("Starting Gold:");
-        styleLabel(goldLabel);
+        styleCategoryLabel(goldLabel);
         gbc.gridx = 0; gbc.gridy = 0;
         panel.add(goldLabel, gbc);
         startingGoldField = new JTextField(10); styleField(startingGoldField);
         gbc.gridx = 1; panel.add(startingGoldField, gbc);
 
         JLabel hpLabel = new JLabel("Starting Player HP:");
-        styleLabel(hpLabel);
+        styleCategoryLabel(hpLabel);
         gbc.gridx = 0; gbc.gridy = 1;
         panel.add(hpLabel, gbc);
         startingPlayerHPField = new JTextField(10); styleField(startingPlayerHPField);
         gbc.gridx = 1; panel.add(startingPlayerHPField, gbc);
 
-        JLabel delayLabel = new JLabel("Inter-wave Delay (s):");
-        styleLabel(delayLabel);
+        JLabel shieldLabel = new JLabel("Starting Shield:");
+        styleCategoryLabel(shieldLabel);
         gbc.gridx = 0; gbc.gridy = 2;
+        panel.add(shieldLabel, gbc);
+        startingShieldField = new JTextField(10); styleField(startingShieldField);
+        gbc.gridx = 1; panel.add(startingShieldField, gbc);
+
+        JLabel delayLabel = new JLabel("Inter-wave Delay (s):");
+        styleCategoryLabel(delayLabel);
+        gbc.gridx = 0; gbc.gridy = 3;
         panel.add(delayLabel, gbc);
         interWaveDelayField = new JTextField(10); styleField(interWaveDelayField);
         gbc.gridx = 1; panel.add(interWaveDelayField, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 3; gbc.weighty = 1.0; gbc.fill = GridBagConstraints.VERTICAL;
+        gbc.gridx = 0; gbc.gridy = 4; gbc.weighty = 1.0; gbc.fill = GridBagConstraints.VERTICAL;
         panel.add(Box.createVerticalGlue(), gbc);
         return panel;
     }
@@ -153,21 +296,29 @@ public class GameOptionsUI extends JPanel {
         JPanel mainPanel = new JPanel(new BorderLayout(5,5));
         mainPanel.setBackground(panelBackgroundColor);
         mainPanel.setBorder(new EmptyBorder(10,10,10,10));
+        mainPanel.setOpaque(false);
 
         wavesContainer = new JPanel();
         wavesContainer.setLayout(new BoxLayout(wavesContainer, BoxLayout.Y_AXIS));
         wavesContainer.setBackground(panelBackgroundColor);
+        wavesContainer.setOpaque(false);
 
         JScrollPane scrollPane = new JScrollPane(wavesContainer);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        scrollPane.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+        scrollPane.setBorder(BorderFactory.createLineBorder(new Color(40, 80, 140)));
+        scrollPane.getViewport().setOpaque(false);
+        scrollPane.setOpaque(false);
         mainPanel.add(scrollPane, BorderLayout.CENTER);
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         buttonPanel.setBackground(panelBackgroundColor);
+        buttonPanel.setOpaque(false);
         JButton addWaveButton = new JButton("Add Wave");
-        styleButton(addWaveButton);
-        addWaveButton.addActionListener(e -> addNewWave());
+        styleButtonWithHoverEffect(addWaveButton);
+        addWaveButton.addActionListener(e -> {
+            AudioManager.getInstance().playButtonClickSound();
+            addNewWave();
+        });
         buttonPanel.add(addWaveButton);
 
         mainPanel.add(buttonPanel, BorderLayout.NORTH);
@@ -180,31 +331,84 @@ public class GameOptionsUI extends JPanel {
     private JPanel createButtonPanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         panel.setBorder(new EmptyBorder(10, 0, 0, 0));
-        panel.setBackground(new Color(225, 225, 225));
+        panel.setBackground(new Color(225, 225, 225, 150));
+        panel.setOpaque(false);
 
         JButton backButton = new JButton("Back to Menu");
         styleButton(backButton);
+        // Add default hover effect for back button
+        addDefaultHoverEffect(backButton);
         backButton.addActionListener(e -> {
+            AudioManager.getInstance().playButtonClickSound();
             if (this.game != null) {
-                saveOptions();
-                this.game.changeGameState(GameStates.MENU);
+                // Save options before returning to menu
+                try {
+                    saveOptions();
+                    this.game.changeGameState(GameStates.MENU);
+                } catch (Exception ex) {
+                    // If saving fails, still allow returning to menu but show warning
+                    JLabel warningLabel = new JLabel("Warning: Settings not saved due to errors.");
+                    warningLabel.setFont(FontLoader.loadMedodicaFont(14f));
+                    warningLabel.setForeground(new Color(180, 120, 0));
+                    JOptionPane.showMessageDialog(this, warningLabel, "Warning", JOptionPane.WARNING_MESSAGE);
+
+                    int result = JOptionPane.showConfirmDialog(this,
+                            "Continue without saving?", "Return to Menu",
+                            JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+
+                    if (result == JOptionPane.YES_OPTION) {
+                        this.game.changeGameState(GameStates.MENU);
+                    }
+                }
             } else {
-                JOptionPane.showMessageDialog(this, "Cannot return to menu: Game context not available.", "Error", JOptionPane.ERROR_MESSAGE);
+                JLabel errorLabel = new JLabel("Cannot return to menu: Game context not available.");
+                errorLabel.setFont(FontLoader.loadMedodicaFont(14f));
+                errorLabel.setForeground(new Color(180, 40, 40));
+                JOptionPane.showMessageDialog(this, errorLabel, "Error", JOptionPane.ERROR_MESSAGE);
             }
         });
         panel.add(backButton);
 
         panel.add(Box.createHorizontalStrut(10));
 
+        // Reset button with custom hover effect
         JButton resetButton = new JButton("Reset to Defaults");
         styleButton(resetButton);
-        resetButton.addActionListener(e -> resetToDefaults());
+        final Color resetButtonColor = new Color(180, 100, 100);
+        resetButton.setBackground(resetButtonColor);
+        resetButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                resetButton.setBackground(new Color(210, 120, 120)); // Lighter red on hover
+            }
+
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                resetButton.setBackground(resetButtonColor); // Back to original color
+            }
+        });
+        resetButton.addActionListener(e -> {
+            AudioManager.getInstance().playButtonClickSound();
+            resetToDefaults();
+        });
         panel.add(resetButton);
 
+        // Save button with custom hover effect
         JButton saveButton = new JButton("Save Settings");
         styleButton(saveButton);
-        saveButton.setBackground(new Color(180, 220, 180));
-        saveButton.addActionListener(e -> saveOptions());
+        final Color saveButtonColor = new Color(60, 160, 100);
+        saveButton.setBackground(saveButtonColor);
+        saveButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                saveButton.setBackground(new Color(80, 190, 120)); // Lighter green on hover
+            }
+
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                saveButton.setBackground(saveButtonColor); // Back to original color
+            }
+        });
+        saveButton.addActionListener(e -> {
+            AudioManager.getInstance().playButtonClickSound();
+            saveOptions();
+        });
         panel.add(saveButton);
 
         return panel;
@@ -233,6 +437,7 @@ public class GameOptionsUI extends JPanel {
     public void loadValuesFromOptions() {
         startingGoldField.setText(String.valueOf(options.getStartingGold()));
         startingPlayerHPField.setText(String.valueOf(options.getStartingPlayerHP()));
+        startingShieldField.setText(String.valueOf(options.getStartingShield()));
         interWaveDelayField.setText(String.valueOf(options.getInterWaveDelay()));
 
         for (Map.Entry<EnemyType, EnemyStats> entry : options.getEnemyStats().entrySet()) {
@@ -282,6 +487,7 @@ public class GameOptionsUI extends JPanel {
         try {
             options.setStartingGold(Integer.parseInt(startingGoldField.getText()));
             options.setStartingPlayerHP(Integer.parseInt(startingPlayerHPField.getText()));
+            options.setStartingShield(Integer.parseInt(startingShieldField.getText()));
             options.setInterWaveDelay(Double.parseDouble(interWaveDelayField.getText()));
 
             for (Map.Entry<EnemyType, Map<String, JTextField>> entry : enemyStatFields.entrySet()) {
@@ -313,11 +519,24 @@ public class GameOptionsUI extends JPanel {
             }
 
             OptionsIO.save(options);
-            JOptionPane.showMessageDialog(this, "Settings saved successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+
+            // Custom styled success message
+            JLabel messageLabel = new JLabel("Settings saved successfully!");
+            messageLabel.setFont(FontLoader.loadMedodicaFont(14f));
+            messageLabel.setForeground(new Color(20, 120, 40));
+            JOptionPane.showMessageDialog(this, messageLabel, "Success", JOptionPane.INFORMATION_MESSAGE);
         } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Invalid number format: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            // Custom styled error message
+            JLabel errorLabel = new JLabel("Invalid number format: " + e.getMessage());
+            errorLabel.setFont(FontLoader.loadMedodicaFont(14f));
+            errorLabel.setForeground(new Color(180, 40, 40));
+            JOptionPane.showMessageDialog(this, errorLabel, "Error", JOptionPane.ERROR_MESSAGE);
         } catch (IllegalArgumentException e) {
-            JOptionPane.showMessageDialog(this, "Invalid value: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            // Custom styled error message
+            JLabel errorLabel = new JLabel("Invalid value: " + e.getMessage());
+            errorLabel.setFont(FontLoader.loadMedodicaFont(14f));
+            errorLabel.setForeground(new Color(180, 40, 40));
+            JOptionPane.showMessageDialog(this, errorLabel, "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -325,12 +544,19 @@ public class GameOptionsUI extends JPanel {
      * Reset all options to defaults and reload the UI
      */
     private void resetToDefaults() {
-        int result = JOptionPane.showConfirmDialog(this, "Reset all settings to defaults?", "Confirm Reset", JOptionPane.YES_NO_OPTION);
+        // Custom styled confirmation dialog
+        JLabel confirmLabel = new JLabel("Reset all settings to defaults?");
+        confirmLabel.setFont(FontLoader.loadMedodicaFont(14f));
+        confirmLabel.setForeground(new Color(40, 40, 120));
+
+        int result = JOptionPane.showConfirmDialog(this, confirmLabel, "Confirm Reset", JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE);
         if (result == JOptionPane.YES_OPTION) {
             OptionsIO.resetToDefaults();
             GameOptions defaults = OptionsIO.load();
             options.setStartingGold(defaults.getStartingGold());
             options.setStartingPlayerHP(defaults.getStartingPlayerHP());
+            options.setStartingShield(defaults.getStartingShield());
             options.setInterWaveDelay(defaults.getInterWaveDelay());
             options.getEnemyStats().clear();
             options.getEnemyStats().putAll(defaults.getEnemyStats());
@@ -339,6 +565,12 @@ public class GameOptionsUI extends JPanel {
             options.getWaves().clear();
             options.getWaves().addAll(defaults.getWaves());
             loadValuesFromOptions();
+
+            // Success message after reset
+            JLabel messageLabel = new JLabel("Settings reset to defaults successfully!");
+            messageLabel.setFont(FontLoader.loadMedodicaFont(14f));
+            messageLabel.setForeground(new Color(20, 120, 40));
+            JOptionPane.showMessageDialog(this, messageLabel, "Reset Complete", JOptionPane.INFORMATION_MESSAGE);
         }
     }
 
@@ -357,26 +589,30 @@ public class GameOptionsUI extends JPanel {
             this.waveNumber = waveNumber;
             setLayout(new BorderLayout(5, 5));
             setBackground(panelBackgroundColor.brighter()); // Slightly brighter for distinction
+            setOpaque(false); // Make transparent to show background image
             setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.DARK_GRAY), "Wave " + waveNumber,
+                    BorderFactory.createTitledBorder(BorderFactory.createLineBorder(new Color(40, 80, 140), 2), "Wave " + waveNumber,
                             javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
                             javax.swing.border.TitledBorder.DEFAULT_POSITION,
-                            headerFont.deriveFont(14f), Color.BLACK),
+                            headerFont.deriveFont(Font.BOLD), new Color(20, 40, 100)),
                     new EmptyBorder(5,5,5,5) // Inner padding
             ));
 
             JPanel propertiesPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5,0));
             propertiesPanel.setOpaque(false);
-            JLabel delayLabel = new JLabel("Intra-Group Delay (s):"); styleLabel(delayLabel);
+            JLabel delayLabel = new JLabel("Intra-Group Delay (s):"); styleCategoryLabel(delayLabel);
             propertiesPanel.add(delayLabel);
             intraGroupDelayField = new JTextField(String.valueOf(wave.getIntraGroupDelay()), 5);
             styleField(intraGroupDelayField);
             propertiesPanel.add(intraGroupDelayField);
 
             JButton removeWaveButton = new JButton("Remove This Wave");
-            styleButton(removeWaveButton);
-            removeWaveButton.setBackground(new Color(220, 180, 180)); // Light red for remove
-            removeWaveButton.addActionListener(e -> removeWave());
+            styleButtonWithHoverEffect(removeWaveButton);
+            removeWaveButton.setBackground(new Color(180, 100, 100)); // Light red for remove
+            removeWaveButton.addActionListener(e -> {
+                AudioManager.getInstance().playButtonClickSound();
+                removeWave();
+            });
             propertiesPanel.add(Box.createHorizontalStrut(10)); // Spacer
             propertiesPanel.add(removeWaveButton);
             add(propertiesPanel, BorderLayout.NORTH);
@@ -386,16 +622,21 @@ public class GameOptionsUI extends JPanel {
             groupsContainer.setOpaque(false);
             JScrollPane groupsScrollPane = new JScrollPane(groupsContainer);
             groupsScrollPane.setPreferredSize(new Dimension(550, 180)); // Adjusted preferred size
-            groupsScrollPane.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
+            groupsScrollPane.setBorder(BorderFactory.createLineBorder(new Color(60, 100, 160)));
+            groupsScrollPane.getViewport().setOpaque(false);
+            groupsScrollPane.setOpaque(false);
             add(groupsScrollPane, BorderLayout.CENTER);
 
             JPanel groupButtonsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
             groupButtonsPanel.setOpaque(false);
             JButton addGroupButton = new JButton("Add Group to Wave");
-            styleButton(addGroupButton);
+            styleButtonWithHoverEffect(addGroupButton);
             groupButtonsPanel.add(addGroupButton);
             groupButtonsPanel.add(Box.createHorizontalStrut(10)); // Spacer
-            addGroupButton.addActionListener(e -> addNewGroup());
+            addGroupButton.addActionListener(e -> {
+                AudioManager.getInstance().playButtonClickSound();
+                addNewGroup();
+            });
             add(groupButtonsPanel, BorderLayout.SOUTH);
 
             for (Group group : wave.getGroups()) {
@@ -430,7 +671,13 @@ public class GameOptionsUI extends JPanel {
         }
 
         private void removeWave() {
-            int result = JOptionPane.showConfirmDialog(GameOptionsUI.this, "Remove Wave " + waveNumber + "?", "Confirm Removal", JOptionPane.YES_NO_OPTION);
+            // Custom styled confirmation dialog
+            JLabel confirmLabel = new JLabel("Remove Wave " + waveNumber + "?");
+            confirmLabel.setFont(FontLoader.loadMedodicaFont(14f));
+            confirmLabel.setForeground(new Color(180, 40, 40));
+
+            int result = JOptionPane.showConfirmDialog(GameOptionsUI.this, confirmLabel, "Confirm Removal",
+                    JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
             if (result == JOptionPane.YES_OPTION) {
                 options.getWaves().remove(wave);
                 wavePanels.remove(this);
@@ -459,10 +706,10 @@ public class GameOptionsUI extends JPanel {
         public void updateWaveNumber(int newNumber) {
             this.waveNumber = newNumber; // Store new number
             setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.DARK_GRAY), "Wave " + newNumber,
+                    BorderFactory.createTitledBorder(BorderFactory.createLineBorder(new Color(40, 80, 140), 2), "Wave " + newNumber,
                             javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
                             javax.swing.border.TitledBorder.DEFAULT_POSITION,
-                            headerFont.deriveFont(14f), Color.BLACK),
+                            headerFont.deriveFont(Font.BOLD), new Color(20, 40, 100)),
                     new EmptyBorder(5,5,5,5)
             ));
         }
@@ -481,10 +728,10 @@ public class GameOptionsUI extends JPanel {
                 this.groupNumber = groupNumber;
                 setOpaque(false); // Inherit background from WavePanel
                 setBorder(BorderFactory.createCompoundBorder(
-                        BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.GRAY),"Group " + groupNumber,
+                        BorderFactory.createTitledBorder(BorderFactory.createLineBorder(new Color(60, 100, 160), 1),"Group " + groupNumber,
                                 javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
                                 javax.swing.border.TitledBorder.DEFAULT_POSITION,
-                                labelFont.deriveFont(Font.PLAIN) , Color.DARK_GRAY),
+                                labelFont.deriveFont(Font.BOLD) , new Color(20, 40, 100)),
                         new EmptyBorder(3,3,3,3)
                 ));
                 setLayout(new GridBagLayout());
@@ -493,7 +740,7 @@ public class GameOptionsUI extends JPanel {
                 gbc.anchor = GridBagConstraints.WEST;
 
                 gbc.gridx = 0; gbc.gridy = 0;
-                JLabel delayLabel = new JLabel("Intra-Enemy Delay (s):"); styleLabel(delayLabel);
+                JLabel delayLabel = new JLabel("Intra-Enemy Delay (s):"); styleCategoryLabel(delayLabel);
                 add(delayLabel, gbc);
                 gbc.gridx = 1; gbc.weightx = 0.1;
                 intraEnemyDelayField = new JTextField(String.valueOf(group.getIntraEnemyDelay()), 4);
@@ -504,24 +751,27 @@ public class GameOptionsUI extends JPanel {
                 gbc.gridx = 2; gbc.gridy = 0; gbc.gridheight = 2; // Span 2 rows
                 gbc.anchor = GridBagConstraints.CENTER; // Center remove button
                 JButton removeButton = new JButton("Remove");
-                styleButton(removeButton);
+                styleButtonWithHoverEffect(removeButton);
                 removeButton.setFont(buttonFont.deriveFont(12f));
                 removeButton.setMargin(new Insets(2,5,2,5)); // Smaller margin
-                removeButton.setBackground(new Color(220, 200, 200));
-                removeButton.addActionListener(e -> removeGroup());
+                removeButton.setBackground(new Color(180, 100, 100));
+                removeButton.addActionListener(e -> {
+                    AudioManager.getInstance().playButtonClickSound();
+                    removeGroup();
+                });
                 add(removeButton, gbc);
                 gbc.gridheight = 1; // Reset span
                 gbc.anchor = GridBagConstraints.WEST; // Reset anchor
 
                 gbc.gridx = 0; gbc.gridy = 1;
-                JLabel compLabel = new JLabel("Composition:"); styleLabel(compLabel);
+                JLabel compLabel = new JLabel("Composition:"); styleCategoryLabel(compLabel);
                 add(compLabel, gbc);
 
                 JPanel compositionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 0));
                 compositionPanel.setOpaque(false);
                 for (EnemyType type : EnemyType.values()) {
                     JLabel enemyLabel = new JLabel(type.name() + ":"); styleLabel(enemyLabel);
-                    enemyLabel.setFont(labelFont.deriveFont(12f)); // Slightly smaller
+                    enemyLabel.setFont(labelFont.deriveFont(14f)); // Slightly smaller
                     compositionPanel.add(enemyLabel);
                     JTextField countField = new JTextField(3); styleField(countField);
                     countField.setText(String.valueOf(group.getComposition().getOrDefault(type, 0)));
@@ -547,7 +797,13 @@ public class GameOptionsUI extends JPanel {
             }
 
             private void removeGroup() {
-                int result = JOptionPane.showConfirmDialog(GameOptionsUI.this, "Remove Group " + groupNumber + " from Wave "+ WavePanel.this.waveNumber +"?", "Confirm Removal", JOptionPane.YES_NO_OPTION);
+                // Custom styled confirmation dialog
+                JLabel confirmLabel = new JLabel("Remove Group " + groupNumber + " from Wave "+ WavePanel.this.waveNumber +"?");
+                confirmLabel.setFont(FontLoader.loadMedodicaFont(14f));
+                confirmLabel.setForeground(new Color(180, 40, 40));
+
+                int result = JOptionPane.showConfirmDialog(GameOptionsUI.this, confirmLabel, "Confirm Removal",
+                        JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
                 if (result == JOptionPane.YES_OPTION) {
                     wave.getGroups().remove(group);
                     groupPanels.remove(this);
@@ -567,10 +823,10 @@ public class GameOptionsUI extends JPanel {
             public void updateGroupNumber(int newNumber) {
                 this.groupNumber = newNumber;
                 setBorder(BorderFactory.createCompoundBorder(
-                        BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.GRAY),"Group " + newNumber,
+                        BorderFactory.createTitledBorder(BorderFactory.createLineBorder(new Color(60, 100, 160), 1),"Group " + newNumber,
                                 javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
                                 javax.swing.border.TitledBorder.DEFAULT_POSITION,
-                                labelFont.deriveFont(Font.PLAIN) , Color.DARK_GRAY),
+                                labelFont.deriveFont(Font.BOLD) , new Color(20, 40, 100)),
                         new EmptyBorder(3,3,3,3)
                 ));
             }
@@ -588,6 +844,7 @@ public class GameOptionsUI extends JPanel {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setBackground(panelBackgroundColor);
         panel.setBorder(new EmptyBorder(10,10,10,10));
+        panel.setOpaque(false);
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = generalInsets;
 
@@ -596,8 +853,9 @@ public class GameOptionsUI extends JPanel {
         gbc.anchor = GridBagConstraints.CENTER; // Center headers
         for (int i = 0; i < headers.length; i++) {
             JLabel headerLabel = new JLabel(headers[i]);
-            headerLabel.setFont(headerFont.deriveFont(14f));
+            headerLabel.setFont(headerFont.deriveFont(Font.BOLD));
             headerLabel.setHorizontalAlignment(SwingConstants.CENTER);
+            headerLabel.setForeground(new Color(20, 40, 100));
             gbc.gridx = i + 1;
             gbc.gridy = 0;
             gbc.weightx = 0.1; // Give headers some weight too
@@ -612,7 +870,7 @@ public class GameOptionsUI extends JPanel {
             Map<String, JTextField> fields = new HashMap<>();
 
             JLabel typeNameLabel = new JLabel(typeLabelPrefix + type.name() + ":");
-            styleLabel(typeNameLabel);
+            styleCategoryLabel(typeNameLabel);
             gbc.gridx = 0;
             gbc.gridy = row;
             gbc.anchor = GridBagConstraints.EAST; // Align type names to the right of their cell
@@ -647,5 +905,23 @@ public class GameOptionsUI extends JPanel {
         gbc.gridx = 0; gbc.gridy = row; gbc.weighty = 1.0; gbc.gridwidth = headers.length + 1; gbc.fill = GridBagConstraints.VERTICAL;
         panel.add(Box.createVerticalGlue(), gbc);
         return panel;
+    }
+
+    /**
+     * Add default hover effect to a button
+     */
+    private void addDefaultHoverEffect(JButton button) {
+        final Color originalColor = button.getBackground();
+
+        // Add hover effect
+        button.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                button.setBackground(new Color(80, 140, 210));
+            }
+
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                button.setBackground(originalColor);
+            }
+        });
     }
 }

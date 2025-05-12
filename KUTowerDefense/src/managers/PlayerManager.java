@@ -17,19 +17,20 @@ public class PlayerManager {
             if (gameOptions != null) {
                 this.gold = gameOptions.getStartingGold();
                 this.health = gameOptions.getStartingPlayerHP();
+                this.shield = gameOptions.getStartingShield();
             } else {
                 System.out.println("Warning: Failed to load game options, using default values");
                 this.gold = 100; // Default value
                 this.health = MAX_HEALTH;
+                this.shield = MAX_SHIELD;
             }
         } catch (Exception e) {
             System.out.println("Error loading player options: " + e.getMessage());
             e.printStackTrace();
             this.gold = 100; // Default value
             this.health = MAX_HEALTH;
+            this.shield = MAX_SHIELD;
         }
-
-        this.shield = MAX_SHIELD;
     }
 
     public void addGold(int amount) {
@@ -105,7 +106,8 @@ public class PlayerManager {
             if (gameOptions != null) {
                 this.gold = gameOptions.getStartingGold();
                 this.health = gameOptions.getStartingPlayerHP();
-                System.out.println("Player stats reloaded: Gold=" + gold + ", Health=" + health);
+                this.shield = gameOptions.getStartingShield();
+                System.out.println("Player stats reloaded: Gold=" + gold + ", Health=" + health + ", Shield=" + shield);
             } else {
                 System.out.println("Warning: Failed to load game options for player, keeping current values");
             }
