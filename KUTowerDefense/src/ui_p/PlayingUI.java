@@ -21,6 +21,8 @@ public class PlayingUI {
     private int goldAmount;
     private int healthAmount;
     private int shieldAmount;
+    private int startingHealthAmount;
+    private int startingShieldAmount;
 
     // Mouse position
     private int mouseX;
@@ -58,6 +60,8 @@ public class PlayingUI {
 
     public PlayingUI(Playing playing) {
         this.playing = playing;
+        this.startingHealthAmount = MAX_HEALTH;
+        this.startingShieldAmount = MAX_SHIELD;
         initButtons();
     }
 
@@ -155,9 +159,9 @@ public class PlayingUI {
         // draw Gold bar with 3-slide button
         drawSlideButton(g, ""+ goldAmount, barX + 50, barY + 15, buttonWidth, buttonHeight, goldAmount, 1000000);
         // draw Health bar with 3-slide button
-        drawSlideButton(g, healthAmount + "/10", barX + 50, barY + 50, buttonWidth, buttonHeight, healthAmount, MAX_HEALTH);
+        drawSlideButton(g, healthAmount + "/" + startingHealthAmount, barX + 50, barY + 50, buttonWidth, buttonHeight, healthAmount, startingHealthAmount);
         // draw Shield bar with 3-slide button
-        drawSlideButton(g, shieldAmount + "/25", barX + 50, barY + 85, buttonWidth, buttonHeight, shieldAmount, MAX_SHIELD);
+        drawSlideButton(g, shieldAmount + "/" + startingShieldAmount, barX + 50, barY + 85, buttonWidth, buttonHeight, shieldAmount, startingShieldAmount);
     }
 
     private void drawWaveIndicator(Graphics g) {
@@ -586,6 +590,10 @@ public class PlayingUI {
     public void setShieldAmount(int shieldAmount) {
         this.shieldAmount = shieldAmount;
     }
+
+    public void setStartingHealthAmount(int startingHealthAmount) { this.startingHealthAmount = startingHealthAmount; }
+
+    public void setStartingShieldAmount(int startingShieldAmount) { this.startingShieldAmount = startingShieldAmount;}
 
     // add methods to handle mouse hover and press for control buttons
     public void mouseMoved(int mouseX, int mouseY) {

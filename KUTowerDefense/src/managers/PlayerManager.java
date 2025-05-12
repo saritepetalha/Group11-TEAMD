@@ -1,15 +1,36 @@
 package managers;
+import config.GameOptions;
+import helpMethods.OptionsIO;
+
 import static constants.Constants.Player.*;
 
 public class PlayerManager {
     private int gold;
     private int health;
     private int shield;
+    private GameOptions gameOptions;
 
     public PlayerManager() {
-        this.gold = 100;
-        this.health = MAX_HEALTH;
-        this.shield = MAX_SHIELD;
+        try {
+            this.gameOptions = OptionsIO.load();
+
+            if (gameOptions != null) {
+                this.gold = gameOptions.getStartingGold();
+                this.health = gameOptions.getStartingPlayerHP();
+                this.shield = gameOptions.getStartingShield();
+            } else {
+                System.out.println("Warning: Failed to load game options, using default values");
+                this.gold = 100; // Default value
+                this.health = MAX_HEALTH;
+                this.shield = MAX_SHIELD;
+            }
+        } catch (Exception e) {
+            System.out.println("Error loading player options: " + e.getMessage());
+            e.printStackTrace();
+            this.gold = 100; // Default value
+            this.health = MAX_HEALTH;
+            this.shield = MAX_SHIELD;
+        }
     }
 
     public void addGold(int amount) {
@@ -73,5 +94,26 @@ public class PlayerManager {
 
     public boolean isAlive() {
         return health > 0;
+    }
+
+    /**
+     * Reloads player stats from options
+     */
+    public void reloadFromOptions() {
+        try {
+            this.gameOptions = OptionsIO.load();
+
+            if (gameOptions != null) {
+                this.gold = gameOptions.getStartingGold();
+                this.health = gameOptions.getStartingPlayerHP();
+                this.shield = gameOptions.getStartingShield();
+                System.out.println("Player stats reloaded: Gold=" + gold + ", Health=" + health + ", Shield=" + shield);
+            } else {
+                System.out.println("Warning: Failed to load game options for player, keeping current values");
+            }
+        } catch (Exception e) {
+            System.out.println("Error reloading player options: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 }

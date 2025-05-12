@@ -48,6 +48,12 @@ public class ButtonAssets {
     public static BufferedImage regularMusicImg;
     public static BufferedImage pressedMusicImg;
 
+    // Background images
+    public static BufferedImage backgroundImg;
+
+    // Logo images
+    public static BufferedImage teamLogoImg;
+
 
     static {
         loadAll();
@@ -78,6 +84,11 @@ public class ButtonAssets {
 
         loadMusicButtonImages();
 
+        // Load background images
+        loadBackgroundImages();
+
+        // Load logo images
+        loadLogoImages();
     }
 
     private static void loadButtonImageFile() {
@@ -244,7 +255,7 @@ public class ButtonAssets {
             e.printStackTrace();
         }
 
-        // Load Hard difficulty 
+        // Load Hard difficulty
         try (InputStream is = LoadSave.class.getResourceAsStream("/UI/Hard.png")) {
             difficultyHardImg = ImageIO.read(is);
         } catch (IOException e) {
@@ -252,6 +263,31 @@ public class ButtonAssets {
         }
     }
 
+    // Load background images
+    private static void loadBackgroundImages() {
+        try (InputStream is = LoadSave.class.getResourceAsStream("/KuTowerDefence1.jpg")) {
+            backgroundImg = ImageIO.read(is);
+            if (backgroundImg == null) {
+                System.err.println("Could not load background image: KuTowerDefence1.jpg");
+            }
+        } catch (IOException e) {
+            System.err.println("Error loading background image: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    // Load logo images
+    private static void loadLogoImages() {
+        try (InputStream is = LoadSave.class.getResourceAsStream("/teamD_logo_alt.png")) {
+            teamLogoImg = ImageIO.read(is);
+            if (teamLogoImg == null) {
+                System.err.println("Could not load team logo image: teamD_logo_alt.png");
+            }
+        } catch (IOException e) {
+            System.err.println("Error loading team logo image: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
 
     // Load music button images
     private static void loadMusicButtonImages() {

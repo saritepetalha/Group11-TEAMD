@@ -15,9 +15,13 @@ import scenes.*;
 public class Game extends JFrame implements Runnable{
 
 	private GameScreen gamescreen;
+
 	private Thread gameThread;
+
 	private final double FPS_SET = 120.0;
 	private final double UPS_SET = 60.0;
+
+
 	private Render render;
 	private Intro intro;
 	private Menu menu;
@@ -33,9 +37,6 @@ public class Game extends JFrame implements Runnable{
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		setResizable(false);
 		initClasses();
-		createDefaultLevel();
-		setCustomCursor();
-
 		add(gamescreen);
 		pack();
 		setVisible(true);
@@ -53,43 +54,38 @@ public class Game extends JFrame implements Runnable{
 	}
 
 	public void changeGameState(GameStates newState) {
-		// Save the previous state for potential return
 		GameStates previousState = GameStates.gameState;
-
-		// Set the new state
 		GameStates.gameState = newState;
-		gamescreen.setPanelSize(); // adjust GameScreen size
-		pack();                    // resize JFrame according to new dimensions
-		setLocationRelativeTo(null); // re-center the window
-		setCustomCursor();
 
-		// Handle music based on state transitions
+		if (gamescreen != null) {
+			gamescreen.updateContentForState(newState, previousState);
+		}
+
+		if (gamescreen != null) {
+			gamescreen.setPanelSize();
+		}
+		pack();
+		setLocationRelativeTo(null);
+
 		AudioManager audioManager = AudioManager.getInstance();
-
-		// Only change music if we're not toggling between menu/edit/options
 		boolean isMenuRelatedToggle = (
-				// Going between menu-related states
 				(previousState == GameStates.MENU && (newState == GameStates.OPTIONS || newState == GameStates.EDIT)) ||
-						// Coming back to menu from options or edit
 						((previousState == GameStates.OPTIONS || previousState == GameStates.EDIT) && newState == GameStates.MENU)
 		);
 
-		// Skip music change if we're just toggling between menu-related states
 		if (!isMenuRelatedToggle) {
 			switch (newState) {
 				case MENU:
 					audioManager.playMusic("lonelyhood");
 					break;
 				case PLAYING:
-					// Reset the playing state when starting a new game
 					if (playing != null) {
+						// Reset game state and reload options
 						playing.resetGameState();
-						audioManager.playRandomGameMusic();
 					}
 					audioManager.playRandomGameMusic();
 					break;
 				case INTRO:
-					break;
 				case OPTIONS:
 				case EDIT:
 				case LOADED:
@@ -112,10 +108,6 @@ public class Game extends JFrame implements Runnable{
 		mapEditing = new MapEditing(this, this);
 		loaded = new Loaded(this);
 		tileManager = new TileManager();
-
-		if (GameStates.gameState != GameStates.INTRO) {
-			AudioManager.getInstance().playRandomGameMusic();
-		}
 	}
 
 
@@ -125,22 +117,18 @@ public class Game extends JFrame implements Runnable{
 	}
 
 	private void updateGame() {
-		//System.out.println("GAME UPDATED");
 		switch (GameStates.gameState) {
 			case INTRO:
-				intro.update();  // Update the intro animation
+				if (intro != null) intro.update();
 				break;
 			case MENU:
-				// menu update logic if needed
 				break;
 			case EDIT:
 				break;
 			case PLAYING:
 				if (playing != null) playing.update();
-				// playing update logic
 				break;
 			case OPTIONS:
-				// options update logic
 				break;
 			default:
 				break;
@@ -148,13 +136,13 @@ public class Game extends JFrame implements Runnable{
 	}
 
 	public static void main(String[] args) {
-		System.out.println("HELLO");
+		System.out.println("Game Starting...");
 		Game game = new Game();
-		game.gamescreen.initInputs();
 		game.start();
 
-		// Play music right away, but only if we're not in the intro
-		if (GameStates.gameState != GameStates.INTRO) {
+		if (GameStates.gameState == GameStates.MENU) {
+			AudioManager.getInstance().playMusic("lonelyhood");
+		} else if (GameStates.gameState != GameStates.INTRO) {
 			AudioManager.getInstance().playRandomGameMusic();
 		}
 	}
@@ -176,15 +164,14 @@ public class Game extends JFrame implements Runnable{
 
 			now = System.nanoTime();
 			if (now - lastFrame >= timePerFrame) {
-				repaint();
+				if (gamescreen != null) gamescreen.repaint();
 				lastFrame = now;
-
 				frames++;
 			}
 
 			if (now - lastUpdate >= timePerUpdate) {
-				lastUpdate = lastUpdate + (long)timePerUpdate;
 				updateGame();
+				lastUpdate = now;
 				updates++;
 			}
 			if (System.currentTimeMillis() - lastTimeCheck >= 1000) {
@@ -216,44 +203,14 @@ public class Game extends JFrame implements Runnable{
 
 	public MapEditing getMapEditing() { return mapEditing; }
 
-	public TileManager getTileManager() { return tileManager;
-	}
+	public TileManager getTileManager() { return tileManager; }
 
-	private void setCustomCursor() {
-		try {
-			java.io.InputStream is = getClass().getResourceAsStream("/UI/cursor.png");
-			if (is == null) {
-				return;
-			}
-
-			BufferedImage originalImg = javax.imageio.ImageIO.read(is);
-
-			int newWidth = originalImg.getWidth() / 2;
-			int newHeight = originalImg.getHeight() / 2;
-
-			BufferedImage resizedImg = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_ARGB);
-			Graphics2D g2d = resizedImg.createGraphics();
-			g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-			g2d.drawImage(originalImg, 0, 0, newWidth, newHeight, null);
-			g2d.dispose();
-
-			Cursor customCursor = Toolkit.getDefaultToolkit().createCustomCursor(
-					resizedImg,
-					new Point(newWidth/2, newHeight/2),
-					"Custom Cursor"
-			);
-
-			setCursor(customCursor);
-
-		} catch (java.io.IOException e) {
-			System.err.println("Error loading cursor image: " + e.getMessage());
-		}
-	}
 
 	public Cursor getCursor() {
 		try {
 			java.io.InputStream is = getClass().getResourceAsStream("/UI/01.png");
 			if (is == null) {
+				System.err.println("Draggable cursor image not found at /UI/01.png");
 				return Cursor.getDefaultCursor();
 			}
 
@@ -271,11 +228,11 @@ public class Game extends JFrame implements Runnable{
 			return Toolkit.getDefaultToolkit().createCustomCursor(
 					resizedImg,
 					new Point(newWidth/2, newHeight/2),
-					"Custom Cursor"
+					"Custom Draggable Cursor"
 			);
 
 		} catch (java.io.IOException e) {
-			System.err.println("Error loading cursor image: " + e.getMessage());
+			System.err.println("Error loading draggable cursor image: " + e.getMessage());
 			return Cursor.getDefaultCursor();
 		}
 	}

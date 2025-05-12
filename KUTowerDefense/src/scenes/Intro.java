@@ -3,6 +3,7 @@ package scenes;
 import constants.GameDimensions;
 import main.Game;
 import main.GameStates;
+import ui_p.ButtonAssets;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
@@ -15,8 +16,6 @@ import javax.sound.sampled.*;
 
 public class Intro {
     private Game game;
-    private BufferedImage logoImage;
-    private BufferedImage loadingBackgroundImage;
     private float alpha = 0f;  // for fading the logo
     private int introState = 0;  // 0: fading in, 1: hold, 2: fading out, 3: loading screen
     private int loadingDotCount = 0;
@@ -53,24 +52,7 @@ public class Intro {
 
     public Intro(Game game) {
         this.game = game;
-        loadImages();
         resetIntro();
-    }
-
-    private void loadImages() {
-        try {
-            InputStream is = getClass().getResourceAsStream("/teamD_logo_alt.png");
-            if (is != null) {
-                logoImage = ImageIO.read(is);
-            }
-
-            is = getClass().getResourceAsStream("/KuTowerDefence1.jpg");
-            if (is != null) {
-                loadingBackgroundImage = ImageIO.read(is);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     public void update() {
@@ -164,13 +146,13 @@ public class Intro {
             g2d.setColor(backgroundColor);
             g2d.fillRect(0, 0, game.getWidth(), game.getHeight());
             // logo display with fading, rotation, and scaling
-            if (logoImage != null) {
+            if (ButtonAssets.teamLogoImg != null) {
                 g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
 
                 // resizing the logo
                 float finalScale = logoScale + (introState == 1 ? currentPulseScale : 0);
-                int scaledWidth = (int)(logoImage.getWidth() * finalScale);
-                int scaledHeight = (int)(logoImage.getHeight() * finalScale);
+                int scaledWidth = (int)(ButtonAssets.teamLogoImg.getWidth() * finalScale);
+                int scaledHeight = (int)(ButtonAssets.teamLogoImg.getHeight() * finalScale);
 
                 int centerX = game.getWidth() / 2;
                 int centerY = game.getHeight() / 2;
@@ -190,7 +172,7 @@ public class Intro {
                         logoY + scaledHeight/2.0);
                 g2d.setTransform(transform);
 
-                g2d.drawImage(logoImage, logoX, logoY, scaledWidth, scaledHeight, null);
+                g2d.drawImage(ButtonAssets.teamLogoImg, logoX, logoY, scaledWidth, scaledHeight, null);
                 g2d.setTransform(oldTransform);
             }
             // draw the skip text last so it stays on top
@@ -208,8 +190,8 @@ public class Intro {
             g2d.drawString(skipText, textX, textY);
         } else if (introState == 3) {
             // loading screen
-            if (loadingBackgroundImage != null) {
-                g2d.drawImage(loadingBackgroundImage, 0, 0, GameDimensions.MAIN_MENU_SCREEN_WIDTH, GameDimensions.MAIN_MENU_SCREEN_HEIGHT, null);
+            if (ButtonAssets.backgroundImg != null) {
+                g2d.drawImage(ButtonAssets.backgroundImg, 0, 0, GameDimensions.MAIN_MENU_SCREEN_WIDTH, GameDimensions.MAIN_MENU_SCREEN_HEIGHT, null);
             } else {
                 // fallback if image not found
                 g2d.setColor(backgroundColor);

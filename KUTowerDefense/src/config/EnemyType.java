@@ -1,6 +1,9 @@
 package config;
 
 public enum EnemyType {
-    KNIGHT,
-    GOBLIN
+    GOBLIN,
+    WARRIOR,
+    BARREL,
+    TNT,
+    TROLL
 }
