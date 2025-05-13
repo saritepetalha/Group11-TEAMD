@@ -54,6 +54,9 @@ public class ButtonAssets {
     // Logo images
     public static BufferedImage teamLogoImg;
 
+    // New UI asset for Load Game Menu
+    public static BufferedImage loadGameMenuBackgroundImg;
+
 
     static {
         loadAll();
@@ -89,6 +92,9 @@ public class ButtonAssets {
 
         // Load logo images
         loadLogoImages();
+
+        // Load Load Game Menu background
+        loadLoadGameMenuBackgroundImg();
     }
 
     private static void loadButtonImageFile() {
@@ -278,13 +284,19 @@ public class ButtonAssets {
 
     // Load logo images
     private static void loadLogoImages() {
-        try (InputStream is = LoadSave.class.getResourceAsStream("/teamD_logo_alt.png")) {
+        try (InputStream is = LoadSave.class.getResourceAsStream("/UI/teamD_logo_alt.png")) {
             teamLogoImg = ImageIO.read(is);
-            if (teamLogoImg == null) {
-                System.err.println("Could not load team logo image: teamD_logo_alt.png");
-            }
         } catch (IOException e) {
-            System.err.println("Error loading team logo image: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    // Load Load Game Menu background
+    private static void loadLoadGameMenuBackgroundImg() {
+        try (InputStream is = LoadSave.class.getResourceAsStream("/UI/LoadGameUI.png")) {
+            loadGameMenuBackgroundImg = ImageIO.read(is);
+        } catch (IOException e) {
+            System.err.println("Error loading LoadGameUI.png: " + e.getMessage());
             e.printStackTrace();
         }
     }

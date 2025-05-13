@@ -142,7 +142,7 @@ public class Menu extends GameScene implements SceneMethods {
             game.changeGameState(GameStates.PLAYING);
         } else if (loadGameButton.getBounds().contains(x, y)) {
             playButtonClickSound();
-            showLoadGameDialog();
+            game.changeGameState(GameStates.LOAD_GAME);
         } else if (mapEditorButton.getBounds().contains(x, y)) {
             playButtonClickSound();
             game.changeGameState(GameStates.EDIT);
@@ -156,26 +156,6 @@ public class Menu extends GameScene implements SceneMethods {
             playButtonClickSound();
             toggleMusicMute();
         }
-    }
-
-    private void showLoadGameDialog() {
-        System.out.println("\n=== Level Loading Dialog ===");
-        ArrayList<String> savedLevels = LoadSave.getSavedLevels();
-        System.out.println("Number of levels found: " + savedLevels.size());
-
-        if (savedLevels.isEmpty()) {
-            System.out.println("No saved levels found!");
-            JOptionPane.showMessageDialog(
-                    null,
-                    "No saved levels found!\nPlease create a level in Edit Mode first.",
-                    "Warning",
-                    JOptionPane.WARNING_MESSAGE
-            );
-            return;
-        }
-
-        LoadGameMenu loadGameMenu = new LoadGameMenu(game);
-        loadGameMenu.showMenu();
     }
 
     private void toggleMusicMute() {
@@ -239,7 +219,6 @@ public class Menu extends GameScene implements SceneMethods {
     public void mouseDragged(int x, int y) {
 
     }
-
 
     private int getRandomInt() {
         return random.nextInt(sprites.size());

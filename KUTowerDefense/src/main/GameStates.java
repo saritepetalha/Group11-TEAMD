@@ -7,6 +7,7 @@ public enum GameStates {
     EDIT,
     OPTIONS,
     LOADED,
+    LOAD_GAME,
     QUIT;
 
     public static GameStates gameState = GameStates.INTRO;

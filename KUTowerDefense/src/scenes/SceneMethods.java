@@ -1,5 +1,6 @@
 package scenes;
 import java.awt.Graphics;
+import java.awt.event.MouseWheelEvent;
 import managers.AudioManager;
 
 public interface SceneMethods {
@@ -9,6 +10,7 @@ public interface SceneMethods {
     public void mousePressed(int x, int y);
     public void mouseReleased(int x, int y);
     public void mouseDragged(int x, int y);
+    public default void mouseWheelMoved(MouseWheelEvent e) {};
 
 
     default void playButtonClickSound() {
