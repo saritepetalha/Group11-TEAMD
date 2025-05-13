@@ -8,6 +8,7 @@ import javax.swing.JPanel;
 import constants.GameDimensions;
 import inputs.KeyboardListener;
 import inputs.MyMouseListener;
+import scenes.LoadGameMenu;
 
 public class GameScreen extends JPanel {
 	private Dimension size;
@@ -45,6 +46,7 @@ public class GameScreen extends JPanel {
 	public void setPanelSize() {
 		if (GameStates.gameState == GameStates.MENU ||
 				GameStates.gameState == GameStates.INTRO ||
+				GameStates.gameState == GameStates.LOAD_GAME ||
 				GameStates.gameState == GameStates.OPTIONS) {
 			size = new Dimension(GameDimensions.MAIN_MENU_SCREEN_WIDTH, GameDimensions.MAIN_MENU_SCREEN_HEIGHT);
 		} else if (GameStates.gameState == GameStates.EDIT){
@@ -60,7 +62,7 @@ public class GameScreen extends JPanel {
 	@Override
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
-		if (GameStates.gameState != GameStates.OPTIONS) {
+		if (GameStates.gameState != GameStates.OPTIONS && GameStates.gameState != GameStates.LOAD_GAME) {
 			game.getRender().render(g);
 		}
 	}
@@ -68,6 +70,9 @@ public class GameScreen extends JPanel {
 	public void updateContentForState(GameStates newState, GameStates oldState) {
 		if (oldState == GameStates.OPTIONS && game.getOptions() instanceof scenes.Options) {
 			((scenes.Options) game.getOptions()).cleanUp();
+		}
+		if (oldState == GameStates.LOAD_GAME && game.getLoadGameMenu() instanceof LoadGameMenu) {
+			// No specific cleanup needed for LoadGameMenu panel removal by default
 		}
 
 		this.removeAll();
@@ -77,6 +82,12 @@ public class GameScreen extends JPanel {
 				this.add((JPanel) game.getOptions(), BorderLayout.CENTER);
 			} else {
 				System.err.println("Error: Options scene is not a JPanel!");
+			}
+		} else if (newState == GameStates.LOAD_GAME) {
+			if (game.getLoadGameMenu() instanceof LoadGameMenu) {
+				this.add(game.getLoadGameMenu(), BorderLayout.CENTER);
+			} else {
+				System.err.println("Error: LoadGameMenu is not a JPanel or is null!");
 			}
 		}
 

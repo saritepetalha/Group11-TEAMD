@@ -141,6 +141,118 @@ public class MapEditing extends GameScene implements SceneMethods{
         return tileId >= 0 && tileId <= 14 && tileId != 5; //
     }
 
+    /**
+     * Utility method to check if a castle at the given position would overlap with any existing castle
+     * @param topLeftY Y coordinate of the top-left corner of the castle
+     * @param topLeftX X coordinate of the top-left corner of the castle
+     * @return true if the castle would overlap with an existing castle, false otherwise
+     */
+    private boolean wouldCastleOverlap(int topLeftY, int topLeftX) {
+        // Check if the 2x2 area would overlap with any existing castle parts
+        for (int i = 0; i <= 1; i++) {
+            for (int j = 0; j <= 1; j++) {
+                // Make sure we don't check outside the level boundaries
+                if (topLeftY + i >= level.length || topLeftX + j >= level[0].length) continue;
+
+                if (isCastleTile(level[topLeftY + i][topLeftX + j])) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Utility method to check if the 2x2 castle at the given position is valid
+     * (within bounds and not overlapping with other castles)
+     * @param topLeftY Y coordinate of the top-left corner of the castle
+     * @param topLeftX X coordinate of the top-left corner of the castle
+     * @return true if the castle placement is valid, false otherwise
+     */
+    private boolean isValidCastlePlacement(int topLeftY, int topLeftX) {
+        // Check if the castle would be in bounds
+        if (topLeftY + 1 >= level.length || topLeftX + 1 >= level[0].length) {
+            System.out.println("Castle placement rejected: would be out of bounds");
+            return false;
+        }
+
+        // Castle placement is valid (we'll handle any overlaps by clearing existing castles)
+        return true;
+    }
+
+    /**
+     * Clears any existing castles that would overlap with a new castle placement
+     * @param topLeftY Y coordinate of the top-left corner of the new castle
+     * @param topLeftX X coordinate of the top-left corner of the new castle
+     */
+    private void clearOverlappingCastles(int topLeftY, int topLeftX) {
+        // Keep track of castle top-left positions we've already cleared to avoid clearing the same one multiple times
+        java.util.HashSet<String> clearedPositions = new java.util.HashSet<>();
+        boolean clearedAnyCastle = false;
+
+        // Check all four positions of the new castle
+        for (int i = 0; i <= 1; i++) {
+            for (int j = 0; j <= 1; j++) {
+                // Skip if out of bounds
+                if (topLeftY + i >= level.length || topLeftX + j >= level[0].length) continue;
+
+                // If this position contains a castle tile
+                if (isCastleTile(level[topLeftY + i][topLeftX + j])) {
+                    // Find the top-left position of this castle
+                    int castleTopLeftY = topLeftY + i;
+                    int castleTopLeftX = topLeftX + j;
+
+                    int tileId = level[topLeftY + i][topLeftX + j];
+
+                    // If this is top-right, move left
+                    if (tileId == tileManager.CastleTopRight.getId()) {
+                        castleTopLeftX--;
+                    }
+                    // If this is bottom-left, move up
+                    else if (tileId == tileManager.CastleBottomLeft.getId()) {
+                        castleTopLeftY--;
+                    }
+                    // If this is bottom-right, move up and left
+                    else if (tileId == tileManager.CastleBottomRight.getId()) {
+                        castleTopLeftY--;
+                        castleTopLeftX--;
+                    }
+
+                    // Generate a unique key for this castle's position
+                    String posKey = castleTopLeftY + "," + castleTopLeftX;
+
+                    // If we haven't cleared this castle yet
+                    if (!clearedPositions.contains(posKey)) {
+                        // Mark this castle as cleared
+                        clearedPositions.add(posKey);
+                        clearedAnyCastle = true;
+
+                        System.out.println("Clearing overlapping castle at: " + castleTopLeftY + "," + castleTopLeftX);
+
+                        // Clear the castle
+                        if (castleTopLeftY >= 0 && castleTopLeftY + 1 < level.length &&
+                                castleTopLeftX >= 0 && castleTopLeftX + 1 < level[0].length) {
+
+                            level[castleTopLeftY][castleTopLeftX] = 5; // grass
+                            level[castleTopLeftY][castleTopLeftX + 1] = 5;
+                            level[castleTopLeftY + 1][castleTopLeftX] = 5;
+                            level[castleTopLeftY + 1][castleTopLeftX + 1] = 5;
+
+                            // Clear any overlays
+                            overlayData[castleTopLeftY][castleTopLeftX] = NO_OVERLAY;
+                            overlayData[castleTopLeftY][castleTopLeftX + 1] = NO_OVERLAY;
+                            overlayData[castleTopLeftY + 1][castleTopLeftX] = NO_OVERLAY;
+                            overlayData[castleTopLeftY + 1][castleTopLeftX + 1] = NO_OVERLAY;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (clearedAnyCastle) {
+            System.out.println("Castle overlap detected and resolved");
+        }
+    }
 
     public void modifyTile(int x, int y) {
         x /= 64;
@@ -192,7 +304,11 @@ public class MapEditing extends GameScene implements SceneMethods{
 
         } else if (selectedTile.getName().equals("Castle")) {
             // place Castle in 2x2 area
-            if (y + 1 < level.length && x + 1 < level[0].length) {
+            if (isValidCastlePlacement(y, x)) {
+                // Clear any existing castles that would overlap with this new castle
+                clearOverlappingCastles(y, x);
+
+                // Now place the new castle
                 level[y][x] = tileManager.CastleTopLeft.getId();                   // top-left: ID 24
                 level[y][x + 1] = tileManager.CastleTopRight.getId();              // top-right: ID 25
                 level[y + 1][x] = tileManager.CastleBottomLeft.getId();            // bottom-left: ID 28
@@ -205,16 +321,76 @@ public class MapEditing extends GameScene implements SceneMethods{
                 overlayData[y + 1][x + 1] = NO_OVERLAY;
             }
         } else {
+            // Check if we're about to place a tile on any part of a castle
+            if (isCastleTile(level[y][x])) {
+                // We're placing on a castle tile, need to clear the whole castle
+                clearCastleAtPosition(y, x);
+            }
+
             level[y][x] = selectedTile.getId();
             overlayData[y][x] = NO_OVERLAY;
+        }
+    }
+
+    /**
+     * Checks if a tile is part of a castle
+     */
+    private boolean isCastleTile(int tileId) {
+        return tileId == tileManager.CastleTopLeft.getId() ||
+                tileId == tileManager.CastleTopRight.getId() ||
+                tileId == tileManager.CastleBottomLeft.getId() ||
+                tileId == tileManager.CastleBottomRight.getId();
+    }
+
+    /**
+     * Clears all tiles of a castle containing the given position
+     */
+    private void clearCastleAtPosition(int y, int x) {
+        int grassTileId = 5; // ID for grass tile
+
+        // Find the top-left position of the castle by checking positions
+        int topLeftY = y;
+        int topLeftX = x;
+
+        int tileId = level[y][x];
+
+        // If this is top-right, move left
+        if (tileId == tileManager.CastleTopRight.getId()) {
+            topLeftX--;
+        }
+        // If this is bottom-left, move up
+        else if (tileId == tileManager.CastleBottomLeft.getId()) {
+            topLeftY--;
+        }
+        // If this is bottom-right, move up and left
+        else if (tileId == tileManager.CastleBottomRight.getId()) {
+            topLeftY--;
+            topLeftX--;
+        }
+
+        // Replace the whole 2x2 castle with grass
+        if (topLeftY >= 0 && topLeftY + 1 < level.length &&
+                topLeftX >= 0 && topLeftX + 1 < level[0].length) {
+
+            level[topLeftY][topLeftX] = grassTileId;
+            level[topLeftY][topLeftX + 1] = grassTileId;
+            level[topLeftY + 1][topLeftX] = grassTileId;
+            level[topLeftY + 1][topLeftX + 1] = grassTileId;
         }
     }
 
     public void eraseTile(int x, int y) {
         x /= 64;
         y /= 64;
-        level[y][x] = 5;
-        overlayData[y][x] = NO_OVERLAY;
+
+        // Check if we're trying to erase a castle tile
+        if (isCastleTile(level[y][x])) {
+            // We're erasing a castle tile, need to clear the whole castle
+            clearCastleAtPosition(y, x);
+        } else {
+            level[y][x] = 5;
+            overlayData[y][x] = NO_OVERLAY;
+        }
     }
 
     public void fillAllTiles() {
@@ -229,16 +405,23 @@ public class MapEditing extends GameScene implements SceneMethods{
             }
         }
 
-        for (int i = 0; i < level.length; i++) {
-            for (int j = 0; j < level[i].length; j++) {
-                if (selectedTile.getName().equals("Castle")) {
-                    if (i + 1 < level.length && j + 1 < level[i].length) {
-                        level[i][j] = tileManager.CastleTopLeft.getId();
-                        level[i][j + 1] = tileManager.CastleTopRight.getId();
-                        level[i + 1][j] = tileManager.CastleBottomLeft.getId();
-                        level[i + 1][j + 1] = tileManager.CastleBottomRight.getId();
+        if (selectedTile.getName().equals("Castle")) {
+            // Special case for Castle (2x2 tiles)
+            // Fill the map with complete 2x2 castles without overlap
+            for (int i = 0; i < level.length; i += 2) {  // Increment by 2 for castle height
+                for (int j = 0; j < level[0].length; j += 2) {  // Increment by 2 for castle width
+                    if (i + 1 < level.length && j + 1 < level[0].length) {
+                        level[i][j] = tileManager.CastleTopLeft.getId();           // top-left
+                        level[i][j + 1] = tileManager.CastleTopRight.getId();      // top-right
+                        level[i + 1][j] = tileManager.CastleBottomLeft.getId();    // bottom-left
+                        level[i + 1][j + 1] = tileManager.CastleBottomRight.getId(); // bottom-right
                     }
-                } else {
+                }
+            }
+        } else {
+            // Handle regular 1x1 tiles
+            for (int i = 0; i < level.length; i++) {
+                for (int j = 0; j < level[i].length; j++) {
                     if(selectedTile.getId() != -2 && selectedTile.getId() != -1) {
                         level[i][j] = selectedTile.getId();
                     }
@@ -347,70 +530,120 @@ public class MapEditing extends GameScene implements SceneMethods{
                 return;
             }
 
-            // Only handle road tiles
-            if (!selectedTile.getName().contains("Road")) {
+            // Special handling for castle drag placement
+            if (selectedTile.getName().equals("Castle")) {
+                // Check if we can place a 2x2 castle here
+                if (isValidCastlePlacement(tileY, tileX)) {
+                    // Check and clear any overlapping castles
+                    clearOverlappingCastles(tileY, tileX);
+
+                    // Place the 2x2 castle
+                    level[tileY][tileX] = tileManager.CastleTopLeft.getId();            // top-left
+                    level[tileY][tileX + 1] = tileManager.CastleTopRight.getId();       // top-right
+                    level[tileY + 1][tileX] = tileManager.CastleBottomLeft.getId();     // bottom-left
+                    level[tileY + 1][tileX + 1] = tileManager.CastleBottomRight.getId(); // bottom-right
+
+                    // Clear any overlays
+                    overlayData[tileY][tileX] = NO_OVERLAY;
+                    overlayData[tileY][tileX + 1] = NO_OVERLAY;
+                    overlayData[tileY + 1][tileX] = NO_OVERLAY;
+                    overlayData[tileY + 1][tileX + 1] = NO_OVERLAY;
+
+                    lastTileX = tileX;
+                    lastTileY = tileY;
+                    prevDraggedTileX = tileX;
+                    prevDraggedTileY = tileY;
+                    return;
+                }
+            }
+
+            // Handle eraser tool
+            if (editTiles.getCurrentMode().equals("Erase")) {
+                if (isCastleTile(level[tileY][tileX])) {
+                    clearCastleAtPosition(tileY, tileX);
+                } else {
+                    level[tileY][tileX] = 5; // grass tile
+                    overlayData[tileY][tileX] = NO_OVERLAY;
+                }
+                lastTileX = tileX;
+                lastTileY = tileY;
+                prevDraggedTileX = tileX;
+                prevDraggedTileY = tileY;
                 return;
             }
 
-            // Calculate direction of movement
-            int dx = tileX - prevDraggedTileX;
-            int dy = tileY - prevDraggedTileY;
+            // Handle regular tiles and road tiles
+            // Check if we're overlapping a castle part
+            if (isCastleTile(level[tileY][tileX])) {
+                clearCastleAtPosition(tileY, tileX);
+            }
 
-            // Only process if we've actually moved to a different tile
-            if (dx != 0 || dy != 0) {
-                // Normalize movement to single unit (prevents diagonal placement)
-                if (Math.abs(dx) > Math.abs(dy)) {
-                    // Horizontal movement is dominant
-                    dx = dx > 0 ? 1 : -1;
-                    dy = 0;
-                } else {
-                    // Vertical movement is dominant
-                    dx = 0;
-                    dy = dy > 0 ? 1 : -1;
-                }
+            // Only handle road tiles specifically with the existing logic
+            if (selectedTile.getName().contains("Road")) {
+                // Calculate direction of movement
+                int dx = tileX - prevDraggedTileX;
+                int dy = tileY - prevDraggedTileY;
 
-                // Place appropriate tile based on current and previous direction
-                Tile tileToPlace;
-
-                // Check if we're crossing an existing road
-                Tile existingTile = tileManager.getTile(level[tileY][tileX]);
-                boolean isRoadTile = existingTile != null && existingTile.getName().contains("Road");
-
-                if (isRoadTile) {
-                    // We're crossing an existing road, determine what type of crossing
-                    tileToPlace = handleRoadCrossing(existingTile, dx, dy);
-                } else if (isFirstTile) {
-                    // First tile placement - use the selected tile type
-                    tileToPlace = getBasicRoadTile(dx, dy);
-                    isFirstTile = false;
-                } else if (dx != prevDx || dy != prevDy) {
-                    // Direction changed - place a curve
-                    tileToPlace = getCurvedRoadTile(prevDx, prevDy, dx, dy);
-
-                    // If there was a valid previous tile, we might need to adjust the previous tile
-                    if (prevDraggedTileX >= 0 && prevDraggedTileY >= 0) {
-                        // Only update the previous tile if it was a straight road
-                        String prevTileName = tileManager.getTile(level[prevDraggedTileY][prevDraggedTileX]).getName();
-                        if (prevTileName.contains("FlatRoad")) {
-                            // Place the curve at the previous position
-                            level[prevDraggedTileY][prevDraggedTileX] = tileToPlace.getId();
-
-                            // And continue with a straight road in the new direction
-                            tileToPlace = getBasicRoadTile(dx, dy);
-                        }
+                // Only process if we've actually moved to a different tile
+                if (dx != 0 || dy != 0) {
+                    // Normalize movement to single unit (prevents diagonal placement)
+                    if (Math.abs(dx) > Math.abs(dy)) {
+                        // Horizontal movement is dominant
+                        dx = dx > 0 ? 1 : -1;
+                        dy = 0;
+                    } else {
+                        // Vertical movement is dominant
+                        dx = 0;
+                        dy = dy > 0 ? 1 : -1;
                     }
-                } else {
-                    // Continuing in the same direction - place a straight road
-                    tileToPlace = getBasicRoadTile(dx, dy);
+
+                    // Place appropriate tile based on current and previous direction
+                    Tile tileToPlace;
+
+                    // Check if we're crossing an existing road
+                    Tile existingTile = tileManager.getTile(level[tileY][tileX]);
+                    boolean isRoadTile = existingTile != null && existingTile.getName().contains("Road");
+
+                    if (isRoadTile) {
+                        // We're crossing an existing road, determine what type of crossing
+                        tileToPlace = handleRoadCrossing(existingTile, dx, dy);
+                    } else if (isFirstTile) {
+                        // First tile placement - use the selected tile type
+                        tileToPlace = getBasicRoadTile(dx, dy);
+                        isFirstTile = false;
+                    } else if (dx != prevDx || dy != prevDy) {
+                        // Direction changed - place a curve
+                        tileToPlace = getCurvedRoadTile(prevDx, prevDy, dx, dy);
+
+                        // If there was a valid previous tile, we might need to adjust the previous tile
+                        if (prevDraggedTileX >= 0 && prevDraggedTileY >= 0) {
+                            // Only update the previous tile if it was a straight road
+                            String prevTileName = tileManager.getTile(level[prevDraggedTileY][prevDraggedTileX]).getName();
+                            if (prevTileName.contains("FlatRoad")) {
+                                // Place the curve at the previous position
+                                level[prevDraggedTileY][prevDraggedTileX] = tileToPlace.getId();
+
+                                // And continue with a straight road in the new direction
+                                tileToPlace = getBasicRoadTile(dx, dy);
+                            }
+                        }
+                    } else {
+                        // Continuing in the same direction - place a straight road
+                        tileToPlace = getBasicRoadTile(dx, dy);
+                    }
+
+                    // Place the tile
+                    level[tileY][tileX] = tileToPlace.getId();
+                    lastTileId = tileToPlace.getId();
+
+                    // Store current position and direction for next time
+                    prevDx = dx;
+                    prevDy = dy;
                 }
-
-                // Place the tile
-                level[tileY][tileX] = tileToPlace.getId();
-                lastTileId = tileToPlace.getId();
-
-                // Store current position and direction for next time
-                prevDx = dx;
-                prevDy = dy;
+            } else {
+                // Handle regular non-road, non-castle tiles
+                level[tileY][tileX] = selectedTile.getId();
+                overlayData[tileY][tileX] = NO_OVERLAY;
             }
 
             lastTileX = tileX;

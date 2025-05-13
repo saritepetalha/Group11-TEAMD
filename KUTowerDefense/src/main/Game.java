@@ -29,6 +29,7 @@ public class Game extends JFrame implements Runnable{
 	private Playing playing;
 	private MapEditing mapEditing;
 	private Loaded loaded;
+	private LoadGameMenu loadGameMenu;
 	private TileManager tileManager;
 
 	public Game() {
@@ -69,14 +70,21 @@ public class Game extends JFrame implements Runnable{
 
 		AudioManager audioManager = AudioManager.getInstance();
 		boolean isMenuRelatedToggle = (
-				(previousState == GameStates.MENU && (newState == GameStates.OPTIONS || newState == GameStates.EDIT)) ||
-						((previousState == GameStates.OPTIONS || previousState == GameStates.EDIT) && newState == GameStates.MENU)
+				(previousState == GameStates.MENU && (newState == GameStates.OPTIONS || newState == GameStates.EDIT || newState == GameStates.LOAD_GAME)) ||
+						((previousState == GameStates.OPTIONS || previousState == GameStates.EDIT || previousState == GameStates.LOAD_GAME) && newState == GameStates.MENU)
 		);
 
 		// Reload game options in Playing when returning from Options to Menu
 		if (previousState == GameStates.OPTIONS && newState == GameStates.MENU) {
 			if (playing != null) {
 				playing.reloadGameOptions();
+			}
+		}
+
+		if (previousState == GameStates.MENU && newState == GameStates.LOAD_GAME) {
+			if (loadGameMenu != null) {
+				// Potentially add a method to LoadGameMenu to refresh its list if levels can be saved/deleted during runtime
+				// e.g., loadGameMenu.refreshMapPreviews();
 			}
 		}
 
@@ -87,10 +95,12 @@ public class Game extends JFrame implements Runnable{
 					break;
 				case PLAYING:
 					if (playing != null) {
-						// Reset game state and reload options
 						playing.resetGameState();
 					}
 					audioManager.playRandomGameMusic();
+					break;
+				case LOAD_GAME:
+					audioManager.playMusic("lonelyhood");
 					break;
 				case INTRO:
 				case OPTIONS:
@@ -114,6 +124,7 @@ public class Game extends JFrame implements Runnable{
 		}
 		mapEditing = new MapEditing(this, this);
 		loaded = new Loaded(this);
+		loadGameMenu = new LoadGameMenu(this);
 		tileManager = new TileManager();
 	}
 
@@ -129,13 +140,12 @@ public class Game extends JFrame implements Runnable{
 				if (intro != null) intro.update();
 				break;
 			case MENU:
-				break;
+			case OPTIONS:
 			case EDIT:
+			case LOAD_GAME:
 				break;
 			case PLAYING:
 				if (playing != null) playing.update();
-				break;
-			case OPTIONS:
 				break;
 			default:
 				break;
@@ -209,6 +219,8 @@ public class Game extends JFrame implements Runnable{
 	public Intro getIntro() {  return intro; }
 
 	public MapEditing getMapEditing() { return mapEditing; }
+
+	public LoadGameMenu getLoadGameMenu() { return loadGameMenu; }
 
 	public TileManager getTileManager() { return tileManager; }
 

@@ -750,7 +750,6 @@ public class Playing extends GameScene implements SceneMethods {
         int currentWave = waveManager.getWaveIndex() + 1; // Convert to 1-based for display
         String stateInfo = waveManager.getCurrentStateInfo();
 
-        // We don't need the total waves count from WaveManager - it handles completion internally
-        return "Wave " + currentWave + " - " + stateInfo;
+        return "Wave " + currentWave + "\n" + stateInfo;
     }
 }
