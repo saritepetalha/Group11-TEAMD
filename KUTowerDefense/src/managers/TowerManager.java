@@ -132,7 +132,9 @@ public class TowerManager {
 
     public ArrayList<Tower> getTowers() {return towers;}
 
-
+    public void clearTowers() {
+        towers.clear();
+    }
 }
 
 

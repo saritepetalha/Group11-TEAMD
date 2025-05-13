@@ -161,4 +161,8 @@ public class ProjectileManager {
         }
         return 0;
     }
+
+    public void clearProjectiles() {
+        projectiles.clear();
+    }
 }
