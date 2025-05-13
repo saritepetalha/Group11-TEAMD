@@ -7,7 +7,7 @@ import constants.Constants;
 import managers.AudioManager;
 
 import java.awt.*;
-import static constants.Constants.*;
+import static constants.Constants.Enemies.*;
 
 public abstract class Enemy {
     protected float x,y;          // using floats to have much more control when dealing with speed of the enemies
@@ -84,14 +84,18 @@ public abstract class Enemy {
                 return;
             }
 
-            // Apply the stats
-            this.health = stats.getHitPoints();
+            // Store current health percentage before updating maxHealth
+            float currentHealthPercentage = getHealthBarPercentage();
+
+            // Apply the new stats
             this.maxHealth = stats.getHitPoints();
+            // Apply the previous health percentage to the new maxHealth, clamp between 0 and maxHealth
+            this.health = Math.max(0, Math.min(this.maxHealth, (int)(this.maxHealth * currentHealthPercentage)));
             this.speed = (float)stats.getMoveSpeed();
 
-            System.out.println("Applied stats for " + type + ": HP=" + health + ", Speed=" + speed);
+            System.out.println("Applied stats for " + type + " (ID: "+ id +"): MaxHP=" + maxHealth + ", CurrentHP=" + health + ", Speed=" + speed);
         } catch (Exception e) {
-            System.out.println("Error updating enemy stats: " + e.getMessage());
+            System.out.println("Error updating enemy stats for ID " + id + ": " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -103,15 +107,15 @@ public abstract class Enemy {
     protected EnemyType getEnemyTypeEnum() {
         try {
             switch (enemyType) {
-                case Constants.Enemies.GOBLIN:
+                case GOBLIN:
                     return EnemyType.GOBLIN;
-                case Constants.Enemies.WARRIOR:
+                case WARRIOR:
                     return EnemyType.WARRIOR;
-                case Constants.Enemies.BARREL:
+                case BARREL:
                     return EnemyType.BARREL;
-                case Constants.Enemies.TNT:
+                case TNT:
                     return EnemyType.TNT;
-                case Constants.Enemies.TROLL:
+                case TROLL:
                     return EnemyType.TROLL;
                 default:
                     System.out.println("Unknown enemy type: " + enemyType);

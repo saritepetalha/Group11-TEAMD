@@ -520,6 +520,11 @@ public class GameOptionsUI extends JPanel {
 
             OptionsIO.save(options);
 
+            // Ensure changes are applied to an existing Playing instance
+            if (game != null && game.getPlaying() != null) {
+                game.getPlaying().reloadGameOptions();
+            }
+
             // Custom styled success message
             JLabel messageLabel = new JLabel("Settings saved successfully!");
             messageLabel.setFont(FontLoader.loadMedodicaFont(14f));

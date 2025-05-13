@@ -10,22 +10,22 @@ public class PlayerManager {
     private int shield;
     private GameOptions gameOptions;
 
-    public PlayerManager() {
+    public PlayerManager(GameOptions options) {
+        this.gameOptions = options;
         try {
-            this.gameOptions = OptionsIO.load();
-
             if (gameOptions != null) {
                 this.gold = gameOptions.getStartingGold();
                 this.health = gameOptions.getStartingPlayerHP();
                 this.shield = gameOptions.getStartingShield();
+                System.out.println("PlayerManager initialized with options: Gold=" + gold + ", Health=" + health + ", Shield=" + shield);
             } else {
-                System.out.println("Warning: Failed to load game options, using default values");
+                System.out.println("Warning: Received null GameOptions, using default values for player");
                 this.gold = 100; // Default value
                 this.health = MAX_HEALTH;
                 this.shield = MAX_SHIELD;
             }
         } catch (Exception e) {
-            System.out.println("Error loading player options: " + e.getMessage());
+            System.out.println("Error initializing player with options: " + e.getMessage());
             e.printStackTrace();
             this.gold = 100; // Default value
             this.health = MAX_HEALTH;
@@ -101,15 +101,16 @@ public class PlayerManager {
      */
     public void reloadFromOptions() {
         try {
-            this.gameOptions = OptionsIO.load();
+            GameOptions freshOptions = OptionsIO.load();
 
-            if (gameOptions != null) {
+            if (freshOptions != null) {
+                this.gameOptions = freshOptions;
                 this.gold = gameOptions.getStartingGold();
                 this.health = gameOptions.getStartingPlayerHP();
                 this.shield = gameOptions.getStartingShield();
                 System.out.println("Player stats reloaded: Gold=" + gold + ", Health=" + health + ", Shield=" + shield);
             } else {
-                System.out.println("Warning: Failed to load game options for player, keeping current values");
+                System.out.println("Warning: Failed to load game options for player reload, keeping current values");
             }
         } catch (Exception e) {
             System.out.println("Error reloading player options: " + e.getMessage());

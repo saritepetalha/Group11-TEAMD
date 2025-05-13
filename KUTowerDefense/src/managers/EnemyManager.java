@@ -32,34 +32,22 @@ public class EnemyManager {
     private static final Set<Integer> ROAD_IDS = Set.of(0,1,2,3,4,6,7,8,9,10,11,12,13,14,31);
     private GameOptions gameOptions;
 
-    public EnemyManager(Playing playing, int[][] overlayData, int [][] tileData) {
+    public EnemyManager(Playing playing, int[][] overlayData, int [][] tileData, GameOptions options) {
         this.playing = playing;
-        loadGameOptions();
+        this.gameOptions = options;
+        if (this.gameOptions == null) {
+            System.out.println("Warning: Received null GameOptions in EnemyManager, using defaults.");
+            this.gameOptions = GameOptions.defaults();
+        }
         enemyImages = extractEnemyFrames();
 
         findStartAndEndPoints(overlayData);
 
-        // generate path only if start and end were found
         if (startPoint != null && endPoint != null) {
             generatePath(tileData);
         }
 
-        System.out.println("Path found? " + pathFound);
-        System.out.println("Start: " + startPoint + ", End: " + endPoint);
-        System.out.println("Path length: " + pathPoints.size());
-    }
-
-    /**
-     * Safely loads game options, handling any exceptions
-     */
-    private void loadGameOptions() {
-        try {
-            this.gameOptions = OptionsIO.load();
-        } catch (Exception e) {
-            System.out.println("Error loading game options: " + e.getMessage());
-            e.printStackTrace();
-            this.gameOptions = null;
-        }
+        System.out.println("EnemyManager Initialized. Path found? " + pathFound);
     }
 
     private void findStartAndEndPoints(int[][] overlayData) {
@@ -372,7 +360,7 @@ public class EnemyManager {
         // Extract goblin frames (6 frames)
         for (int i = 0; i < 6; i++) {
             BufferedImage goblinFrame = goblinSheet.getSubimage(i * 192, 0, 192, 192);
-            enemyFrames[i] = goblinFrame.getSubimage(20, 50, 120, 92);
+            enemyFrames[i] = goblinFrame.getSubimage(20, 57, 115, 75);
         }
 
         // Extract warrior frames (6 frames)
@@ -391,7 +379,7 @@ public class EnemyManager {
         // Extract barrel frames (3 frames)
         for (int i = 0; i < 3; i++) {
             BufferedImage barrelFrame = barrelSheet.getSubimage(i * 128, 0, 128, 128);
-            enemyFrames[18 + i] = barrelFrame.getSubimage(15, 15,100, 100);
+            enemyFrames[18 + i] = barrelFrame.getSubimage(24, 24,80, 80);
         }
 
         // Extract troll frames (10 frames)

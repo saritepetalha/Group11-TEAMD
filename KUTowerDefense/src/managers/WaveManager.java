@@ -3,6 +3,7 @@ package managers;
 import config.GameOptions;
 import config.Group;
 import config.Wave;
+import config.EnemyType;
 import helpMethods.OptionsIO;
 import scenes.Playing;
 
@@ -10,291 +11,349 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.LinkedList;
+import java.util.Queue;
 
 import static constants.Constants.Enemies.*;
 
 public class WaveManager {
 
     private Playing playing;
-    private ArrayList<events.Wave> waves = new ArrayList<>();
-    private int enemySpawnTickLimit = 60 * 1; // 1 second
-    private int enemySpawnTick = enemySpawnTickLimit;
-    private int enemyIndex;
-    private int waveIndex;
-    private boolean waveStartTimer;
-    private int waveTickLimit = 60 * 5; // 5 seconds default
-    private int waveTick = 0;
-    private boolean waveTickTimerOver;
+    private List<config.Wave> waves = new ArrayList<>();
     private GameOptions gameOptions;
 
-    public WaveManager(Playing playing) {
+    private int interWaveTickLimit = 60 * 10; // Default 10 seconds between waves (configurable)
+    private int interWaveTick = 0;
+    private int groupDelayTickLimit = 0; // Will be set from config.Wave
+    private int groupDelayTick = 0;
+    private int enemyDelayTickLimit = 0; // Will be set from config.Group
+    private int enemyDelayTick = 0;
+
+    private int waveIndex = 0;
+    private int groupIndex = 0;
+    private Queue<Integer> currentGroupEnemyQueue = new LinkedList<>(); // Enemies left in the current group
+    private boolean waitingForNextWave = true; // Start by waiting for the first wave
+    private boolean waitingForNextGroup = false;
+    private boolean waitingForNextEnemy = false;
+    private boolean waveTimerActive = false; // Tracks if the inter-wave timer is running
+
+    public WaveManager(Playing playing, GameOptions options) {
         this.playing = playing;
-        this.gameOptions = OptionsIO.load();
-        createWaves();
-
-        // Set inter-wave delay from options
-        setInterWaveDelay(gameOptions.getInterWaveDelay());
-    }
-
-    public void update(){
-        if (enemySpawnTick <= enemySpawnTickLimit) {
-            enemySpawnTick++;
-        }
-        if (waveStartTimer) {
-            waveTick++;
-            if (waveTick >= waveTickLimit) {
-                waveTickTimerOver = true;
-                waveTick = 0;
-            }
-        }
-    }
-
-    public void incrementWaveIndex() {
-        waveIndex++;
-        waveTickTimerOver = false;
-        waveStartTimer = false;
-        // Reset enemy spawn tick to ensure immediate spawning of the next wave
-        enemySpawnTick = enemySpawnTickLimit;
-    }
-
-    public int getNextEnemy(){
-        enemySpawnTick = 0;
-        return waves.get(waveIndex).getEnemyList().get(enemyIndex++);
-    }
-
-    private void createWaves(){
-        // Check if we should use the waves from options
-        if (gameOptions != null && !gameOptions.getWaves().isEmpty()) {
-            convertConfigWavesToEventWaves();
-            return;
-        }
-
-        // Fallback to hardcoded waves if options are not available
-        // Using the constant values from Constants.Enemies for clarity:
-        // GOBLIN = 0, WARRIOR = 1, BARREL = 2, TNT = 4, TROLL = 3
-
-        // Wave 1: Introduction to goblins
-        waves.add(new events.Wave(new ArrayList<>(Arrays.asList(GOBLIN,GOBLIN, GOBLIN, GOBLIN, GOBLIN))));
-
-        //Wave 2: Mix of goblins and TNT
-        waves.add(new events.Wave(new ArrayList<>(Arrays.asList(GOBLIN, GOBLIN, TNT, GOBLIN, TNT, GOBLIN))));
-
-        // Wave 3: Introduce barrel
-        waves.add(new events.Wave(new ArrayList<>(Arrays.asList(GOBLIN, BARREL, GOBLIN, TNT, BARREL, GOBLIN))));
-
-        // Wave 4: Introduce warriors
-        waves.add(new events.Wave(new ArrayList<>(Arrays.asList(WARRIOR, GOBLIN, BARREL, WARRIOR, TNT, GOBLIN))));
-
-        // Wave 5: Harder mix of existing enemies
-        waves.add(new events.Wave(new ArrayList<>(Arrays.asList(WARRIOR, WARRIOR, BARREL, TNT, TNT, GOBLIN, GOBLIN, GOBLIN))));
-
-        // Wave 6: Introduce troll
-        waves.add(new events.Wave(new ArrayList<>(Arrays.asList(TROLL, GOBLIN, GOBLIN, TNT, BARREL))));
-
-        // Wave 7: Final boss wave with multiple trolls
-        waves.add(new events.Wave(new ArrayList<>(Arrays.asList(WARRIOR, TROLL, BARREL, TNT, TROLL, GOBLIN, GOBLIN))));
-    }
-
-    /**
-     * Converts the Wave and Group objects from the config package to events.Wave objects
-     * that can be used by the game engine
-     */
-    private void convertConfigWavesToEventWaves() {
-        waves.clear();
-
+        this.gameOptions = options;
         try {
-            for (config.Wave configWave : gameOptions.getWaves()) {
-                ArrayList<Integer> enemyList = new ArrayList<>();
-
-                // Process each group in the wave
-                for (Group group : configWave.getGroups()) {
-                    // Skip null groups
-                    if (group == null) {
-                        System.out.println("Warning: Null group found in wave");
-                        continue;
-                    }
-
-                    // Skip if composition is null
-                    if (group.getComposition() == null) {
-                        System.out.println("Warning: Null composition found in group");
-                        continue;
-                    }
-
-                    // For each enemy type in the group
-                    for (Map.Entry<config.EnemyType, Integer> entry : group.getComposition().entrySet()) {
-                        config.EnemyType enemyType = entry.getKey();
-
-                        // Skip null enemy types
-                        if (enemyType == null) {
-                            System.out.println("Warning: Null enemy type found in group");
-                            continue;
-                        }
-
-                        int count = entry.getValue();
-
-                        // Add the appropriate number of enemies
-                        for (int i = 0; i < count; i++) {
-                            // Convert from config.EnemyType to Constants.Enemies integer constants
-                            Integer enemyConstant = convertEnemyTypeToConstant(enemyType);
-
-                            // Only add valid enemy constants
-                            if (enemyConstant != null) {
-                                enemyList.add(enemyConstant);
-                            }
-                        }
-                    }
-                }
-
-                // Only create a wave if we have enemies
-                if (!enemyList.isEmpty()) {
-                    // Create a new event wave with the enemy list
-                    waves.add(new events.Wave(enemyList));
-                } else {
-                    System.out.println("Warning: Empty enemy list for wave, skipping");
-                }
-            }
-
-            // If no waves were created, fall back to default waves
-            if (waves.isEmpty()) {
-                System.out.println("No valid waves created from options, using default waves");
-                createDefaultWaves();
+            if (this.gameOptions == null) {
+                System.out.println("Warning: Received null GameOptions, using defaults for waves.");
+                this.gameOptions = GameOptions.defaults();
             }
         } catch (Exception e) {
-            System.out.println("Error converting config waves: " + e.getMessage());
-            e.printStackTrace();
+            System.out.println("Error initializing WaveManager with options: " + e.getMessage() + ". Using defaults.");
+            this.gameOptions = GameOptions.defaults();
+        }
 
-            // Fall back to default waves on error
-            waves.clear();
+        loadWavesFromOptions();
+
+        setInterWaveDelay(gameOptions.getInterWaveDelay());
+
+        prepareNextWave();
+    }
+
+    private void loadWavesFromOptions() {
+        waves.clear();
+        if (gameOptions != null && gameOptions.getWaves() != null && !gameOptions.getWaves().isEmpty()) {
+            System.out.println("Loading " + gameOptions.getWaves().size() + " waves from config.");
+            for (config.Wave w : gameOptions.getWaves()) {
+                if (w != null && w.getGroups() != null && !w.getGroups().isEmpty()) {
+                    boolean waveIsValid = true;
+                    for(Group g : w.getGroups()) {
+                        if(g == null || g.getComposition() == null || g.getComposition().isEmpty()) {
+                            System.out.println("Warning: Wave contains invalid group. Skipping wave.");
+                            waveIsValid = false;
+                            break;
+                        }
+                        for(Map.Entry<EnemyType, Integer> entry : g.getComposition().entrySet()) {
+                            if(entry.getKey() == null || entry.getValue() <= 0) {
+                                System.out.println("Warning: Group contains invalid enemy type or count. Skipping wave.");
+                                waveIsValid = false;
+                                break;
+                            }
+                        }
+                        if (!waveIsValid) break;
+                    }
+                    if (waveIsValid) {
+                        waves.add(w);
+                    }
+                } else {
+                    System.out.println("Warning: Found null or empty wave in config, skipping.");
+                }
+            }
+            System.out.println("Successfully loaded " + waves.size() + " valid waves from config.");
+        }
+
+        if (waves.isEmpty()) {
+            System.out.println("No valid waves found in config or config not loaded. Creating default waves.");
             createDefaultWaves();
         }
     }
 
-    /**
-     * Converts an EnemyType enum to the corresponding Constants.Enemies integer constant
-     * @param enemyType The EnemyType enum value
-     * @return The corresponding integer constant, or null if not found
-     */
-    private Integer convertEnemyTypeToConstant(config.EnemyType enemyType) {
-        if (enemyType == null) return null;
+    private void createDefaultWaves() {
+        waves.clear();
 
-        switch (enemyType) {
-            case GOBLIN:
-                return GOBLIN;
-            case WARRIOR:
-                return WARRIOR;
-            case BARREL:
-                return BARREL;
-            case TNT:
-                return TNT;
-            case TROLL:
-                return TROLL;
-            default:
-                System.out.println("Warning: Unknown enemy type: " + enemyType);
-                return null;
+        Group g1_1 = new Group(Map.of(EnemyType.GOBLIN, 5), 0.5);
+        waves.add(new Wave(List.of(g1_1), 0.0));
+
+        Group g2_1 = new Group(Map.of(EnemyType.GOBLIN, 5), 0.5);
+        Group g2_2 = new Group(Map.of(EnemyType.TNT, 2), 1.0);
+        waves.add(new Wave(List.of(g2_1, g2_2), 2.0));
+
+        Group g3_1 = new Group(Map.of(EnemyType.GOBLIN, 3), 0.5);
+        Group g3_2 = new Group(Map.of(EnemyType.BARREL, 2), 1.0);
+        Group g3_3 = new Group(Map.of(EnemyType.GOBLIN, 3), 0.5);
+        waves.add(new Wave(List.of(g3_1, g3_2, g3_3), 1.5));
+
+        Group g4_1 = new Group(Map.of(EnemyType.WARRIOR, 2), 1.2);
+        Group g4_2 = new Group(Map.of(EnemyType.GOBLIN, 4), 0.4);
+        Group g4_3 = new Group(Map.of(EnemyType.TNT, 1), 0.0);
+        Group g4_4 = new Group(Map.of(EnemyType.BARREL, 2), 1.0);
+        waves.add(new Wave(List.of(g4_1, g4_2, g4_3, g4_4), 1.0));
+
+        Group g5_1 = new Group(Map.of(EnemyType.WARRIOR, 3), 1.0);
+        Group g5_2 = new Group(Map.of(EnemyType.TNT, 2), 0.8);
+        Group g5_3 = new Group(Map.of(EnemyType.GOBLIN, 5), 0.3);
+        Group g5_4 = new Group(Map.of(EnemyType.TROLL, 1), 0.0);
+        waves.add(new Wave(List.of(g5_1, g5_2, g5_3, g5_4), 2.0));
+
+        System.out.println("Created " + waves.size() + " default waves.");
+    }
+
+    private void prepareNextWave() {
+        if (waveIndex < waves.size()) {
+            groupIndex = 0;
+            prepareNextGroup();
+            waitingForNextWave = false;
+            System.out.println("Preparing Wave: " + (waveIndex + 1));
+        } else {
+            System.out.println("All waves completed.");
         }
     }
 
-    /**
-     * Creates the default waves as a fallback
-     */
-    private void createDefaultWaves() {
-        // Wave 1: Introduction to goblins
-        waves.add(new events.Wave(new ArrayList<>(Arrays.asList(GOBLIN,GOBLIN, GOBLIN, GOBLIN, GOBLIN))));
+    private void prepareNextGroup() {
+        if (waveIndex < waves.size()) {
+            Wave currentWave = waves.get(waveIndex);
+            if (groupIndex < currentWave.getGroups().size()) {
+                Group currentGroup = currentWave.getGroups().get(groupIndex);
 
-        //Wave 2: Mix of goblins and TNT
-        waves.add(new events.Wave(new ArrayList<>(Arrays.asList(GOBLIN, GOBLIN, TNT, GOBLIN, TNT, GOBLIN))));
+                currentGroupEnemyQueue.clear();
+                for (Map.Entry<EnemyType, Integer> entry : currentGroup.getComposition().entrySet()) {
+                    EnemyType type = entry.getKey();
+                    int count = entry.getValue();
+                    Integer enemyConstant = convertEnemyTypeToConstant(type);
+                    if (enemyConstant != null) {
+                        for (int i = 0; i < count; i++) {
+                            currentGroupEnemyQueue.add(enemyConstant);
+                        }
+                    }
+                }
 
-        // Wave 3: Introduce barrel
-        waves.add(new events.Wave(new ArrayList<>(Arrays.asList(GOBLIN, BARREL, GOBLIN, TNT, BARREL, GOBLIN))));
+                enemyDelayTickLimit = (int) (currentGroup.getIntraEnemyDelay() * 60);
+                enemyDelayTick = 0;
 
-        // Wave 4: Introduce warriors
-        waves.add(new events.Wave(new ArrayList<>(Arrays.asList(WARRIOR, GOBLIN, BARREL, WARRIOR, TNT, GOBLIN))));
+                waitingForNextGroup = false;
+                waitingForNextEnemy = true;
+                System.out.println("Preparing Group: " + (groupIndex + 1) + " in Wave " + (waveIndex + 1) + " with " + currentGroupEnemyQueue.size() + " enemies. Enemy delay: " + enemyDelayTickLimit + " ticks.");
 
-        // Wave 5: Harder mix of existing enemies
-        waves.add(new events.Wave(new ArrayList<>(Arrays.asList(WARRIOR, WARRIOR, BARREL, TNT, TNT, GOBLIN, GOBLIN, GOBLIN))));
-
-        // Wave 6: Introduce troll
-        waves.add(new events.Wave(new ArrayList<>(Arrays.asList(TROLL, GOBLIN, GOBLIN, TNT, BARREL))));
-
-        // Wave 7: Final boss wave with multiple trolls
-        waves.add(new events.Wave(new ArrayList<>(Arrays.asList(WARRIOR, TROLL, BARREL, TNT, TROLL, GOBLIN, GOBLIN))));
+            } else {
+                System.out.println("Wave " + (waveIndex+1) + " finished.");
+                startInterWaveTimer();
+            }
+        }
     }
 
-    /**
-     * Sets the inter-wave delay in seconds from the options
-     * @param seconds The delay in seconds between waves
-     */
-    public void setInterWaveDelay(double seconds) {
-        // Convert seconds to game ticks (60 ticks per second)
-        this.waveTickLimit = (int)(seconds * 60);
+    private void startInterWaveTimer() {
+        waitingForNextWave = true;
+        waveTimerActive = true;
+        interWaveTick = 0;
+        System.out.println("Starting inter-wave timer for " + interWaveTickLimit + " ticks.");
     }
 
-    public ArrayList<events.Wave> getWaves() {
-        return waves;
-    }
+    public void update(){
+        if (waitingForNextWave) {
+            if (waveTimerActive) {
+                interWaveTick++;
+                if (interWaveTick >= interWaveTickLimit) {
+                    waveTimerActive = false;
+                    interWaveTick = 0;
+                    waveIndex++;
+                    if (waveIndex < waves.size()) {
+                        prepareNextWave();
+                    } else {
+                        System.out.println("All waves completed - update loop.");
+                        waitingForNextWave = true;
+                    }
+                }
+            }
+        } else if (waitingForNextGroup) {
+            groupDelayTick++;
+            if (groupDelayTick >= groupDelayTickLimit) {
+                groupDelayTick = 0;
+                groupIndex++;
+                prepareNextGroup();
+            }
+        } else if (waitingForNextEnemy) {
+            enemyDelayTick++;
+            if(enemyDelayTick >= enemyDelayTickLimit) {
+                enemyDelayTick = 0;
+                waitingForNextEnemy = false;
+            }
+        }
 
-    public boolean isTimeForNewEnemy() {
-        return enemySpawnTick >= enemySpawnTickLimit;
+        if (!waitingForNextWave && !waitingForNextGroup && !waitingForNextEnemy && !currentGroupEnemyQueue.isEmpty()) {
+            Integer enemyTypeObject = currentGroupEnemyQueue.poll();
+            if (enemyTypeObject != null) {
+                int enemyType = enemyTypeObject.intValue();
+                playing.spawnEnemy(enemyType);
+                System.out.println("Spawned enemy type: " + enemyType + ". Enemies left in group: " + currentGroupEnemyQueue.size());
+
+                if (!currentGroupEnemyQueue.isEmpty()) {
+                    waitingForNextEnemy = true;
+                    enemyDelayTick = 0;
+                } else {
+                    Wave currentWave = waves.get(waveIndex);
+                    if (groupIndex + 1 < currentWave.getGroups().size()) {
+                        waitingForNextGroup = true;
+                        groupDelayTickLimit = (int) (currentWave.getIntraGroupDelay() * 60);
+                        groupDelayTick = 0;
+                        System.out.println("Group finished. Starting intra-group timer for " + groupDelayTickLimit + " ticks.");
+                    } else {
+                        System.out.println("Wave " + (waveIndex+1) + " finished processing enemies.");
+                        startInterWaveTimer();
+                    }
+                }
+            }
+        }
     }
 
     public boolean isWaveFinished() {
-        if (waves.isEmpty() || waveIndex >= waves.size()) {
-            return true;
-        }
-        return enemyIndex >= waves.get(waveIndex).getEnemyList().size();
+        return waitingForNextWave && waveIndex >= waves.size();
+    }
+
+    public boolean isAllWavesFinished() {
+        return waveIndex >= waves.size() && waitingForNextWave;
     }
 
     public boolean isThereMoreWaves() {
-        return (waveIndex + 1) < waves.size();
-    }
-
-    public void startTimer() {
-        waveStartTimer = true;
-        waveTick = 0;
-        waveTickTimerOver = false;
-        enemySpawnTick = enemySpawnTickLimit;
+        return waveIndex < waves.size();
     }
 
     public boolean isWaveTimerOver() {
-        return waveTickTimerOver;
+        return waitingForNextWave && !waveTimerActive;
     }
 
-    public void resetEnemyIndex() {
-        enemyIndex = 0;
-    }
-
-    public void resetWaveIndex() {
-        waveIndex = 0;
-        waveTickTimerOver = false;
-        waveStartTimer = false;
+    public void resetWaveManager() {
+        loadWavesFromOptions();
+        resetWaveManagerEssentials();
+        System.out.println("WaveManager fully reset.");
     }
 
     public int getWaveIndex() {
         return waveIndex;
     }
 
-    public float getTimeLeft() {
-        return (waveTickLimit - waveTick) / 60f;
+    public float getTimeUntilNextSpawn() {
+        if (waitingForNextWave && waveTimerActive) {
+            return (interWaveTickLimit - interWaveTick) / 60f;
+        } else if (waitingForNextGroup) {
+            return (groupDelayTickLimit - groupDelayTick) / 60f;
+        } else if (waitingForNextEnemy) {
+            return (enemyDelayTickLimit - enemyDelayTick) / 60f;
+        }
+        return 0f;
     }
 
-    public boolean isWaveTimerStarted() {
-        return waveStartTimer;
+    public String getCurrentStateInfo() {
+        if (waitingForNextWave) {
+            return waveTimerActive ? "Next Wave In: " + String.format("%.1f", getTimeUntilNextSpawn()) + "s" : "Waiting...";
+        } else if (waitingForNextGroup) {
+            return "Next Group In: " + String.format("%.1f", getTimeUntilNextSpawn()) + "s";
+        } else if (waitingForNextEnemy) {
+            return "Next Enemy In: " + String.format("%.1f", getTimeUntilNextSpawn()) + "s";
+        } else if (!currentGroupEnemyQueue.isEmpty()){
+            return "Spawning...";
+        } else if (isAllWavesFinished()){
+            return "All Waves Done";
+        } else {
+            return "Processing...";
+        }
     }
 
-    public String getWaveTickLimit() {
-        return String.valueOf(waveTickLimit / 60);
+    public void setInterWaveDelay(double seconds) {
+        this.interWaveTickLimit = Math.max(0, (int)(seconds * 60));
+        System.out.println("Inter-wave delay set to: " + seconds + "s (" + this.interWaveTickLimit + " ticks)");
     }
 
-    public String getWaveTick() {
-        return String.valueOf(waveTick / 60);
-    }
-
-    /**
-     * Reloads the waves from the options file
-     */
     public void reloadFromOptions() {
-        this.gameOptions = OptionsIO.load();
-        createWaves();
-        setInterWaveDelay(gameOptions.getInterWaveDelay());
+        System.out.println("Reloading WaveManager from options...");
+        try {
+            GameOptions freshOptions = OptionsIO.load();
+            if (freshOptions != null) {
+                this.gameOptions = freshOptions;
+                System.out.println("WaveManager: Successfully reloaded GameOptions.");
+            } else {
+                System.out.println("Warning: Failed to load GameOptions during WaveManager reload, using current or defaults.");
+                if (this.gameOptions == null) this.gameOptions = GameOptions.defaults();
+            }
+        } catch (Exception e) {
+            System.out.println("Error reloading GameOptions in WaveManager: " + e.getMessage() + ". Using current or defaults.");
+            if (this.gameOptions == null) this.gameOptions = GameOptions.defaults();
+        }
+        loadWavesFromOptions();
+        int currentWaveIndex = this.waveIndex;
+        int currentGroupIndex = this.groupIndex;
+        Queue<Integer> currentQueueState = new LinkedList<>(this.currentGroupEnemyQueue);
+        boolean currentWaitingWave = this.waitingForNextWave;
+        boolean currentWaitingGroup = this.waitingForNextGroup;
+        boolean currentWaitingEnemy = this.waitingForNextEnemy;
+        boolean currentTimerActive = this.waveTimerActive;
+        int currentInterWaveTick = this.interWaveTick;
+        int currentGroupDelayTick = this.groupDelayTick;
+        int currentEnemyDelayTick = this.enemyDelayTick;
+
+        resetWaveManagerEssentials();
+
+        System.out.println("WaveManager reloaded and progression reset based on new options.");
+    }
+
+    private void resetWaveManagerEssentials() {
+        waveIndex = 0;
+        groupIndex = 0;
+        currentGroupEnemyQueue.clear();
+        waitingForNextWave = true;
+        waitingForNextGroup = false;
+        waitingForNextEnemy = false;
+        waveTimerActive = false;
+        interWaveTick = 0;
+        groupDelayTick = 0;
+        enemyDelayTick = 0;
+        if (this.gameOptions != null) {
+            setInterWaveDelay(this.gameOptions.getInterWaveDelay());
+        }
+        prepareNextWave();
+    }
+
+    private Integer convertEnemyTypeToConstant(config.EnemyType enemyType) {
+        if (enemyType == null) {
+            System.out.println("Warning: Tried to convert null EnemyType.");
+            return null;
+        }
+
+        switch (enemyType) {
+            case GOBLIN: return GOBLIN;
+            case WARRIOR: return WARRIOR;
+            case BARREL: return BARREL;
+            case TNT: return TNT;
+            case TROLL: return TROLL;
+            default:
+                System.out.println("Warning: Unknown enemy type during conversion: " + enemyType);
+                return null;
+        }
     }
 }
