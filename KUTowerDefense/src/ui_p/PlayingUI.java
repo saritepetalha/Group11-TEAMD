@@ -251,12 +251,30 @@ public class PlayingUI {
         g2d.setFont(mvBoliFont);
         g2d.setColor(Color.WHITE);
 
+        /*
+
         FontMetrics fm = g2d.getFontMetrics();
         int textX = x + (width - fm.stringWidth(text)) / 2;
         int textY = y + ((height - fm.getHeight()) / 4) + fm.getAscent();
-
         g2d.setColor(new Color(0, 0, 0, 120));
-        g2d.drawString(text, textX, textY);
+        g2d.drawString(text, textX, textY);*/
+
+        FontMetrics fm = g2d.getFontMetrics();
+        String[] lines = text.split("\n");
+        String firstLine = lines.length > 0 ? lines[0] : "";
+        String secondLine = lines.length > 1 ? lines[1] : "";
+
+        int textX1 = x + (width - fm.stringWidth(firstLine)) / 2;
+        int textY1 = y + ((height - fm.getHeight()) / 2) + fm.getAscent();
+        g2d.setColor(new Color(0, 0, 0, 120));
+        g2d.drawString(firstLine, textX1, textY1);
+
+        if (!secondLine.isEmpty()) {
+            int textX2 = x + (width - fm.stringWidth(secondLine)) / 2;
+            int textY2 = textY1 + 30;
+            g2d.setColor(new Color(0, 0, 0, 100));
+            g2d.drawString(secondLine, textX2, textY2);
+        }
     }
 
     private void drawControlButtons(Graphics g) {
