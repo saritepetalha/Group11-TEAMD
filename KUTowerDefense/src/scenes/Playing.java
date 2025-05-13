@@ -16,7 +16,6 @@ import helpMethods.OptionsIO;
 import config.GameOptions;
 
 import managers.*;
-import managers.WaveManager;
 import managers.AudioManager;
 
 import objects.Tower;
@@ -60,7 +59,7 @@ public class Playing extends GameScene implements SceneMethods {
     public Playing(Game game, TileManager tileManager) {
         super(game);
         this.tileManager = tileManager;
-        this.gameOptions = OptionsIO.load();
+        this.gameOptions = loadOptionsOrDefault();
         loadDefaultLevel();
         initializeManagers();
     }
@@ -69,17 +68,33 @@ public class Playing extends GameScene implements SceneMethods {
         this.tileManager = tileManager;
         this.level = customLevel;
         this.overlay = customOverlay;
+        this.gameOptions = loadOptionsOrDefault();
         initializeManagers();
     }
 
+    private GameOptions loadOptionsOrDefault() {
+        GameOptions loadedOptions = OptionsIO.load();
+        if (loadedOptions == null) {
+            System.out.println("Playing: Failed to load GameOptions, using defaults.");
+            return GameOptions.defaults();
+        }
+        System.out.println("Playing: Successfully loaded GameOptions.");
+        return loadedOptions;
+    }
+
     private void initializeManagers() {
+        if (this.gameOptions == null) {
+            System.out.println("Critical Error: gameOptions is null during initializeManagers. Using defaults.");
+            this.gameOptions = GameOptions.defaults();
+        }
+
         projectileManager = new ProjectileManager(this);
         treeInteractionManager = new TreeInteractionManager(this);
         fireAnimationManager = new FireAnimationManager();
-        waveManager = new WaveManager(this);
-        enemyManager = new EnemyManager(this, overlay, level);
+        waveManager = new WaveManager(this, this.gameOptions);
+        enemyManager = new EnemyManager(this, overlay, level, this.gameOptions);
         towerManager = new TowerManager(this);
-        playerManager = new PlayerManager();
+        playerManager = new PlayerManager(this.gameOptions);
         this.selectedDeadTree = null;
 
         if(towerManager.findDeadTrees(level) != null)
@@ -89,18 +104,17 @@ public class Playing extends GameScene implements SceneMethods {
 
         playingUI = new PlayingUI(this);
 
-        playingUI.setStartingHealthAmount(gameOptions.getStartingPlayerHP());
-        playingUI.setStartingShieldAmount(gameOptions.getStartingShield());
-
         updateUIResources();
     }
 
 
     public void updateUIResources() {
+        if (playerManager == null) return;
         playingUI.setGoldAmount(playerManager.getGold());
         playingUI.setHealthAmount(playerManager.getHealth());
         playingUI.setShieldAmount(playerManager.getShield());
 
+        if (gameOptions == null) return;
         playingUI.setStartingHealthAmount(gameOptions.getStartingPlayerHP());
         playingUI.setStartingShieldAmount(gameOptions.getStartingShield());
     }
@@ -166,8 +180,8 @@ public class Playing extends GameScene implements SceneMethods {
             deadTrees = towerManager.findDeadTrees(level);
             liveTrees = towerManager.findLiveTrees(level);
 
-            enemyManager = new EnemyManager(this, overlay, level);
-            waveManager = new WaveManager(this);
+            enemyManager = new EnemyManager(this, overlay, level, this.gameOptions);
+            waveManager = new WaveManager(this, this.gameOptions);
 
             resetGameState();
             startEnemySpawning();
@@ -176,39 +190,18 @@ public class Playing extends GameScene implements SceneMethods {
         }
     }
 
-    /**
-     * Reloads game options from file and applies them to all managers
-     */
     public void reloadGameOptions() {
         try {
-            System.out.println("Reloading game options...");
-            this.gameOptions = OptionsIO.load();
+            // Load fresh options
+            this.gameOptions = loadOptionsOrDefault();
 
-            if (gameOptions == null) {
-                System.out.println("Warning: Failed to load game options, using default values");
-                return;
-            }
+            // Update all managers with new options
+            if (waveManager != null) waveManager.reloadFromOptions();
+            if (enemyManager != null) enemyManager.reloadFromOptions();
+            if (playerManager != null) playerManager.reloadFromOptions();
 
-            // Apply options to all managers
-            if (waveManager != null) {
-                waveManager.reloadFromOptions();
-            } else {
-                System.out.println("Warning: WaveManager is null");
-            }
-
-            if (enemyManager != null) {
-                enemyManager.reloadFromOptions();
-            } else {
-                System.out.println("Warning: EnemyManager is null");
-            }
-
-            if (playerManager != null) {
-                playerManager.reloadFromOptions();
-            } else {
-                System.out.println("Warning: PlayerManager is null");
-            }
-
-            System.out.println("Game options reloaded successfully");
+            // Update UI
+            updateUIResources();
         } catch (Exception e) {
             System.out.println("Error reloading game options: " + e.getMessage());
             e.printStackTrace();
@@ -249,27 +242,18 @@ public class Playing extends GameScene implements SceneMethods {
             projectileManager.update();
             fireAnimationManager.update();
 
+            // Check enemy status and handle wave completion
             if (isAllEnemiesDead()) {
-                if (isThereMoreWaves()) {
-                    if (!waveManager.isWaveTimerStarted()) {
-                        waveManager.startTimer();
-                    } else if (waveManager.isWaveTimerOver()) {
-                        waveManager.incrementWaveIndex();
-                        enemyManager.getEnemies().clear();
-                        waveManager.resetEnemyIndex();
-                    }
-                } else {
+                if (waveManager.isThereMoreWaves()) {
+                    // Just let WaveManager handle the wave timing and progression
+                    // The WaveManager.update() call above will handle all the wave timing
+                } else if (waveManager.isAllWavesFinished()) {
+                    // Only trigger victory if all waves are processed and finished
                     handleVictory();
                 }
             }
 
-            if (isTimeForNewEnemy()) {
-                int nextEnemy = waveManager.getNextEnemy();
-                if (nextEnemy != -1) {
-                    spawnEnemy();
-                }
-            }
-
+            // Update other game elements
             enemyManager.update(gameSpeedMultiplier);
             towerManager.update(gameSpeedMultiplier);
             updateUIResources();
@@ -290,22 +274,26 @@ public class Playing extends GameScene implements SceneMethods {
     }
 
     private boolean isAllEnemiesDead() {
+        // Check if the current wave is finished according to WaveManager
         boolean waveFinished = waveManager.isWaveFinished();
 
         if (waveFinished) {
+            // If the wave is marked as finished, but there are still enemies on the board
+            // we need to check if they're all either dead or have reached the end
             if (enemyManager.getEnemies().isEmpty()) {
-                return true;
+                return true; // No enemies left
             }
 
+            // Check each enemy
             for (Enemy enemy : enemyManager.getEnemies()) {
                 if (enemy.isAlive() && !enemy.hasReachedEnd()) {
-                    return false;
+                    return false; // Found at least one alive enemy that hasn't reached the end
                 }
             }
-            return true;
+            return true; // All enemies are either dead or have reached the end
         }
 
-        return false;
+        return false; // Current wave is not yet finished
     }
 
     @Override
@@ -535,24 +523,25 @@ public class Playing extends GameScene implements SceneMethods {
 
     public Tower getDisplayedTower() {return displayedTower;}
 
-    private void spawnEnemy() {
-        enemyManager.spawnEnemy(waveManager.getNextEnemy());
-        System.out.println("Spawning enemy...");
+    public void spawnEnemy(int enemyType) {
+        if (enemyType != -1) {
+            enemyManager.spawnEnemy(enemyType);
+            System.out.println("Spawning enemy of type: " + enemyType);
+        } else {
+            System.out.println("Invalid enemy type (-1) received, skipping spawn");
+        }
     }
 
     private boolean isTimeForNewEnemy() {
-        boolean timeElapsed = waveManager.isTimeForNewEnemy();
-        boolean waveHasEnemiesLeft = !waveManager.isWaveFinished();
-
-        return timeElapsed && waveHasEnemiesLeft;
+        return false;
     }
 
     public void setDisplayedTower(Tower tower) {displayedTower = tower;}
 
     public void startEnemySpawning() {
-        waveManager.resetWaveIndex();
-        waveManager.resetEnemyIndex();
-        waveManager.startTimer();
+        if (waveManager != null) {
+            waveManager.resetWaveManager();
+        }
     }
 
     public void enemyReachedEnd(Enemy enemy) {
@@ -576,7 +565,7 @@ public class Playing extends GameScene implements SceneMethods {
         AudioManager.getInstance().playRandomLoseSound();
 
         // stop any ongoing waves/spawning
-        waveManager.resetWaveIndex();
+        // waveManager.resetWaveIndex(); // Removed - WaveManager state handles this
         enemyManager.getEnemies().clear();
 
         // for now, we'll just wait 2 seconds and return to the menu, we will implement a proper game over screen soon
@@ -663,17 +652,47 @@ public class Playing extends GameScene implements SceneMethods {
     }
 
     public void resetGameState() {
+        this.gameOptions = loadOptionsOrDefault();
+
         gameOverHandled = false;
         victoryHandled = false;
         gamePaused = false;
         gameSpeedIncreased = false;
         optionsMenuOpen = false;
         gameSpeedMultiplier = 1.0f;
-        enemyManager.getEnemies().clear();
+
+        if(enemyManager != null) enemyManager.getEnemies().clear();
+
         displayedTower = null;
         selectedDeadTree = null;
-        startEnemySpawning();
-        playerManager = new PlayerManager();
-        updateUIResources();
+
+        if(waveManager != null) waveManager.resetWaveManager();
+
+        if (this.gameOptions != null) {
+            playerManager = new PlayerManager(this.gameOptions);
+        } else {
+            System.out.println("Warning: gameOptions null during resetGameState, creating PlayerManager with defaults.");
+            playerManager = new PlayerManager(GameOptions.defaults());
+        }
+
+        // TODO: Reset ProjectileManager, TowerManager etc. as needed, potentially passing options
+        // Assuming ProjectileManager and TowerManager do not have reset methods for now
+        // if (projectileManager != null) projectileManager.reset();
+        // if (towerManager != null) towerManager.reset();
+
+        updateUIResources(); // Update UI after resetting player stats etc.
+        System.out.println("Playing: Game state reset.");
+    }
+
+    /**
+     * Add a helper method to get and display wave status
+     * @return Current wave and state information
+     */
+    public String getWaveStatus() {
+        int currentWave = waveManager.getWaveIndex() + 1; // Convert to 1-based for display
+        String stateInfo = waveManager.getCurrentStateInfo();
+
+        // We don't need the total waves count from WaveManager - it handles completion internally
+        return "Wave " + currentWave + " - " + stateInfo;
     }
 }

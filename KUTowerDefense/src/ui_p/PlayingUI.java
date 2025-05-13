@@ -166,22 +166,29 @@ public class PlayingUI {
 
     private void drawWaveIndicator(Graphics g) {
         int buttonSpacing = 8;
-        int barWidth = 120;
+        int barWidth = 150; // Increased width for more text
         int barHeight = 32;
         int iconSize = 32;
         int startX = GameDimensions.GAME_WIDTH - barWidth - iconSize - buttonSpacing - 10;
         int startY = buttonSize + 16;
+
+        // Using the new method from Playing that works with our refactored WaveManager
+        String waveStatus = playing.getWaveStatus();
+
+        // Extract current wave number for the progress bar
         int currentWave = playing.getWaveManager().getWaveIndex() + 1;
-        int totalWaves = playing.getWaveManager().getWaves().size();
+        // Assuming there are about 5 waves total for the progress bar
+        // (this is just for visual purposes)
+        int estimatedTotalWaves = 5;
 
         // draw wave icon
         g.drawImage(ButtonAssets.waveImg, startX, startY, iconSize, iconSize, null);
 
-        // draw wave progress bar
-        drawSlideButton(g,currentWave + "/" + totalWaves,
+        // draw wave status bar with the full status text
+        drawSlideButton(g, waveStatus,
                 startX + iconSize + buttonSpacing, startY,
                 barWidth, barHeight,
-                currentWave, totalWaves);
+                currentWave, estimatedTotalWaves);
     }
 
 

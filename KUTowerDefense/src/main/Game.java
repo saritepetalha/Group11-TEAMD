@@ -73,6 +73,13 @@ public class Game extends JFrame implements Runnable{
 						((previousState == GameStates.OPTIONS || previousState == GameStates.EDIT) && newState == GameStates.MENU)
 		);
 
+		// Reload game options in Playing when returning from Options to Menu
+		if (previousState == GameStates.OPTIONS && newState == GameStates.MENU) {
+			if (playing != null) {
+				playing.reloadGameOptions();
+			}
+		}
+
 		if (!isMenuRelatedToggle) {
 			switch (newState) {
 				case MENU:

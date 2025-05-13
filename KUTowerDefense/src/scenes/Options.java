@@ -50,10 +50,13 @@ public class Options extends JPanel implements SceneMethods {
      * this panel is removed from the UI
      */
     public void cleanUp() {
-        // Save the current options
         GameOptions currentOptions = optionsUI.getGameOptions();
         OptionsIO.save(currentOptions);
-        System.out.println("Options saved during cleanup");
+
+        // Trigger options reload in the Playing instance
+        if (game != null && game.getPlaying() != null) {
+            game.getPlaying().reloadGameOptions();
+        }
     }
 
     // Mouse interaction methods are removed as they were for the old back button in this class.
