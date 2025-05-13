@@ -4,6 +4,7 @@ import java.awt.*;
 
 import java.awt.event.MouseWheelEvent;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.ArrayList;
 import main.Game;
@@ -27,6 +28,8 @@ import ui_p.LiveTree;
 public class Playing extends GameScene implements SceneMethods {
     private int[][] level;
     private int[][] overlay;
+    private int[][] originalLevelData;
+    private int[][] originalOverlayData;
 
     private PlayingUI playingUI;
     private int mouseX, mouseY;
@@ -67,7 +70,11 @@ public class Playing extends GameScene implements SceneMethods {
         super(game);
         this.tileManager = tileManager;
         this.level = customLevel;
+        this.originalLevelData = deepCopy2DArray(customLevel);
+
         this.overlay = customOverlay;
+        this.originalOverlayData = deepCopy2DArray(customOverlay);
+
         this.gameOptions = loadOptionsOrDefault();
         initializeManagers();
     }
@@ -141,9 +148,23 @@ public class Playing extends GameScene implements SceneMethods {
             LoadSave.saveLevel("defaultlevel", lvl);
         }
         this.level = lvl;
+        this.originalLevelData = deepCopy2DArray(this.level);
+
         this.overlay = new int[lvl.length][lvl[0].length];
         overlay[4][0] = 1;
         overlay[4][15] = 2;
+        this.originalOverlayData = deepCopy2DArray(this.overlay);
+    }
+
+    private int[][] deepCopy2DArray(int[][] source) {
+        if (source == null) return null;
+        int[][] destination = new int[source.length][];
+        for (int i = 0; i < source.length; i++) {
+            if (source[i] != null) {
+                destination[i] = Arrays.copyOf(source[i], source[i].length);
+            }
+        }
+        return destination;
     }
 
     public void loadLevel(String levelName) {
@@ -652,8 +673,10 @@ public class Playing extends GameScene implements SceneMethods {
     }
 
     public void resetGameState() {
+        // 1. Reload current game options (essential for PlayerManager starting stats)
         this.gameOptions = loadOptionsOrDefault();
 
+        // 2. Reset game state flags
         gameOverHandled = false;
         victoryHandled = false;
         gamePaused = false;
@@ -661,27 +684,62 @@ public class Playing extends GameScene implements SceneMethods {
         optionsMenuOpen = false;
         gameSpeedMultiplier = 1.0f;
 
-        if(enemyManager != null) enemyManager.getEnemies().clear();
+        // 3. Restore original map state from stored copies
+        if (originalLevelData != null) {
+            level = deepCopy2DArray(originalLevelData);
+        } else {
+            System.err.println("CRITICAL: originalLevelData is null in resetGameState. Cannot restore level.");
+            return;
+        }
+        if (originalOverlayData != null) {
+            overlay = deepCopy2DArray(originalOverlayData);
+        } else {
+            System.err.println("CRITICAL: originalOverlayData is null in resetGameState. Cannot restore overlay.");
+            return;
+        }
 
+        // 4. Reset UI selections
         displayedTower = null;
         selectedDeadTree = null;
 
-        if(waveManager != null) waveManager.resetWaveManager();
+        // 5. Clear active entities from managers
+        if (towerManager != null) {
+            towerManager.clearTowers();
+        }
+        if (projectileManager != null) {
+            projectileManager.clearProjectiles();
+        }
+        // Note: Enemies are cleared when EnemyManager is reconstructed below, no need for explicit clear here.
 
+        // 6. Recreate or Reset managers that depend heavily on map state or need full reset
         if (this.gameOptions != null) {
             playerManager = new PlayerManager(this.gameOptions);
         } else {
-            System.out.println("Warning: gameOptions null during resetGameState, creating PlayerManager with defaults.");
+            System.err.println("CRITICAL: gameOptions null during resetGameState after load. Using defaults.");
             playerManager = new PlayerManager(GameOptions.defaults());
         }
 
-        // TODO: Reset ProjectileManager, TowerManager etc. as needed, potentially passing options
-        // Assuming ProjectileManager and TowerManager do not have reset methods for now
-        // if (projectileManager != null) projectileManager.reset();
-        // if (towerManager != null) towerManager.reset();
+        if (this.gameOptions == null) this.gameOptions = GameOptions.defaults();
+        enemyManager = new EnemyManager(this, overlay, level, this.gameOptions);
 
-        updateUIResources(); // Update UI after resetting player stats etc.
-        System.out.println("Playing: Game state reset.");
+        if (waveManager != null) {
+            waveManager.resetWaveManager();
+        } else {
+            waveManager = new WaveManager(this, this.gameOptions); // Should exist, but defensive
+            waveManager.resetWaveManager();
+        }
+
+        // 7. Re-initialize map-derived lists (Dead/Live trees) based on the restored 'level'
+        // This is crucial for ensuring tree states and interactions are correct after reset.
+        if (towerManager != null) {
+            deadTrees = towerManager.findDeadTrees(level);
+            liveTrees = towerManager.findLiveTrees(level);
+        } else {
+            System.err.println("CRITICAL: TowerManager null during resetGameState. Tree lists not updated.");
+        }
+
+        // 8. Update UI to reflect the reset state
+        updateUIResources();
     }
 
     /**
