@@ -26,6 +26,11 @@ public abstract class Enemy {
     private int animationTick = 0;
     private int animationSpeed = 10; // lower is faster
     private int maxFrameCount = 6;   // default frame count
+    protected int goldReward;
+
+    public void setAlive(boolean alive) {
+        this.alive = alive;
+    }
 
     // Enemy size category
     public enum Size {
@@ -340,5 +345,8 @@ public abstract class Enemy {
             default:
                 return y;
         }
+    }
+    public int getGoldReward() {
+        return goldReward;
     }
 }

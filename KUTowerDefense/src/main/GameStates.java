@@ -8,7 +8,8 @@ public enum GameStates {
     OPTIONS,
     LOADED,
     LOAD_GAME,
-    QUIT;
+    QUIT,
+    GAME_OVER;
 
     public static GameStates gameState = GameStates.INTRO;
     public static void setGameState(GameStates gameState) {

@@ -30,6 +30,7 @@ public class Game extends JFrame implements Runnable{
 	private MapEditing mapEditing;
 	private Loaded loaded;
 	private LoadGameMenu loadGameMenu;
+	private GameOverScene gameOverScene;
 	private TileManager tileManager;
 
 	public Game() {
@@ -106,6 +107,7 @@ public class Game extends JFrame implements Runnable{
 				case OPTIONS:
 				case EDIT:
 				case LOADED:
+				case GAME_OVER:
 				default:
 					break;
 			}
@@ -125,6 +127,7 @@ public class Game extends JFrame implements Runnable{
 		mapEditing = new MapEditing(this, this);
 		loaded = new Loaded(this);
 		loadGameMenu = new LoadGameMenu(this);
+		gameOverScene = new GameOverScene(this);
 		tileManager = new TileManager();
 	}
 
@@ -147,6 +150,8 @@ public class Game extends JFrame implements Runnable{
 			case PLAYING:
 				if (playing != null) playing.update();
 				break;
+			case GAME_OVER:
+				gameOverScene.update();
 			default:
 				break;
 		}
@@ -224,6 +229,9 @@ public class Game extends JFrame implements Runnable{
 
 	public TileManager getTileManager() { return tileManager; }
 
+	public GameOverScene getGameOverScene() {
+		return gameOverScene;
+	}
 
 	public Cursor getCursor() {
 		try {
@@ -259,4 +267,21 @@ public class Game extends JFrame implements Runnable{
 	public void startPlayingWithLevel(int[][] levelData, int[][] overlayData) {
 		this.playing = new Playing(this, tileManager, levelData, overlayData);
 	}
+
+	public void resetGameWithSameLevel() {
+		if (playing != null) {
+			playing.resetGameState();
+			GameStates.setGameState(GameStates.PLAYING);
+
+			if (gamescreen != null) {
+				gamescreen.setPanelSize();
+				gamescreen.revalidate();
+				gamescreen.repaint();
+			}
+
+			pack();
+			setLocationRelativeTo(null);
+		}
+	}
+
 }

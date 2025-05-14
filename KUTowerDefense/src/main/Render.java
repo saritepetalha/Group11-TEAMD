@@ -33,6 +33,8 @@ public class Render {
                 break;
             case QUIT:
                 break;
+            case GAME_OVER:
+                game.getGameOverScene().render(g);
         }
     }
 

@@ -59,6 +59,9 @@ public class Playing extends GameScene implements SceneMethods {
 
     private GameOptions gameOptions;
 
+    private int totalEnemiesSpawned = 0;
+    private int enemiesReachedEnd = 0;
+
     public Playing(Game game, TileManager tileManager) {
         super(game);
         this.tileManager = tileManager;
@@ -547,6 +550,7 @@ public class Playing extends GameScene implements SceneMethods {
     public void spawnEnemy(int enemyType) {
         if (enemyType != -1) {
             enemyManager.spawnEnemy(enemyType);
+            totalEnemiesSpawned++;
             System.out.println("Spawning enemy of type: " + enemyType);
         } else {
             System.out.println("Invalid enemy type (-1) received, skipping spawn");
@@ -568,6 +572,7 @@ public class Playing extends GameScene implements SceneMethods {
     public void enemyReachedEnd(Enemy enemy) {
         System.out.println("Enemy reached end: " + enemy.getId());
 
+        enemiesReachedEnd++;
         // each enemy that reaches the end causes 1 damage
         playerManager.takeDamage(1);
 
@@ -592,14 +597,16 @@ public class Playing extends GameScene implements SceneMethods {
         // for now, we'll just wait 2 seconds and return to the menu, we will implement a proper game over screen soon
 
         // use a separate thread to avoid blocking the game loop
-        new Thread(() -> {
-            try {
-                Thread.sleep(3000);
-                game.changeGameState(main.GameStates.MENU);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }).start();
+
+        game.getGameOverScene().setStats(
+                false,
+                playerManager.getGold(),
+                totalEnemiesSpawned,
+                enemiesReachedEnd,
+                towerManager.getTowers().size()
+        );
+
+        game.changeGameState(main.GameStates.GAME_OVER);
     }
 
     // add a method to handle victory
@@ -614,14 +621,16 @@ public class Playing extends GameScene implements SceneMethods {
         AudioManager.getInstance().playRandomVictorySound();
 
         // Return to the menu after a short delay
-        new Thread(() -> {
-            try {
-                Thread.sleep(5000);
-                game.changeGameState(main.GameStates.MENU);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }).start();
+
+        game.getGameOverScene().setStats(
+                true,
+                playerManager.getGold(),
+                totalEnemiesSpawned,
+                enemiesReachedEnd,
+                towerManager.getTowers().size()
+        );
+
+        game.changeGameState(main.GameStates.GAME_OVER);
     }
 
 

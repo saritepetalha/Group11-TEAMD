@@ -181,6 +181,9 @@ public class EnemyManager {
 
         for (Enemy e : enemies) {
             if (!e.isAlive()) {
+                playing.getPlayerManager().addGold(e.getGoldReward());
+                playing.updateUIResources();
+                System.out.println("Enemy " + e.getId() + " killed. + " + e.getGoldReward() + " gold!");
                 enemiesToRemove.add(e);
                 continue;
             }
