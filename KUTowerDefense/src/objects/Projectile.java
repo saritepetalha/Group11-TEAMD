@@ -1,53 +1,91 @@
 package objects;
 
+import java.awt.*;
 import java.awt.geom.Point2D;
 
 public class Projectile {
-    private Point2D.Float pos;
-    private int id, projectileType, damage;
+    private float x, y, xSpeed, ySpeed;
+    private int id, damage, projectileType;
     private boolean active = true;
-    private float xSpeed, ySpeed;
+    private boolean exploding = false;
+
+    private int animationFrame = 0;
+    private int explosionFrame = 0;
+
+    private long lastFrameTime = System.nanoTime();
+    private long animationDelay = 100_000_000;
 
     public Projectile(float x, float y, float xSpeed, float ySpeed, int id, int damage, int projectileType) {
-        pos = new Point2D.Float(x,y);
-        this.id = id;
-        this.damage = damage;
+        this.x = x;
+        this.y = y;
         this.xSpeed = xSpeed;
         this.ySpeed = ySpeed;
-        this.projectileType = projectileType;   //0 arrow, 1 cannonball, 2 magicbolt
+        this.id = id;
+        this.damage = damage;
+        this.projectileType = projectileType;
     }
 
-    public boolean isActive() {
-        return active;
+    public void move() {
+        x += xSpeed;
+        y += ySpeed;
     }
 
-    public void setActive(boolean active) {
-        this.active = active;
+    public void incrementAnimationFrame() {
+        long currentTime = System.nanoTime();
+        if (currentTime - lastFrameTime >= animationDelay) {
+            animationFrame = (animationFrame + 1) % 8;
+            lastFrameTime = currentTime;
+        }
     }
 
-    public Point2D.Float getPos() {
-        return pos;
+    public void incrementExplosionFrame() {
+        long currentTime = System.nanoTime();
+        if (currentTime - lastFrameTime >= animationDelay) {
+            explosionFrame++;
+            lastFrameTime = currentTime;
+            if (explosionFrame >= 8) {
+                active = false;
+            }
+        }
     }
 
-    public void setPos(Point2D.Float pos) {
-        this.pos = pos;
-    }
-
-    public int getId() {
-        return id;
+    public Point getPos() {
+        return new Point((int) x, (int) y);
     }
 
     public int getProjectileType() {
         return projectileType;
     }
 
-    public void move() {
-        pos.x += xSpeed;
-        pos.y += ySpeed;
-    }
-
     public int getDamage() {
         return damage;
     }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public boolean isExploding() {
+        return exploding;
+    }
+
+    public int getAnimationFrame() {
+        return animationFrame;
+    }
+
+    public int getExplosionFrame() {
+        return explosionFrame;
+    }
+
+    public void setExploding(boolean exploding) {
+        this.exploding = exploding;
+        this.explosionFrame = 0;
+        this.lastFrameTime = System.nanoTime();
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
 
 }

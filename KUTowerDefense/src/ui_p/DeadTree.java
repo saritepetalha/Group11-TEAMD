@@ -29,8 +29,8 @@ public class DeadTree {
         loadButtonImageFile();
         loadButtonImages();
 
-        theButtons.add(mageButton = new TheButton("Mage", x - size + 16, y, size, size, ButtonImages.get(0)));
-        theButtons.add(archerButton = new TheButton("Archer", x + 16, y - size, size, size, ButtonImages.get(1)));
+        theButtons.add(mageButton = new TheButton("Mage", x - size + 16, y, size, size, ButtonImages.get(1)));
+        theButtons.add(archerButton = new TheButton("Archer", x + 16, y - size, size, size, ButtonImages.get(0)));
         theButtons.add(artilleryButton = new TheButton("Artillery", x + size + 16, y, size, size, ButtonImages.get(2)));
     }
 
