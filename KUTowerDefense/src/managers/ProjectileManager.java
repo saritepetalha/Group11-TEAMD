@@ -18,12 +18,13 @@ public class ProjectileManager {
     private Playing playing;
     private ArrayList<Projectile> projectiles = new ArrayList<>();
     private BufferedImage[] proj_imgs;
+    private BufferedImage[] fireball_imgs;
+    private BufferedImage[] explosion_imgs;
     private int projID = 0;
 
     public ProjectileManager(Playing playing) {
         this.playing = playing;
         importImages();
-
     }
 
     private void importImages() {
@@ -31,6 +32,10 @@ public class ProjectileManager {
         for (int i = 0; i < 3; i++) {
             proj_imgs[i] = LoadSave.getTowerMaterial(i, 24, 24);
         }
+
+        fireball_imgs = LoadSave.getFireballAnimation();
+
+        explosion_imgs = LoadSave.getExplosionAnimation();
     }
 
     public void newProjectile(Tower tower, Enemy enemy) {
@@ -75,11 +80,20 @@ public class ProjectileManager {
     public void update() {
         for (Projectile currentProjectile : projectiles) {
             if (currentProjectile.isActive()) {
-                currentProjectile.move();
-                if (isEnemyShot(currentProjectile)) {
-                    currentProjectile.setActive(false);
+                if (currentProjectile.isExploding()) {
+                    currentProjectile.incrementExplosionFrame();
                 } else {
-                    // nothing
+                    currentProjectile.move();
+                    if (currentProjectile.getProjectileType() == Constants.Projectiles.CANNONBALL) {
+                        currentProjectile.incrementAnimationFrame();
+                    }
+                    if (isEnemyShot(currentProjectile)) {
+                        if (currentProjectile.getProjectileType() == Constants.Projectiles.CANNONBALL) {
+                            currentProjectile.setExploding(true);
+                        } else {
+                            currentProjectile.setActive(false);
+                        }
+                    }
                 }
             }
         }
@@ -143,9 +157,28 @@ public class ProjectileManager {
     public void draw(Graphics g) {
         for (Projectile currentProjectile : projectiles) {
             if (currentProjectile.isActive()) {
-                g.drawImage(proj_imgs[currentProjectile.getProjectileType()],
-                        (int) currentProjectile.getPos().x,
-                        (int) currentProjectile.getPos().y, null);
+                if (currentProjectile.isExploding()) {
+                    int frame = currentProjectile.getExplosionFrame();
+                    if (frame >= 0 && frame < explosion_imgs.length) {
+                        g.drawImage(explosion_imgs[frame],
+                                (int) currentProjectile.getPos().x - explosion_imgs[frame].getWidth() / 2,
+                                (int) currentProjectile.getPos().y - explosion_imgs[frame].getHeight() / 2,
+                                null);
+                    }
+                } else if (currentProjectile.getProjectileType() == Constants.Projectiles.CANNONBALL) {
+                    int frame = currentProjectile.getAnimationFrame();
+                    if (frame >= 0 && frame < fireball_imgs.length) {
+                        g.drawImage(fireball_imgs[frame],
+                                (int) currentProjectile.getPos().x - fireball_imgs[frame].getWidth() / 2,
+                                (int) currentProjectile.getPos().y - fireball_imgs[frame].getHeight() / 2,
+                                null);
+                    }
+                } else {
+                    g.drawImage(proj_imgs[currentProjectile.getProjectileType()],
+                            (int) currentProjectile.getPos().x,
+                            (int) currentProjectile.getPos().y,
+                            null);
+                }
             }
         }
     }
