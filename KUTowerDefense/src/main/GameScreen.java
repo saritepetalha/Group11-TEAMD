@@ -53,7 +53,11 @@ public class GameScreen extends JPanel {
 			size = new Dimension(GameDimensions.TOTAL_GAME_WIDTH, GameDimensions.GAME_HEIGHT);
 		} else if (GameStates.gameState == GameStates.PLAYING){
 			size = new Dimension(GameDimensions.GAME_WIDTH, GameDimensions.GAME_HEIGHT);
-		} else {
+		}
+		else if (GameStates.gameState == GameStates.GAME_OVER) {
+			size = new Dimension(GameDimensions.GAME_WIDTH, GameDimensions.GAME_HEIGHT);
+		}
+		else {
 			size = new Dimension(GameDimensions.MAIN_MENU_SCREEN_WIDTH, GameDimensions.MAIN_MENU_SCREEN_HEIGHT);
 		}
 		setPreferredSize(size);

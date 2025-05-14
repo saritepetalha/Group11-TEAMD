@@ -28,6 +28,10 @@ public abstract class Enemy {
     private int maxFrameCount = 6;   // default frame count
     protected int goldReward;
 
+    public void setAlive(boolean alive) {
+        this.alive = alive;
+    }
+
     // Enemy size category
     public enum Size {
         SMALL,  // goblin, tnt
