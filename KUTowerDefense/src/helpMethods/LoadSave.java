@@ -261,4 +261,45 @@ public class LoadSave {
             return null;
         }
     }
+
+    public static BufferedImage[] getFireballAnimation() {
+        final int frameCount = 5;
+        final int frameWidth = 48;
+        final int frameHeight = 32;
+
+        BufferedImage[] frames = new BufferedImage[frameCount];
+        BufferedImage spriteSheet = getImageFromPath("/TowerAssets/Firaball_Animated.png");
+
+        if (spriteSheet != null) {
+            for (int i = 0; i < frameCount; i++) {
+                frames[i] = spriteSheet.getSubimage(i * frameWidth, 0, frameWidth, frameHeight);
+            }
+        }
+
+        return frames;
+    }
+
+    public static BufferedImage[] getExplosionAnimation() {
+        final int frameCount = 5;
+        final int targetWidth = 32;
+        final int targetHeight = 32;
+
+        BufferedImage[] frames = new BufferedImage[frameCount];
+        BufferedImage spriteSheet = getImageFromPath("/Effects/Explosions.png");
+
+        if (spriteSheet != null) {
+            int frameWidth = spriteSheet.getWidth() / frameCount;
+            int frameHeight = spriteSheet.getHeight();
+
+            for (int i = 0; i < frameCount; i++) {
+                BufferedImage frame = spriteSheet.getSubimage(i * frameWidth, 0, frameWidth, frameHeight);
+                frames[i] = resizeImage(frame, targetWidth, targetHeight);
+            }
+        }
+
+        return frames;
+    }
+
+
+
 }
