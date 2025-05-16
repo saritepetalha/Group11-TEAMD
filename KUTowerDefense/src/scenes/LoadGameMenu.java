@@ -152,6 +152,7 @@ public class LoadGameMenu extends JPanel { // Changed to JPanel
         BufferedImage thumbnail = new BufferedImage(PREVIEW_WIDTH, PREVIEW_HEIGHT, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2d = thumbnail.createGraphics();
 
+        // Handle cases where levelData might be problematic for rendering
         if (levelData == null || levelData.length == 0 || levelData[0].length == 0) {
             g2d.setColor(Color.DARK_GRAY);
             g2d.fillRect(0, 0, PREVIEW_WIDTH, PREVIEW_HEIGHT);
@@ -166,18 +167,59 @@ public class LoadGameMenu extends JPanel { // Changed to JPanel
 
         int numRows = levelData.length;
         int numCols = levelData[0].length;
+
+        // If numRows or numCols is zero, trying to divide by them will cause an error.
+        // Also, if they are too large, individual tiles will be too small.
+        // For thumbnail generation, we can define a maximum number of tiles to render
+        // or simply fall back to a solid color if the map is too dense or empty for a good preview.
+        if (numRows <= 0 || numCols <= 0) { // Added check for zero rows/cols
+            g2d.setColor(Color.DARK_GRAY); // Fallback for invalid dimensions
+            g2d.fillRect(0, 0, PREVIEW_WIDTH, PREVIEW_HEIGHT);
+            g2d.setColor(Color.WHITE);
+            g2d.setFont(medodicaFontSmallBold != null ? medodicaFontSmallBold : mvBoliFontBold);
+            String errorText = "Invalid Map";
+            FontMetrics fm = g2d.getFontMetrics();
+            g2d.drawString(errorText, (PREVIEW_WIDTH - fm.stringWidth(errorText)) / 2, PREVIEW_HEIGHT / 2 + fm.getAscent() / 2);
+            g2d.dispose();
+            return thumbnail;
+        }
+
         float tileRenderWidth = (float) PREVIEW_WIDTH / numCols;
         float tileRenderHeight = (float) PREVIEW_HEIGHT / numRows;
 
+        // Step 1: Fill the entire thumbnail with grass tiles
+        int grassTileId = 5; // ID for grass tile
+        BufferedImage grassSprite = tileManager.getSprite(grassTileId);
+
+        if (grassSprite != null) {
+            for (int r = 0; r < numRows; r++) {
+                for (int c = 0; c < numCols; c++) {
+                    g2d.drawImage(grassSprite,
+                            (int) (c * tileRenderWidth), (int) (r * tileRenderHeight),
+                            (int) Math.ceil(tileRenderWidth), (int) Math.ceil(tileRenderHeight), null);
+                }
+            }
+        } else {
+            // Fallback if grass sprite is somehow unavailable: fill with a green color
+            g2d.setColor(new Color(34, 139, 34)); // Forest green
+            g2d.fillRect(0, 0, PREVIEW_WIDTH, PREVIEW_HEIGHT);
+        }
+
+        // Step 2: Render the actual map data on top of the grass
         for (int r = 0; r < numRows; r++) {
             for (int c = 0; c < numCols; c++) {
                 int tileId = levelData[r][c];
+
+                if (tileId == grassTileId && grassSprite != null) { // If it's a grass tile, and we already drew grass, skip.
+                    continue;
+                }
+
                 BufferedImage tileSprite = tileManager.getSprite(tileId);
                 if (tileSprite != null) {
                     g2d.drawImage(tileSprite, (int) (c * tileRenderWidth), (int) (r * tileRenderHeight),
                             (int) Math.ceil(tileRenderWidth), (int) Math.ceil(tileRenderHeight), null);
-                } else {
-                    g2d.setColor(new Color(30,30,30)); // Dark fallback for missing sprites
+                } else if (tileId != grassTileId) {
+                    g2d.setColor(new Color(30,30,30)); // Dark fallback for missing non-grass sprites
                     g2d.fillRect((int) (c * tileRenderWidth), (int) (r * tileRenderHeight),
                             (int) Math.ceil(tileRenderWidth), (int) Math.ceil(tileRenderHeight));
                 }
