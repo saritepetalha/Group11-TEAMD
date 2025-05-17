@@ -60,6 +60,30 @@ public abstract class Enemy {
         initializeHealth();
         maxHealth = health;
     }
+    /**
+     * Reads the gold‐reward value for this enemy's type from GameOptions
+     * and applies it.
+     */
+    public void updateGoldRewardFromOptions(GameOptions options) {
+        if (options == null) {
+            System.out.println("Warning: GameOptions is null; using default goldReward=" + goldReward);
+            return;
+        }
+
+        EnemyType type = getEnemyTypeEnum();
+        if (type == null) {
+            System.out.println("Warning: Unknown EnemyType for id=" + id + "; using default goldReward=" + goldReward);
+            return;
+        }
+
+        EnemyStats stats = options.getEnemyStats().get(type);
+        if (stats == null) {
+            System.out.println("Warning: No EnemyStats for type=" + type + "; using default goldReward=" + goldReward);
+            return;
+        }
+        this.goldReward = stats.getGoldReward();
+        System.out.println("Updated goldReward for " + type + " (ID: " + id + ") = " + goldReward);
+    }
 
     /**
      * Updates enemy stats based on the provided GameOptions
@@ -91,7 +115,7 @@ public abstract class Enemy {
 
             // Store current health percentage before updating maxHealth
             float currentHealthPercentage = getHealthBarPercentage();
-
+            updateGoldRewardFromOptions(options);
             // Apply the new stats
             this.maxHealth = stats.getHitPoints();
             // Apply the previous health percentage to the new maxHealth, clamp between 0 and maxHealth
