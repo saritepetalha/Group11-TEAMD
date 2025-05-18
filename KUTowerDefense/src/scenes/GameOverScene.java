@@ -63,7 +63,8 @@ public class GameOverScene extends GameScene implements SceneMethods{
 
         g.setColor(Color.WHITE);
         g.setFont(new Font("Arial", Font.BOLD, 48));
-        g.drawString("GAME OVER", (1024 - g.getFontMetrics().stringWidth("GAME OVER")) / 2, 120);
+        String gameOverText = isVictory ? "VICTORY!" : "GAME OVER";
+        g.drawString(gameOverText, (1024 - g.getFontMetrics().stringWidth(gameOverText)) / 2, 120);
 
         g.setFont(new Font("Arial", Font.PLAIN, 28));
         g.drawString("Total Gold: " + goldEarned, 50, 200);

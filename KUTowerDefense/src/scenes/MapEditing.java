@@ -13,6 +13,8 @@ import ui_p.EditTiles;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import javax.imageio.ImageIO;
+import java.io.IOException;
 
 
 // a class to edit map. map editor part on the main screen.
@@ -33,6 +35,10 @@ public class MapEditing extends GameScene implements SceneMethods{
 
     private Tower selectedTower;
 
+    // Border images
+    private BufferedImage wallImage;
+    private BufferedImage gateImage;
+
     public MapEditing(Game game, Window owner) {
         super(game);
         this.owner = owner;
@@ -42,6 +48,18 @@ public class MapEditing extends GameScene implements SceneMethods{
         editTiles = new EditTiles(GameDimensions.GAME_WIDTH,0,4*GameDimensions.ButtonSize.MEDIUM.getSize(), GameDimensions.GAME_HEIGHT,this, game, owner);
         createDefaultLevel();
         loadDefaultLevel();
+        loadBorderImages();
+    }
+
+    private void loadBorderImages() {
+        try {
+            wallImage = LoadSave.getImageFromPath("/Borders/wall.png");
+            gateImage = LoadSave.getImageFromPath("/Borders/gate.png");
+            System.out.println("Border images loaded successfully");
+        } catch (Exception e) {
+            System.err.println("Error loading border images: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     private void createDefaultLevel() {
@@ -68,7 +86,25 @@ public class MapEditing extends GameScene implements SceneMethods{
 
         for (int i = 0; i < level.length; i++) {
             for (int j = 0; j < level[i].length; j++) {
-                g.drawImage(tileManager.getSprite(level[i][j]), j * GameDimensions.TILE_DISPLAY_SIZE, i * GameDimensions.TILE_DISPLAY_SIZE, null);
+                int tileId = level[i][j];
+
+                // Special handling for wall and gate
+                if (tileId == -3 && wallImage != null) { // Wall
+                    // Draw wall as silhouette in map editing mode
+                    drawSilhouette(g, wallImage, j * GameDimensions.TILE_DISPLAY_SIZE,
+                            i * GameDimensions.TILE_DISPLAY_SIZE,
+                            GameDimensions.TILE_DISPLAY_SIZE,
+                            GameDimensions.TILE_DISPLAY_SIZE);
+                } else if (tileId == -4 && gateImage != null) { // Gate
+                    // Draw gate as silhouette in map editing mode
+                    drawSilhouette(g, gateImage, j * GameDimensions.TILE_DISPLAY_SIZE,
+                            i * GameDimensions.TILE_DISPLAY_SIZE,
+                            GameDimensions.TILE_DISPLAY_SIZE,
+                            GameDimensions.TILE_DISPLAY_SIZE);
+                } else {
+                    // Normal tiles
+                    g.drawImage(tileManager.getSprite(tileId), j * GameDimensions.TILE_DISPLAY_SIZE, i * GameDimensions.TILE_DISPLAY_SIZE, null);
+                }
 
                 // then draw any overlay (start/end points) if they exist
                 if (overlayData[i][j] == START_POINT) {
@@ -78,6 +114,24 @@ public class MapEditing extends GameScene implements SceneMethods{
                 }
             }
         }
+    }
+
+    // Helper method to draw silhouette of an image
+    private void drawSilhouette(Graphics g, BufferedImage image, int x, int y, int width, int height) {
+        Graphics2D g2d = (Graphics2D) g.create();
+
+        // Create silhouette effect
+        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.6f));
+
+        // Draw a semi-transparent blue silhouette
+        g2d.setColor(new Color(100, 100, 255, 150));
+        g2d.fillRect(x, y, width, height);
+
+        // Draw the image with a blue tint
+        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.4f));
+        g2d.drawImage(image, x, y, width, height, null);
+
+        g2d.dispose();
     }
 
     // helper method to draw overlay images with transparency
@@ -301,6 +355,8 @@ public class MapEditing extends GameScene implements SceneMethods{
             overlayData[y][x] = END_POINT;
             System.out.println("End point placed at: " + x + "," + y);
 
+            // Add walls and gate around the end point
+            addWallsAndGateAroundEndPoint(x, y);
 
         } else if (selectedTile.getName().equals("Castle")) {
             // place Castle in 2x2 area
@@ -755,6 +811,75 @@ public class MapEditing extends GameScene implements SceneMethods{
 
     public String getCurrentLevelName() {
         return this.currentLevelName;
+    }
+
+    private void addWallsAndGateAroundEndPoint(int x, int y) {
+        // Determine which edge the end point is on
+        boolean isOnLeftEdge = (x == 0);
+        boolean isOnRightEdge = (x == level[0].length - 1);
+        boolean isOnTopEdge = (y == 0);
+        boolean isOnBottomEdge = (y == level.length - 1);
+
+        // If the end point is not on an edge, do nothing
+        if (!isOnLeftEdge && !isOnRightEdge && !isOnTopEdge && !isOnBottomEdge) {
+            System.out.println("End point is not on an edge, not adding walls and gate");
+            return;
+        }
+
+        System.out.println("Adding walls and gate around end point at " + x + "," + y);
+
+        // Define wall and gate IDs
+        int wallId = -3;
+        int gateId = -4;
+
+        // Place walls and gate based on which edge the end point is on
+        if (isOnLeftEdge) {
+            // Place walls on the left edge (except at the end point)
+            for (int i = 0; i < level.length; i++) {
+                if (i != y) {
+                    // Place wall
+                    level[i][0] = wallId;
+                } else {
+                    // Place gate at end point
+                    level[i][0] = gateId;
+                }
+            }
+        } else if (isOnRightEdge) {
+            // Place walls on the right edge (except at the end point)
+            for (int i = 0; i < level.length; i++) {
+                if (i != y) {
+                    // Place wall
+                    level[i][level[0].length - 1] = wallId;
+                } else {
+                    // Place gate at end point
+                    level[i][level[0].length - 1] = gateId;
+                }
+            }
+        } else if (isOnTopEdge) {
+            // Place walls on the top edge (except at the end point)
+            for (int j = 0; j < level[0].length; j++) {
+                if (j != x) {
+                    // Place wall
+                    level[0][j] = wallId;
+                } else {
+                    // Place gate at end point
+                    level[0][j] = gateId;
+                }
+            }
+        } else if (isOnBottomEdge) {
+            // Place walls on the bottom edge (except at the end point)
+            for (int j = 0; j < level[0].length; j++) {
+                if (j != x) {
+                    // Place wall
+                    level[level.length - 1][j] = wallId;
+                } else {
+                    // Place gate at end point
+                    level[level.length - 1][j] = gateId;
+                }
+            }
+        }
+
+        System.out.println("Walls and gate added successfully");
     }
 
 }

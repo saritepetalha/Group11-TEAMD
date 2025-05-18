@@ -96,6 +96,15 @@ public class PlayerManager {
         return health > 0;
     }
 
+    public int getStartingHealthAmount() {
+        if (gameOptions != null) {
+            return gameOptions.getStartingPlayerHP();
+        } else {
+            // Fallback to default max health if options are null
+            return MAX_HEALTH;
+        }
+    }
+
     /**
      * Reloads player stats from options
      */

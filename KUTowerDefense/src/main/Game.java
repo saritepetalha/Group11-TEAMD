@@ -122,7 +122,7 @@ public class Game extends JFrame implements Runnable{
 		menu = new Menu(this);
 		options = new Options(this);
 		if (playing == null) {
-			playing = new Playing(this, tileManager);
+			playing = new Playing(this);
 		}
 		mapEditing = new MapEditing(this, this);
 		loaded = new Loaded(this);

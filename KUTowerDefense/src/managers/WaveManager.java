@@ -264,6 +264,10 @@ public class WaveManager {
         return waveIndex;
     }
 
+    public int getWaveCount() {
+        return waves.size();
+    }
+
     public float getTimeUntilNextSpawn() {
         if (waitingForNextWave && waveTimerActive) {
             return (interWaveTickLimit - interWaveTick) / 60f;
