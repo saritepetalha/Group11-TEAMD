@@ -498,6 +498,20 @@ public class EnemyManager {
         // draw the enemy with appropriate size
         g.drawImage(sprite, drawX, drawY, drawWidth, drawHeight, null);
         drawHealthBar(g, enemy, drawX, drawY, drawWidth, drawHeight);
+        // Draw snowflake icon if slowed
+        if (enemy.isSlowed()) {
+            if (Enemy.snowflakeIcon == null) {
+                Enemy.snowflakeIcon = helpMethods.LoadSave.getImageFromPath("/TowerAssets/snow flake icon.png");
+            }
+            if (Enemy.snowflakeIcon != null) {
+                int healthBarWidth = 40;
+                int healthBarHeight = 4;
+                int healthBarX = drawX + (drawWidth - healthBarWidth) / 2;
+                boolean drawAbove = enemy.getEnemyType() % 2 == 1;
+                int healthBarY = drawAbove ? drawY - 8 : drawY + drawHeight + 2;
+                g.drawImage(Enemy.snowflakeIcon, healthBarX - 14, healthBarY - 4, 12, 12, null);
+            }
+        }
     }
 
     private void drawHealthBar(Graphics g, Enemy enemy, int x, int y, int width, int height) {

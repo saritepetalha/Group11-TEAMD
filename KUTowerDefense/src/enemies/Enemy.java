@@ -35,7 +35,7 @@ public abstract class Enemy {
     private boolean isSlowed = false;
     private long slowTimer = 0;
     private static final long SLOW_DURATION = 4_000_000_000L; // 4 seconds in nanoseconds
-    private static BufferedImage snowflakeIcon = null;
+    public static BufferedImage snowflakeIcon = null;
 
     public void setAlive(boolean alive) {
         this.alive = alive;
