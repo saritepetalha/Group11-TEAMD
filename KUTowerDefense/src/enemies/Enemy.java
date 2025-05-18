@@ -5,8 +5,10 @@ import config.EnemyType;
 import config.GameOptions;
 import constants.Constants;
 import managers.AudioManager;
+import helpMethods.LoadSave;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import static constants.Constants.Enemies.*;
 
 public abstract class Enemy {
@@ -29,6 +31,11 @@ public abstract class Enemy {
     private int animationSpeed = 10; // lower is faster
     private int maxFrameCount = 6;   // default frame count
     protected int goldReward;
+
+    private boolean isSlowed = false;
+    private long slowTimer = 0;
+    private static final long SLOW_DURATION = 4_000_000_000L; // 4 seconds in nanoseconds
+    private static BufferedImage snowflakeIcon = null;
 
     public void setAlive(boolean alive) {
         this.alive = alive;
@@ -156,17 +163,15 @@ public abstract class Enemy {
     }
 
     public void move(float xSpeed, float ySpeed) {
-        this.x += xSpeed;
-        this.y += ySpeed;
-
+        float effSpeed = getEffectiveSpeed();
+        this.x += xSpeed * effSpeed;
+        this.y += ySpeed * effSpeed;
         // Update direction based on movement
-        float totalSpeed = (float) Math.sqrt(xSpeed * xSpeed + ySpeed * ySpeed);
+        float totalSpeed = (float) Math.sqrt((xSpeed * effSpeed) * (xSpeed * effSpeed) + (ySpeed * effSpeed) * (ySpeed * effSpeed));
         if (totalSpeed > 0) {
-            this.dirX = xSpeed / totalSpeed;
-            this.dirY = ySpeed / totalSpeed;
+            this.dirX = xSpeed / (float)Math.sqrt(xSpeed * xSpeed + ySpeed * ySpeed);
+            this.dirY = ySpeed / (float)Math.sqrt(xSpeed * xSpeed + ySpeed * ySpeed);
         }
-
-        // Update the boundary position
         updateBoundary();
     }
 
@@ -365,5 +370,30 @@ public abstract class Enemy {
 
     public float getDirY() {
         return dirY;
+    }
+
+    public void applySlow() {
+        isSlowed = true;
+        slowTimer = System.nanoTime();
+        if (snowflakeIcon == null) {
+            snowflakeIcon = LoadSave.getImageFromPath("/TowerAssets/snow flake icon.png");
+            System.out.println("[DEBUG] Loaded snowflake icon: " + (snowflakeIcon != null));
+        }
+    }
+
+    private void updateSlow() {
+        if (isSlowed && System.nanoTime() - slowTimer > SLOW_DURATION) {
+            isSlowed = false;
+        }
+    }
+
+    public boolean isSlowed() { return isSlowed; }
+
+    public void update() {
+        updateSlow();
+    }
+
+    public float getEffectiveSpeed() {
+        return isSlowed ? speed * 0.8f : speed;
     }
 }

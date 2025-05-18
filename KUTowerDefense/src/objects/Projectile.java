@@ -14,11 +14,12 @@ public class Projectile {
 
     private int animationFrame = 0;
     private int explosionFrame = 0;
+    private int level = 1;
 
     private long lastFrameTime = System.nanoTime();
     private long animationDelay = 100_000_000;
 
-    public Projectile(float x, float y, float xSpeed, float ySpeed, int id, int damage, int projectileType) {
+    public Projectile(float x, float y, float xSpeed, float ySpeed, int id, int damage, int projectileType, int level) {
         this.x = x;
         this.y = y;
         this.xSpeed = xSpeed;
@@ -26,6 +27,7 @@ public class Projectile {
         this.id = id;
         this.damage = damage;
         this.projectileType = projectileType;
+        this.level = level;
     }
 
     public void move() {
@@ -110,6 +112,10 @@ public class Projectile {
 
     public boolean isHit() {
         return hit;
+    }
+
+    public int getLevel() {
+        return level;
     }
 
 }

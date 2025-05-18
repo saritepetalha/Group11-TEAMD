@@ -15,6 +15,7 @@ import ui_p.LiveTree;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class TowerManager {
@@ -22,6 +23,7 @@ public class TowerManager {
     private BufferedImage[] towerImages;
     private Tower tower;
     private ArrayList<Tower> towers = new ArrayList<>();
+    private List<TowerUpgradeEffect> upgradeEffects = new ArrayList<>();
 
     public TowerManager(Playing playing) {
 
@@ -105,6 +107,17 @@ public class TowerManager {
                 g.drawImage(sprite, tower.getX(), tower.getY(), 64, 64, null);
             }
         }
+        // Draw upgrade effects
+        Graphics2D g2d = (Graphics2D) g;
+        Iterator<TowerUpgradeEffect> it = upgradeEffects.iterator();
+        while (it.hasNext()) {
+            TowerUpgradeEffect eff = it.next();
+            if (eff.isAlive()) {
+                eff.draw(g2d);
+            } else {
+                it.remove();
+            }
+        }
     }
 
     public List<DeadTree> findDeadTrees(int[][] level){
@@ -153,6 +166,39 @@ public class TowerManager {
 
     public void clearTowers() {
         towers.clear();
+    }
+
+    // Inner class for upgrade visual effect
+    private static class TowerUpgradeEffect {
+        private final int x, y;
+        private final long startTime;
+        private static final long DURATION = 500_000_000L; // 0.5 seconds in nanoseconds
+        public TowerUpgradeEffect(int x, int y) {
+            this.x = x;
+            this.y = y;
+            this.startTime = System.nanoTime();
+        }
+        public boolean isAlive() {
+            return System.nanoTime() - startTime < DURATION;
+        }
+        public float getProgress() {
+            return Math.min(1f, (System.nanoTime() - startTime) / (float)DURATION);
+        }
+        public void draw(Graphics2D g2d) {
+            float progress = getProgress();
+            float alpha = 0.7f * (1f - progress);
+            int size = (int)(64 + 32 * progress);
+            int offset = (size - 64) / 2;
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+            g2d.setColor(new Color(255, 255, 0));
+            g2d.setStroke(new BasicStroke(4f));
+            g2d.drawOval(x - offset, y - offset, size, size);
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
+        }
+    }
+
+    public void triggerUpgradeEffect(Tower tower) {
+        upgradeEffects.add(new TowerUpgradeEffect(tower.getX() + 32, tower.getY() + 32));
     }
 }
 

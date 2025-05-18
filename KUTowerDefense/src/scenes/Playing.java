@@ -456,6 +456,7 @@ public class Playing extends GameScene implements SceneMethods {
             if (displayedTower.isUpgradeable() && playerManager.getGold() >= getUpgradeCost(displayedTower)) {
                 playerManager.spendGold(getUpgradeCost(displayedTower));
                 displayedTower.upgrade();
+                towerManager.triggerUpgradeEffect(displayedTower);
                 updateUIResources();
             }
             return; // Prevent other actions if upgrade is performed

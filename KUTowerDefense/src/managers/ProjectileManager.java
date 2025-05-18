@@ -84,7 +84,8 @@ public class ProjectileManager {
         float xSpeed = (xDiff / distance) * adjustedSpeed;
         float ySpeed = (yDiff / distance) * adjustedSpeed;
 
-        projectiles.add(new Projectile(towerCenterX, towerCenterY, xSpeed, ySpeed, projID++, tower.getDamage(), projType));
+        // Pass tower level to projectile
+        projectiles.add(new Projectile(towerCenterX, towerCenterY, xSpeed, ySpeed, projID++, tower.getDamage(), projType, tower.getLevel()));
     }
 
     public void update() {
@@ -170,6 +171,11 @@ public class ProjectileManager {
                 if (hitArea.contains(projectile.getPos())) {
                     enemy.hurt(projectile.getDamage());
 
+                    // Mage slow effect
+                    if (projectile.getProjectileType() == Constants.Projectiles.MAGICBOLT && projectile.getLevel() == 2) {
+                        enemy.applySlow();
+                    }
+
                     // handle AOE damage for CANNONBALL projectile type
                     if (projectile.getProjectileType() == Constants.Projectiles.CANNONBALL) {
                         handleAOEDamage(projectile, enemy);
@@ -240,6 +246,10 @@ public class ProjectileManager {
                                 (int) currentProjectile.getPos().y - fireball_imgs[frame].getHeight() / 2,
                                 null);
                     }
+                } else if (currentProjectile.getProjectileType() == Constants.Projectiles.MAGICBOLT && currentProjectile.getLevel() == 2) {
+                    // Draw cyan circle for level 2 mage projectile
+                    g.setColor(Color.CYAN);
+                    g.fillOval((int) currentProjectile.getPos().x, (int) currentProjectile.getPos().y, 16, 16);
                 } else {
                     g.drawImage(proj_imgs[currentProjectile.getProjectileType()],
                             (int) currentProjectile.getPos().x,
