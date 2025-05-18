@@ -371,23 +371,41 @@ public class Playing extends GameScene implements SceneMethods {
         if (displayedTower == null) return;
         drawDisplayedTowerBorder(g);
         drawDisplayedTowerRange(g);
-        // Draw upgrade button
-        int btnW = 80, btnH = 32;
+        // Draw upgrade button (smaller pixel-art style)
+        int btnW = 64, btnH = 24;
         int btnX = displayedTower.getX() + 32 - btnW/2;
         int btnY = displayedTower.getY() + 80;
         upgradeButtonBounds = new Rectangle(btnX, btnY, btnW, btnH);
         if (displayedTower.isUpgradeable()) {
             boolean canAfford = playerManager.getGold() >= getUpgradeCost(displayedTower);
-            g.setColor(canAfford ? new Color(80,200,80) : new Color(120,120,120));
+            // Draw thick dark border
+            g.setColor(new Color(40, 24, 8));
+            g.fillRect(btnX-3, btnY-3, btnW+6, btnH+6);
+            // Fill with parchment/wood color
+            g.setColor(new Color(210, 180, 140));
             g.fillRect(btnX, btnY, btnW, btnH);
-            g.setColor(Color.BLACK);
-            g.drawRect(btnX, btnY, btnW, btnH);
-            g.setFont(new Font("Arial", Font.BOLD, 16));
-            g.drawString("Upgrade", btnX + 10, btnY + 22);
+            // Pixel-art highlight (top 3px)
+            g.setColor(new Color(255, 255, 255, 80));
+            g.fillRect(btnX+3, btnY+3, btnW-6, 3);
+            // Draw blocky border (simulate pixel art)
+            g.setColor(new Color(80, 40, 10));
+            for (int i = 0; i < 2; i++) {
+                g.drawRect(btnX+i, btnY+i, btnW-1-2*i, btnH-1-2*i);
+            }
+            // Draw text (smaller, bold)
+            g.setFont(new Font("Dialog", Font.BOLD, 14));
+            g.setColor(canAfford ? new Color(30, 20, 10) : new Color(80,80,80));
+            String text = "Upgrade";
+            int textWidth = g.getFontMetrics().stringWidth(text);
+            int textHeight = g.getFontMetrics().getAscent();
+            int textX = btnX + (btnW - textWidth) / 2;
+            int textY = btnY + (btnH + textHeight) / 2 - 2;
+            g.drawString(text, textX, textY);
+            // If not affordable, draw X
             if (!canAfford) {
                 g.setColor(new Color(200,0,0,180));
-                g.drawLine(btnX, btnY, btnX+btnW, btnY+btnH);
-                g.drawLine(btnX+btnW, btnY, btnX, btnY+btnH);
+                g.drawLine(btnX+4, btnY+4, btnX+btnW-4, btnY+btnH-4);
+                g.drawLine(btnX+btnW-4, btnY+4, btnX+4, btnY+btnH-4);
             }
         } else {
             upgradeButtonBounds = null;
