@@ -58,6 +58,12 @@ public class EnemyManager {
                 }
                 else if (overlayData[y][x] == END_POINT) {
                     endPoint = new GridPoint(x, y);
+                    if (isGateTile(x, y, overlayData)) {
+                        GridPoint newEndPoint = findLastRoadTileBeforeGate(x, y, overlayData);
+                        if (newEndPoint != null) {
+                            endPoint = newEndPoint;
+                        }
+                    }
                 }
             }
         }
@@ -68,11 +74,30 @@ public class EnemyManager {
     }
 
     private boolean isRoadTile(int tileId) {
-        return ROAD_IDS.contains(tileId);
+        return ROAD_IDS.contains(tileId) || tileId == -4;
+    }
+
+    private boolean isGateTile(int x, int y, int[][] overlayData) {
+        return overlayData[y][x] == -4;
+    }
+
+    private GridPoint findLastRoadTileBeforeGate(int gateX, int gateY, int[][] overlayData) {
+        int[] dx = {-1, 0, 1, 0};
+        int[] dy = {0, -1, 0, 1};
+
+        for (int i = 0; i < 4; i++) {
+            int newX = gateX + dx[i];
+            int newY = gateY + dy[i];
+
+            if (isValidPosition(newX, newY, overlayData.length, overlayData[0].length) &&
+                    isRoadTile(overlayData[newY][newX])) {
+                return new GridPoint(newX, newY);
+            }
+        }
+        return null;
     }
 
     private void generatePath(int[][] tileData) {
-        // implementation of Breadth-First Search to find path from start to end
         if (startPoint == null || endPoint == null) {
             System.out.println("Cannot generate path: Start or end point is null");
             return;
@@ -115,7 +140,8 @@ public class EnemyManager {
                 int newY = current.getY() + dy[i];
 
                 // check bounds and if it's a valid road and not visited
-                if (isValidPosition(newX, newY, rows, cols) && isRoadTile(tileData[newY][newX]) &&
+                if (isValidPosition(newX, newY, rows, cols) &&
+                        (isRoadTile(tileData[newY][newX]) || (newX == endPoint.getX() && newY == endPoint.getY())) &&
                         !visited[newY][newX]) {
                     System.out.println("Found valid road tile at: " + newX + "," + newY);
                     GridPoint next = new GridPoint(newX, newY);
@@ -134,6 +160,16 @@ public class EnemyManager {
             System.out.println("Path found with " + pathPoints.size() + " points");
         } else {
             System.out.println("No path found!");
+            // Yol bulunamadığında detaylı hata ayıklama bilgisi
+            System.out.println("Start point: " + startPoint);
+            System.out.println("End point: " + endPoint);
+            System.out.println("Current map state:");
+            for (int y = 0; y < rows; y++) {
+                for (int x = 0; x < cols; x++) {
+                    System.out.print(tileData[y][x] + " ");
+                }
+                System.out.println();
+            }
         }
     }
 
@@ -215,9 +251,19 @@ public class EnemyManager {
             System.out.println("Cannot add enemy: Path not found or empty");
             return;
         }
-        GridPoint spawnPoint = pathPoints.size() > 1 ? pathPoints.get(1) : pathPoints.get(0);
 
-        // calculate starting position (center of the spawn tile)
+        GridPoint spawnPoint = pathPoints.get(0);
+
+        if (!isValidSpawnPoint(spawnPoint)) {
+            for (int i = 0; i < pathPoints.size(); i++) {
+                if (isValidSpawnPoint(pathPoints.get(i))) {
+                    spawnPoint = pathPoints.get(i);
+                    break;
+                }
+            }
+        }
+
+        // Spawn noktasının merkez koordinatlarını hesapla
         int x = spawnPoint.getX() * tileSize + tileSize / 2;
         int y = spawnPoint.getY() * tileSize + tileSize / 2;
 
@@ -251,11 +297,17 @@ public class EnemyManager {
                 return;
         }
 
-        // Apply options to the enemy
         if (enemy != null) {
             applyOptionsToEnemy(enemy);
             enemies.add(enemy);
         }
+    }
+
+    private boolean isValidSpawnPoint(GridPoint point) {
+        int[][] overlay = playing.getOverlay();
+        return point != null &&
+                point != endPoint &&
+                !isGateTile(point.getX(), point.getY(), overlay);
     }
 
     /**

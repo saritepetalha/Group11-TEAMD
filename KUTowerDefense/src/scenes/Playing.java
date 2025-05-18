@@ -74,6 +74,24 @@ public class Playing extends GameScene implements SceneMethods {
     private BufferedImage wallImage;
     private BufferedImage gateImage;
 
+    private int castleMaxHealth;
+    private int castleCurrentHealth;
+    private static final int CASTLE_HEALTH_BAR_WIDTH = 100;
+    private static final int CASTLE_HEALTH_BAR_HEIGHT = 10;
+    private static final int CASTLE_HEALTH_BAR_X = 50;
+    private static final int CASTLE_HEALTH_BAR_Y = 50;
+
+    public Playing(Game game) {
+        super(game);
+        this.tileManager = new TileManager();
+        this.gameOptions = loadOptionsOrDefault();
+        loadDefaultLevel();
+        loadBorderImages();
+        initializeManagers();
+        this.castleMaxHealth = calculateCastleMaxHealth();
+        this.castleCurrentHealth = castleMaxHealth;
+    }
+
     public Playing(Game game, TileManager tileManager) {
         super(game);
         this.tileManager = tileManager;
@@ -81,7 +99,10 @@ public class Playing extends GameScene implements SceneMethods {
         loadDefaultLevel();
         loadBorderImages();
         initializeManagers();
+        this.castleMaxHealth = calculateCastleMaxHealth();
+        this.castleCurrentHealth = castleMaxHealth;
     }
+
     public Playing(Game game, TileManager tileManager, int[][] customLevel, int[][] customOverlay) {
         super(game);
         this.tileManager = tileManager;
@@ -94,6 +115,8 @@ public class Playing extends GameScene implements SceneMethods {
         this.gameOptions = loadOptionsOrDefault();
         loadBorderImages();
         initializeManagers();
+        this.castleMaxHealth = calculateCastleMaxHealth();
+        this.castleCurrentHealth = castleMaxHealth;
     }
 
     private GameOptions loadOptionsOrDefault() {
@@ -378,6 +401,7 @@ public class Playing extends GameScene implements SceneMethods {
         fireAnimationManager.draw(g);
         playingUI.draw(g);
         goldBagManager.draw(g);
+        drawCastleHealthBar(g);
     }
 
     private void drawHighlight(Graphics g) {
@@ -672,11 +696,20 @@ public class Playing extends GameScene implements SceneMethods {
         System.out.println("Enemy reached end: " + enemy.getId());
 
         enemiesReachedEnd++;
-        // each enemy that reaches the end causes 1 damage
+
         playerManager.takeDamage(1);
 
-        // update UI to show new shield/health values
+        this.castleCurrentHealth = playerManager.getHealth();
+
+        checkCastleHealth();
+
         updateUIResources();
+    }
+
+    private void checkCastleHealth() {
+        if (!playerManager.isAlive()) {
+            handleGameOver();
+        }
     }
 
     private void handleGameOver() {
@@ -686,16 +719,11 @@ public class Playing extends GameScene implements SceneMethods {
         System.out.println("Game Over!");
         gameOverHandled = true;
 
-        // Play a random lose sound
-        AudioManager.getInstance().playRandomLoseSound();
+        // Play the specific lose sound
+        AudioManager.getInstance().playSound("lose5");
 
         // stop any ongoing waves/spawning
-        // waveManager.resetWaveIndex(); // Removed - WaveManager state handles this
         enemyManager.getEnemies().clear();
-
-        // for now, we'll just wait 2 seconds and return to the menu, we will implement a proper game over screen soon
-
-        // use a separate thread to avoid blocking the game loop
 
         game.getGameOverScene().setStats(
                 false,
@@ -711,16 +739,14 @@ public class Playing extends GameScene implements SceneMethods {
     // add a method to handle victory
     private void handleVictory() {
         // Prevent multiple calls to handleVictory
-        if (victoryHandled) return;
+        // Zafer sadece tüm dalgalar bittiğinde ve oyuncu hayattaysa!
+        if (victoryHandled || !waveManager.isAllWavesFinished() || !playerManager.isAlive()) return;
 
         System.out.println("Victory!");
         victoryHandled = true;
 
-        // play a random victory sound
-        AudioManager.getInstance().playRandomVictorySound();
-
-        // Return to the menu after a short delay
-
+        // play the specific victory sound
+        AudioManager.getInstance().playSound("win4");
         game.getGameOverScene().setStats(
                 true,
                 playerManager.getGold(),
@@ -728,7 +754,6 @@ public class Playing extends GameScene implements SceneMethods {
                 enemiesReachedEnd,
                 towerManager.getTowers().size()
         );
-
         game.changeGameState(main.GameStates.GAME_OVER);
     }
 
@@ -796,7 +821,17 @@ public class Playing extends GameScene implements SceneMethods {
         optionsMenuOpen = false;
         gameSpeedMultiplier = 1.0f;
 
-        // 3. Restore original map state from stored copies
+        // 3. Reset player and castle health
+        if (this.gameOptions != null) {
+            playerManager = new PlayerManager(this.gameOptions);
+        } else {
+            System.err.println("CRITICAL: gameOptions null during resetGameState after load. Using defaults.");
+            playerManager = new PlayerManager(GameOptions.defaults());
+        }
+        this.castleMaxHealth = playerManager.getStartingHealthAmount(); // Max health is player's starting health
+        this.castleCurrentHealth = playerManager.getHealth(); // Current health is player's current health
+
+        // 4. Restore original map state from stored copies
         if (originalLevelData != null) {
             level = deepCopy2DArray(originalLevelData);
         } else {
@@ -810,11 +845,11 @@ public class Playing extends GameScene implements SceneMethods {
             return;
         }
 
-        // 4. Reset UI selections
+        // 5. Reset UI selections
         displayedTower = null;
         selectedDeadTree = null;
 
-        // 5. Clear active entities from managers
+        // 6. Clear active entities from managers
         if (towerManager != null) {
             towerManager.clearTowers();
         }
@@ -823,7 +858,7 @@ public class Playing extends GameScene implements SceneMethods {
         }
         // Note: Enemies are cleared when EnemyManager is reconstructed below, no need for explicit clear here.
 
-        // 6. Recreate or Reset managers that depend heavily on map state or need full reset
+        // 7. Recreate or Reset managers that depend heavily on map state or need full reset
         if (this.gameOptions != null) {
             playerManager = new PlayerManager(this.gameOptions);
         } else {
@@ -841,7 +876,7 @@ public class Playing extends GameScene implements SceneMethods {
             waveManager.resetWaveManager();
         }
 
-        // 7. Re-initialize map-derived lists (Dead/Live trees) based on the restored 'level'
+        // 8. Re-initialize map-derived lists (Dead/Live trees) based on the restored 'level'
         // This is crucial for ensuring tree states and interactions are correct after reset.
         if (towerManager != null) {
             deadTrees = towerManager.findDeadTrees(level);
@@ -850,7 +885,7 @@ public class Playing extends GameScene implements SceneMethods {
             System.err.println("CRITICAL: TowerManager null during resetGameState. Tree lists not updated.");
         }
 
-        // 8. Update UI to reflect the reset state
+        // 9. Update UI to reflect the reset state
         updateUIResources();
     }
 
@@ -877,5 +912,56 @@ public class Playing extends GameScene implements SceneMethods {
             case 2: return 100; // Mage
             default: return 100;
         }
+    }
+
+    public int[][] getLevel() {
+        return level;
+    }
+
+    public int[][] getOverlay() {
+        return overlay;
+    }
+
+    private int calculateCastleMaxHealth() {
+        return waveManager.getWaveCount() * 100;
+    }
+
+    private void drawCastleHealthBar(Graphics g) {
+        int castleX = -1, castleY = -1;
+        outer:
+        for (int i = 0; i < level.length - 1; i++) {
+            for (int j = 0; j < level[i].length - 1; j++) {
+                if (level[i][j] == tileManager.CastleTopLeft.getId() &&
+                        level[i][j+1] == tileManager.CastleTopRight.getId() &&
+                        level[i+1][j] == tileManager.CastleBottomLeft.getId() &&
+                        level[i+1][j+1] == tileManager.CastleBottomRight.getId()) {
+                    castleX = j;
+                    castleY = i;
+                    break outer;
+                }
+            }
+        }
+        if (castleX == -1 || castleY == -1) return;
+
+        int tileSize = constants.GameDimensions.TILE_DISPLAY_SIZE;
+        int barWidth = tileSize * 2 - 8;
+        int barHeight = 8;
+        int barX = castleX * tileSize + 4;
+        int barY = castleY * tileSize - 14;
+
+        g.setColor(Color.DARK_GRAY);
+        g.fillRoundRect(barX, barY, barWidth, barHeight, 6, 6);
+        float healthPercent = Math.max(0, (float)playerManager.getHealth() / playerManager.getStartingHealthAmount());
+        Color healthColor = new Color((int)(255 * (1-healthPercent)), (int)(220 * healthPercent), 40);
+        int healthBarWidth = (int)(barWidth * healthPercent);
+        g.setColor(healthColor);
+        g.fillRoundRect(barX, barY, healthBarWidth, barHeight, 6, 6);
+
+        g.setColor(Color.BLACK);
+        g.drawRoundRect(barX, barY, barWidth, barHeight, 6, 6);
+    }
+
+    public boolean isAllWavesFinished() {
+        return waveManager.isAllWavesFinished();
     }
 }
