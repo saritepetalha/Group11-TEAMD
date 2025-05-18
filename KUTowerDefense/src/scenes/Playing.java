@@ -25,6 +25,8 @@ import ui_p.DeadTree;
 import ui_p.PlayingUI;
 import ui_p.LiveTree;
 
+import managers.GoldBagManager;
+
 public class Playing extends GameScene implements SceneMethods {
     private int[][] level;
     private int[][] overlay;
@@ -61,6 +63,11 @@ public class Playing extends GameScene implements SceneMethods {
 
     private int totalEnemiesSpawned = 0;
     private int enemiesReachedEnd = 0;
+
+    private GoldBagManager goldBagManager;
+
+    // Add field to store upgrade button bounds
+    private Rectangle upgradeButtonBounds = null;
 
     public Playing(Game game, TileManager tileManager) {
         super(game);
@@ -113,6 +120,8 @@ public class Playing extends GameScene implements SceneMethods {
             liveTrees = towerManager.findLiveTrees(level);
 
         playingUI = new PlayingUI(this);
+
+        goldBagManager = new GoldBagManager();
 
         updateUIResources();
     }
@@ -254,10 +263,12 @@ public class Playing extends GameScene implements SceneMethods {
 
         for (int i = 0; i < level.length; i++) {
             for (int j = 0; j < level[i].length; j++) {
-                g.drawImage(tileManager.getSprite(level[i][j]), j * GameDimensions.TILE_DISPLAY_SIZE, i * GameDimensions.TILE_DISPLAY_SIZE, null);
+                // Skip drawing tower tiles (20=Mage, 21=Artillery, 26=Archer)
+                if (level[i][j] != 20 && level[i][j] != 21 && level[i][j] != 26) {
+                    g.drawImage(tileManager.getSprite(level[i][j]), j * GameDimensions.TILE_DISPLAY_SIZE, i * GameDimensions.TILE_DISPLAY_SIZE, null);
+                }
             }
         }
-
     }
 
     public void update() {
@@ -285,6 +296,8 @@ public class Playing extends GameScene implements SceneMethods {
             if (!playerManager.isAlive()) {
                 handleGameOver();
             }
+
+            goldBagManager.update();
         }
         checkButtonStates();
     }
@@ -332,6 +345,7 @@ public class Playing extends GameScene implements SceneMethods {
         drawDisplayedTower(g);
         fireAnimationManager.draw(g);
         playingUI.draw(g);
+        goldBagManager.draw(g);
     }
 
     private void drawHighlight(Graphics g) {
@@ -357,6 +371,45 @@ public class Playing extends GameScene implements SceneMethods {
         if (displayedTower == null) return;
         drawDisplayedTowerBorder(g);
         drawDisplayedTowerRange(g);
+        // Draw upgrade button (smaller pixel-art style)
+        int btnW = 64, btnH = 24;
+        int btnX = displayedTower.getX() + 32 - btnW/2;
+        int btnY = displayedTower.getY() + 80;
+        upgradeButtonBounds = new Rectangle(btnX, btnY, btnW, btnH);
+        if (displayedTower.isUpgradeable()) {
+            boolean canAfford = playerManager.getGold() >= getUpgradeCost(displayedTower);
+            // Draw thick dark border
+            g.setColor(new Color(40, 24, 8));
+            g.fillRect(btnX-3, btnY-3, btnW+6, btnH+6);
+            // Fill with parchment/wood color
+            g.setColor(new Color(210, 180, 140));
+            g.fillRect(btnX, btnY, btnW, btnH);
+            // Pixel-art highlight (top 3px)
+            g.setColor(new Color(255, 255, 255, 80));
+            g.fillRect(btnX+3, btnY+3, btnW-6, 3);
+            // Draw blocky border (simulate pixel art)
+            g.setColor(new Color(80, 40, 10));
+            for (int i = 0; i < 2; i++) {
+                g.drawRect(btnX+i, btnY+i, btnW-1-2*i, btnH-1-2*i);
+            }
+            // Draw text (smaller, bold)
+            g.setFont(new Font("Dialog", Font.BOLD, 14));
+            g.setColor(canAfford ? new Color(30, 20, 10) : new Color(80,80,80));
+            String text = "Upgrade";
+            int textWidth = g.getFontMetrics().stringWidth(text);
+            int textHeight = g.getFontMetrics().getAscent();
+            int textX = btnX + (btnW - textWidth) / 2;
+            int textY = btnY + (btnH + textHeight) / 2 - 2;
+            g.drawString(text, textX, textY);
+            // If not affordable, draw X
+            if (!canAfford) {
+                g.setColor(new Color(200,0,0,180));
+                g.drawLine(btnX+4, btnY+4, btnX+btnW-4, btnY+btnH-4);
+                g.drawLine(btnX+btnW-4, btnY+4, btnX+4, btnY+btnH-4);
+            }
+        } else {
+            upgradeButtonBounds = null;
+        }
     }
 
     private void drawDisplayedTowerRange(Graphics g) {
@@ -416,15 +469,29 @@ public class Playing extends GameScene implements SceneMethods {
     public void mouseClicked(int x, int y) {
         this.mouseX = x;
         this.mouseY = y;
+        // Handle upgrade button click
+        if (displayedTower != null && upgradeButtonBounds != null && upgradeButtonBounds.contains(x, y)) {
+            if (displayedTower.isUpgradeable() && playerManager.getGold() >= getUpgradeCost(displayedTower)) {
+                playerManager.spendGold(getUpgradeCost(displayedTower));
+                displayedTower.upgrade();
+                towerManager.triggerUpgradeEffect(displayedTower);
+                updateUIResources();
+            }
+            return; // Prevent other actions if upgrade is performed
+        }
         displayedTower = null;
-
         if (deadTrees != null) {
             treeInteractionManager.handleDeadTreeInteraction(mouseX, mouseY);
         }
         if (liveTrees != null) {
             treeInteractionManager.handleLiveTreeInteraction(mouseX, mouseY);
         }
-
+        // Gold bag collection
+        var collectedBag = goldBagManager.tryCollect(x, y);
+        if (collectedBag != null) {
+            playerManager.addGold(collectedBag.getGoldAmount());
+            updateUIResources();
+        }
         handleTowerClick();
     }
 
@@ -659,6 +726,10 @@ public class Playing extends GameScene implements SceneMethods {
         return optionsMenuOpen;
     }
 
+    public float getGameSpeedMultiplier() {
+        return gameSpeedMultiplier;
+    }
+
     public void returnToMainMenu() {
         System.out.println("Returning to main menu");
         game.changeGameState(main.GameStates.MENU);
@@ -760,5 +831,19 @@ public class Playing extends GameScene implements SceneMethods {
         String stateInfo = waveManager.getCurrentStateInfo();
 
         return "Wave " + currentWave + "\n" + stateInfo;
+    }
+
+    public GoldBagManager getGoldBagManager() {
+        return goldBagManager;
+    }
+
+    // Helper to get upgrade cost
+    private int getUpgradeCost(Tower tower) {
+        switch (tower.getType()) {
+            case 0: return 75; // Archer
+            case 1: return 120; // Artillery
+            case 2: return 100; // Mage
+            default: return 100;
+        }
     }
 }

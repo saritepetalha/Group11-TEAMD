@@ -50,31 +50,42 @@ public class ProjectileManager {
         int towerCenterY = tower.getY() + 32;
 
         // calculate distance and direction components
-        int xDist = (int) Math.abs(towerCenterX - enemyCenterX);
-        int yDist = (int) Math.abs(towerCenterY - enemyCenterY);
-        int totalDist = xDist + yDist;
+        float xDiff = enemyCenterX - towerCenterX;
+        float yDiff = enemyCenterY - towerCenterY;
+        float distance = (float) Math.sqrt(xDiff * xDiff + yDiff * yDiff);
 
-        // if distances are too small, avoid division by zero
-        if (totalDist < 1) totalDist = 1;
+        // Calculate time to reach target based on projectile speed
+        float projectileSpeed = Constants.Projectiles.getSpeed(projType);
+        float timeToTarget = distance / projectileSpeed;
 
-        // calculate speed ratios based on distance components
-        float xRatio = (float) xDist / totalDist;
-        float yRatio = (float) yDist / totalDist;
+        // Get enemy's movement direction and speed
+        float enemyDirX = enemy.getDirX();
+        float enemyDirY = enemy.getDirY();
+        float enemySpeed = enemy.getSpeed();
 
-        // calculate actual speed components
-        float xSpeed = xRatio * Constants.Projectiles.getSpeed(projType);
-        float ySpeed = yRatio * Constants.Projectiles.getSpeed(projType);
+        // Get current game speed multiplier
+        float gameSpeedMultiplier = playing.getGameSpeedMultiplier();
 
-        // adjust direction based on relative positions
-        if (towerCenterX > enemyCenterX) {
-            xSpeed *= -1;
-        }
+        // Predict enemy position after timeToTarget, considering both speed and direction
+        // Adjust prediction based on game speed
+        float predictedX = enemyCenterX + (enemySpeed * timeToTarget * enemyDirX * gameSpeedMultiplier);
+        float predictedY = enemyCenterY + (enemySpeed * timeToTarget * enemyDirY * gameSpeedMultiplier);
 
-        if (towerCenterY > enemyCenterY) {
-            ySpeed *= -1;
-        }
+        // Add a small random offset to make shots more natural
+        float randomOffset = (float) (Math.random() * 0.1 - 0.05); // ±5% random offset
+        float adjustedSpeed = projectileSpeed * (1 + randomOffset);
 
-        projectiles.add(new Projectile(towerCenterX, towerCenterY, xSpeed, ySpeed, projID++, tower.getDamage(), projType));
+        // Recalculate direction to predicted position
+        xDiff = predictedX - towerCenterX;
+        yDiff = predictedY - towerCenterY;
+        distance = (float) Math.sqrt(xDiff * xDiff + yDiff * yDiff);
+
+        // Normalize direction and apply speed
+        float xSpeed = (xDiff / distance) * adjustedSpeed;
+        float ySpeed = (yDiff / distance) * adjustedSpeed;
+
+        // Pass tower level to projectile
+        projectiles.add(new Projectile(towerCenterX, towerCenterY, xSpeed, ySpeed, projID++, tower.getDamage(), projType, tower.getLevel()));
     }
 
     public void update() {
@@ -87,14 +98,38 @@ public class ProjectileManager {
                     if (currentProjectile.getProjectileType() == Constants.Projectiles.CANNONBALL) {
                         currentProjectile.incrementAnimationFrame();
                     }
-                    if (isEnemyShot(currentProjectile)) {
+                    if (!currentProjectile.isHit() && isEnemyShot(currentProjectile)) {
                         if (currentProjectile.getProjectileType() == Constants.Projectiles.CANNONBALL) {
                             currentProjectile.setExploding(true);
                         } else {
-                            currentProjectile.setActive(false);
+                            currentProjectile.setHit();
                         }
                     }
                 }
+                currentProjectile.update();
+            }
+        }
+    }
+
+    public void update(float gameSpeedMultiplier) {
+        for (Projectile currentProjectile : projectiles) {
+            if (currentProjectile.isActive()) {
+                if (currentProjectile.isExploding()) {
+                    currentProjectile.incrementExplosionFrame();
+                } else {
+                    currentProjectile.move(gameSpeedMultiplier);
+                    if (currentProjectile.getProjectileType() == Constants.Projectiles.CANNONBALL) {
+                        currentProjectile.incrementAnimationFrame();
+                    }
+                    if (!currentProjectile.isHit() && isEnemyShot(currentProjectile)) {
+                        if (currentProjectile.getProjectileType() == Constants.Projectiles.CANNONBALL) {
+                            currentProjectile.setExploding(true);
+                        } else {
+                            currentProjectile.setHit();
+                        }
+                    }
+                }
+                currentProjectile.update();
             }
         }
     }
@@ -102,9 +137,44 @@ public class ProjectileManager {
     private boolean isEnemyShot(Projectile projectile) {
         for (Enemy enemy : playing.getEnemyManager().getEnemies()) {
             if (enemy.isAlive()) {
-                // check if the projectile hits the enemy's boundary
-                if (enemy.getBounds().contains(projectile.getPos())) {
+                // Get enemy's actual sprite bounds for visual hit detection
+                Rectangle enemyBounds = enemy.getBounds();
+                
+                // Calculate the actual sprite center and size based on enemy type
+                float centerX = enemy.getSpriteCenterX();
+                float centerY = enemy.getSpriteCenterY();
+                
+                // Create a hit area that scales with enemy size
+                int hitSize;
+                switch (enemy.getSize()) {
+                    case SMALL:
+                        hitSize = 16;  // Smaller hit area for small enemies
+                        break;
+                    case MEDIUM:
+                        hitSize = 24;  // Medium hit area for medium enemies
+                        break;
+                    case LARGE:
+                        hitSize = 32;  // Larger hit area for large enemies
+                        break;
+                    default:
+                        hitSize = 20;
+                }
+
+                Rectangle hitArea = new Rectangle(
+                    (int)centerX - hitSize/2,
+                    (int)centerY - hitSize/2,
+                    hitSize,
+                    hitSize
+                );
+
+                // Check if the projectile hits the enemy's sprite center
+                if (hitArea.contains(projectile.getPos())) {
                     enemy.hurt(projectile.getDamage());
+
+                    // Mage slow effect
+                    if (projectile.getProjectileType() == Constants.Projectiles.MAGICBOLT && projectile.getLevel() == 2) {
+                        enemy.applySlow();
+                    }
 
                     // handle AOE damage for CANNONBALL projectile type
                     if (projectile.getProjectileType() == Constants.Projectiles.CANNONBALL) {
@@ -155,7 +225,10 @@ public class ProjectileManager {
     }
 
     public void draw(Graphics g) {
-        for (Projectile currentProjectile : projectiles) {
+        // Create a copy of the projectiles list to avoid concurrent modification
+        ArrayList<Projectile> projectilesCopy = new ArrayList<>(projectiles);
+        
+        for (Projectile currentProjectile : projectilesCopy) {
             if (currentProjectile.isActive()) {
                 if (currentProjectile.isExploding()) {
                     int frame = currentProjectile.getExplosionFrame();
@@ -173,6 +246,10 @@ public class ProjectileManager {
                                 (int) currentProjectile.getPos().y - fireball_imgs[frame].getHeight() / 2,
                                 null);
                     }
+                } else if (currentProjectile.getProjectileType() == Constants.Projectiles.MAGICBOLT && currentProjectile.getLevel() == 2) {
+                    // Draw cyan circle for level 2 mage projectile
+                    g.setColor(Color.CYAN);
+                    g.fillOval((int) currentProjectile.getPos().x, (int) currentProjectile.getPos().y, 16, 16);
                 } else {
                     g.drawImage(proj_imgs[currentProjectile.getProjectileType()],
                             (int) currentProjectile.getPos().x,

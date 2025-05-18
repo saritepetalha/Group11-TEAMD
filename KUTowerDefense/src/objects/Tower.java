@@ -6,9 +6,11 @@ import java.awt.*;
 
 public abstract class Tower {
 
-    private int x, y, ID, countDownClock, damage;
-    private float range, cooldown;
+    private int x, y, ID, countDownClock;
+    protected int damage;
+    protected float range, cooldown;
     private static int num = 0;
+    protected int level = 1;
     public abstract int getType();
 
     public Tower(int x, int y) {
@@ -59,6 +61,15 @@ public abstract class Tower {
     }
 
     public void update() {
-        countDownClock ++;
+        countDownClock++;
     }
+
+    public void update(float gameSpeedMultiplier) {
+        countDownClock += gameSpeedMultiplier;
+    }
+
+    public int getLevel() { return level; }
+    public boolean isUpgradeable() { return level == 1; }
+    public abstract void upgrade();
+    public void setLevel(int lvl) { this.level = lvl; }
 }

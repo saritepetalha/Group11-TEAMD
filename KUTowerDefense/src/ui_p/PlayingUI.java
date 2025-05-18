@@ -308,6 +308,26 @@ public class PlayingUI {
         g2d.setColor(new Color(157, 209, 153, 255));
         g2d.fillRect(x, y, width, height);
 
+        // Special handling for pause button when game is paused
+        if (button == pauseButton && playing.isGamePaused()) {
+            // Draw a more prominent pulsing glow effect
+            long currentTime = System.currentTimeMillis();
+            float alpha = (float) (0.5f + 0.3f * Math.sin(currentTime * 0.005)); // Stronger pulse
+            
+            // Draw outer glow
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha * 0.5f));
+            g2d.setColor(new Color(255, 255, 0)); // Yellow glow
+            g2d.fillOval(x - 4, y - 4, width + 8, height + 8);
+            
+            // Draw inner glow
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+            g2d.setColor(new Color(255, 255, 200)); // Brighter inner glow
+            g2d.fillOval(x - 2, y - 2, width + 4, height + 4);
+            
+            // Reset composite
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
+        }
+
         g2d.drawImage(normalImg, x, y, width, height, null); // draw base image
 
         if (button.isMousePressed()) {               // if button is pressed, draw pressed effect
@@ -331,7 +351,24 @@ public class PlayingUI {
 
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
 
-        g2d.setColor(new Color(0, 0, 0, 150));
+        // Draw a gradient overlay that's less dark around the pause button
+        int pauseButtonX = pauseButton.getX();
+        int pauseButtonY = pauseButton.getY();
+        int pauseButtonSize = pauseButton.getWidth();
+        
+        // Create a radial gradient that's more transparent around the pause button
+        RadialGradientPaint gradient = new RadialGradientPaint(
+            pauseButtonX + pauseButtonSize/2, pauseButtonY + pauseButtonSize/2, // center point
+            pauseButtonSize * 2, // radius
+            new float[]{0.0f, 0.5f, 1.0f}, // fractions
+            new Color[]{
+                new Color(0, 0, 0, 0), // transparent at center
+                new Color(0, 0, 0, 100), // semi-transparent in middle
+                new Color(0, 0, 0, 150) // darker at edges
+            }
+        );
+        
+        g2d.setPaint(gradient);
         g2d.fillRect(0, 0, GameDimensions.GAME_WIDTH, GameDimensions.GAME_HEIGHT);
 
         Font pauseFont = helpMethods.FontLoader.loadMedodicaFont(64f);

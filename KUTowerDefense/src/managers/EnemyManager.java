@@ -168,7 +168,10 @@ public class EnemyManager {
     }
 
     public void update(float speedMultiplier){
-        for (Enemy enemy : enemies) {
+        // Create a copy of the enemies list to avoid concurrent modification
+        ArrayList<Enemy> enemiesCopy = new ArrayList<>(enemies);
+        
+        for (Enemy enemy : enemiesCopy) {
             if (enemy.isAlive()) {
                 // adjust animation speed when game speed changes
                 enemy.adjustAnimationForGameSpeed(speedMultiplier);
@@ -179,11 +182,17 @@ public class EnemyManager {
 
         ArrayList<Enemy> enemiesToRemove = new ArrayList<>();
 
-        for (Enemy e : enemies) {
+        for (Enemy e : enemiesCopy) {
             if (!e.isAlive()) {
                 playing.getPlayerManager().addGold(e.getGoldReward());
                 playing.updateUIResources();
                 System.out.println("Enemy " + e.getId() + " killed. + " + e.getGoldReward() + " gold!");
+                // 50% chance to spawn a gold bag
+                if (Math.random() < 0.5) {
+                    float bagX = e.getSpriteCenterX();
+                    float bagY = e.getSpriteCenterY();
+                    playing.getGoldBagManager().spawnGoldBag(bagX, bagY, 2, 30);
+                }
                 enemiesToRemove.add(e);
                 continue;
             }
@@ -328,7 +337,10 @@ public class EnemyManager {
     }
 
     public void draw(Graphics g){
-        for (Enemy enemy: enemies){
+        // Create a copy of the enemies list to avoid concurrent modification
+        ArrayList<Enemy> enemiesCopy = new ArrayList<>(enemies);
+        
+        for (Enemy enemy: enemiesCopy){
             if (enemy.isAlive()) {
                 // Update animation in normal speed
                 enemy.updateAnimationTick();
@@ -338,7 +350,10 @@ public class EnemyManager {
     }
 
     public void draw(Graphics g, boolean gamePaused){
-        for (Enemy enemy: enemies){
+        // Create a copy of the enemies list to avoid concurrent modification
+        ArrayList<Enemy> enemiesCopy = new ArrayList<>(enemies);
+        
+        for (Enemy enemy: enemiesCopy){
             if (enemy.isAlive()) {
                 // only update animation if game is not paused
                 if (!gamePaused) {
@@ -483,6 +498,20 @@ public class EnemyManager {
         // draw the enemy with appropriate size
         g.drawImage(sprite, drawX, drawY, drawWidth, drawHeight, null);
         drawHealthBar(g, enemy, drawX, drawY, drawWidth, drawHeight);
+        // Draw snowflake icon if slowed
+        if (enemy.isSlowed()) {
+            if (Enemy.snowflakeIcon == null) {
+                Enemy.snowflakeIcon = helpMethods.LoadSave.getImageFromPath("/TowerAssets/snow flake icon.png");
+            }
+            if (Enemy.snowflakeIcon != null) {
+                int healthBarWidth = 40;
+                int healthBarHeight = 4;
+                int healthBarX = drawX + (drawWidth - healthBarWidth) / 2;
+                boolean drawAbove = enemy.getEnemyType() % 2 == 1;
+                int healthBarY = drawAbove ? drawY - 8 : drawY + drawHeight + 2;
+                g.drawImage(Enemy.snowflakeIcon, healthBarX - 14, healthBarY - 4, 12, 12, null);
+            }
+        }
     }
 
     private void drawHealthBar(Graphics g, Enemy enemy, int x, int y, int width, int height) {

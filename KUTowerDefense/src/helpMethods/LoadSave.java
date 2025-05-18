@@ -300,6 +300,18 @@ public class LoadSave {
         return frames;
     }
 
-
+    public static BufferedImage[] getGoldBagAnimation() {
+        final int frameCount = 7;
+        final int frameWidth = 128;
+        final int frameHeight = 128;
+        BufferedImage[] frames = new BufferedImage[frameCount];
+        BufferedImage spriteSheet = getImageFromPath("/EnemyAssets/G_Spawn.png");
+        if (spriteSheet != null) {
+            for (int i = 0; i < frameCount; i++) {
+                frames[i] = spriteSheet.getSubimage(i * frameWidth, 0, frameWidth, frameHeight);
+            }
+        }
+        return frames;
+    }
 
 }
