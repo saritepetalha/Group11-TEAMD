@@ -58,22 +58,27 @@ public class ProjectileManager {
         float projectileSpeed = Constants.Projectiles.getSpeed(projType);
         float timeToTarget = distance / projectileSpeed;
 
-        // Get enemy's movement direction
+        // Get enemy's movement direction and speed
         float enemyDirX = enemy.getDirX();
         float enemyDirY = enemy.getDirY();
+        float enemySpeed = enemy.getSpeed();
+
+        // Get current game speed multiplier
+        float gameSpeedMultiplier = playing.getGameSpeedMultiplier();
 
         // Predict enemy position after timeToTarget, considering both speed and direction
-        float predictedX = enemyCenterX + (enemy.getSpeed() * timeToTarget * enemyDirX);
-        float predictedY = enemyCenterY + (enemy.getSpeed() * timeToTarget * enemyDirY);
+        // Adjust prediction based on game speed
+        float predictedX = enemyCenterX + (enemySpeed * timeToTarget * enemyDirX * gameSpeedMultiplier);
+        float predictedY = enemyCenterY + (enemySpeed * timeToTarget * enemyDirY * gameSpeedMultiplier);
+
+        // Add a small random offset to make shots more natural
+        float randomOffset = (float) (Math.random() * 0.1 - 0.05); // ±5% random offset
+        float adjustedSpeed = projectileSpeed * (1 + randomOffset);
 
         // Recalculate direction to predicted position
         xDiff = predictedX - towerCenterX;
         yDiff = predictedY - towerCenterY;
         distance = (float) Math.sqrt(xDiff * xDiff + yDiff * yDiff);
-
-        // Add a small random offset to make shots more natural
-        float randomOffset = (float) (Math.random() * 0.1 - 0.05); // ±5% random offset
-        float adjustedSpeed = projectileSpeed * (1 + randomOffset);
 
         // Normalize direction and apply speed
         float xSpeed = (xDiff / distance) * adjustedSpeed;
@@ -115,8 +120,22 @@ public class ProjectileManager {
                 float centerX = enemy.getSpriteCenterX();
                 float centerY = enemy.getSpriteCenterY();
                 
-                // Create a smaller hit area around the sprite center
-                int hitSize = 20; // Smaller hit area for more precise hits
+                // Create a hit area that scales with enemy size
+                int hitSize;
+                switch (enemy.getSize()) {
+                    case SMALL:
+                        hitSize = 16;  // Smaller hit area for small enemies
+                        break;
+                    case MEDIUM:
+                        hitSize = 24;  // Medium hit area for medium enemies
+                        break;
+                    case LARGE:
+                        hitSize = 32;  // Larger hit area for large enemies
+                        break;
+                    default:
+                        hitSize = 20;
+                }
+
                 Rectangle hitArea = new Rectangle(
                     (int)centerX - hitSize/2,
                     (int)centerY - hitSize/2,

@@ -659,6 +659,10 @@ public class Playing extends GameScene implements SceneMethods {
         return optionsMenuOpen;
     }
 
+    public float getGameSpeedMultiplier() {
+        return gameSpeedMultiplier;
+    }
+
     public void returnToMainMenu() {
         System.out.println("Returning to main menu");
         game.changeGameState(main.GameStates.MENU);
