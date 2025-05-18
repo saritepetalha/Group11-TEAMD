@@ -168,7 +168,10 @@ public class EnemyManager {
     }
 
     public void update(float speedMultiplier){
-        for (Enemy enemy : enemies) {
+        // Create a copy of the enemies list to avoid concurrent modification
+        ArrayList<Enemy> enemiesCopy = new ArrayList<>(enemies);
+        
+        for (Enemy enemy : enemiesCopy) {
             if (enemy.isAlive()) {
                 // adjust animation speed when game speed changes
                 enemy.adjustAnimationForGameSpeed(speedMultiplier);
@@ -179,7 +182,7 @@ public class EnemyManager {
 
         ArrayList<Enemy> enemiesToRemove = new ArrayList<>();
 
-        for (Enemy e : enemies) {
+        for (Enemy e : enemiesCopy) {
             if (!e.isAlive()) {
                 playing.getPlayerManager().addGold(e.getGoldReward());
                 playing.updateUIResources();
@@ -328,7 +331,10 @@ public class EnemyManager {
     }
 
     public void draw(Graphics g){
-        for (Enemy enemy: enemies){
+        // Create a copy of the enemies list to avoid concurrent modification
+        ArrayList<Enemy> enemiesCopy = new ArrayList<>(enemies);
+        
+        for (Enemy enemy: enemiesCopy){
             if (enemy.isAlive()) {
                 // Update animation in normal speed
                 enemy.updateAnimationTick();
@@ -338,7 +344,10 @@ public class EnemyManager {
     }
 
     public void draw(Graphics g, boolean gamePaused){
-        for (Enemy enemy: enemies){
+        // Create a copy of the enemies list to avoid concurrent modification
+        ArrayList<Enemy> enemiesCopy = new ArrayList<>(enemies);
+        
+        for (Enemy enemy: enemiesCopy){
             if (enemy.isAlive()) {
                 // only update animation if game is not paused
                 if (!gamePaused) {

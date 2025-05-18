@@ -20,6 +20,8 @@ public abstract class Enemy {
     protected boolean reachedEnd = false;
     protected Rectangle boundary;    // for hit box
     protected boolean alive = true;
+    protected float dirX = 0;        // direction X component
+    protected float dirY = 0;        // direction Y component
 
     // for animation of enemies' walking
     private int animationIndex = 0;
@@ -156,6 +158,13 @@ public abstract class Enemy {
     public void move(float xSpeed, float ySpeed) {
         this.x += xSpeed;
         this.y += ySpeed;
+
+        // Update direction based on movement
+        float totalSpeed = (float) Math.sqrt(xSpeed * xSpeed + ySpeed * ySpeed);
+        if (totalSpeed > 0) {
+            this.dirX = xSpeed / totalSpeed;
+            this.dirY = ySpeed / totalSpeed;
+        }
 
         // Update the boundary position
         updateBoundary();
@@ -348,5 +357,13 @@ public abstract class Enemy {
     }
     public int getGoldReward() {
         return goldReward;
+    }
+
+    public float getDirX() {
+        return dirX;
+    }
+
+    public float getDirY() {
+        return dirY;
     }
 }

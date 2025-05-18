@@ -8,6 +8,9 @@ public class Projectile {
     private int id, damage, projectileType;
     private boolean active = true;
     private boolean exploding = false;
+    private boolean hit = false;
+    private long hitTime = 0;
+    private static final long HIT_DISPLAY_TIME = 100_000_000; // 100ms in nanoseconds
 
     private int animationFrame = 0;
     private int explosionFrame = 0;
@@ -26,8 +29,23 @@ public class Projectile {
     }
 
     public void move() {
-        x += xSpeed;
-        y += ySpeed;
+        if (!hit) {
+            x += xSpeed;
+            y += ySpeed;
+        }
+    }
+
+    public void setHit() {
+        if (!hit) {
+            hit = true;
+            hitTime = System.nanoTime();
+        }
+    }
+
+    public void update() {
+        if (hit && System.nanoTime() - hitTime > HIT_DISPLAY_TIME) {
+            active = false;
+        }
     }
 
     public void incrementAnimationFrame() {
@@ -87,5 +105,8 @@ public class Projectile {
         this.active = active;
     }
 
+    public boolean isHit() {
+        return hit;
+    }
 
 }

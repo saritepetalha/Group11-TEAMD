@@ -50,29 +50,34 @@ public class ProjectileManager {
         int towerCenterY = tower.getY() + 32;
 
         // calculate distance and direction components
-        int xDist = (int) Math.abs(towerCenterX - enemyCenterX);
-        int yDist = (int) Math.abs(towerCenterY - enemyCenterY);
-        int totalDist = xDist + yDist;
+        float xDiff = enemyCenterX - towerCenterX;
+        float yDiff = enemyCenterY - towerCenterY;
+        float distance = (float) Math.sqrt(xDiff * xDiff + yDiff * yDiff);
 
-        // if distances are too small, avoid division by zero
-        if (totalDist < 1) totalDist = 1;
+        // Calculate time to reach target based on projectile speed
+        float projectileSpeed = Constants.Projectiles.getSpeed(projType);
+        float timeToTarget = distance / projectileSpeed;
 
-        // calculate speed ratios based on distance components
-        float xRatio = (float) xDist / totalDist;
-        float yRatio = (float) yDist / totalDist;
+        // Get enemy's movement direction
+        float enemyDirX = enemy.getDirX();
+        float enemyDirY = enemy.getDirY();
 
-        // calculate actual speed components
-        float xSpeed = xRatio * Constants.Projectiles.getSpeed(projType);
-        float ySpeed = yRatio * Constants.Projectiles.getSpeed(projType);
+        // Predict enemy position after timeToTarget, considering both speed and direction
+        float predictedX = enemyCenterX + (enemy.getSpeed() * timeToTarget * enemyDirX);
+        float predictedY = enemyCenterY + (enemy.getSpeed() * timeToTarget * enemyDirY);
 
-        // adjust direction based on relative positions
-        if (towerCenterX > enemyCenterX) {
-            xSpeed *= -1;
-        }
+        // Recalculate direction to predicted position
+        xDiff = predictedX - towerCenterX;
+        yDiff = predictedY - towerCenterY;
+        distance = (float) Math.sqrt(xDiff * xDiff + yDiff * yDiff);
 
-        if (towerCenterY > enemyCenterY) {
-            ySpeed *= -1;
-        }
+        // Add a small random offset to make shots more natural
+        float randomOffset = (float) (Math.random() * 0.1 - 0.05); // ±5% random offset
+        float adjustedSpeed = projectileSpeed * (1 + randomOffset);
+
+        // Normalize direction and apply speed
+        float xSpeed = (xDiff / distance) * adjustedSpeed;
+        float ySpeed = (yDiff / distance) * adjustedSpeed;
 
         projectiles.add(new Projectile(towerCenterX, towerCenterY, xSpeed, ySpeed, projID++, tower.getDamage(), projType));
     }
@@ -87,14 +92,15 @@ public class ProjectileManager {
                     if (currentProjectile.getProjectileType() == Constants.Projectiles.CANNONBALL) {
                         currentProjectile.incrementAnimationFrame();
                     }
-                    if (isEnemyShot(currentProjectile)) {
+                    if (!currentProjectile.isHit() && isEnemyShot(currentProjectile)) {
                         if (currentProjectile.getProjectileType() == Constants.Projectiles.CANNONBALL) {
                             currentProjectile.setExploding(true);
                         } else {
-                            currentProjectile.setActive(false);
+                            currentProjectile.setHit();
                         }
                     }
                 }
+                currentProjectile.update();
             }
         }
     }
@@ -102,8 +108,24 @@ public class ProjectileManager {
     private boolean isEnemyShot(Projectile projectile) {
         for (Enemy enemy : playing.getEnemyManager().getEnemies()) {
             if (enemy.isAlive()) {
-                // check if the projectile hits the enemy's boundary
-                if (enemy.getBounds().contains(projectile.getPos())) {
+                // Get enemy's actual sprite bounds for visual hit detection
+                Rectangle enemyBounds = enemy.getBounds();
+                
+                // Calculate the actual sprite center and size based on enemy type
+                float centerX = enemy.getSpriteCenterX();
+                float centerY = enemy.getSpriteCenterY();
+                
+                // Create a smaller hit area around the sprite center
+                int hitSize = 20; // Smaller hit area for more precise hits
+                Rectangle hitArea = new Rectangle(
+                    (int)centerX - hitSize/2,
+                    (int)centerY - hitSize/2,
+                    hitSize,
+                    hitSize
+                );
+
+                // Check if the projectile hits the enemy's sprite center
+                if (hitArea.contains(projectile.getPos())) {
                     enemy.hurt(projectile.getDamage());
 
                     // handle AOE damage for CANNONBALL projectile type
@@ -155,7 +177,10 @@ public class ProjectileManager {
     }
 
     public void draw(Graphics g) {
-        for (Projectile currentProjectile : projectiles) {
+        // Create a copy of the projectiles list to avoid concurrent modification
+        ArrayList<Projectile> projectilesCopy = new ArrayList<>(projectiles);
+        
+        for (Projectile currentProjectile : projectilesCopy) {
             if (currentProjectile.isActive()) {
                 if (currentProjectile.isExploding()) {
                     int frame = currentProjectile.getExplosionFrame();
