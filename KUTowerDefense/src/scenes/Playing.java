@@ -1,6 +1,7 @@
 package scenes;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 
 import java.awt.event.MouseWheelEvent;
 
@@ -69,11 +70,16 @@ public class Playing extends GameScene implements SceneMethods {
     // Add field to store upgrade button bounds
     private Rectangle upgradeButtonBounds = null;
 
+    // Border images
+    private BufferedImage wallImage;
+    private BufferedImage gateImage;
+
     public Playing(Game game, TileManager tileManager) {
         super(game);
         this.tileManager = tileManager;
         this.gameOptions = loadOptionsOrDefault();
         loadDefaultLevel();
+        loadBorderImages();
         initializeManagers();
     }
     public Playing(Game game, TileManager tileManager, int[][] customLevel, int[][] customOverlay) {
@@ -86,6 +92,7 @@ public class Playing extends GameScene implements SceneMethods {
         this.originalOverlayData = deepCopy2DArray(customOverlay);
 
         this.gameOptions = loadOptionsOrDefault();
+        loadBorderImages();
         initializeManagers();
     }
 
@@ -126,6 +133,15 @@ public class Playing extends GameScene implements SceneMethods {
         updateUIResources();
     }
 
+    private void loadBorderImages() {
+        wallImage = LoadSave.getImageFromPath("/Borders/wall.png");
+        gateImage = LoadSave.getImageFromPath("/Borders/gate.png");
+        if (wallImage != null && gateImage != null) {
+            System.out.println("Border images loaded successfully in Playing mode");
+        } else {
+            System.err.println("Error loading border images in Playing mode");
+        }
+    }
 
     public void updateUIResources() {
         if (playerManager == null) return;
@@ -263,9 +279,25 @@ public class Playing extends GameScene implements SceneMethods {
 
         for (int i = 0; i < level.length; i++) {
             for (int j = 0; j < level[i].length; j++) {
+                int tileId = level[i][j];
+
                 // Skip drawing tower tiles (20=Mage, 21=Artillery, 26=Archer)
-                if (level[i][j] != 20 && level[i][j] != 21 && level[i][j] != 26) {
-                    g.drawImage(tileManager.getSprite(level[i][j]), j * GameDimensions.TILE_DISPLAY_SIZE, i * GameDimensions.TILE_DISPLAY_SIZE, null);
+                if (tileId != 20 && tileId != 21 && tileId != 26) {
+                    // Special handling for wall and gate in playing mode - draw them normally
+                    if (tileId == -3) { // Wall
+                        if (wallImage != null) {
+                            g.drawImage(wallImage, j * GameDimensions.TILE_DISPLAY_SIZE, i * GameDimensions.TILE_DISPLAY_SIZE,
+                                    GameDimensions.TILE_DISPLAY_SIZE, GameDimensions.TILE_DISPLAY_SIZE, null);
+                        }
+                    } else if (tileId == -4) { // Gate
+                        if (gateImage != null) {
+                            g.drawImage(gateImage, j * GameDimensions.TILE_DISPLAY_SIZE, i * GameDimensions.TILE_DISPLAY_SIZE,
+                                    GameDimensions.TILE_DISPLAY_SIZE, GameDimensions.TILE_DISPLAY_SIZE, null);
+                        }
+                    } else {
+                        // Regular tiles
+                        g.drawImage(tileManager.getSprite(tileId), j * GameDimensions.TILE_DISPLAY_SIZE, i * GameDimensions.TILE_DISPLAY_SIZE, null);
+                    }
                 }
             }
         }

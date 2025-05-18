@@ -170,7 +170,7 @@ public class EnemyManager {
     public void update(float speedMultiplier){
         // Create a copy of the enemies list to avoid concurrent modification
         ArrayList<Enemy> enemiesCopy = new ArrayList<>(enemies);
-        
+
         for (Enemy enemy : enemiesCopy) {
             if (enemy.isAlive()) {
                 // adjust animation speed when game speed changes
@@ -215,12 +215,11 @@ public class EnemyManager {
             System.out.println("Cannot add enemy: Path not found or empty");
             return;
         }
+        GridPoint spawnPoint = pathPoints.size() > 1 ? pathPoints.get(1) : pathPoints.get(0);
 
-        GridPoint firstPoint = pathPoints.get(0);
-
-        // calculate starting position (center of the start tile)
-        int x = firstPoint.getX() * tileSize + tileSize / 2;
-        int y = firstPoint.getY() * tileSize + tileSize / 2;
+        // calculate starting position (center of the spawn tile)
+        int x = spawnPoint.getX() * tileSize + tileSize / 2;
+        int y = spawnPoint.getY() * tileSize + tileSize / 2;
 
         System.out.println("Adding enemy at position: " + x + "," + y);
 
@@ -339,7 +338,7 @@ public class EnemyManager {
     public void draw(Graphics g){
         // Create a copy of the enemies list to avoid concurrent modification
         ArrayList<Enemy> enemiesCopy = new ArrayList<>(enemies);
-        
+
         for (Enemy enemy: enemiesCopy){
             if (enemy.isAlive()) {
                 // Update animation in normal speed
@@ -352,7 +351,7 @@ public class EnemyManager {
     public void draw(Graphics g, boolean gamePaused){
         // Create a copy of the enemies list to avoid concurrent modification
         ArrayList<Enemy> enemiesCopy = new ArrayList<>(enemies);
-        
+
         for (Enemy enemy: enemiesCopy){
             if (enemy.isAlive()) {
                 // only update animation if game is not paused

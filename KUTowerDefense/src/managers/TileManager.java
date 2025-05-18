@@ -9,6 +9,7 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import helpMethods.LoadSave;
 import ui_p.ButtonAssets;
+import javax.imageio.ImageIO;
 
 public class TileManager {
     public Tile
@@ -99,6 +100,16 @@ public class TileManager {
             return resizeImage(ButtonAssets.startPointImg, GameDimensions.PATHPOINT_DISPLAY_SIZE, GameDimensions.PATHPOINT_DISPLAY_SIZE);
         } else if (index == -2) {
             return resizeImage(ButtonAssets.endPointImg, GameDimensions.PATHPOINT_DISPLAY_SIZE, GameDimensions.PATHPOINT_DISPLAY_SIZE);
+        } else if (index == -3) { // Wall
+            BufferedImage wallImg = LoadSave.getImageFromPath("/Borders/wall.png");
+            if (wallImg != null) {
+                return resizeImage(wallImg, GameDimensions.TILE_DISPLAY_SIZE, GameDimensions.TILE_DISPLAY_SIZE);
+            }
+        } else if (index == -4) { // Gate
+            BufferedImage gateImg = LoadSave.getImageFromPath("/Borders/gate.png");
+            if (gateImg != null) {
+                return resizeImage(gateImg, GameDimensions.TILE_DISPLAY_SIZE, GameDimensions.TILE_DISPLAY_SIZE);
+            }
         }
 
         // regular tile handling
@@ -134,8 +145,8 @@ public class TileManager {
                 GameDimensions.TILE_DISPLAY_SIZE,
                 GameDimensions.TILE_DISPLAY_SIZE);
 
-                System.out.println("Tile 1 loaded: " + (tile != null));  // for debugging
-                return tile;
+        System.out.println("Tile 1 loaded: " + (tile != null));  // for debugging
+        return tile;
 
 
     }
