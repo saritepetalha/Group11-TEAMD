@@ -110,6 +110,29 @@ public class ProjectileManager {
         }
     }
 
+    public void update(float gameSpeedMultiplier) {
+        for (Projectile currentProjectile : projectiles) {
+            if (currentProjectile.isActive()) {
+                if (currentProjectile.isExploding()) {
+                    currentProjectile.incrementExplosionFrame();
+                } else {
+                    currentProjectile.move(gameSpeedMultiplier);
+                    if (currentProjectile.getProjectileType() == Constants.Projectiles.CANNONBALL) {
+                        currentProjectile.incrementAnimationFrame();
+                    }
+                    if (!currentProjectile.isHit() && isEnemyShot(currentProjectile)) {
+                        if (currentProjectile.getProjectileType() == Constants.Projectiles.CANNONBALL) {
+                            currentProjectile.setExploding(true);
+                        } else {
+                            currentProjectile.setHit();
+                        }
+                    }
+                }
+                currentProjectile.update();
+            }
+        }
+    }
+
     private boolean isEnemyShot(Projectile projectile) {
         for (Enemy enemy : playing.getEnemyManager().getEnemies()) {
             if (enemy.isAlive()) {

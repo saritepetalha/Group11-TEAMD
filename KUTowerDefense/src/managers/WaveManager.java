@@ -176,9 +176,13 @@ public class WaveManager {
     }
 
     public void update(){
+        // Get the current game speed multiplier from Playing
+        float gameSpeedMultiplier = playing.getGameSpeedMultiplier();
+
         if (waitingForNextWave) {
             if (waveTimerActive) {
-                interWaveTick++;
+                // Apply game speed multiplier to timer updates
+                interWaveTick += gameSpeedMultiplier;
                 if (interWaveTick >= interWaveTickLimit) {
                     waveTimerActive = false;
                     interWaveTick = 0;
@@ -192,14 +196,16 @@ public class WaveManager {
                 }
             }
         } else if (waitingForNextGroup) {
-            groupDelayTick++;
+            // Apply game speed multiplier to group delay
+            groupDelayTick += gameSpeedMultiplier;
             if (groupDelayTick >= groupDelayTickLimit) {
                 groupDelayTick = 0;
                 groupIndex++;
                 prepareNextGroup();
             }
         } else if (waitingForNextEnemy) {
-            enemyDelayTick++;
+            // Apply game speed multiplier to enemy spawn delay
+            enemyDelayTick += gameSpeedMultiplier;
             if(enemyDelayTick >= enemyDelayTickLimit) {
                 enemyDelayTick = 0;
                 waitingForNextEnemy = false;

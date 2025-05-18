@@ -43,9 +43,11 @@ public class TowerManager {
         attackEnemyIfInRange();
     }
 
-
     public void update(float speedMultiplier) {
-        attackEnemyIfInRange(speedMultiplier);
+        for (Tower tower : towers) {
+            tower.update(speedMultiplier);
+            attackEnemyIfInRange(tower);
+        }
     }
 
     private void attackEnemyIfInRange() {
@@ -53,9 +55,8 @@ public class TowerManager {
     }
 
     private void attackEnemyIfInRange(float speedMultiplier) {
-
         for (Tower tower : towers) {
-            tower.update();
+            tower.update(speedMultiplier);
             attackEnemyIfInRange(tower);
         }
     }

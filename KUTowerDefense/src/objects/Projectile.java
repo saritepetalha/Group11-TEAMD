@@ -29,10 +29,13 @@ public class Projectile {
     }
 
     public void move() {
-        if (!hit) {
-            x += xSpeed;
-            y += ySpeed;
-        }
+        x += xSpeed;
+        y += ySpeed;
+    }
+
+    public void move(float gameSpeedMultiplier) {
+        x += xSpeed * gameSpeedMultiplier;
+        y += ySpeed * gameSpeedMultiplier;
     }
 
     public void setHit() {

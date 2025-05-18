@@ -59,6 +59,10 @@ public abstract class Tower {
     }
 
     public void update() {
-        countDownClock ++;
+        countDownClock++;
+    }
+
+    public void update(float gameSpeedMultiplier) {
+        countDownClock += gameSpeedMultiplier;
     }
 }
