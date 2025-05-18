@@ -10,7 +10,7 @@ public class Projectile {
     private boolean exploding = false;
     private boolean hit = false;
     private long hitTime = 0;
-    private static final long HIT_DISPLAY_TIME = 100_000_000; // 100ms in nanoseconds
+    private static final long HIT_DISPLAY_TIME = 50_000_000; // 50ms in nanoseconds
 
     private int animationFrame = 0;
     private int explosionFrame = 0;

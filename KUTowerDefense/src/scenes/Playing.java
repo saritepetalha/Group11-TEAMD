@@ -66,6 +66,9 @@ public class Playing extends GameScene implements SceneMethods {
 
     private GoldBagManager goldBagManager;
 
+    // Add field to store upgrade button bounds
+    private Rectangle upgradeButtonBounds = null;
+
     public Playing(Game game, TileManager tileManager) {
         super(game);
         this.tileManager = tileManager;
@@ -260,10 +263,12 @@ public class Playing extends GameScene implements SceneMethods {
 
         for (int i = 0; i < level.length; i++) {
             for (int j = 0; j < level[i].length; j++) {
-                g.drawImage(tileManager.getSprite(level[i][j]), j * GameDimensions.TILE_DISPLAY_SIZE, i * GameDimensions.TILE_DISPLAY_SIZE, null);
+                // Skip drawing tower tiles (20=Mage, 21=Artillery, 26=Archer)
+                if (level[i][j] != 20 && level[i][j] != 21 && level[i][j] != 26) {
+                    g.drawImage(tileManager.getSprite(level[i][j]), j * GameDimensions.TILE_DISPLAY_SIZE, i * GameDimensions.TILE_DISPLAY_SIZE, null);
+                }
             }
         }
-
     }
 
     public void update() {
@@ -366,6 +371,27 @@ public class Playing extends GameScene implements SceneMethods {
         if (displayedTower == null) return;
         drawDisplayedTowerBorder(g);
         drawDisplayedTowerRange(g);
+        // Draw upgrade button
+        int btnW = 80, btnH = 32;
+        int btnX = displayedTower.getX() + 32 - btnW/2;
+        int btnY = displayedTower.getY() + 80;
+        upgradeButtonBounds = new Rectangle(btnX, btnY, btnW, btnH);
+        if (displayedTower.isUpgradeable()) {
+            boolean canAfford = playerManager.getGold() >= getUpgradeCost(displayedTower);
+            g.setColor(canAfford ? new Color(80,200,80) : new Color(120,120,120));
+            g.fillRect(btnX, btnY, btnW, btnH);
+            g.setColor(Color.BLACK);
+            g.drawRect(btnX, btnY, btnW, btnH);
+            g.setFont(new Font("Arial", Font.BOLD, 16));
+            g.drawString("Upgrade", btnX + 10, btnY + 22);
+            if (!canAfford) {
+                g.setColor(new Color(200,0,0,180));
+                g.drawLine(btnX, btnY, btnX+btnW, btnY+btnH);
+                g.drawLine(btnX+btnW, btnY, btnX, btnY+btnH);
+            }
+        } else {
+            upgradeButtonBounds = null;
+        }
     }
 
     private void drawDisplayedTowerRange(Graphics g) {
@@ -425,22 +451,28 @@ public class Playing extends GameScene implements SceneMethods {
     public void mouseClicked(int x, int y) {
         this.mouseX = x;
         this.mouseY = y;
+        // Handle upgrade button click
+        if (displayedTower != null && upgradeButtonBounds != null && upgradeButtonBounds.contains(x, y)) {
+            if (displayedTower.isUpgradeable() && playerManager.getGold() >= getUpgradeCost(displayedTower)) {
+                playerManager.spendGold(getUpgradeCost(displayedTower));
+                displayedTower.upgrade();
+                updateUIResources();
+            }
+            return; // Prevent other actions if upgrade is performed
+        }
         displayedTower = null;
-
         if (deadTrees != null) {
             treeInteractionManager.handleDeadTreeInteraction(mouseX, mouseY);
         }
         if (liveTrees != null) {
             treeInteractionManager.handleLiveTreeInteraction(mouseX, mouseY);
         }
-
         // Gold bag collection
         var collectedBag = goldBagManager.tryCollect(x, y);
         if (collectedBag != null) {
             playerManager.addGold(collectedBag.getGoldAmount());
             updateUIResources();
         }
-
         handleTowerClick();
     }
 
@@ -784,5 +816,15 @@ public class Playing extends GameScene implements SceneMethods {
 
     public GoldBagManager getGoldBagManager() {
         return goldBagManager;
+    }
+
+    // Helper to get upgrade cost
+    private int getUpgradeCost(Tower tower) {
+        switch (tower.getType()) {
+            case 0: return 75; // Archer
+            case 1: return 120; // Artillery
+            case 2: return 100; // Mage
+            default: return 100;
+        }
     }
 }

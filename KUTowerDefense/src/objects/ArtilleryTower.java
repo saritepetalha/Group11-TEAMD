@@ -1,8 +1,11 @@
 package objects;
 
 import constants.Constants;
+import java.awt.image.BufferedImage;
 
 public class ArtilleryTower extends Tower {
+
+    public BufferedImage upgradedSprite;
 
     public ArtilleryTower(int x, int y) {
         super(x, y);
@@ -28,5 +31,16 @@ public class ArtilleryTower extends Tower {
     @Override
     public int getType() {
         return Constants.Towers.ARTILLERY;
+    }
+
+    @Override
+    public void upgrade() {
+        if (level == 1) {
+            level = 2;
+            range = (float)(getRange() * 1.2);
+            damage = (int)(getDamage() * 1.2);
+            // Load upgraded sprite
+            upgradedSprite = helpMethods.LoadSave.getImageFromPath("/TowerAssets/artillery_up.png");
+        }
     }
 }

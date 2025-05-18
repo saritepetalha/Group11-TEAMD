@@ -31,12 +31,12 @@ public class TowerManager {
 
 
     private void loadTowerImages() {
-
         BufferedImage tilesetImage = LoadSave.getSpriteAtlas();
         towerImages = new BufferedImage[3];
-        towerImages[0] = tilesetImage.getSubimage(5, 0 * 64, 64, 64);
-        towerImages[1] = tilesetImage.getSubimage(5, 1 * 64, 64, 64);
-        towerImages[2] = tilesetImage.getSubimage(5, 2 * 64, 64, 64);
+        // Load from correct positions in tileset
+        towerImages[0] = tilesetImage.getSubimage(2 * 64, 6 * 64, 64, 64); // Archer Tower (row 6, col 2)
+        towerImages[1] = tilesetImage.getSubimage(0 * 64, 5 * 64, 64, 64); // Artillery Tower (row 5, col 0)
+        towerImages[2] = tilesetImage.getSubimage(1 * 64, 5 * 64, 64, 64); // Mage Tower (row 5, col 1)
     }
 
     public void update() {
@@ -86,7 +86,25 @@ public class TowerManager {
     }
 
     public void draw(Graphics g) {
-
+        for (Tower tower : towers) {
+            BufferedImage sprite = null;
+            if (tower instanceof objects.ArcherTower) {
+                objects.ArcherTower archer = (objects.ArcherTower) tower;
+                sprite = (archer.getLevel() == 2 && archer.upgradedSprite != null) ? 
+                    archer.upgradedSprite : towerImages[0];
+            } else if (tower instanceof objects.ArtilleryTower) {
+                objects.ArtilleryTower artillery = (objects.ArtilleryTower) tower;
+                sprite = (artillery.getLevel() == 2 && artillery.upgradedSprite != null) ? 
+                    artillery.upgradedSprite : towerImages[1];
+            } else if (tower instanceof objects.MageTower) {
+                objects.MageTower mage = (objects.MageTower) tower;
+                sprite = (mage.getLevel() == 2 && mage.upgradedSprite != null) ? 
+                    mage.upgradedSprite : towerImages[2];
+            }
+            if (sprite != null) {
+                g.drawImage(sprite, tower.getX(), tower.getY(), 64, 64, null);
+            }
+        }
     }
 
     public List<DeadTree> findDeadTrees(int[][] level){
