@@ -187,6 +187,12 @@ public class EnemyManager {
                 playing.getPlayerManager().addGold(e.getGoldReward());
                 playing.updateUIResources();
                 System.out.println("Enemy " + e.getId() + " killed. + " + e.getGoldReward() + " gold!");
+                // 50% chance to spawn a gold bag
+                if (Math.random() < 0.5) {
+                    float bagX = e.getSpriteCenterX();
+                    float bagY = e.getSpriteCenterY();
+                    playing.getGoldBagManager().spawnGoldBag(bagX, bagY, 2, 30);
+                }
                 enemiesToRemove.add(e);
                 continue;
             }

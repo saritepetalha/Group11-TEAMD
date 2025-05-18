@@ -25,6 +25,8 @@ import ui_p.DeadTree;
 import ui_p.PlayingUI;
 import ui_p.LiveTree;
 
+import managers.GoldBagManager;
+
 public class Playing extends GameScene implements SceneMethods {
     private int[][] level;
     private int[][] overlay;
@@ -61,6 +63,8 @@ public class Playing extends GameScene implements SceneMethods {
 
     private int totalEnemiesSpawned = 0;
     private int enemiesReachedEnd = 0;
+
+    private GoldBagManager goldBagManager;
 
     public Playing(Game game, TileManager tileManager) {
         super(game);
@@ -113,6 +117,8 @@ public class Playing extends GameScene implements SceneMethods {
             liveTrees = towerManager.findLiveTrees(level);
 
         playingUI = new PlayingUI(this);
+
+        goldBagManager = new GoldBagManager();
 
         updateUIResources();
     }
@@ -285,6 +291,8 @@ public class Playing extends GameScene implements SceneMethods {
             if (!playerManager.isAlive()) {
                 handleGameOver();
             }
+
+            goldBagManager.update();
         }
         checkButtonStates();
     }
@@ -332,6 +340,7 @@ public class Playing extends GameScene implements SceneMethods {
         drawDisplayedTower(g);
         fireAnimationManager.draw(g);
         playingUI.draw(g);
+        goldBagManager.draw(g);
     }
 
     private void drawHighlight(Graphics g) {
@@ -423,6 +432,13 @@ public class Playing extends GameScene implements SceneMethods {
         }
         if (liveTrees != null) {
             treeInteractionManager.handleLiveTreeInteraction(mouseX, mouseY);
+        }
+
+        // Gold bag collection
+        var collectedBag = goldBagManager.tryCollect(x, y);
+        if (collectedBag != null) {
+            playerManager.addGold(collectedBag.getGoldAmount());
+            updateUIResources();
         }
 
         handleTowerClick();
@@ -764,5 +780,9 @@ public class Playing extends GameScene implements SceneMethods {
         String stateInfo = waveManager.getCurrentStateInfo();
 
         return "Wave " + currentWave + "\n" + stateInfo;
+    }
+
+    public GoldBagManager getGoldBagManager() {
+        return goldBagManager;
     }
 }
