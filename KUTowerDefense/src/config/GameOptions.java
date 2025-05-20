@@ -8,6 +8,7 @@ public class GameOptions {
     private int startingGold     = 500;
     private int startingPlayerHP = 20;
     private int startingShield   = 25;
+    private int currentGold      = startingGold;   // current in‐game gold
 
     // ---------- Static stats ----------
     private Map<EnemyType, EnemyStats> enemyStats =
@@ -66,7 +67,7 @@ public class GameOptions {
     /* ---------- Hard-coded defaults (same values as before) ---------- */
     public static GameOptions defaults() {
         GameOptions o = new GameOptions();
-
+        o.currentGold       = o.startingGold;
         // Reset progress trackers
         o.currentWaveIndex = 0;
         o.currentGroupIndex = 0;

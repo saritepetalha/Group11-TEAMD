@@ -2,6 +2,7 @@
   "startingGold": 300,
   "startingPlayerHP": 15,
   "startingShield": 25,
+  "currentGold": 500,
   "enemyStats": {
     "GOBLIN": {
       "hitPoints": 100,

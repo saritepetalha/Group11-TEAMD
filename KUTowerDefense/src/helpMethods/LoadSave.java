@@ -132,7 +132,7 @@ public class LoadSave {
 
     public static ArrayList<String> getSavedLevels() {
         ArrayList<String> levelNames = new ArrayList<>();
-        String levelsPath = "KUTowerDefense/resources/Levels";
+        String levelsPath = "resources/Levels";
         File levelsFolder = new File(levelsPath);
 
         System.out.println("Levels folder path: " + levelsFolder.getAbsolutePath());
