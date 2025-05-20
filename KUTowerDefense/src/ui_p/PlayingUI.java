@@ -727,7 +727,7 @@ public class PlayingUI {
             AudioManager.getInstance().playButtonClickSound();
             // pick your levelName & slot however you track them—
             // e.g. stored in Playing as currentLevelName and currentSlot:
-            //playing.saveGame( playing.getLevelName(), playing.getCurrentSaveSlot() );
+            playing.saveGame("bruuuh");
             // give the user feedback, e.g. flash a “Saved!” message or log:
             System.out.println("Game saved to slot "); //+ playing.getCurrentSaveSlot());
 

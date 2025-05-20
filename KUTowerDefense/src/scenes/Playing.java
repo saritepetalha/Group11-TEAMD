@@ -119,6 +119,22 @@ public class Playing extends GameScene implements SceneMethods {
         this.castleCurrentHealth = castleMaxHealth;
     }
 
+    public Playing(Game game, TileManager tileManager, int[][] customLevel, int[][] customOverlay, String levelName) {
+        super(game);
+        this.tileManager = tileManager;
+        this.level = customLevel;
+        this.originalLevelData = deepCopy2DArray(customLevel);
+
+        this.overlay = customOverlay;
+        this.originalOverlayData = deepCopy2DArray(customOverlay);
+
+        this.gameOptions = loadOptionsOrDefault();
+        loadBorderImages();
+        initializeManagers();
+        this.castleMaxHealth = calculateCastleMaxHealth();
+        this.castleCurrentHealth = castleMaxHealth;
+    }
+
     private GameOptions loadOptionsOrDefault() {
         GameOptions loadedOptions = OptionsIO.load();
         if (loadedOptions == null) {
@@ -181,6 +197,53 @@ public class Playing extends GameScene implements SceneMethods {
         LoadSave.saveLevel(filename,level);
 
     }
+
+    public void saveGame(String levelName) {
+        // 1) options data
+        OptionsIO.save(gameOptions, levelName + "_options");
+    }
+
+    public void loadSavedGame(String levelName) {
+        String optsFile  = levelName +  "_options";
+        String levelFile = levelName;
+
+        // Try loading both
+        GameOptions savedOpts  = OptionsIO.load(optsFile);
+        int[][]     savedLevel = LoadSave.loadLevel(levelFile);
+
+        if (savedOpts != null && savedLevel != null) {
+            // ————————————————
+            // 1) Both exist
+            System.out.println("Loaded both options and level from save slot ");
+            this.gameOptions       = savedOpts;
+            this.level             = savedLevel;
+            this.originalLevelData = deepCopy2DArray(savedLevel);
+            //rebuildSceneAfterLoad();
+
+        } else if (savedLevel != null) {
+            // ————————————————
+            // 2) Only level exists
+            System.out.println("Loaded level from save slot " + ", using default options");
+            this.gameOptions       = GameOptions.defaults();
+            this.level             = savedLevel;
+            this.originalLevelData = deepCopy2DArray(savedLevel);
+            //rebuildSceneAfterLoad();
+
+        } else {
+            // ————————————————
+            // 3) No saved level
+            if (savedOpts != null) {
+                System.out.println("Options file found but level file missing; starting default level with saved options");
+                this.gameOptions = savedOpts;
+            } else {
+                System.out.println("No save data found; starting brand-new game with defaults");
+                this.gameOptions = GameOptions.defaults();
+            }
+            loadDefaultLevel();
+            initializeManagers();
+        }
+    }
+
 
     private void loadDefaultLevel() {
         int[][] lvl = LoadSave.getLevelData("defaultlevel");
