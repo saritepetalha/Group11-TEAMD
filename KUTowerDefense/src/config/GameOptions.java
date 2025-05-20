@@ -19,6 +19,10 @@ public class GameOptions {
     private List<Wave> waves     = new ArrayList<>();
     private double interWaveDelay = 10.0;
 
+    // ---------- Current progress trackers ----------
+    private int currentWaveIndex = 0;   // zero-based index of current wave
+    private int currentGroupIndex = 0;  // zero-based index within current wave groups
+
     /* ------------------- Getters / setters ------------------- */
     public int getStartingGold()             { return startingGold; }
     public void setStartingGold(int g)       { this.startingGold = g; }
@@ -37,12 +41,35 @@ public class GameOptions {
     public double getInterWaveDelay()        { return interWaveDelay; }
     public void setInterWaveDelay(double d)  { this.interWaveDelay = d; }
 
+    /**
+            * Index of the currently active wave (0-based).
+            */
+    public int getCurrentWaveIndex() { return currentWaveIndex; }
+
+    /**
+     * Index of the currently active group within the current wave (0-based).
+     */
+    public int getCurrentGroupIndex() { return currentGroupIndex; }
+
+    /**
+     * Set the current wave index (zero-based).
+     */
+    public void setCurrentWaveIndex(int idx) { this.currentWaveIndex = idx; }
+
+    /**
+     * Set the current group index within the current wave (zero-based).
+     */
+    public void setCurrentGroupIndex(int idx) { this.currentGroupIndex = idx; }
+
     public int getWaveCount() { return waves.size(); }
 
     /* ---------- Hard-coded defaults (same values as before) ---------- */
     public static GameOptions defaults() {
         GameOptions o = new GameOptions();
 
+        // Reset progress trackers
+        o.currentWaveIndex = 0;
+        o.currentGroupIndex = 0;
         // Enemy defaults - based on Constants.Enemies values
         o.enemyStats.put(EnemyType.GOBLIN, new EnemyStats(100, 0.85, 5));
         o.enemyStats.put(EnemyType.WARRIOR, new EnemyStats(200, 0.45, 25));
