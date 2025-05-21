@@ -16,7 +16,6 @@ import javax.swing.*;
 
 public class EditTiles extends Bar {
     private Game game;
-    private int x,y, width, height; // starting position x,y, and width and height of the edit tiles bar
 
     private TheButton backMenu;
     private TheButton draw, erase, fill, trash, save;
@@ -51,9 +50,12 @@ public class EditTiles extends Bar {
                 ButtonAssets.buttonImages.get(0)
         );
 
+        // Add 4 pixels to Y position for better spacing
+        int buttonYPos = GameDimensions.ButtonSize.MEDIUM.getSize() + 4;
+
         draw = new TheButton("Draw",
                 GameDimensions.GAME_WIDTH,
-                GameDimensions.ButtonSize.MEDIUM.getSize(),
+                buttonYPos,
                 GameDimensions.ButtonSize.SMALL.getSize(),
                 GameDimensions.ButtonSize.SMALL.getSize(),
                 ButtonAssets.buttonImages.get(11)
@@ -61,7 +63,7 @@ public class EditTiles extends Bar {
 
         erase = new TheButton("Erase",
                 GameDimensions.GAME_WIDTH + GameDimensions.ButtonSize.SMALL.getSize(),
-                GameDimensions.ButtonSize.MEDIUM.getSize(),
+                buttonYPos,
                 GameDimensions.ButtonSize.SMALL.getSize(),
                 GameDimensions.ButtonSize.SMALL.getSize(),
                 ButtonAssets.buttonImages.get(10)
@@ -69,7 +71,7 @@ public class EditTiles extends Bar {
 
         fill = new TheButton("Fill",
                 GameDimensions.GAME_WIDTH + 2 * GameDimensions.ButtonSize.SMALL.getSize(),
-                GameDimensions.ButtonSize.MEDIUM.getSize(),
+                buttonYPos,
                 GameDimensions.ButtonSize.SMALL.getSize(),
                 GameDimensions.ButtonSize.SMALL.getSize(),
                 ButtonAssets.buttonImages.get(6)
@@ -77,7 +79,7 @@ public class EditTiles extends Bar {
 
         trash = new TheButton("Trash",
                 GameDimensions.GAME_WIDTH + 3 * GameDimensions.ButtonSize.SMALL.getSize(),
-                GameDimensions.ButtonSize.MEDIUM.getSize(),
+                buttonYPos,
                 GameDimensions.ButtonSize.SMALL.getSize(),
                 GameDimensions.ButtonSize.SMALL.getSize(),
                 ButtonAssets.buttonImages.get(3)
@@ -85,7 +87,7 @@ public class EditTiles extends Bar {
 
         save = new TheButton("Save",
                 GameDimensions.GAME_WIDTH + 4 * GameDimensions.ButtonSize.SMALL.getSize(),
-                GameDimensions.ButtonSize.MEDIUM.getSize(),
+                buttonYPos,
                 GameDimensions.ButtonSize.SMALL.getSize(),
                 GameDimensions.ButtonSize.SMALL.getSize(),
                 ButtonAssets.buttonImages.get(7)
@@ -129,15 +131,19 @@ public class EditTiles extends Bar {
                     i));
         }
 
-        startPoint = new TheButton("Start", GameDimensions.GAME_WIDTH,
-                GameDimensions.GAME_HEIGHT -  GameDimensions.BUTTON_PADDING - GameDimensions.ButtonSize.MEDIUM.getSize(),
+        // Positioning path point buttons at buttonsize*13 (higher than before)
+        int pathPointY = GameDimensions.ButtonSize.MEDIUM.getSize() * 13;
+
+        startPoint = new TheButton("Start",
+                GameDimensions.GAME_WIDTH,
+                pathPointY,
                 widthButton,
                 heightButton,
                 i++);
 
         endPoint = new TheButton("End",
                 GameDimensions.GAME_WIDTH + GameDimensions.ButtonSize.MEDIUM.getSize(),
-                GameDimensions.GAME_HEIGHT -  GameDimensions.BUTTON_PADDING - GameDimensions.ButtonSize.MEDIUM.getSize(),
+                pathPointY,
                 widthButton,
                 heightButton,
                 i++);
@@ -169,7 +175,6 @@ public class EditTiles extends Bar {
         drawPathPointButton(g2d, startPoint, ButtonAssets.startPointImg, ButtonAssets.startPointHoverImg, ButtonAssets.startPointPressedImg);
         drawPathPointButton(g2d, endPoint, ButtonAssets.endPointImg, ButtonAssets.endPointHoverImg, ButtonAssets.endPointPressedImg);
 
-        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
     }
 
     // method for drawing path point buttons with hover/press animations
@@ -219,15 +224,18 @@ public class EditTiles extends Bar {
     }
 
     private void drawTilesButtonEffect(Graphics2D g2d, TheButton tilesButton) {
-        x = tilesButton.getX();
-        y = tilesButton.getY();
-        width = tilesButton.getWidth();
-        height = tilesButton.getHeight();
+        int x = tilesButton.getX();
+        int y = tilesButton.getY();
+        int width = tilesButton.getWidth();
+        int height = tilesButton.getHeight();
+
+        Composite originalComposite = g2d.getComposite();
 
         // changing opacity when the mouse is over tiles.
         if (tilesButton.isMouseOver()) {
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.4f));
-        } else {
+        }
+        else {
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
         }
 
@@ -257,6 +265,8 @@ public class EditTiles extends Bar {
                 width,
                 height,
                 null);
+
+        g2d.setComposite(originalComposite);
     }
 
     private void drawActionButton(Graphics2D g2d, TheButton button, BufferedImage image) {
@@ -324,26 +334,53 @@ public class EditTiles extends Bar {
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
         }
 
-        /*
-        // (temporary) Draw text centered, if needed
-        if (button.isMouseOver() && button.getText() != null && !button.getText().isEmpty()) {
-            g2d.setColor(Color.WHITE);
-            g2d.setFont(new Font("MV Boli", Font.BOLD, 11));
-            FontMetrics fm = g2d.getFontMetrics();
-            int textWidth = fm.stringWidth(button.getText());
-            int textHeight = fm.getHeight();
-            g2d.drawString(button.getText(), x + (width - textWidth) / 2, y + (height + textHeight / 5) / 2);
-        }*/
-
 
     }
 
 
     public void draw(Graphics g){
         g.setColor(new Color(157,209,153,255));     // color given in the project's example image
-        g.fillRect(x,y,width,height);                           // fill rectangular
+        g.fillRect(x,y,width,height);               // fill rectangular
 
         drawButtons(g);
+
+        drawEditPanelGrid(g);
+    }
+
+
+    private void drawEditPanelGrid(Graphics g) {
+        Graphics2D g2d = (Graphics2D) g;
+        g2d.setColor(new Color(40, 40, 40, 70));
+
+        float[] dashPattern = {2, 2};
+        BasicStroke dottedStroke = new BasicStroke(
+                1,
+                BasicStroke.CAP_BUTT,
+                BasicStroke.JOIN_MITER,
+                10.0f,
+                dashPattern,
+                0.0f
+        );
+
+        Stroke originalStroke = g2d.getStroke();
+        g2d.setStroke(dottedStroke);
+
+        int gridSize = GameDimensions.ButtonSize.MEDIUM.getSize();
+
+        g2d.drawRect(x, y, width, height);
+
+        g2d.drawLine(x, y + gridSize, x + width, y + gridSize);
+        g2d.drawLine(x, y + 2 * gridSize, x + width, y + 2 * gridSize);
+
+        for (int gridY = y + 3 * gridSize; gridY <= y + height; gridY += gridSize) {
+            g2d.drawLine(x, gridY, x + width, gridY);
+        }
+
+        for (int gridX = x + gridSize; gridX < x + width; gridX += gridSize) {
+            g2d.drawLine(gridX, y + 2 * gridSize, gridX, y + height);
+        }
+
+        g2d.setStroke(originalStroke);
     }
 
     public void mouseClicked(int x, int y) {
