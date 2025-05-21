@@ -16,7 +16,6 @@ import javax.swing.*;
 
 public class EditTiles extends Bar {
     private Game game;
-    private int x,y, width, height; // starting position x,y, and width and height of the edit tiles bar
 
     private TheButton backMenu;
     private TheButton draw, erase, fill, trash, save;
@@ -169,7 +168,6 @@ public class EditTiles extends Bar {
         drawPathPointButton(g2d, startPoint, ButtonAssets.startPointImg, ButtonAssets.startPointHoverImg, ButtonAssets.startPointPressedImg);
         drawPathPointButton(g2d, endPoint, ButtonAssets.endPointImg, ButtonAssets.endPointHoverImg, ButtonAssets.endPointPressedImg);
 
-        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
     }
 
     // method for drawing path point buttons with hover/press animations
@@ -219,16 +217,16 @@ public class EditTiles extends Bar {
     }
 
     private void drawTilesButtonEffect(Graphics2D g2d, TheButton tilesButton) {
-        x = tilesButton.getX();
-        y = tilesButton.getY();
-        width = tilesButton.getWidth();
-        height = tilesButton.getHeight();
+        int x = tilesButton.getX();
+        int y = tilesButton.getY();
+        int width = tilesButton.getWidth();
+        int height = tilesButton.getHeight();
+
+        Composite originalComposite = g2d.getComposite();
 
         // changing opacity when the mouse is over tiles.
         if (tilesButton.isMouseOver()) {
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.4f));
-        } else {
-            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
         }
 
         g2d.setColor(new Color(157,209,153,255));
@@ -257,6 +255,8 @@ public class EditTiles extends Bar {
                 width,
                 height,
                 null);
+
+        g2d.setComposite(originalComposite);
     }
 
     private void drawActionButton(Graphics2D g2d, TheButton button, BufferedImage image) {

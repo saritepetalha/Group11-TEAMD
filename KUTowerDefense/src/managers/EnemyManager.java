@@ -29,7 +29,7 @@ public class EnemyManager {
     private int tileSize = GameDimensions.TILE_DISPLAY_SIZE;
     private int nextEnemyID = 0;
     private boolean pathFound = false;
-    private static final Set<Integer> ROAD_IDS = Set.of(0,1,2,3,4,6,7,8,9,10,11,12,13,14,31);
+    private static final Set<Integer> ROAD_IDS = Set.of(0,1,2,3,4,6,7,8,9,10,11,12,13,14,32);
     private GameOptions gameOptions;
 
     public EnemyManager(Playing playing, int[][] overlayData, int [][] tileData, GameOptions options) {

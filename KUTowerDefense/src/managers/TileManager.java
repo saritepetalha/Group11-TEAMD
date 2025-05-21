@@ -85,12 +85,7 @@ public class TileManager {
         tiles.add(SmallCastle = new Tile(getSprite(2, 7), id++, "SmallCastle"));
         tiles.add(Wood = new Tile(getSprite(3, 7), id++, "Wood"));
 
-        tiles.add(RoadFourWay = new Tile(resizeImage(ButtonAssets.fourWayRoadImg,
-                GameDimensions.TILE_DISPLAY_SIZE,
-                GameDimensions.TILE_DISPLAY_SIZE),
-                id++,"RoadFourWay"));
-
-
+        tiles.add(RoadFourWay = new Tile(ButtonAssets.fourWayRoadImg,id++,"RoadFourWay"));
     }
 
     // This method is used to get the sprite of a specific tile by index
