@@ -6,6 +6,7 @@ import helpMethods.LoadSave;
 import objects.Projectile;
 import objects.Tower;
 import scenes.Playing;
+import helpMethods.RotSprite;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -20,11 +21,13 @@ public class ProjectileManager {
     private BufferedImage[] proj_imgs;
     private BufferedImage[] fireball_imgs;
     private BufferedImage[] explosion_imgs;
+    private BufferedImage[] arrowFrames; // Array for rotated arrow sprites
     private int projID = 0;
 
     public ProjectileManager(Playing playing) {
         this.playing = playing;
         importImages();
+        loadArrowFrames();
     }
 
     private void importImages() {
@@ -36,6 +39,18 @@ public class ProjectileManager {
         fireball_imgs = LoadSave.getFireballAnimation();
 
         explosion_imgs = LoadSave.getExplosionAnimation();
+    }
+
+    private void loadArrowFrames() {
+        BufferedImage baseArrow = LoadSave.getImageFromPath("/TowerAssets/arrow.png");
+        BufferedImage[] originalFrames = RotSprite.generateSpriteSheet(baseArrow, null, 72, 5.0);
+
+        arrowFrames = new BufferedImage[originalFrames.length];
+
+        // Resize each frame to 24x24 pixels using LoadSave's utility method
+        for (int i = 0; i < originalFrames.length; i++) {
+            arrowFrames[i] = LoadSave.resizeImage(originalFrames[i], 24, 24);
+        }
     }
 
     public void newProjectile(Tower tower, Enemy enemy) {
@@ -53,6 +68,11 @@ public class ProjectileManager {
         float xDiff = enemyCenterX - towerCenterX;
         float yDiff = enemyCenterY - towerCenterY;
         float distance = (float) Math.sqrt(xDiff * xDiff + yDiff * yDiff);
+
+        // Calculate angle for sprite rotation (in degrees)
+        float angle = (float) Math.toDegrees(Math.atan2(yDiff, xDiff));
+        // Normalize angle to 0-360 range
+        if (angle < 0) angle += 360;
 
         // Calculate time to reach target based on projectile speed
         float projectileSpeed = Constants.Projectiles.getSpeed(projType);
@@ -80,12 +100,16 @@ public class ProjectileManager {
         yDiff = predictedY - towerCenterY;
         distance = (float) Math.sqrt(xDiff * xDiff + yDiff * yDiff);
 
+        // Recalculate angle based on predicted position
+        angle = (float) Math.toDegrees(Math.atan2(yDiff, xDiff));
+        if (angle < 0) angle += 360;
+
         // Normalize direction and apply speed
         float xSpeed = (xDiff / distance) * adjustedSpeed;
         float ySpeed = (yDiff / distance) * adjustedSpeed;
 
-        // Pass tower level to projectile
-        projectiles.add(new Projectile(towerCenterX, towerCenterY, xSpeed, ySpeed, projID++, tower.getDamage(), projType, tower.getLevel()));
+        // Pass tower level and rotation angle to projectile
+        projectiles.add(new Projectile(towerCenterX, towerCenterY, xSpeed, ySpeed, projID++, tower.getDamage(), projType, tower.getLevel(), angle));
     }
 
     public void update() {
@@ -139,11 +163,11 @@ public class ProjectileManager {
             if (enemy.isAlive()) {
                 // Get enemy's actual sprite bounds for visual hit detection
                 Rectangle enemyBounds = enemy.getBounds();
-                
+
                 // Calculate the actual sprite center and size based on enemy type
                 float centerX = enemy.getSpriteCenterX();
                 float centerY = enemy.getSpriteCenterY();
-                
+
                 // Create a hit area that scales with enemy size
                 int hitSize;
                 switch (enemy.getSize()) {
@@ -161,10 +185,10 @@ public class ProjectileManager {
                 }
 
                 Rectangle hitArea = new Rectangle(
-                    (int)centerX - hitSize/2,
-                    (int)centerY - hitSize/2,
-                    hitSize,
-                    hitSize
+                        (int)centerX - hitSize/2,
+                        (int)centerY - hitSize/2,
+                        hitSize,
+                        hitSize
                 );
 
                 // Check if the projectile hits the enemy's sprite center
@@ -227,35 +251,49 @@ public class ProjectileManager {
     public void draw(Graphics g) {
         // Create a copy of the projectiles list to avoid concurrent modification
         ArrayList<Projectile> projectilesCopy = new ArrayList<>(projectiles);
-        
+
         for (Projectile currentProjectile : projectilesCopy) {
-            if (currentProjectile.isActive()) {
-                if (currentProjectile.isExploding()) {
-                    int frame = currentProjectile.getExplosionFrame();
-                    if (frame >= 0 && frame < explosion_imgs.length) {
-                        g.drawImage(explosion_imgs[frame],
-                                (int) currentProjectile.getPos().x - explosion_imgs[frame].getWidth() / 2,
-                                (int) currentProjectile.getPos().y - explosion_imgs[frame].getHeight() / 2,
-                                null);
-                    }
-                } else if (currentProjectile.getProjectileType() == Constants.Projectiles.CANNONBALL) {
-                    int frame = currentProjectile.getAnimationFrame();
-                    if (frame >= 0 && frame < fireball_imgs.length) {
-                        g.drawImage(fireball_imgs[frame],
-                                (int) currentProjectile.getPos().x - fireball_imgs[frame].getWidth() / 2,
-                                (int) currentProjectile.getPos().y - fireball_imgs[frame].getHeight() / 2,
-                                null);
-                    }
-                } else if (currentProjectile.getProjectileType() == Constants.Projectiles.MAGICBOLT && currentProjectile.getLevel() == 2) {
-                    // Draw cyan circle for level 2 mage projectile
-                    g.setColor(Color.CYAN);
-                    g.fillOval((int) currentProjectile.getPos().x, (int) currentProjectile.getPos().y, 16, 16);
-                } else {
-                    g.drawImage(proj_imgs[currentProjectile.getProjectileType()],
-                            (int) currentProjectile.getPos().x,
-                            (int) currentProjectile.getPos().y,
+            drawProjectile(currentProjectile, g);
+        }
+    }
+
+    private void drawProjectile(Projectile currentProjectile, Graphics g) {
+        if (currentProjectile.isActive()) {
+            if (currentProjectile.isExploding()) {
+                int frame = currentProjectile.getExplosionFrame();
+                if (frame >= 0 && frame < explosion_imgs.length) {
+                    g.drawImage(explosion_imgs[frame],
+                            (int) currentProjectile.getPos().x - explosion_imgs[frame].getWidth() / 2,
+                            (int) currentProjectile.getPos().y - explosion_imgs[frame].getHeight() / 2,
                             null);
                 }
+            } else if (currentProjectile.getProjectileType() == Constants.Projectiles.CANNONBALL) {
+                int frame = currentProjectile.getAnimationFrame();
+                if (frame >= 0 && frame < fireball_imgs.length) {
+                    g.drawImage(fireball_imgs[frame],
+                            (int) currentProjectile.getPos().x - fireball_imgs[frame].getWidth() / 2,
+                            (int) currentProjectile.getPos().y - fireball_imgs[frame].getHeight() / 2,
+                            null);
+                }
+            } else if (currentProjectile.getProjectileType() == Constants.Projectiles.MAGICBOLT && currentProjectile.getLevel() == 2) {
+                // Draw cyan circle for level 2 mage projectile
+                g.setColor(Color.CYAN);
+                g.fillOval((int) currentProjectile.getPos().x, (int) currentProjectile.getPos().y, 16, 16);
+            } else if (currentProjectile.getProjectileType() == Constants.Projectiles.ARROW && arrowFrames != null) {
+                // Use rotated arrow sprites based on direction
+                int frameIndex = currentProjectile.getRotationFrameIndex();
+                if (frameIndex >= 0 && frameIndex < arrowFrames.length) {
+                    BufferedImage arrowImg = arrowFrames[frameIndex];
+                    g.drawImage(arrowImg,
+                            (int) currentProjectile.getPos().x - 12,
+                            (int) currentProjectile.getPos().y - 12,
+                            null);
+                }
+            } else {
+                g.drawImage(proj_imgs[currentProjectile.getProjectileType()],
+                        (int) currentProjectile.getPos().x,
+                        (int) currentProjectile.getPos().y,
+                        null);
             }
         }
     }
