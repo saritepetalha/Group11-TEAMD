@@ -200,6 +200,17 @@ public class ProjectileManager {
                         enemy.applySlow();
                     }
 
+                    // Mage teleport effect - "Back to step 1" mechanic
+                    if (projectile.getProjectileType() == Constants.Projectiles.MAGICBOLT) {
+                        if (Math.random() < 0.03) {
+                            // Play a teleport sound or effect here if available
+                            System.out.println("TELEPORT TRIGGERED for enemy " + enemy.getId());
+
+                            // Teleport the enemy back to the start of the path
+                            playing.getEnemyManager().teleportEnemyToStart(enemy);
+                        }
+                    }
+
                     // handle AOE damage for CANNONBALL projectile type
                     if (projectile.getProjectileType() == Constants.Projectiles.CANNONBALL) {
                         handleAOEDamage(projectile, enemy);

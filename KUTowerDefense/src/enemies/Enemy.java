@@ -37,6 +37,10 @@ public abstract class Enemy {
     private static final long SLOW_DURATION = 4_000_000_000L; // 4 seconds in nanoseconds
     public static BufferedImage snowflakeIcon = null;
 
+    private boolean isTeleporting = false;
+    private long teleportEffectTimer = 0;
+    public static final long TELEPORT_EFFECT_DURATION = 500_000_000L; // 0.5 seconds
+
     public void setAlive(boolean alive) {
         this.alive = alive;
     }
@@ -413,11 +417,41 @@ public abstract class Enemy {
 
     public boolean isSlowed() { return isSlowed; }
 
+    /**
+     * Applies a teleport visual effect to the enemy
+     */
+    public void applyTeleportEffect() {
+        isTeleporting = true;
+        teleportEffectTimer = System.nanoTime();
+    }
+
+    /**
+     * Checks if the enemy is currently showing a teleport effect
+     */
+    public boolean isTeleporting() {
+        return isTeleporting;
+    }
+
+    private void updateTeleportEffect() {
+        if (isTeleporting && System.nanoTime() - teleportEffectTimer > TELEPORT_EFFECT_DURATION) {
+            isTeleporting = false;
+        }
+    }
+
     public void update() {
         updateSlow();
+        updateTeleportEffect();
     }
 
     public float getEffectiveSpeed() {
         return isSlowed ? speed * 0.8f : speed;
+    }
+
+    /**
+     * Gets the timestamp when the teleport effect started
+     * @return The system nanotime when teleport effect was applied
+     */
+    public long getTeleportEffectTimer() {
+        return teleportEffectTimer;
     }
 }

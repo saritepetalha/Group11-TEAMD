@@ -547,20 +547,59 @@ public class EnemyManager {
                 break;
         }
 
-        // Check enemy direction
         boolean facingLeft = enemy.getDirX() < 0;
 
         Graphics2D g2d = (Graphics2D) g;
+        AffineTransform oldTransform = g2d.getTransform();
+
+        if (enemy.isTeleporting()) {
+            // Set a blue/cyan glow with pulse effect based on time
+            long currentTime = System.nanoTime();
+            float progress = 1.0f - ((float)(currentTime - enemy.getTeleportEffectTimer()) / enemy.TELEPORT_EFFECT_DURATION);
+            float alpha = Math.max(0.1f, progress); // Fade out over time
+
+            // Draw a pulsing blue glow
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha * 0.7f));
+            g2d.setColor(new Color(0, 200, 255)); // Bright blue
+            g2d.fillOval(
+                    drawX - 10,
+                    drawY - 10,
+                    drawWidth + 20,
+                    drawHeight + 20
+            );
+
+            // Draw some "sparkle" effects
+            g2d.setColor(new Color(255, 255, 255, (int)(255 * alpha)));
+            float pulseSize = 5.0f + (float)(Math.sin(currentTime * 0.00000002) * 3.0);
+            int sparkleSize = (int)pulseSize;
+
+            // Draw 5 random sparkles
+            for (int i = 0; i < 5; i++) {
+                double angle = Math.random() * Math.PI * 2;
+                int offsetX = (int)(Math.cos(angle) * drawWidth/2);
+                int offsetY = (int)(Math.sin(angle) * drawHeight/2);
+                g2d.fillRect(
+                        drawX + drawWidth/2 + offsetX - sparkleSize/2,
+                        drawY + drawHeight/2 + offsetY - sparkleSize/2,
+                        sparkleSize, sparkleSize
+                );
+            }
+
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
+        }
 
         if (facingLeft) {
-            AffineTransform oldTransform = g2d.getTransform();
+            // Create a transform for flipping horizontally
+            AffineTransform tx = new AffineTransform();
+            tx.translate(drawX + drawWidth, drawY);
+            tx.scale(-1, 1);
+            tx.translate(-drawWidth, 0);
+            g2d.setTransform(tx);
 
-            g2d.translate(drawX + drawWidth, drawY);
-            g2d.scale(-1, 1);
             g2d.drawImage(sprite, 0, 0, drawWidth, drawHeight, null);
-
             g2d.setTransform(oldTransform);
         } else {
+            // Normal drawing for facing right
             g2d.drawImage(sprite, drawX, drawY, drawWidth, drawHeight, null);
         }
 
@@ -624,5 +663,36 @@ public class EnemyManager {
 
     public ArrayList<Enemy> getEnemies() {
         return enemies;
+    }
+
+    /**
+     * Teleports an enemy back to the starting point of the path.
+     * The enemy retains its current HP and status effects.
+     *
+     * @param enemy The enemy to teleport
+     * @return true if teleportation was successful, false otherwise
+     */
+    public boolean teleportEnemyToStart(Enemy enemy) {
+        if (!pathFound || pathPoints.isEmpty()) {
+            System.out.println("Cannot teleport enemy: Path not found or empty");
+            return false;
+        }
+
+        GridPoint startingPoint = pathPoints.get(0);
+        if (startingPoint == null) {
+            System.out.println("Cannot teleport enemy: Invalid starting point");
+            return false;
+        }
+        float newX = startingPoint.getX() * tileSize + tileSize / 2;
+        float newY = startingPoint.getY() * tileSize + tileSize / 2;
+
+        enemy.setX(newX);
+        enemy.setY(newY);
+
+        enemy.setCurrentPathIndex(0);
+        enemy.applyTeleportEffect();
+
+        System.out.println("Enemy " + enemy.getId() + " teleported back to start!");
+        return true;
     }
 }
