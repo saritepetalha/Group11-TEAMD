@@ -10,6 +10,7 @@ import helpMethods.OptionsIO;
 import objects.GridPoint;
 
 import java.awt.*;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
@@ -546,9 +547,26 @@ public class EnemyManager {
                 break;
         }
 
-        // draw the enemy with appropriate size
-        g.drawImage(sprite, drawX, drawY, drawWidth, drawHeight, null);
+        // Check enemy direction
+        boolean facingLeft = enemy.getDirX() < 0;
+
+        Graphics2D g2d = (Graphics2D) g;
+
+        if (facingLeft) {
+            AffineTransform oldTransform = g2d.getTransform();
+
+            g2d.translate(drawX + drawWidth, drawY);
+            g2d.scale(-1, 1);
+            g2d.drawImage(sprite, 0, 0, drawWidth, drawHeight, null);
+
+            g2d.setTransform(oldTransform);
+        } else {
+            g2d.drawImage(sprite, drawX, drawY, drawWidth, drawHeight, null);
+        }
+
+        // Health bar and effects should be drawn with the original transform
         drawHealthBar(g, enemy, drawX, drawY, drawWidth, drawHeight);
+
         // Draw snowflake icon if slowed
         if (enemy.isSlowed()) {
             if (Enemy.snowflakeIcon == null) {
