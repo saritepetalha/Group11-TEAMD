@@ -529,8 +529,12 @@ public class Playing extends GameScene implements SceneMethods {
         if (displayedTower != null && upgradeButtonBounds != null && upgradeButtonBounds.contains(x, y)) {
             if (displayedTower.isUpgradeable() && playerManager.getGold() >= getUpgradeCost(displayedTower)) {
                 playerManager.spendGold(getUpgradeCost(displayedTower));
-                displayedTower.upgrade();
-                towerManager.triggerUpgradeEffect(displayedTower);
+                Tower upgradedTower = displayedTower.upgrade(); // upgrade() now returns the (potentially decorated) tower
+                if (upgradedTower != displayedTower) { // If a new instance (decorator) was returned
+                    towerManager.replaceTower(displayedTower, upgradedTower);
+                    displayedTower = upgradedTower; // Update the displayed tower to the new decorated one
+                }
+                towerManager.triggerUpgradeEffect(displayedTower); // Trigger effect on the (possibly new) tower instance
                 updateUIResources();
             }
             return; // Prevent other actions if upgrade is performed
@@ -773,6 +777,9 @@ public class Playing extends GameScene implements SceneMethods {
 
     public void shootEnemy(Tower tower, Enemy enemy) {
         projectileManager.newProjectile(tower, enemy);
+        // After a projectile is launched (or hits), apply any on-hit effects from the tower itself.
+        // This is particularly for direct effects like the Mage's slow, not projectile-specific effects.
+        tower.applyOnHitEffect(enemy, this);
     }
 
     public boolean isGamePaused() {
