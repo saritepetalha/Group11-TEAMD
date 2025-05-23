@@ -6,9 +6,8 @@ public class GameOptions {
 
     // ---------- Economy & player ----------
     private int startingGold     = 500;
-    private int startingPlayerHP = 20;
-    private int startingShield   = 25;
-    private int currentGold      = startingGold;   // current in‐game gold
+    private static int startingPlayerHP = 20;
+    private int startingShield   = 25;// current in‐game gold
 
     // ---------- Static stats ----------
     private Map<EnemyType, EnemyStats> enemyStats =
@@ -23,6 +22,8 @@ public class GameOptions {
     // ---------- Current progress trackers ----------
     private int currentWaveIndex = 0;   // zero-based index of current wave
     private int currentGroupIndex = 0;  // zero-based index within current wave groups
+    private int savedGold;
+    private int savedCastleHealth;
 
     /* ------------------- Getters / setters ------------------- */
     public int getStartingGold()             { return startingGold; }
@@ -64,10 +65,18 @@ public class GameOptions {
 
     public int getWaveCount() { return waves.size(); }
 
+    public int getSavedGold()              { return savedGold; }
+    public void setSavedGold(int g)        { this.savedGold = g; }
+
+    public int getSavedCastleHealth()      { return savedCastleHealth; }
+    public void setSavedCastleHealth(int h){ this.savedCastleHealth = h; }
     /* ---------- Hard-coded defaults (same values as before) ---------- */
     public static GameOptions defaults() {
         GameOptions o = new GameOptions();
-        o.currentGold       = o.startingGold;
+        o.currentWaveIndex   = 0;
+        o.currentGroupIndex  = 0;
+        o.savedGold          = 0;
+        o.savedCastleHealth  = startingPlayerHP;
         // Reset progress trackers
         o.currentWaveIndex = 0;
         o.currentGroupIndex = 0;

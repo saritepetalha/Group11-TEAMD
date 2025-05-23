@@ -76,6 +76,8 @@ public class PlayerManager {
         return gold;
     }
 
+    public void setGold(int savedGold) {this.gold = savedGold;}
+
     public int getHealth() {
         return health;
     }
@@ -126,4 +128,5 @@ public class PlayerManager {
             e.printStackTrace();
         }
     }
+
 }

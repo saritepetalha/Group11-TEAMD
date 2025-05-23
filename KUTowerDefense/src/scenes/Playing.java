@@ -33,6 +33,8 @@ public class Playing extends GameScene implements SceneMethods {
     private int[][] overlay;
     private int[][] originalLevelData;
     private int[][] originalOverlayData;
+    private String currentLevelName = "default";
+
 
     private PlayingUI playingUI;
     private int mouseX, mouseY;
@@ -129,6 +131,7 @@ public class Playing extends GameScene implements SceneMethods {
         this.originalOverlayData = deepCopy2DArray(customOverlay);
 
         this.gameOptions = loadOptionsOrDefault();
+        this.currentLevelName = levelName;
         loadBorderImages();
         initializeManagers();
         this.castleMaxHealth = calculateCastleMaxHealth();
@@ -197,12 +200,26 @@ public class Playing extends GameScene implements SceneMethods {
         LoadSave.saveLevel(filename,level);
 
     }
-
+    /**
     public void saveGame(String levelName) {
         // 1) options data
         OptionsIO.save(gameOptions, levelName + "_options");
     }
+    */
+    public void saveGame() {
+        // 1️⃣  Snap live state into GameOptions
+        gameOptions.setCurrentWaveIndex(waveManager.getWaveIndex());
+        gameOptions.setSavedGold(playerManager.getGold());
+        gameOptions.setSavedCastleHealth(castleCurrentHealth);
 
+        // 2️⃣  Write options + level/overlay files
+        OptionsIO.save(gameOptions, currentLevelName + "_options");
+        saveLevel(currentLevelName);                     // already exists
+        LoadSave.saveOverlay(currentLevelName, overlay); // if you have overlays
+
+        System.out.println("Saved game for level " + currentLevelName);
+    }
+/**
     public void loadSavedGame(String levelName) {
         String optsFile  = levelName +  "_options";
         String levelFile = levelName;
@@ -243,6 +260,28 @@ public class Playing extends GameScene implements SceneMethods {
             initializeManagers();
         }
     }
+*/
+
+public void loadSavedGame(String levelName) {
+    // 1) Read the options file for this level
+    GameOptions savedOpts = OptionsIO.load(levelName + "_options");
+
+    // 2) If nothing was found, fall back to a clean start
+    if (savedOpts == null) {
+        System.out.println("No save file found — starting fresh.");
+        gameOptions = GameOptions.defaults();
+        return;
+    }
+
+    // 3) Keep the loaded options object
+    this.gameOptions = savedOpts;
+
+    // 4) Push the persisted values into the live subsystems
+    waveManager.setWaveIndex (gameOptions.getCurrentWaveIndex());
+    waveManager.setGroupIndex(gameOptions.getCurrentGroupIndex());   // remove if you don’t track groups
+    playerManager.setGold   (gameOptions.getSavedGold());
+    this.castleCurrentHealth = gameOptions.getSavedCastleHealth();
+}
 
 
     private void loadDefaultLevel() {
@@ -388,6 +427,8 @@ public class Playing extends GameScene implements SceneMethods {
             }
         }
     }
+
+    public String getCurrentLevelName() { return currentLevelName; }
 
     public void update() {
         if (!gamePaused) {

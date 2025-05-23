@@ -269,6 +269,10 @@ public class WaveManager {
         return waves.size();
     }
 
+    public void setWaveIndex(int currentWaveIndex) {this.waveIndex = currentWaveIndex;}
+
+    public void setGroupIndex(int currentGroupIndex) {this.groupIndex = currentGroupIndex;}
+
     public float getTimeUntilNextSpawn() {
         if (waitingForNextWave && waveTimerActive) {
             return (interWaveTickLimit - interWaveTick) / 60f;
@@ -367,4 +371,6 @@ public class WaveManager {
                 return null;
         }
     }
+
+
 }
