@@ -1,6 +1,7 @@
 package objects;
 
 import constants.Constants;
+import enemies.Enemy;
 
 import java.awt.*;
 
@@ -70,6 +71,12 @@ public abstract class Tower {
 
     public int getLevel() { return level; }
     public boolean isUpgradeable() { return level == 1; }
-    public abstract void upgrade();
+    public abstract Tower upgrade();
     public void setLevel(int lvl) { this.level = lvl; }
+
+    // Default implementation for on-hit effects. Can be overridden by specific towers or decorators.
+    public void applyOnHitEffect(Enemy enemy, scenes.Playing playingScene) {
+        // Base towers typically don't have special on-hit effects beyond damage.
+        // This can be left empty or log a message if needed.
+    }
 }
