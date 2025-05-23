@@ -19,6 +19,9 @@ public class GameOverScene extends GameScene implements SceneMethods{
     private int enemiesSpawned;
     private int enemiesReachedEnd;
     private int towersBuilt;
+    private int enemyDefeated;
+    private int totalDamage;
+    private int timePlayed;
     private TheButton replayButton;
     private TheButton menuButton;
     private BufferedImage victoryBg;
@@ -71,18 +74,29 @@ public class GameOverScene extends GameScene implements SceneMethods{
         g.drawString("Enemies Spawned: " + enemiesSpawned, 50, 240);
         g.drawString("Enemies Reached End: " + enemiesReachedEnd, 50, 280);
         g.drawString("Towers Built: " + towersBuilt, 50, 320);
+        g.drawString("Enemies Defeated: " + enemyDefeated, 50, 360);
+        g.drawString("Total Damage Dealt: " + totalDamage, 50, 400);
+
+        int minutes = timePlayed / 60;
+        int seconds = timePlayed % 60;
+        g.drawString("Time Played: " + minutes + "m " + seconds + "s", 50, 440);
 
         replayButton.drawStyled(g);
         menuButton.drawStyled(g);
     }
 
-    public void setStats(boolean isVictory,int goldEarned, int enemiesSpawned, int enemiesReachedEnd, int towersBuilt) {
+    public void setStats(boolean isVictory, int goldEarned, int enemiesSpawned, int enemiesReachedEnd, int towersBuilt,
+                         int enemyDefeated, int totalDamage, int timePlayed) {
         this.isVictory = isVictory;
         this.goldEarned = goldEarned;
         this.enemiesSpawned = enemiesSpawned;
         this.enemiesReachedEnd = enemiesReachedEnd;
         this.towersBuilt = towersBuilt;
+        this.enemyDefeated = enemyDefeated;
+        this.totalDamage = totalDamage;
+        this.timePlayed = timePlayed;
     }
+
 
 
     @Override
