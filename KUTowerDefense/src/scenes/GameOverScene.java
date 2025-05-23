@@ -90,7 +90,7 @@ public class GameOverScene extends GameScene implements SceneMethods{
         if (replayButton.getBounds().contains(x, y)) {
             game.resetGameWithSameLevel();
         } else if (menuButton.getBounds().contains(x, y)) {
-            GameStates.setGameState(GameStates.MENU);
+            game.changeGameState(GameStates.MENU);
         }
     }
 

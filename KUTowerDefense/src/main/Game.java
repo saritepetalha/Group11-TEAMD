@@ -66,6 +66,9 @@ public class Game extends JFrame implements Runnable{
 		if (gamescreen != null) {
 			gamescreen.setPanelSize();
 		}
+		getContentPane().removeAll();
+		add(gamescreen);
+
 		pack();
 		setLocationRelativeTo(null);
 
@@ -111,6 +114,11 @@ public class Game extends JFrame implements Runnable{
 				default:
 					break;
 			}
+		}
+		if (gamescreen != null) {
+			gamescreen.setPanelSize();
+			gamescreen.revalidate();
+			gamescreen.repaint();
 		}
 	}
 
