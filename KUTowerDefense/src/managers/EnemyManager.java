@@ -212,6 +212,8 @@ public class EnemyManager {
             if (enemy.isAlive()) {
                 // adjust animation speed when game speed changes
                 enemy.adjustAnimationForGameSpeed(speedMultiplier);
+                // call enemy's own update method to handle internal logic like timers
+                enemy.update();
             }
         }
 

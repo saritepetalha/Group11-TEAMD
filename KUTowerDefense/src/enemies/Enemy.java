@@ -33,8 +33,8 @@ public abstract class Enemy {
     protected int goldReward;
 
     private boolean isSlowed = false;
-    private long slowTimer = 0;
-    private static final long SLOW_DURATION = 4_000_000_000L; // 4 seconds in nanoseconds
+    private long slowTimer = 0; // Will store remaining duration in ticks
+    private float currentSlowFactor = 1.0f; // 1.0f means no slow
     public static BufferedImage snowflakeIcon = null;
 
     private boolean isTeleporting = false;
@@ -400,18 +400,24 @@ public abstract class Enemy {
         return dirY;
     }
 
-    public void applySlow() {
-        isSlowed = true;
-        slowTimer = System.nanoTime();
-        if (snowflakeIcon == null) {
-            snowflakeIcon = LoadSave.getImageFromPath("/TowerAssets/snow flake icon.png");
-            System.out.println("[DEBUG] Loaded snowflake icon: " + (snowflakeIcon != null));
+    public void applySlow(float slowFactor, int durationTicks) {
+        if (!isSlowed || slowFactor < this.currentSlowFactor) { // Apply new slow if not slowed, or if new slow is stronger
+            this.isSlowed = true;
+            this.currentSlowFactor = slowFactor;
+            this.slowTimer = durationTicks;
+            if (snowflakeIcon == null) {
+                snowflakeIcon = LoadSave.getImageFromPath("/TowerAssets/snow flake icon.png");
+            }
         }
     }
 
     private void updateSlow() {
-        if (isSlowed && System.nanoTime() - slowTimer > SLOW_DURATION) {
-            isSlowed = false;
+        if (isSlowed) {
+            slowTimer--;
+            if (slowTimer <= 0) {
+                isSlowed = false;
+                currentSlowFactor = 1.0f; // Reset slow factor
+            }
         }
     }
 
@@ -441,10 +447,15 @@ public abstract class Enemy {
     public void update() {
         updateSlow();
         updateTeleportEffect();
+        updateAnimationTick();
     }
 
     public float getEffectiveSpeed() {
-        return isSlowed ? speed * 0.8f : speed;
+        float currentSpeed = this.speed;
+        if (isSlowed) {
+            currentSpeed *= currentSlowFactor;
+        }
+        return currentSpeed;
     }
 
     /**

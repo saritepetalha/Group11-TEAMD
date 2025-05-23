@@ -18,8 +18,8 @@ import static constants.Constants.Projectiles.*;
 public class ProjectileManager {
     private Playing playing;
     private ArrayList<Projectile> projectiles = new ArrayList<>();
-    private BufferedImage[] proj_imgs;
-    private BufferedImage[] fireball_imgs;
+    private BufferedImage[] proj_imgs; // Index 0: ARROW, 1: CANNONBALL (L1), 2: MAGICBOLT (L1)
+    private BufferedImage[] fireball_imgs; // For L2 CANNONBALL animation
     private BufferedImage[] explosion_imgs;
     private BufferedImage[] arrowFrames; // Array for rotated arrow sprites
     private int projID = 0;
@@ -37,7 +37,6 @@ public class ProjectileManager {
         }
 
         fireball_imgs = LoadSave.getFireballAnimation();
-
         explosion_imgs = LoadSave.getExplosionAnimation();
     }
 
@@ -197,7 +196,8 @@ public class ProjectileManager {
 
                     // Mage slow effect
                     if (projectile.getProjectileType() == Constants.Projectiles.MAGICBOLT && projectile.getLevel() == 2) {
-                        enemy.applySlow();
+                        // Apply a default slow from projectiles, e.g., 50% slow for 2 seconds (120 ticks)
+                        enemy.applySlow(0.5f, 120);
                     }
 
                     // Mage teleport effect - "Back to step 1" mechanic
@@ -278,20 +278,17 @@ public class ProjectileManager {
                             (int) currentProjectile.getPos().y - explosion_imgs[frame].getHeight() / 2,
                             null);
                 }
-            } else if (currentProjectile.getProjectileType() == Constants.Projectiles.CANNONBALL) {
+            } else if (currentProjectile.getProjectileType() == Constants.Projectiles.CANNONBALL && currentProjectile.getLevel() == 2) {
+                // Draw Lvl 2 Cannonball animation (fireball)
                 int frame = currentProjectile.getAnimationFrame();
-                if (frame >= 0 && frame < fireball_imgs.length) {
+                if (fireball_imgs != null && frame >= 0 && frame < fireball_imgs.length) {
                     g.drawImage(fireball_imgs[frame],
                             (int) currentProjectile.getPos().x - fireball_imgs[frame].getWidth() / 2,
                             (int) currentProjectile.getPos().y - fireball_imgs[frame].getHeight() / 2,
                             null);
                 }
-            } else if (currentProjectile.getProjectileType() == Constants.Projectiles.MAGICBOLT && currentProjectile.getLevel() == 2) {
-                // Draw cyan circle for level 2 mage projectile
-                g.setColor(Color.CYAN);
-                g.fillOval((int) currentProjectile.getPos().x, (int) currentProjectile.getPos().y, 16, 16);
             } else if (currentProjectile.getProjectileType() == Constants.Projectiles.ARROW && arrowFrames != null) {
-                // Use rotated arrow sprites based on direction
+                // Use rotated arrow sprites based on direction (already centered)
                 int frameIndex = currentProjectile.getRotationFrameIndex();
                 if (frameIndex >= 0 && frameIndex < arrowFrames.length) {
                     BufferedImage arrowImg = arrowFrames[frameIndex];
@@ -301,10 +298,15 @@ public class ProjectileManager {
                             null);
                 }
             } else {
-                g.drawImage(proj_imgs[currentProjectile.getProjectileType()],
-                        (int) currentProjectile.getPos().x,
-                        (int) currentProjectile.getPos().y,
-                        null);
+                // Default drawing for L1 projectiles (including L1 Cannonball, L1 Magicbolt, L1 Arrow)
+                // Uses proj_imgs and centers the image
+                BufferedImage imgToDraw = proj_imgs[currentProjectile.getProjectileType()];
+                if (imgToDraw != null) {
+                    g.drawImage(imgToDraw,
+                            (int) currentProjectile.getPos().x - imgToDraw.getWidth() / 2,
+                            (int) currentProjectile.getPos().y - imgToDraw.getHeight() / 2,
+                            null);
+                }
             }
         }
     }
