@@ -104,6 +104,7 @@ public class Playing extends GameScene implements SceneMethods {
 
     private GameStateManager gameStateManager;
     private String currentMapName = "defaultlevel"; // Default map name
+    private boolean isFirstReset = true; // <-- ADD THIS NEW FLAG
 
     private TowerSelectionUI towerSelectionUI;
 
@@ -971,6 +972,19 @@ public class Playing extends GameScene implements SceneMethods {
 
         // 9. Update UI to reflect the reset state
         updateUIResources();
+
+        // Warm-up render on first reset to prevent initial flash
+        if (isFirstReset) {
+            System.out.println("Performing first-time render warm-up for Playing scene...");
+            BufferedImage dummyImg = new BufferedImage(GameDimensions.GAME_WIDTH, GameDimensions.GAME_HEIGHT, BufferedImage.TYPE_INT_ARGB);
+            Graphics g = dummyImg.getGraphics();
+            if (g != null) {
+                this.render(g); // Call render once to an offscreen buffer
+                g.dispose();
+            }
+            isFirstReset = false;
+            System.out.println("Render warm-up complete.");
+        }
     }
 
     /**
@@ -1062,7 +1076,7 @@ public class Playing extends GameScene implements SceneMethods {
     public void addTotalDamage(int damage) {
         totalDamage += damage;
     }
-      
+
     // Save game state
     public void saveGameState() {
         // Create lists to store tower states

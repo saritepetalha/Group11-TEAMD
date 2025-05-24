@@ -67,19 +67,6 @@ public class Game extends JFrame implements Runnable{
 		GameStates previousState = GameStates.gameState;
 		GameStates.gameState = newState;
 
-		if (gamescreen != null) {
-			gamescreen.updateContentForState(newState, previousState);
-		}
-
-		if (gamescreen != null) {
-			gamescreen.setPanelSize();
-		}
-		getContentPane().removeAll();
-		add(gamescreen);
-
-		pack();
-		setLocationRelativeTo(null);
-
 		AudioManager audioManager = AudioManager.getInstance();
 		boolean isMenuRelatedToggle = (
 				(previousState == GameStates.MENU && (newState == GameStates.OPTIONS || newState == GameStates.EDIT || newState == GameStates.LOAD_GAME)) ||
@@ -93,20 +80,14 @@ public class Game extends JFrame implements Runnable{
 			}
 		}
 
-		if (previousState == GameStates.MENU && newState == GameStates.LOAD_GAME) {
-			if (loadGameMenu != null) {
-				// Potentially add a method to LoadGameMenu to refresh its list if levels can be saved/deleted during runtime
-				// e.g., loadGameMenu.refreshMapPreviews();
-			}
-		}
-
+		// Handle heavy initialization BEFORE UI updates to prevent black flash
 		if (!isMenuRelatedToggle) {
 			switch (newState) {
 				case MENU:
 					audioManager.playMusic("lonelyhood");
 					break;
 				case PLAYING:
-					// Only reset game state if we're not loading from a save
+					// Reset game state BEFORE making window visible to prevent black flash
 					if (playing != null && previousState != GameStates.LOAD_GAME) {
 						playing.resetGameState();
 					}
@@ -124,6 +105,27 @@ public class Game extends JFrame implements Runnable{
 					break;
 			}
 		}
+
+		if (gamescreen != null) {
+			gamescreen.updateContentForState(newState, previousState);
+		}
+
+		if (gamescreen != null) {
+			gamescreen.setPanelSize();
+		}
+		getContentPane().removeAll();
+		add(gamescreen);
+
+		pack();
+		setLocationRelativeTo(null);
+
+		if (previousState == GameStates.MENU && newState == GameStates.LOAD_GAME) {
+			if (loadGameMenu != null) {
+				// Potentially add a method to LoadGameMenu to refresh its list if levels can be saved/deleted during runtime
+				// e.g., loadGameMenu.refreshMapPreviews();
+			}
+		}
+
 		if (gamescreen != null) {
 			gamescreen.setPanelSize();
 			gamescreen.revalidate();
