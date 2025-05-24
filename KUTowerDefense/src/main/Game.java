@@ -1,16 +1,24 @@
 package main;
 
-import javax.swing.JFrame;
 import java.awt.Cursor;
+import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.RenderingHints;
 import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import managers.AudioManager;
 
+import javax.swing.JFrame;
+
+import managers.AudioManager;
 import managers.TileManager;
-import scenes.*;
+import scenes.GameOverScene;
+import scenes.Intro;
+import scenes.LoadGameMenu;
+import scenes.Loaded;
+import scenes.MapEditing;
+import scenes.Menu;
+import scenes.Options;
+import scenes.Playing;
 
 public class Game extends JFrame implements Runnable{
 
@@ -95,7 +103,8 @@ public class Game extends JFrame implements Runnable{
 					audioManager.playMusic("lonelyhood");
 					break;
 				case PLAYING:
-					if (playing != null) {
+					// Only reset game state if we're not loading from a save
+					if (playing != null && previousState != GameStates.LOAD_GAME) {
 						playing.resetGameState();
 					}
 					audioManager.playRandomGameMusic();
@@ -268,9 +277,10 @@ public class Game extends JFrame implements Runnable{
 		this.playing = new Playing(this, tileManager, levelData, overlayData);
 	}
 
-	public void startPlayingWithLevel(String levelName,
-									  int[][] lvl, int[][] overlay) {
-		this.playing = new Playing(this, tileManager, lvl, overlay, levelName);
+	public void startPlayingWithLevel(int[][] levelData, int[][] overlayData, String mapName) {
+		this.playing = new Playing(this, tileManager, levelData, overlayData);
+		this.playing.setCurrentMapName(mapName);
+		this.playing.loadGameState();
 	}
 
 	public void resetGameWithSameLevel() {
@@ -290,3 +300,4 @@ public class Game extends JFrame implements Runnable{
 	}
 
 }
+

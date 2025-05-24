@@ -83,8 +83,8 @@
     }
   ],
   "interWaveDelay": 8.0,
-  "currentWaveIndex": 1,
+  "currentWaveIndex": 0,
   "currentGroupIndex": 0,
-  "savedGold": 77,
+  "savedGold": 300,
   "savedCastleHealth": 20
 }
