@@ -2,6 +2,8 @@ package objects;
 
 import constants.Constants;
 import enemies.Enemy;
+import strategies.TargetingStrategy;
+import strategies.FirstEnemyStrategy;
 
 import java.awt.*;
 
@@ -12,6 +14,10 @@ public abstract class Tower {
     protected float range, cooldown;
     private static int num = 0;
     protected int level = 1;
+
+    // Strategy Pattern: Tower targeting behavior
+    protected TargetingStrategy targetingStrategy;
+
     public abstract int getType();
 
     public Tower(int x, int y) {
@@ -19,6 +25,18 @@ public abstract class Tower {
         this.y = y;
         this.ID = num;
         num++;
+
+        // Default targeting strategy is FirstEnemy (current behavior)
+        this.targetingStrategy = new FirstEnemyStrategy();
+    }
+
+    // Constructor with custom targeting strategy
+    public Tower(int x, int y, TargetingStrategy targetingStrategy) {
+        this.x = x;
+        this.y = y;
+        this.ID = num;
+        num++;
+        this.targetingStrategy = targetingStrategy != null ? targetingStrategy : new FirstEnemyStrategy();
     }
 
     public abstract float getCooldown();
@@ -37,10 +55,18 @@ public abstract class Tower {
         damage = Constants.Towers.getStartDamage(getType());
     }
 
-
     public boolean isClicked(int mouseX, int mouseY) {
         Rectangle bounds = new Rectangle(x, y, 64, 64);
         return bounds.contains(mouseX, mouseY);
+    }
+
+    // Targeting Strategy methods
+    public TargetingStrategy getTargetingStrategy() {
+        return targetingStrategy;
+    }
+
+    public void setTargetingStrategy(TargetingStrategy targetingStrategy) {
+        this.targetingStrategy = targetingStrategy != null ? targetingStrategy : new FirstEnemyStrategy();
     }
 
     public int getX() {
