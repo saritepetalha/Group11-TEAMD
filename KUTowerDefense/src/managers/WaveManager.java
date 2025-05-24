@@ -29,8 +29,8 @@ public class WaveManager {
     private int enemyDelayTickLimit = 0; // Will be set from config.Group
     private int enemyDelayTick = 0;
 
-    private int waveIndex = 0;
-    private int groupIndex = 0;
+    private int waveIndex;
+    private int groupIndex;
     private Queue<Integer> currentGroupEnemyQueue = new LinkedList<>(); // Enemies left in the current group
     private boolean waitingForNextWave = true; // Start by waiting for the first wave
     private boolean waitingForNextGroup = false;
@@ -49,7 +49,8 @@ public class WaveManager {
             System.out.println("Error initializing WaveManager with options: " + e.getMessage() + ". Using defaults.");
             this.gameOptions = GameOptions.defaults();
         }
-
+        this.waveIndex = gameOptions.getCurrentWaveIndex();
+        this.groupIndex = gameOptions.getCurrentGroupIndex();
         loadWavesFromOptions();
 
         setInterWaveDelay(gameOptions.getInterWaveDelay());
@@ -268,6 +269,10 @@ public class WaveManager {
         return waves.size();
     }
 
+    public void setWaveIndex(int currentWaveIndex) {this.waveIndex = currentWaveIndex;}
+
+    public void setGroupIndex(int currentGroupIndex) {this.groupIndex = currentGroupIndex;}
+
     public float getTimeUntilNextSpawn() {
         if (waitingForNextWave && waveTimerActive) {
             return (interWaveTickLimit - interWaveTick) / 60f;
@@ -366,4 +371,6 @@ public class WaveManager {
                 return null;
         }
     }
+
+
 }

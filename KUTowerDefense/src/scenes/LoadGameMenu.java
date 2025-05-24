@@ -250,7 +250,7 @@ public class LoadGameMenu extends JPanel { // Changed to JPanel
                     overlay[4][15] = 2;
                 }
             }
-            game.startPlayingWithLevel(levelData, overlay);
+            game.startPlayingWithLevel(levelName, levelData, overlay);
             game.changeGameState(GameStates.PLAYING);
         } else if (choice == JOptionPane.NO_OPTION) { // Edit
             game.getMapEditing().setLevel(levelData);

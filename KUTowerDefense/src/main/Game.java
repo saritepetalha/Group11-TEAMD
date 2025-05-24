@@ -268,6 +268,11 @@ public class Game extends JFrame implements Runnable{
 		this.playing = new Playing(this, tileManager, levelData, overlayData);
 	}
 
+	public void startPlayingWithLevel(String levelName,
+									  int[][] lvl, int[][] overlay) {
+		this.playing = new Playing(this, tileManager, lvl, overlay, levelName);
+	}
+
 	public void resetGameWithSameLevel() {
 		if (playing != null) {
 			playing.resetGameState();

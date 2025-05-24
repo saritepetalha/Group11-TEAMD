@@ -32,6 +32,7 @@ public class PlayingUI {
     private TheButton fastForwardButton;
     private TheButton pauseButton;
     private TheButton optionsButton;
+    private TheButton saveButton;
 
     // options menu back button
     private TheButton backOptionsButton;
@@ -91,6 +92,12 @@ public class PlayingUI {
                 buttonSize,
                 buttonSize,
                 ButtonAssets.buttonImages.get(1));
+
+        saveButton = new TheButton("Save",
+                GameDimensions.GAME_WIDTH/2 - 60,                   // X: centered in options menu
+                GameDimensions.GAME_HEIGHT/2 + ButtonAssets.optionsMenuImg.getHeight()/4,  // Y: just below the other controls
+                120, 40,                                           // width, height
+                ButtonAssets.buttonImages.get(1));                         // pick or add a “save” icon in your assets map
 
         backOptionsButton = new TheButton("Back",
                 GameDimensions.GAME_WIDTH / 2 + ButtonAssets.optionsMenuImg.getWidth() / 4,
@@ -417,6 +424,18 @@ public class PlayingUI {
 
         g2d.drawImage(optionsImg, menuX, menuY, menuWidth, menuHeight, null);
 
+        // draw save button background (hover/pressed states)
+        if (saveButton.isMouseOver()) {
+            g2d.setColor(new Color(255,255,255,40));
+            g2d.fillRoundRect(saveButton.getX(), saveButton.getY(),
+                    saveButton.getWidth(), saveButton.getHeight(),
+                    8,8);
+        }
+        g2d.drawImage(ButtonAssets.buttonImages.get(1),
+                saveButton.getX(), saveButton.getY(),
+                saveButton.getWidth(), saveButton.getHeight(),
+                null);
+
         // draw back button
         if (ButtonAssets.backOptionsImg != null) {
             int backButtonX = menuX + menuWidth - buttonSize;
@@ -703,7 +722,16 @@ public class PlayingUI {
             AudioManager.getInstance().playButtonClickSound();
 
             toggleButtonState(fastForwardButton);
-        } else if (optionsButton.getBounds().contains(mouseX, mouseY)) {
+
+        } else if (saveButton.getBounds().contains(mouseX, mouseY)) {
+            AudioManager.getInstance().playButtonClickSound();
+            // pick your levelName & slot however you track them—
+            // e.g. stored in Playing as currentLevelName and currentSlot:
+            playing.saveGame();
+            // give the user feedback, e.g. flash a “Saved!” message or log:
+            System.out.println("Game saved to slot "); //+ playing.getCurrentSaveSlot());
+
+        }else if (optionsButton.getBounds().contains(mouseX, mouseY)) {
             AudioManager.getInstance().playButtonClickSound();
             toggleButtonState(optionsButton);
         } else if (playing.isOptionsMenuOpen()) {

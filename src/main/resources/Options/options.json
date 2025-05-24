@@ -1,0 +1,75 @@
+{
+  "startingGold": 300,
+  "startingPlayerHP": 150,
+  "startingShield": 100,
+  "enemyStats": {
+    "GOBLIN": {
+      "hitPoints": 20,
+      "moveSpeed": 0.2,
+      "goldReward": 300
+    },
+    "WARRIOR": {
+      "hitPoints": 3,
+      "moveSpeed": 0.2,
+      "goldReward": 400
+    },
+    "BARREL": {
+      "hitPoints": 150,
+      "moveSpeed": 0.6,
+      "goldReward": 15
+    },
+    "TNT": {
+      "hitPoints": 50,
+      "moveSpeed": 1.2,
+      "goldReward": 2
+    },
+    "TROLL": {
+      "hitPoints": 300,
+      "moveSpeed": 0.15,
+      "goldReward": 10
+    }
+  },
+  "towerStats": {
+    "ARTILLERY": {
+      "buildCost": 120,
+      "range": 2.5,
+      "fireRate": 0.6,
+      "aoeRadius": 1.5,
+      "damage": 25
+    },
+    "ARCHER": {
+      "buildCost": 60,
+      "range": 3.5,
+      "fireRate": 1.2,
+      "aoeRadius": 0.0,
+      "damage": 15
+    },
+    "MAGE": {
+      "buildCost": 90,
+      "range": 3.0,
+      "fireRate": 0.9,
+      "aoeRadius": 0.0,
+      "damage": 20
+    }
+  },
+  "waves": [
+    {
+      "groups": [
+        {
+          "composition": {
+            "GOBLIN": 1
+          },
+          "intraEnemyDelay": 0.5
+        },
+        {
+          "composition": {
+            "WARRIOR": 5
+          },
+          "intraEnemyDelay": 0.5
+        }
+      ],
+      "intraGroupDelay": 0.0
+    }
+  ],
+  "interWaveDelay": 8.0
+}
