@@ -1,8 +1,6 @@
 {
   "startingGold": 300,
-  "startingPlayerHP": 15,
   "startingShield": 25,
-  "currentGold": 500,
   "enemyStats": {
     "GOBLIN": {
       "hitPoints": 100,
@@ -86,5 +84,7 @@
   ],
   "interWaveDelay": 8.0,
   "currentWaveIndex": 0,
-  "currentGroupIndex": 0
+  "currentGroupIndex": 0,
+  "savedGold": 190,
+  "savedCastleHealth": 20
 }

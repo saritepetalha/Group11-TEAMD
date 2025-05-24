@@ -1,20 +1,22 @@
 package managers;
 
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+
+import config.EnemyType;
 import config.GameOptions;
 import config.Group;
 import config.Wave;
-import config.EnemyType;
+import static constants.Constants.Enemies.BARREL;
+import static constants.Constants.Enemies.GOBLIN;
+import static constants.Constants.Enemies.TNT;
+import static constants.Constants.Enemies.TROLL;
+import static constants.Constants.Enemies.WARRIOR;
 import helpMethods.OptionsIO;
 import scenes.Playing;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.LinkedList;
-import java.util.Queue;
-
-import static constants.Constants.Enemies.*;
 
 public class WaveManager {
 
@@ -262,6 +264,20 @@ public class WaveManager {
 
     public int getWaveIndex() {
         return waveIndex;
+    }
+
+    public void setWaveIndex(int waveIndex) {
+        this.waveIndex = Math.max(0, Math.min(waveIndex, waves.size() - 1));
+    }
+
+    public int getCurrentGroupIndex() {
+        return groupIndex;
+    }
+
+    public void setCurrentGroupIndex(int groupIndex) {
+        if (waveIndex < waves.size()) {
+            this.groupIndex = Math.max(0, Math.min(groupIndex, waves.get(waveIndex).getGroups().size() - 1));
+        }
     }
 
     public int getWaveCount() {

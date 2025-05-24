@@ -1,16 +1,27 @@
 package ui_p;
 
-import constants.GameDimensions;
-import static constants.Constants.Player.*;
-import scenes.Playing;
-import managers.AudioManager;
-
-import java.awt.*;
+import java.awt.AlphaComposite;
+import java.awt.Color;
+import java.awt.Composite;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RadialGradientPaint;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.Shape;
 import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+
+import static constants.Constants.Player.MAX_HEALTH;
+import static constants.Constants.Player.MAX_SHIELD;
+import constants.GameDimensions;
+import managers.AudioManager;
+import scenes.Playing;
 
 public class PlayingUI {
     private Playing playing;
@@ -36,6 +47,7 @@ public class PlayingUI {
     // options menu back button
     private TheButton backOptionsButton;
     private TheButton mainMenuButton;
+    private TheButton saveButton;
 
     // option values (WILL BE CHANGED TO BE READ FROM FILE)
     private int soundVolume = 50;
@@ -98,6 +110,14 @@ public class PlayingUI {
                 buttonSize,
                 buttonSize,
                 ButtonAssets.backOptionsImg);
+
+        // Initialize save button
+        saveButton = new TheButton("Save Game",
+                GameDimensions.GAME_WIDTH / 2 - ButtonAssets.optionsMenuImg.getWidth() / 4,
+                GameDimensions.GAME_HEIGHT / 2 - ButtonAssets.optionsMenuImg.getHeight() / 3,
+                buttonSize,
+                buttonSize,
+                ButtonAssets.buttonImages.get(1));
 
         // Initialize main menu button
         mainMenuButton = new TheButton("Main Menu",
@@ -313,17 +333,17 @@ public class PlayingUI {
             // Draw a more prominent pulsing glow effect
             long currentTime = System.currentTimeMillis();
             float alpha = (float) (0.5f + 0.3f * Math.sin(currentTime * 0.005)); // Stronger pulse
-            
+
             // Draw outer glow
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha * 0.5f));
             g2d.setColor(new Color(255, 255, 0)); // Yellow glow
             g2d.fillOval(x - 4, y - 4, width + 8, height + 8);
-            
+
             // Draw inner glow
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
             g2d.setColor(new Color(255, 255, 200)); // Brighter inner glow
             g2d.fillOval(x - 2, y - 2, width + 4, height + 4);
-            
+
             // Reset composite
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
         }
@@ -355,19 +375,19 @@ public class PlayingUI {
         int pauseButtonX = pauseButton.getX();
         int pauseButtonY = pauseButton.getY();
         int pauseButtonSize = pauseButton.getWidth();
-        
+
         // Create a radial gradient that's more transparent around the pause button
         RadialGradientPaint gradient = new RadialGradientPaint(
-            pauseButtonX + pauseButtonSize/2, pauseButtonY + pauseButtonSize/2, // center point
-            pauseButtonSize * 2, // radius
-            new float[]{0.0f, 0.5f, 1.0f}, // fractions
-            new Color[]{
-                new Color(0, 0, 0, 0), // transparent at center
-                new Color(0, 0, 0, 100), // semi-transparent in middle
-                new Color(0, 0, 0, 150) // darker at edges
-            }
+                pauseButtonX + pauseButtonSize/2, pauseButtonY + pauseButtonSize/2, // center point
+                pauseButtonSize * 2, // radius
+                new float[]{0.0f, 0.5f, 1.0f}, // fractions
+                new Color[]{
+                        new Color(0, 0, 0, 0), // transparent at center
+                        new Color(0, 0, 0, 100), // semi-transparent in middle
+                        new Color(0, 0, 0, 150) // darker at edges
+                }
         );
-        
+
         g2d.setPaint(gradient);
         g2d.fillRect(0, 0, GameDimensions.GAME_WIDTH, GameDimensions.GAME_HEIGHT);
 
@@ -597,8 +617,7 @@ public class PlayingUI {
         // 4. Music slider
         drawSlider(g2d, controlX, startY + spacing, 70, 20, musicVolume, "music");
 
-
-        // 5. Return to Main Menu - no visible button, just hitbox
+        // 6. Return to Main Menu - no visible button, just hitbox
         int btnWidth = 242;
         int btnHeight = 38;
         int btnX = menuX + (menuWidth - btnWidth) / 2;
@@ -613,6 +632,28 @@ public class PlayingUI {
         if (mainMenuButton.isMouseOver()) {
             g2d.setColor(new Color(255, 255, 255, 40));
             g2d.fillRoundRect(btnX, btnY, btnWidth, btnHeight, 15, 15);
+        }
+
+        // 7. Save button - positioned below main menu button
+        int saveLoadWidth = 120;
+        int saveLoadHeight = 30;
+        int saveLoadY = btnY + btnHeight + 10; // Position below main menu button
+
+        // Save button
+        saveButton.setX(btnX + (btnWidth - saveLoadWidth) / 2); // Center horizontally with main menu button
+        saveButton.setY(saveLoadY);
+        saveButton.setWidth(saveLoadWidth);
+        saveButton.setHeight(saveLoadHeight);
+
+        g2d.setColor(new Color(60, 60, 60));
+        g2d.fillRoundRect(saveButton.getX(), saveLoadY, saveLoadWidth, saveLoadHeight, 5, 5);
+        g2d.setColor(Color.WHITE);
+        g2d.drawString("Save Game", saveButton.getX() + 5, saveLoadY + 20);
+        if (saveButton.isMouseOver()) {
+            g2d.setColor(new Color(100, 100, 255));
+            g2d.fillRoundRect(saveButton.getX(), saveLoadY, saveLoadWidth, saveLoadHeight, 5, 5);
+            g2d.setColor(Color.WHITE);
+            g2d.drawString("Save Game", saveButton.getX() + 5, saveLoadY + 20);
         }
     }
 
@@ -662,28 +703,27 @@ public class PlayingUI {
         this.mouseX = mouseX;
         this.mouseY = mouseY;
 
-        // reset all hover states
-        pauseButton.setMouseOver(false);
+        // Reset all button hover states
         fastForwardButton.setMouseOver(false);
+        pauseButton.setMouseOver(false);
         optionsButton.setMouseOver(false);
         backOptionsButton.setMouseOver(false);
         mainMenuButton.setMouseOver(false);
+        saveButton.setMouseOver(false);
 
         // check which button is hovered
-        if (pauseButton.getBounds().contains(mouseX, mouseY)) {
-            pauseButton.setMouseOver(true);
-        } else if (fastForwardButton.getBounds().contains(mouseX, mouseY)) {
+        if (isMouseOverButton(fastForwardButton, mouseX, mouseY)) {
             fastForwardButton.setMouseOver(true);
-        } else if (optionsButton.getBounds().contains(mouseX, mouseY)) {
+        } else if (isMouseOverButton(pauseButton, mouseX, mouseY)) {
+            pauseButton.setMouseOver(true);
+        } else if (isMouseOverButton(optionsButton, mouseX, mouseY)) {
             optionsButton.setMouseOver(true);
-        } else if (playing.isOptionsMenuOpen()) {
-            if (isMouseOverButton(backOptionsButton, mouseX, mouseY)) {
-                backOptionsButton.setMouseOver(true);
-            }
-            // only set hover for main menu button if music dropdown is closed
-            else if (!musicDropdownOpen && isMouseOverButton(mainMenuButton, mouseX, mouseY)) {
-                mainMenuButton.setMouseOver(true);
-            }
+        } else if (isMouseOverButton(backOptionsButton, mouseX, mouseY)) {
+            backOptionsButton.setMouseOver(true);
+        } else if (isMouseOverButton(saveButton, mouseX, mouseY)) {
+            saveButton.setMouseOver(true);
+        } else if (!musicDropdownOpen && isMouseOverButton(mainMenuButton, mouseX, mouseY)) {
+            mainMenuButton.setMouseOver(true);
         }
     }
 
@@ -783,10 +823,23 @@ public class PlayingUI {
             }
             // pnly process other buttons if dropdown is closed
             else if (!musicDropdownOpen) {
+                if (isMouseOverButton(backOptionsButton, mouseX, mouseY)) {
+                    AudioManager.getInstance().playButtonClickSound();
+                    toggleButtonState(backOptionsButton);
+                    musicDropdownOpen = false;
+                    return;
+                }
+                if (isMouseOverButton(saveButton, mouseX, mouseY)) {
+                    AudioManager.getInstance().playButtonClickSound();
+                    toggleButtonState(saveButton);
+                    playing.saveGameState();
+                    return;
+                }
                 if (isMouseOverButton(mainMenuButton, mouseX, mouseY)) {
                     AudioManager.getInstance().playButtonClickSound();
                     toggleButtonState(mainMenuButton);
                     playing.returnToMainMenu();
+                    return;
                 }
 
                 // check slider interaction
@@ -795,7 +848,6 @@ public class PlayingUI {
                     sliderDragging = true;
                     updateSliderValue(mouseX);
                 }
-
             }
         }
     }
@@ -812,6 +864,7 @@ public class PlayingUI {
             if (button != optionsButton) optionsButton.setMousePressed(false);
             if (button != backOptionsButton) backOptionsButton.setMousePressed(false);
             if (button != mainMenuButton) mainMenuButton.setMousePressed(false);
+            if (button != saveButton) saveButton.setMousePressed(false);
         }
     }
 

@@ -1,32 +1,47 @@
 package scenes;
 
-import java.awt.*;
-import java.awt.image.BufferedImage;
-
+import java.awt.AlphaComposite;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.event.MouseWheelEvent;
-
+import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.ArrayList;
-import main.Game;
 
+import config.GameOptions;
+import constants.Constants;
 import constants.GameDimensions;
 import enemies.Enemy;
-
 import helpMethods.LoadSave;
 import helpMethods.OptionsIO;
-import config.GameOptions;
-
-import managers.*;
+import main.Game;
 import managers.AudioManager;
-
-import objects.Tower;
-
-import ui_p.DeadTree;
-import ui_p.PlayingUI;
-import ui_p.LiveTree;
-
+import managers.EnemyManager;
+import managers.FireAnimationManager;
+import managers.GameStateManager;
+import managers.GameStateMemento;
 import managers.GoldBagManager;
+import managers.PlayerManager;
+import managers.ProjectileManager;
+import managers.TileManager;
+import managers.TowerManager;
+import managers.TreeInteractionManager;
+import managers.WaveManager;
+import objects.ArcherTower;
+import objects.ArtilleryTower;
+import objects.MageTower;
+import objects.Tower;
+import objects.UpgradedArcherTower;
+import objects.UpgradedArtilleryTower;
+import objects.UpgradedMageTower;
+import ui_p.DeadTree;
+import ui_p.LiveTree;
+import ui_p.PlayingUI;
 
 public class Playing extends GameScene implements SceneMethods {
     private int[][] level;
@@ -86,6 +101,9 @@ public class Playing extends GameScene implements SceneMethods {
     private static final int CASTLE_HEALTH_BAR_X = 50;
     private static final int CASTLE_HEALTH_BAR_Y = 50;
 
+    private GameStateManager gameStateManager;
+    private String currentMapName = "defaultlevel"; // Default map name
+
     public Playing(Game game) {
         super(game);
         this.tileManager = new TileManager();
@@ -95,6 +113,7 @@ public class Playing extends GameScene implements SceneMethods {
         initializeManagers();
         this.castleMaxHealth = calculateCastleMaxHealth();
         this.castleCurrentHealth = castleMaxHealth;
+        this.gameStateManager = new GameStateManager();
     }
 
     public Playing(Game game, TileManager tileManager) {
@@ -106,6 +125,7 @@ public class Playing extends GameScene implements SceneMethods {
         initializeManagers();
         this.castleMaxHealth = calculateCastleMaxHealth();
         this.castleCurrentHealth = castleMaxHealth;
+        this.gameStateManager = new GameStateManager();
     }
 
     public Playing(Game game, TileManager tileManager, int[][] customLevel, int[][] customOverlay) {
@@ -122,6 +142,7 @@ public class Playing extends GameScene implements SceneMethods {
         initializeManagers();
         this.castleMaxHealth = calculateCastleMaxHealth();
         this.castleCurrentHealth = castleMaxHealth;
+        this.gameStateManager = new GameStateManager();
     }
 
     private GameOptions loadOptionsOrDefault() {
@@ -226,6 +247,7 @@ public class Playing extends GameScene implements SceneMethods {
     public void loadLevel(String levelName) {
         int[][] loadedLevel = LoadSave.loadLevel(levelName);
         if (loadedLevel != null) {
+            this.currentMapName = levelName; // Update current map name
             level = loadedLevel;
             overlay = new int[loadedLevel.length][loadedLevel[0].length];
             boolean foundStart = false;
@@ -260,10 +282,16 @@ public class Playing extends GameScene implements SceneMethods {
             enemyManager = new EnemyManager(this, overlay, level, this.gameOptions);
             waveManager = new WaveManager(this, this.gameOptions);
 
-            resetGameState();
+            // Only reset game state if we're not loading from a save
+            if (!gameStateManager.saveFileExists(currentMapName)) {
+                resetGameState();
+            }
             startEnemySpawning();
 
             updateUIResources();
+
+            // Load the game state if it exists
+            loadGameState();
         }
     }
 
@@ -734,6 +762,9 @@ public class Playing extends GameScene implements SceneMethods {
         System.out.println("Game Over!");
         gameOverHandled = true;
 
+        // Delete the save file
+        gameStateManager.deleteSaveFile(currentMapName);
+
         // Play the specific lose sound
         AudioManager.getInstance().playSound("lose5");
 
@@ -758,11 +789,14 @@ public class Playing extends GameScene implements SceneMethods {
     // add a method to handle victory
     private void handleVictory() {
         // Prevent multiple calls to handleVictory
-        // Zafer sadece tüm dalgalar bittiğinde ve oyuncu hayattaysa!
+        // Victory only when all waves are finished and player is alive!
         if (victoryHandled || !waveManager.isAllWavesFinished() || !playerManager.isAlive()) return;
 
         System.out.println("Victory!");
         victoryHandled = true;
+
+        // Delete the save file
+        gameStateManager.deleteSaveFile(currentMapName);
 
         // play the specific victory sound
         AudioManager.getInstance().playSound("win4");
@@ -990,11 +1024,109 @@ public class Playing extends GameScene implements SceneMethods {
         return waveManager.isAllWavesFinished();
     }
 
+
     public void incrementEnemyDefeated() {
         enemyDefeated++;
     }
 
     public void addTotalDamage(int damage) {
         totalDamage += damage;
+      
+    // Save game state
+    public void saveGameState() {
+        // Create lists to store tower states
+        List<GameStateMemento.TowerState> towerStates = new ArrayList<>();
+
+        // Save tower states
+        for (Tower tower : towerManager.getTowers()) {
+            towerStates.add(new GameStateMemento.TowerState(
+                    tower.getX(),
+                    tower.getY(),
+                    tower.getType(),
+                    tower.getLevel()
+            ));
+        }
+
+        // Create memento with all game state including GameOptions, but without enemy states
+        GameStateMemento memento = new GameStateMemento(
+                playerManager.getGold(),
+                playerManager.getHealth(),
+                playerManager.getShield(),
+                waveManager.getWaveIndex(),
+                waveManager.getCurrentGroupIndex(),
+                towerStates,
+                new ArrayList<>(), // Empty list for enemy states
+                gameOptions
+        );
+
+        // Save the memento using the current map name
+        gameStateManager.saveGameState(memento, currentMapName);
+    }
+
+    // Load game state
+    public void loadGameState() {
+        GameStateMemento memento = gameStateManager.loadGameState(currentMapName);
+        if (memento == null) {
+            System.out.println("Failed to load game state from " + currentMapName);
+            return;
+        }
+
+        // Restore game options first
+        this.gameOptions = memento.getGameOptions();
+
+        // Restore player state
+        playerManager.setGold(memento.getGold());
+        playerManager.setHealth(memento.getHealth());
+        playerManager.setShield(memento.getShield());
+
+        // Restore wave state
+        waveManager.setWaveIndex(memento.getWaveIndex());
+        waveManager.setCurrentGroupIndex(memento.getGroupIndex());
+
+        // Clear existing towers and enemies
+        towerManager.clearTowers();
+        enemyManager.clearEnemies();
+
+        // Restore towers
+        for (GameStateMemento.TowerState towerState : memento.getTowerStates()) {
+            Tower tower = null;
+            switch (towerState.getType()) {
+                case Constants.Towers.ARCHER:
+                    tower = new ArcherTower(towerState.getX(), towerState.getY());
+                    break;
+                case Constants.Towers.ARTILLERY:
+                    tower = new ArtilleryTower(towerState.getX(), towerState.getY());
+                    break;
+                case Constants.Towers.MAGE:
+                    tower = new MageTower(towerState.getX(), towerState.getY());
+                    break;
+            }
+            if (tower != null) {
+                tower.setLevel(towerState.getLevel());
+                // If the tower is level 2, create the appropriate upgraded version
+                if (towerState.getLevel() == 2) {
+                    switch (towerState.getType()) {
+                        case Constants.Towers.ARCHER:
+                            tower = new UpgradedArcherTower(tower);
+                            break;
+                        case Constants.Towers.ARTILLERY:
+                            tower = new UpgradedArtilleryTower(tower);
+                            break;
+                        case Constants.Towers.MAGE:
+                            tower = new UpgradedMageTower(tower);
+                            break;
+                    }
+                }
+                towerManager.addTower(tower);
+            }
+        }
+
+        // Update UI with restored player state
+        updateUIResources();
+    }
+
+    public void setCurrentMapName(String mapName) {
+        this.currentMapName = mapName;
+
     }
 }
