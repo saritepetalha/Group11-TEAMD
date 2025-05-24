@@ -22,7 +22,7 @@ public class Menu extends GameScene implements SceneMethods {
     private BufferedImage img;
     private Random random;
     private BufferedImage backgroundImg;
-    private TheButton playButton, loadGameButton, mapEditorButton, optionButton, exitButton;
+    private TheButton playButton, loadGameButton, mapEditorButton, optionButton, exitButton, statsButton;
 
     // Music button
     private TheButton musicButton;
@@ -73,11 +73,13 @@ public class Menu extends GameScene implements SceneMethods {
         int centerX = GameDimensions.MAIN_MENU_SCREEN_WIDTH / 2 - buttonWidth / 2;
         int centerY = GameDimensions.MAIN_MENU_SCREEN_HEIGHT / 2 - buttonHeight / 2;
 
-        playButton = new TheButton("New Game", centerX, centerY, buttonWidth, buttonHeight);
-        loadGameButton = new TheButton("Load Game", centerX, centerY + buttonHeight, buttonWidth, buttonHeight);
-        mapEditorButton = new TheButton("Edit Mode", centerX, centerY + buttonHeight*2, buttonWidth, buttonHeight);
-        optionButton = new TheButton("Options", centerX, centerY + buttonHeight*3, buttonWidth, buttonHeight);
+        playButton = new TheButton("New Game", centerX, centerY - buttonHeight, buttonWidth, buttonHeight);
+        loadGameButton = new TheButton("Load Game", centerX, centerY, buttonWidth, buttonHeight);
+        mapEditorButton = new TheButton("Edit Mode", centerX, centerY + buttonHeight, buttonWidth, buttonHeight);
+        optionButton = new TheButton("Options", centerX, centerY + buttonHeight*2, buttonWidth, buttonHeight);
+        statsButton = new TheButton("View Statistics", centerX, centerY + buttonHeight*3, buttonWidth, buttonHeight);
         exitButton = new TheButton("Quit", centerX, centerY + buttonHeight*4, buttonWidth, buttonHeight);
+
 
         int musicButtonSize = 32;
         musicButton = new TheButton("Toggle Music",
@@ -113,6 +115,7 @@ public class Menu extends GameScene implements SceneMethods {
         loadGameButton.drawStyled(g);
         mapEditorButton.drawStyled(g);
         optionButton.drawStyled(g);
+        statsButton.drawStyled(g);
         exitButton.drawStyled(g);
     }
 
@@ -155,7 +158,11 @@ public class Menu extends GameScene implements SceneMethods {
         } else if (musicButton.getBounds().contains(x, y)) {
             playButtonClickSound();
             toggleMusicMute();
+        } else if (statsButton.getBounds().contains(x, y)) {
+            playButtonClickSound();
+            GameStates.setGameState(GameStates.STATISTICS);
         }
+
     }
 
     private void toggleMusicMute() {
@@ -170,6 +177,7 @@ public class Menu extends GameScene implements SceneMethods {
         loadGameButton.setMouseOver(false);
         mapEditorButton.setMouseOver(false);
         optionButton.setMouseOver(false);
+        statsButton.setMouseOver(false);
         exitButton.setMouseOver(false);
         musicButton.setMouseOver(false);
 
@@ -181,6 +189,8 @@ public class Menu extends GameScene implements SceneMethods {
             mapEditorButton.setMouseOver(true);
         } else if (optionButton.getBounds().contains(x, y)) {
             optionButton.setMouseOver(true);
+        } else if (statsButton.getBounds().contains(x, y)) {
+            statsButton.setMouseOver(true);
         } else if (exitButton.getBounds().contains(x, y)) {
             exitButton.setMouseOver(true);
         } else if (musicButton.getBounds().contains(x, y)) {
@@ -198,6 +208,8 @@ public class Menu extends GameScene implements SceneMethods {
             mapEditorButton.setMousePressed(true);
         } else if (optionButton.getBounds().contains(x, y)) {
             optionButton.setMousePressed(true);
+        } else if (statsButton.getBounds().contains(x, y)) {
+            statsButton.setMousePressed(true);
         } else if (exitButton.getBounds().contains(x, y)) {
             exitButton.setMousePressed(true);
         } else if (musicButton.getBounds().contains(x, y)) {
@@ -211,6 +223,7 @@ public class Menu extends GameScene implements SceneMethods {
         loadGameButton.resetBooleans();
         mapEditorButton.resetBooleans();
         optionButton.resetBooleans();
+        statsButton.resetBooleans();
         exitButton.resetBooleans();
         musicButton.resetBooleans();
     }
