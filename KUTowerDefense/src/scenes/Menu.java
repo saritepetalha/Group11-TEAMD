@@ -2,6 +2,8 @@ package scenes;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+
 import constants.GameDimensions;
 import main.Game;
 import main.GameStates;
@@ -11,9 +13,7 @@ import ui_p.TheButton;
 
 public class Menu extends GameScene implements SceneMethods {
 
-    private ArrayList<BufferedImage> sprites = new ArrayList<>();
     private BufferedImage img;
-    private Random random;
     private BufferedImage backgroundImg;
     private TheButton playButton, loadGameButton, mapEditorButton, optionButton, exitButton, statsButton;
 
@@ -40,7 +40,7 @@ public class Menu extends GameScene implements SceneMethods {
         loadGameButton = new TheButton("Load Game", centerX, centerY, buttonWidth, buttonHeight);
         mapEditorButton = new TheButton("Edit Mode", centerX, centerY + buttonHeight, buttonWidth, buttonHeight);
         optionButton = new TheButton("Options", centerX, centerY + buttonHeight*2, buttonWidth, buttonHeight);
-        statsButton = new TheButton("View Statistics", centerX, centerY + buttonHeight*3, buttonWidth, buttonHeight);
+        statsButton = new TheButton("View Stats", centerX, centerY + buttonHeight*3, buttonWidth, buttonHeight);
         exitButton = new TheButton("Quit", centerX, centerY + buttonHeight*4, buttonWidth, buttonHeight);
 
 

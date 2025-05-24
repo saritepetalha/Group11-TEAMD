@@ -16,15 +16,16 @@ public class StatisticsScene extends GameScene implements SceneMethods {
 
     private List<GameStatsRecord> stats;
     private int selectedIndex = -1;
-    private Rectangle[] cardBounds;
     private TheButton backButton;
-    private int entryHeight = 40;
-    private int startY = 100;
     private int scrollOffset = 0;
     private final int cardHeight = 120;
     private final int spacing = 20;
-    int visibleAreaHeight = 768 - startY - 50;
+    int visibleAreaHeight = 500 - 100 - 20;
     private BufferedImage bg;
+
+    private boolean scrollbarDragging = false;
+    private int dragStartY = 0;
+    private int dragStartScrollOffset = 0;
 
     public StatisticsScene(Game game) {
         super(game);
@@ -87,6 +88,38 @@ public class StatisticsScene extends GameScene implements SceneMethods {
         g.drawString("Time Played: " + record.getTimePlayed() + "s", x, lineY);
     }
 
+    private Rectangle getScrollbarThumbBounds() {
+        int cardX = 40;
+        int cardYStart = 100;
+
+        int totalHeight;
+        if (stats.size() > 0) {
+            totalHeight = (stats.size() - 1) * (cardHeight + spacing) + cardHeight;
+        } else {
+            totalHeight = 0;
+        }
+
+        if (totalHeight > visibleAreaHeight) {
+            int scrollbarX = cardX - 10;
+            int scrollbarY = cardYStart;
+            int scrollbarWidth = 10;
+            int scrollbarHeight = visibleAreaHeight;
+
+            int bottomPadding = 20;
+            int maxScrollOffset = Math.max(0, totalHeight - visibleAreaHeight + bottomPadding);
+
+            float ratio = visibleAreaHeight / (float) totalHeight;
+            int thumbHeight = Math.max(20, (int) (scrollbarHeight * ratio));
+            int maxThumbY = scrollbarY + scrollbarHeight - thumbHeight;
+            int thumbY = scrollbarY + (int) ((scrollOffset / (float) maxScrollOffset) * (scrollbarHeight - thumbHeight));
+
+            thumbY = Math.max(scrollbarY, Math.min(thumbY, maxThumbY));
+
+            return new Rectangle(scrollbarX, thumbY, scrollbarWidth, thumbHeight);
+        }
+
+        return null;
+    }
 
     public void update() {}
 
@@ -108,19 +141,19 @@ public class StatisticsScene extends GameScene implements SceneMethods {
         int cardWidth = 300;
         int cardHeight = 120;
         int spacing = 20;
+        Graphics clippedG = g.create();
+        clippedG.setClip(cardX, cardYStart, cardWidth + 20, visibleAreaHeight);
 
         for (int i = 0; i < stats.size(); i++) {
             int y = cardYStart + i * (cardHeight + spacing) - scrollOffset;
 
-            //if (y + cardHeight < startY || y > startY + visibleAreaHeight)
-              //  continue;
-            System.out.println("Card " + i + " Y: " + y);
-
-            drawCard(g, stats.get(i), cardX, y, cardWidth, cardHeight, i == selectedIndex);
+            if (y + cardHeight >= cardYStart && y <= cardYStart + visibleAreaHeight) {
+                drawCard(clippedG, stats.get(i), cardX, y, cardWidth, cardHeight, i == selectedIndex);
+            }
         }
 
+        clippedG.dispose();
 
-        // Detailed info
         if (selectedIndex >= 0 && selectedIndex < stats.size()) {
             GameStatsRecord selected = stats.get(selectedIndex);
 
@@ -132,24 +165,38 @@ public class StatisticsScene extends GameScene implements SceneMethods {
             drawDetails(g, selected, detailX, detailY);
 
         }
-
         backButton.drawStyled(g);
 
-        int totalHeight = stats.size() * (cardHeight + spacing);
+        int totalHeight;
+        if (stats.size() > 0) {
+            totalHeight = (stats.size() - 1) * (cardHeight + spacing) + cardHeight;
+        } else {
+            totalHeight = 0;
+        }
+
         if (totalHeight > visibleAreaHeight) {
             int scrollbarX = cardX - 10;
-            int scrollbarY = startY;
+            int scrollbarY = cardYStart;
             int scrollbarWidth = 10;
             int scrollbarHeight = visibleAreaHeight;
 
+            int bottomPadding = 20;
+            int maxScrollOffset = Math.max(0, totalHeight - visibleAreaHeight + bottomPadding);
+
             float ratio = visibleAreaHeight / (float) totalHeight;
-            int thumbHeight = (int) (scrollbarHeight * ratio);
-            int thumbY = scrollbarY + (int) ((scrollOffset / (float) totalHeight) * scrollbarHeight);
+            int thumbHeight = Math.max(20, (int) (scrollbarHeight * ratio));
+            int maxThumbY = scrollbarY + scrollbarHeight - thumbHeight;
+            int thumbY = scrollbarY + (int) ((scrollOffset / (float) maxScrollOffset) * (scrollbarHeight - thumbHeight));
+
+            thumbY = Math.max(scrollbarY, Math.min(thumbY, maxThumbY));
 
             g.setColor(new Color(100, 100, 100, 100));
             g.fillRoundRect(scrollbarX, scrollbarY, scrollbarWidth, scrollbarHeight, 5, 5);
 
-            g.setColor(new Color(200, 200, 200, 200));
+            Color thumbColor = scrollbarDragging ?
+                    new Color(255, 255, 255, 200) :
+                    new Color(200, 200, 200, 200);
+            g.setColor(thumbColor);
             g.fillRoundRect(scrollbarX, thumbY, scrollbarWidth, thumbHeight, 5, 5);
         }
     }
@@ -165,15 +212,17 @@ public class StatisticsScene extends GameScene implements SceneMethods {
         int cardHeight = 120;
         int spacing = 20;
 
-        for (int i = 0; i < stats.size(); i++) {
-            int cardY = cardYStart + i * (cardHeight + spacing) - scrollOffset;
-            Rectangle cardBounds = new Rectangle(cardX, cardY, cardWidth, cardHeight);
-            if (cardBounds.contains(x, y)) {
-                selectedIndex = i;
-                GameStatsRecord selected = stats.get(i);
-                System.out.println("Selected stats:");
-                System.out.println(selected);
-                return;
+        if (x >= cardX && x <= cardX + cardWidth && y >= cardYStart && y <= cardYStart + visibleAreaHeight) {
+            for (int i = 0; i < stats.size(); i++) {
+                int cardY = cardYStart + i * (cardHeight + spacing) - scrollOffset;
+
+                if (cardY + cardHeight >= cardYStart && cardY <= cardYStart + visibleAreaHeight) {
+                    Rectangle cardBounds = new Rectangle(cardX, cardY, cardWidth, cardHeight);
+                    if (cardBounds.contains(x, y)) {
+                        selectedIndex = i;
+                        return;
+                    }
+                }
             }
         }
 
@@ -191,32 +240,99 @@ public class StatisticsScene extends GameScene implements SceneMethods {
 
     @Override
     public void mousePressed(int x, int y) {
+        Rectangle thumbBounds = getScrollbarThumbBounds();
+        if (thumbBounds != null && thumbBounds.contains(x, y)) {
+            scrollbarDragging = true;
+            dragStartY = y;
+            dragStartScrollOffset = scrollOffset;
+            return;
+        }
+
+        if (thumbBounds != null) {
+            int cardX = 40;
+            int cardYStart = 100;
+            int scrollbarX = cardX - 10;
+            int scrollbarWidth = 10;
+
+            Rectangle scrollbarTrack = new Rectangle(scrollbarX, cardYStart, scrollbarWidth, visibleAreaHeight);
+            if (scrollbarTrack.contains(x, y)) {
+                int relativeY = y - cardYStart;
+                float scrollRatio = (float) relativeY / visibleAreaHeight;
+                int totalHeight;
+                if (stats.size() > 0) {
+                    totalHeight = (stats.size() - 1) * (cardHeight + spacing) + cardHeight;
+                } else {
+                    totalHeight = 0;
+                }
+
+                int bottomPadding = 20;
+                int maxScrollOffset = Math.max(0, totalHeight - visibleAreaHeight + bottomPadding);
+
+                scrollOffset = (int) (scrollRatio * maxScrollOffset);
+                scrollOffset = Math.max(0, Math.min(scrollOffset, maxScrollOffset));
+                return;
+            }
+        }
+
         backButton.setMousePressed(backButton.getBounds().contains(x, y));
     }
 
     @Override
     public void mouseReleased(int x, int y) {
+        scrollbarDragging = false;
         backButton.resetBooleans();
     }
 
     @Override
-    public void mouseDragged(int x, int y) {}
+    public void mouseDragged(int x, int y) {
+        if (scrollbarDragging) {
+            int cardYStart = 100;
+
+            int totalHeight;
+            if (stats.size() > 0) {
+                totalHeight = (stats.size() - 1) * (cardHeight + spacing) + cardHeight;
+            } else {
+                totalHeight = 0;
+            }
+
+            int bottomPadding = 20;
+            int maxScrollOffset = Math.max(0, totalHeight - visibleAreaHeight + bottomPadding);
+
+            if (maxScrollOffset > 0) {
+                int deltaY = y - dragStartY;
+
+                int scrollbarHeight = visibleAreaHeight;
+                float ratio = visibleAreaHeight / (float) totalHeight;
+                int thumbHeight = Math.max(20, (int) (scrollbarHeight * ratio));
+                int availableThumbTravel = scrollbarHeight - thumbHeight;
+
+                if (availableThumbTravel > 0) {
+                    float scrollRatio = (float) deltaY / availableThumbTravel;
+                    int scrollDelta = (int) (scrollRatio * maxScrollOffset);
+
+                    scrollOffset = dragStartScrollOffset + scrollDelta;
+                    scrollOffset = Math.max(0, Math.min(scrollOffset, maxScrollOffset));
+                }
+            }
+        }
+    }
 
     public void mouseWheelMoved(MouseWheelEvent e) {
         int rotation = e.getWheelRotation();
         int scrollAmount = rotation * 20;
 
-        System.out.println("Mouse wheel moved: " + rotation);
+        int totalHeight;
+        if (stats.size() > 0) {
+            totalHeight = (stats.size() - 1) * (cardHeight + spacing) + cardHeight;
+        } else {
+            totalHeight = 0;
+        }
 
-        int totalHeight = stats.size() * (cardHeight + spacing);
+        int bottomPadding = 20;
+        int maxScrollOffset = Math.max(0, totalHeight - visibleAreaHeight + bottomPadding);
+
         scrollOffset += scrollAmount;
-
-        scrollOffset = Math.max(0, scrollOffset);
-        scrollOffset = Math.min(scrollOffset, Math.max(0, totalHeight - visibleAreaHeight));
-
-        System.out.println("scrollOffset = " + scrollOffset);
-        System.out.println("totalHeight: " + totalHeight);
-        System.out.println("visibleAreaHeight: " + visibleAreaHeight);
+        scrollOffset = Math.max(0, Math.min(scrollOffset, maxScrollOffset));
     }
 
 
