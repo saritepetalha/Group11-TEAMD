@@ -314,4 +314,55 @@ public class LoadSave {
         return frames;
     }
 
+    // Method to save BufferedImage to filesystem
+    public static void saveImage(BufferedImage image, String path) {
+        try {
+            File outputFile = new File(path);
+            outputFile.getParentFile().mkdirs(); // Create directories if they don't exist
+            ImageIO.write(image, "png", outputFile);
+        } catch (IOException e) {
+            System.err.println("Error saving image to " + path + ": " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    // Method to load arrow frames from files if they exist, otherwise load from resources
+    public static BufferedImage[] loadArrowFrames(int frameCount) {
+        BufferedImage[] frames = new BufferedImage[frameCount];
+
+        // Try to load frames from files first
+        for (int i = 0; i < frameCount; i++) {
+            String framePath = "/TowerAssets/ArrowFrames/arrow_frame_" + i + ".png";
+            frames[i] = getImageFromPath(framePath);
+            if (frames[i] == null) {
+                return null; // If any frame is missing, return null to trigger generation
+            }
+        }
+
+        return frames;
+    }
+
+    // Method to load pre-generated fireball frames
+    public static BufferedImage[][] loadFireballFrames() {
+        final int animationFrames = 5;
+        final int rotationFrames = 36;
+
+        BufferedImage[][] frames = new BufferedImage[animationFrames][rotationFrames];
+
+        // Try to load all frames
+        for (int animFrame = 0; animFrame < animationFrames; animFrame++) {
+            for (int rotFrame = 0; rotFrame < rotationFrames; rotFrame++) {
+                String framePath = "/TowerAssets/FireballFrames/fireball_anim_" +
+                        animFrame + "_rot_" + rotFrame + ".png";
+                frames[animFrame][rotFrame] = getImageFromPath(framePath);
+
+                if (frames[animFrame][rotFrame] == null) {
+                    return null; // If any frame is missing, return null to trigger generation
+                }
+            }
+        }
+
+        return frames;
+    }
+
 }
