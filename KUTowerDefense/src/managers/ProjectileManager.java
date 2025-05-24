@@ -193,6 +193,11 @@ public class ProjectileManager {
                 // Check if the projectile hits the enemy's sprite center
                 if (hitArea.contains(projectile.getPos())) {
                     enemy.hurt(projectile.getDamage());
+                    playing.addTotalDamage(projectile.getDamage());
+
+                    if (!enemy.isAlive()) {
+                        playing.incrementEnemyDefeated();
+                    }
 
                     // Mage slow effect
                     if (projectile.getProjectileType() == Constants.Projectiles.MAGICBOLT && projectile.getLevel() == 2) {

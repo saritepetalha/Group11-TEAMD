@@ -79,6 +79,11 @@ public class Playing extends GameScene implements SceneMethods {
 
     private int totalEnemiesSpawned = 0;
     private int enemiesReachedEnd = 0;
+    private int enemyDefeated = 0;
+    private int totalDamage = 0;
+    private int timePlayedInSeconds = 0;
+
+    private int updateCounter = 0;
 
     private GoldBagManager goldBagManager;
 
@@ -381,6 +386,12 @@ public class Playing extends GameScene implements SceneMethods {
             }
 
             goldBagManager.update();
+
+            updateCounter++;
+            if (updateCounter >= 60) {
+                timePlayedInSeconds++;
+                updateCounter = 0;
+            }
         }
         checkButtonStates();
     }
@@ -765,8 +776,12 @@ public class Playing extends GameScene implements SceneMethods {
                 playerManager.getGold(),
                 totalEnemiesSpawned,
                 enemiesReachedEnd,
-                towerManager.getTowers().size()
+                towerManager.getTowers().size(),
+                enemyDefeated,
+                totalDamage,
+                timePlayedInSeconds
         );
+
 
         game.changeGameState(main.GameStates.GAME_OVER);
     }
@@ -790,7 +805,10 @@ public class Playing extends GameScene implements SceneMethods {
                 playerManager.getGold(),
                 totalEnemiesSpawned,
                 enemiesReachedEnd,
-                towerManager.getTowers().size()
+                towerManager.getTowers().size(),
+                enemyDefeated,
+                totalDamage,
+                timePlayedInSeconds
         );
         game.changeGameState(main.GameStates.GAME_OVER);
     }
@@ -1006,6 +1024,14 @@ public class Playing extends GameScene implements SceneMethods {
         return waveManager.isAllWavesFinished();
     }
 
+
+    public void incrementEnemyDefeated() {
+        enemyDefeated++;
+    }
+
+    public void addTotalDamage(int damage) {
+        totalDamage += damage;
+      
     // Save game state
     public void saveGameState() {
         // Create lists to store tower states
@@ -1101,5 +1127,6 @@ public class Playing extends GameScene implements SceneMethods {
 
     public void setCurrentMapName(String mapName) {
         this.currentMapName = mapName;
+
     }
 }

@@ -61,6 +61,8 @@ public class GameScreen extends JPanel {
 			size = new Dimension(GameDimensions.MAIN_MENU_SCREEN_WIDTH, GameDimensions.MAIN_MENU_SCREEN_HEIGHT);
 		}
 		setPreferredSize(size);
+		revalidate();
+		repaint();
 	}
 
 	@Override
