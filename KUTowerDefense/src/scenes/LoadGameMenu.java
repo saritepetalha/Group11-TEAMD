@@ -1,20 +1,40 @@
 package scenes;
 
-import javax.swing.*;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
+import java.awt.RenderingHints;
+import java.awt.Shape;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
+import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.SwingConstants;
+import javax.swing.UIManager;
+
+import constants.GameDimensions;
 import helpMethods.FontLoader;
 import helpMethods.LoadSave;
 import main.Game;
 import main.GameStates;
 import managers.TileManager;
 import ui_p.ButtonAssets;
-import constants.GameDimensions;
 
 public class LoadGameMenu extends JPanel { // Changed to JPanel
     private Game game;
@@ -250,7 +270,7 @@ public class LoadGameMenu extends JPanel { // Changed to JPanel
                     overlay[4][15] = 2;
                 }
             }
-            game.startPlayingWithLevel(levelName, levelData, overlay);
+            game.startPlayingWithLevel(levelData, overlay, levelName);
             game.changeGameState(GameStates.PLAYING);
         } else if (choice == JOptionPane.NO_OPTION) { // Edit
             game.getMapEditing().setLevel(levelData);

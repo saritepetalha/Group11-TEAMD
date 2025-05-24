@@ -1,8 +1,8 @@
 package managers;
 import config.GameOptions;
+import static constants.Constants.Player.MAX_HEALTH;
+import static constants.Constants.Player.MAX_SHIELD;
 import helpMethods.OptionsIO;
-
-import static constants.Constants.Player.*;
 
 public class PlayerManager {
     private int gold;
@@ -76,8 +76,6 @@ public class PlayerManager {
         return gold;
     }
 
-    public void setGold(int savedGold) {this.gold = savedGold;}
-
     public int getHealth() {
         return health;
     }
@@ -107,6 +105,18 @@ public class PlayerManager {
         }
     }
 
+    public void setGold(int gold) {
+        this.gold = gold;
+    }
+
+    public void setHealth(int health) {
+        this.health = Math.min(MAX_HEALTH, Math.max(0, health));
+    }
+
+    public void setShield(int shield) {
+        this.shield = Math.min(MAX_SHIELD, Math.max(0, shield));
+    }
+
     /**
      * Reloads player stats from options
      */
@@ -128,5 +138,4 @@ public class PlayerManager {
             e.printStackTrace();
         }
     }
-
 }
