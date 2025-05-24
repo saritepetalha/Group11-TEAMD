@@ -35,7 +35,6 @@ public class MapEditing extends GameScene implements SceneMethods{
 
     private Tower selectedTower;
 
-    // Border images
     private BufferedImage wallImage;
     private BufferedImage gateImage;
 
@@ -114,6 +113,38 @@ public class MapEditing extends GameScene implements SceneMethods{
                 }
             }
         }
+
+        drawMapGrid(g);
+    }
+
+    private void drawMapGrid(Graphics g) {
+        Graphics2D g2d = (Graphics2D) g;
+
+        g2d.setColor(new Color(40, 40, 40, 30));
+
+        float[] dashPattern = {5, 5};
+        BasicStroke dashedStroke = new BasicStroke(
+                1,
+                BasicStroke.CAP_BUTT,
+                BasicStroke.JOIN_MITER,
+                10.0f,
+                dashPattern,
+                0.0f
+        );
+
+
+        Stroke originalStroke = g2d.getStroke();
+        g2d.setStroke(dashedStroke);
+
+        for (int x = 0; x <= GameDimensions.GAME_WIDTH; x += GameDimensions.TILE_DISPLAY_SIZE) {
+            g2d.drawLine(x, 0, x, GameDimensions.GAME_HEIGHT);
+        }
+
+        for (int y = 0; y <= GameDimensions.GAME_HEIGHT; y += GameDimensions.TILE_DISPLAY_SIZE) {
+            g2d.drawLine(0, y, GameDimensions.GAME_WIDTH, y);
+        }
+
+        g2d.setStroke(originalStroke);
     }
 
     // Helper method to draw silhouette of an image
@@ -193,27 +224,6 @@ public class MapEditing extends GameScene implements SceneMethods{
     private boolean isRoadTile(int tileId) {
         // check if the tile ID corresponds to any road type
         return tileId >= 0 && tileId <= 14 && tileId != 5; //
-    }
-
-    /**
-     * Utility method to check if a castle at the given position would overlap with any existing castle
-     * @param topLeftY Y coordinate of the top-left corner of the castle
-     * @param topLeftX X coordinate of the top-left corner of the castle
-     * @return true if the castle would overlap with an existing castle, false otherwise
-     */
-    private boolean wouldCastleOverlap(int topLeftY, int topLeftX) {
-        // Check if the 2x2 area would overlap with any existing castle parts
-        for (int i = 0; i <= 1; i++) {
-            for (int j = 0; j <= 1; j++) {
-                // Make sure we don't check outside the level boundaries
-                if (topLeftY + i >= level.length || topLeftX + j >= level[0].length) continue;
-
-                if (isCastleTile(level[topLeftY + i][topLeftX + j])) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
     /**
@@ -534,6 +544,7 @@ public class MapEditing extends GameScene implements SceneMethods{
             drawSelected = false;
         }
         else{
+            editTiles.mouseReleased(x, y);
             mouseX = x / 64;
             mouseY = y / 64;
             mouseX *= 64;
