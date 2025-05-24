@@ -1031,6 +1031,7 @@ public class Playing extends GameScene implements SceneMethods {
 
     public void addTotalDamage(int damage) {
         totalDamage += damage;
+    }
       
     // Save game state
     public void saveGameState() {
