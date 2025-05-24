@@ -42,6 +42,7 @@ import objects.UpgradedMageTower;
 import ui_p.DeadTree;
 import ui_p.LiveTree;
 import ui_p.PlayingUI;
+import ui_p.TowerSelectionUI;
 
 public class Playing extends GameScene implements SceneMethods {
     private int[][] level;
@@ -103,6 +104,8 @@ public class Playing extends GameScene implements SceneMethods {
 
     private GameStateManager gameStateManager;
     private String currentMapName = "defaultlevel"; // Default map name
+
+    private TowerSelectionUI towerSelectionUI;
 
     public Playing(Game game) {
         super(game);
@@ -170,14 +173,15 @@ public class Playing extends GameScene implements SceneMethods {
         playerManager = new PlayerManager(this.gameOptions);
         this.selectedDeadTree = null;
 
-        if(towerManager.findDeadTrees(level) != null)
+        if (towerManager.findDeadTrees(level) != null)
             deadTrees = towerManager.findDeadTrees(level);
-        if(towerManager.findLiveTrees(level) != null)
+        if (towerManager.findLiveTrees(level) != null)
             liveTrees = towerManager.findLiveTrees(level);
 
         playingUI = new PlayingUI(this);
 
         goldBagManager = new GoldBagManager();
+        towerSelectionUI = new TowerSelectionUI(this);
 
         updateUIResources();
     }
@@ -204,7 +208,7 @@ public class Playing extends GameScene implements SceneMethods {
     }
 
     public void saveLevel(String filename) {
-        LoadSave.saveLevel(filename,level);
+        LoadSave.saveLevel(filename, level);
 
     }
 
@@ -441,6 +445,10 @@ public class Playing extends GameScene implements SceneMethods {
         playingUI.draw(g);
         goldBagManager.draw(g);
         drawCastleHealthBar(g);
+
+        if (towerSelectionUI != null) {
+            towerSelectionUI.draw(g);
+        }
     }
 
     private void drawHighlight(Graphics g) {
@@ -468,28 +476,28 @@ public class Playing extends GameScene implements SceneMethods {
         drawDisplayedTowerRange(g);
         // Draw upgrade button (smaller pixel-art style)
         int btnW = 64, btnH = 24;
-        int btnX = displayedTower.getX() + 32 - btnW/2;
+        int btnX = displayedTower.getX() + 32 - btnW / 2;
         int btnY = displayedTower.getY() + 80;
         upgradeButtonBounds = new Rectangle(btnX, btnY, btnW, btnH);
         if (displayedTower.isUpgradeable()) {
             boolean canAfford = playerManager.getGold() >= getUpgradeCost(displayedTower);
             // Draw thick dark border
             g.setColor(new Color(40, 24, 8));
-            g.fillRect(btnX-3, btnY-3, btnW+6, btnH+6);
+            g.fillRect(btnX - 3, btnY - 3, btnW + 6, btnH + 6);
             // Fill with parchment/wood color
             g.setColor(new Color(210, 180, 140));
             g.fillRect(btnX, btnY, btnW, btnH);
             // Pixel-art highlight (top 3px)
             g.setColor(new Color(255, 255, 255, 80));
-            g.fillRect(btnX+3, btnY+3, btnW-6, 3);
+            g.fillRect(btnX + 3, btnY + 3, btnW - 6, 3);
             // Draw blocky border (simulate pixel art)
             g.setColor(new Color(80, 40, 10));
             for (int i = 0; i < 2; i++) {
-                g.drawRect(btnX+i, btnY+i, btnW-1-2*i, btnH-1-2*i);
+                g.drawRect(btnX + i, btnY + i, btnW - 1 - 2 * i, btnH - 1 - 2 * i);
             }
             // Draw text (smaller, bold)
             g.setFont(new Font("Dialog", Font.BOLD, 14));
-            g.setColor(canAfford ? new Color(30, 20, 10) : new Color(80,80,80));
+            g.setColor(canAfford ? new Color(30, 20, 10) : new Color(80, 80, 80));
             String text = "Upgrade";
             int textWidth = g.getFontMetrics().stringWidth(text);
             int textHeight = g.getFontMetrics().getAscent();
@@ -498,9 +506,9 @@ public class Playing extends GameScene implements SceneMethods {
             g.drawString(text, textX, textY);
             // If not affordable, draw X
             if (!canAfford) {
-                g.setColor(new Color(200,0,0,180));
-                g.drawLine(btnX+4, btnY+4, btnX+btnW-4, btnY+btnH-4);
-                g.drawLine(btnX+btnW-4, btnY+4, btnX+4, btnY+btnH-4);
+                g.setColor(new Color(200, 0, 0, 180));
+                g.drawLine(btnX + 4, btnY + 4, btnX + btnW - 4, btnY + btnH - 4);
+                g.drawLine(btnX + btnW - 4, btnY + 4, btnX + 4, btnY + btnH - 4);
             }
         } else {
             upgradeButtonBounds = null;
@@ -546,14 +554,11 @@ public class Playing extends GameScene implements SceneMethods {
 
         if (tile.equals("ARCHER")) {
             level[y][x] = 26;
-        }
-        else if (tile.equals("MAGE")) {
+        } else if (tile.equals("MAGE")) {
             level[y][x] = 20;
-        }
-        else if (tile.equals("ARTILERRY")) {
+        } else if (tile.equals("ARTILERRY")) {
             level[y][x] = 21;
-        }
-        else if (tile.equals("DEADTREE")) {
+        } else if (tile.equals("DEADTREE")) {
             level[y][x] = 15;
         }
 
@@ -564,21 +569,15 @@ public class Playing extends GameScene implements SceneMethods {
     public void mouseClicked(int x, int y) {
         this.mouseX = x;
         this.mouseY = y;
-        // Handle upgrade button click
-        if (displayedTower != null && upgradeButtonBounds != null && upgradeButtonBounds.contains(x, y)) {
-            if (displayedTower.isUpgradeable() && playerManager.getGold() >= getUpgradeCost(displayedTower)) {
-                playerManager.spendGold(getUpgradeCost(displayedTower));
-                Tower upgradedTower = displayedTower.upgrade(); // upgrade() now returns the (potentially decorated) tower
-                if (upgradedTower != displayedTower) { // If a new instance (decorator) was returned
-                    towerManager.replaceTower(displayedTower, upgradedTower);
-                    displayedTower = upgradedTower; // Update the displayed tower to the new decorated one
-                }
-                towerManager.triggerUpgradeEffect(displayedTower); // Trigger effect on the (possibly new) tower instance
-                updateUIResources();
+
+        // Handle tower selection UI clicks first - only return early if actually handled
+        if (towerSelectionUI != null && towerSelectionUI.hasTowerSelected()) {
+            boolean uiHandledClick = towerSelectionUI.mouseClicked(x, y);
+            if (uiHandledClick) {
+                return; // UI button was clicked, don't process other interactions
             }
-            return; // Prevent other actions if upgrade is performed
         }
-        displayedTower = null;
+        // Handle dead trees
         if (deadTrees != null) {
             treeInteractionManager.handleDeadTreeInteraction(mouseX, mouseY);
         }
@@ -591,19 +590,29 @@ public class Playing extends GameScene implements SceneMethods {
             playerManager.addGold(collectedBag.getGoldAmount());
             updateUIResources();
         }
-        handleTowerClick();
-    }
 
-    private void handleTowerClick() {
-        for (Tower tower : towerManager.getTowers()) {
-            if (tower.isClicked(mouseX, mouseY)) {
-                playButtonClickSound();
-                displayedTower = tower;
-                return;
-            }
+        // Check for tower selection/deselection
+        Tower clickedTower = getTowerAt(x, y);
+        if (clickedTower != null) {
+            towerSelectionUI.setSelectedTower(clickedTower);
+            playButtonClickSound();
+        } else {
+            towerSelectionUI.setSelectedTower(null); // Clear selection when clicking elsewhere
         }
     }
 
+
+    /**
+     * Helper method to find tower at mouse position
+     */
+    private Tower getTowerAt(int mouseX, int mouseY) {
+        for (Tower tower : towerManager.getTowers()) {
+            if (tower.isClicked(mouseX, mouseY)) {
+                return tower;
+            }
+        }
+        return null;
+    }
 
 
     public TowerManager getTowerManager() {
@@ -625,16 +634,27 @@ public class Playing extends GameScene implements SceneMethods {
 
         playingUI.mouseMoved(x, y);
 
+        if (towerSelectionUI != null) {
+            towerSelectionUI.mouseMoved(x, y);
+        }
+
     }
 
     @Override
     public void mousePressed(int x, int y) {
         playingUI.mousePressed(x, y);
+        if (towerSelectionUI != null) {
+            towerSelectionUI.mousePressed(x, y);
+        }
     }
 
     @Override
     public void mouseReleased(int x, int y) {
         playingUI.mouseReleased();
+
+        if (towerSelectionUI != null) {
+            towerSelectionUI.mouseReleased();
+        }
     }
 
     @Override
@@ -707,11 +727,13 @@ public class Playing extends GameScene implements SceneMethods {
         return waveManager;
     }
 
-    public DeadTree getSelectedDeadTree() {return selectedDeadTree;}
+    public DeadTree getSelectedDeadTree() {
+        return selectedDeadTree;
+    }
 
-    public void setSelectedDeadTree(DeadTree deadTree) {this.selectedDeadTree = deadTree;}
-
-    public Tower getDisplayedTower() {return displayedTower;}
+    public void setSelectedDeadTree(DeadTree deadTree) {
+        this.selectedDeadTree = deadTree;
+    }
 
     public void spawnEnemy(int enemyType) {
         if (enemyType != -1) {
@@ -726,8 +748,6 @@ public class Playing extends GameScene implements SceneMethods {
     private boolean isTimeForNewEnemy() {
         return false;
     }
-
-    public void setDisplayedTower(Tower tower) {displayedTower = tower;}
 
     public void startEnemySpawning() {
         if (waveManager != null) {
@@ -821,6 +841,7 @@ public class Playing extends GameScene implements SceneMethods {
 
     /**
      * Handles mouse wheel events and forwards them to PlayingUI
+     *
      * @param e The mouse wheel event
      */
     public void mouseWheelMoved(MouseWheelEvent e) {
@@ -906,6 +927,10 @@ public class Playing extends GameScene implements SceneMethods {
 
         // 5. Reset UI selections
         displayedTower = null;
+
+        if (towerSelectionUI != null) {
+            towerSelectionUI.setSelectedTower(null);
+        }
         selectedDeadTree = null;
 
         // 6. Clear active entities from managers
@@ -950,6 +975,7 @@ public class Playing extends GameScene implements SceneMethods {
 
     /**
      * Add a helper method to get and display wave status
+     *
      * @return Current wave and state information
      */
     public String getWaveStatus() {
@@ -966,10 +992,14 @@ public class Playing extends GameScene implements SceneMethods {
     // Helper to get upgrade cost
     private int getUpgradeCost(Tower tower) {
         switch (tower.getType()) {
-            case 0: return 75; // Archer
-            case 1: return 120; // Artillery
-            case 2: return 100; // Mage
-            default: return 100;
+            case 0:
+                return 75; // Archer
+            case 1:
+                return 120; // Artillery
+            case 2:
+                return 100; // Mage
+            default:
+                return 100;
         }
     }
 
@@ -991,9 +1021,9 @@ public class Playing extends GameScene implements SceneMethods {
         for (int i = 0; i < level.length - 1; i++) {
             for (int j = 0; j < level[i].length - 1; j++) {
                 if (level[i][j] == tileManager.CastleTopLeft.getId() &&
-                        level[i][j+1] == tileManager.CastleTopRight.getId() &&
-                        level[i+1][j] == tileManager.CastleBottomLeft.getId() &&
-                        level[i+1][j+1] == tileManager.CastleBottomRight.getId()) {
+                        level[i][j + 1] == tileManager.CastleTopRight.getId() &&
+                        level[i + 1][j] == tileManager.CastleBottomLeft.getId() &&
+                        level[i + 1][j + 1] == tileManager.CastleBottomRight.getId()) {
                     castleX = j;
                     castleY = i;
                     break outer;
@@ -1010,9 +1040,9 @@ public class Playing extends GameScene implements SceneMethods {
 
         g.setColor(Color.DARK_GRAY);
         g.fillRoundRect(barX, barY, barWidth, barHeight, 6, 6);
-        float healthPercent = Math.max(0, (float)playerManager.getHealth() / playerManager.getStartingHealthAmount());
-        Color healthColor = new Color((int)(255 * (1-healthPercent)), (int)(220 * healthPercent), 40);
-        int healthBarWidth = (int)(barWidth * healthPercent);
+        float healthPercent = Math.max(0, (float) playerManager.getHealth() / playerManager.getStartingHealthAmount());
+        Color healthColor = new Color((int) (255 * (1 - healthPercent)), (int) (220 * healthPercent), 40);
+        int healthBarWidth = (int) (barWidth * healthPercent);
         g.setColor(healthColor);
         g.fillRoundRect(barX, barY, healthBarWidth, barHeight, 6, 6);
 
@@ -1129,5 +1159,17 @@ public class Playing extends GameScene implements SceneMethods {
     public void setCurrentMapName(String mapName) {
         this.currentMapName = mapName;
 
+    }
+
+    public Tower getDisplayedTower() {
+        // Return the currently selected tower from TowerSelectionUI for backward compatibility
+        return towerSelectionUI != null ? towerSelectionUI.getSelectedTower() : null;
+    }
+
+
+    public void setDisplayedTower(Tower tower) {
+        if (towerSelectionUI != null) {
+            towerSelectionUI.setSelectedTower(tower);
+        }
     }
 }

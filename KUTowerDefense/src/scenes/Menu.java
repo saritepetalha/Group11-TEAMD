@@ -2,26 +2,14 @@ package scenes;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Random;
-import javax.imageio.ImageIO;
-import javax.swing.*;
-import helpMethods.LoadSave;
-
 import constants.GameDimensions;
 import main.Game;
 import main.GameStates;
 import managers.AudioManager;
-import ui_p.ButtonAssets;
+import ui_p.AssetsLoader;
 import ui_p.TheButton;
 
 public class Menu extends GameScene implements SceneMethods {
-    private ArrayList<BufferedImage> sprites = new ArrayList<>();
-    private BufferedImage img;
-    private Random random;
-    private BufferedImage backgroundImg;
     private TheButton playButton, loadGameButton, mapEditorButton, optionButton, exitButton;
 
     // Music button
@@ -33,38 +21,7 @@ public class Menu extends GameScene implements SceneMethods {
     public Menu(Game game) {
         super(game);
         this.game = game;
-        random = new Random();
-        importImg();
-        loadSprites();
         initButtons();
-        loadBackground();
-    }
-
-    private void loadBackground() {
-        InputStream is = getClass().getResourceAsStream("/KuTowerDefence2.jpg");
-        try {
-            backgroundImg = ImageIO.read(is);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void importImg() {
-        InputStream is = getClass().getResourceAsStream("/Tiles/Tileset64.png");
-        try {
-            img = ImageIO.read(is);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    private void loadSprites() {
-        for (int y = 0; y < 8; y++) {
-            for (int x = 0; x < 4; x++) {
-                sprites.add(img.getSubimage(x * GameDimensions.TILE_DISPLAY_SIZE, y * GameDimensions.TILE_DISPLAY_SIZE, GameDimensions.TILE_DISPLAY_SIZE, GameDimensions.TILE_DISPLAY_SIZE));
-            }
-        }
     }
 
     private void initButtons() {
@@ -85,7 +42,7 @@ public class Menu extends GameScene implements SceneMethods {
                 15,
                 musicButtonSize,
                 musicButtonSize,
-                ButtonAssets.regularMusicImg);
+                AssetsLoader.getInstance().regularMusicImg);
 
         musicMuted = AudioManager.getInstance().isMusicMuted();
     }
@@ -102,7 +59,7 @@ public class Menu extends GameScene implements SceneMethods {
     }
 
     private void drawBackground(Graphics g) {
-        g.drawImage(backgroundImg, 0, 0, GameDimensions.MAIN_MENU_SCREEN_WIDTH,GameDimensions.MAIN_MENU_SCREEN_HEIGHT, null);
+        g.drawImage(AssetsLoader.getInstance().menuBackgroundImg, 0, 0, GameDimensions.MAIN_MENU_SCREEN_WIDTH,GameDimensions.MAIN_MENU_SCREEN_HEIGHT, null);
     }
 
     private void drawButtons(Graphics g) {
@@ -118,7 +75,7 @@ public class Menu extends GameScene implements SceneMethods {
 
     private void drawMusicButton(Graphics g) {
         // draw music button in top right corner
-        BufferedImage img = musicMuted ? ButtonAssets.pressedMusicImg : ButtonAssets.regularMusicImg;
+        BufferedImage img = musicMuted ? AssetsLoader.getInstance().pressedMusicImg : AssetsLoader.getInstance().regularMusicImg;
 
         if (img != null) {
             g.drawImage(img, musicButton.getX(), musicButton.getY(), musicButton.getWidth(), musicButton.getHeight(), null);
@@ -218,10 +175,6 @@ public class Menu extends GameScene implements SceneMethods {
     @Override
     public void mouseDragged(int x, int y) {
 
-    }
-
-    private int getRandomInt() {
-        return random.nextInt(sprites.size());
     }
 
 }

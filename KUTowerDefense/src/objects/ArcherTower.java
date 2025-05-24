@@ -1,6 +1,7 @@
 package objects;
 
 import constants.Constants;
+import strategies.TargetingStrategy;
 // import java.awt.image.BufferedImage; // No longer needed here
 
 public class ArcherTower extends Tower {
@@ -8,6 +9,14 @@ public class ArcherTower extends Tower {
 
     public ArcherTower(int x, int y) {
         super(x, y);
+        setDefaultDamage();
+        setDefaultRange();
+        setDefaultCooldown();
+    }
+
+    // Constructor with custom targeting strategy
+    public ArcherTower(int x, int y, TargetingStrategy targetingStrategy) {
+        super(x, y, targetingStrategy);
         setDefaultDamage();
         setDefaultRange();
         setDefaultCooldown();

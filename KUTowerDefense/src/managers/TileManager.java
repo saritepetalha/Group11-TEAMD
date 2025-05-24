@@ -1,6 +1,4 @@
 package managers;
-
-import constants.Constants;
 import constants.GameDimensions;
 import objects.Tile;
 
@@ -8,8 +6,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import helpMethods.LoadSave;
-import ui_p.ButtonAssets;
-import javax.imageio.ImageIO;
+import ui_p.AssetsLoader;
 
 public class TileManager {
     public Tile
@@ -85,16 +82,16 @@ public class TileManager {
         tiles.add(SmallCastle = new Tile(getSprite(2, 7), id++, "SmallCastle"));
         tiles.add(Wood = new Tile(getSprite(3, 7), id++, "Wood"));
 
-        tiles.add(RoadFourWay = new Tile(ButtonAssets.fourWayRoadImg,id++,"RoadFourWay"));
+        tiles.add(RoadFourWay = new Tile(AssetsLoader.getInstance().fourWayRoadImg,id++,"RoadFourWay"));
     }
 
     // This method is used to get the sprite of a specific tile by index
     public BufferedImage getSprite(int index) {
         // special handling for start and end points
         if (index == -1) {
-            return resizeImage(ButtonAssets.startPointImg, GameDimensions.PATHPOINT_DISPLAY_SIZE, GameDimensions.PATHPOINT_DISPLAY_SIZE);
+            return resizeImage(AssetsLoader.getInstance().startPointImg, GameDimensions.PATHPOINT_DISPLAY_SIZE, GameDimensions.PATHPOINT_DISPLAY_SIZE);
         } else if (index == -2) {
-            return resizeImage(ButtonAssets.endPointImg, GameDimensions.PATHPOINT_DISPLAY_SIZE, GameDimensions.PATHPOINT_DISPLAY_SIZE);
+            return resizeImage(AssetsLoader.getInstance().endPointImg, GameDimensions.PATHPOINT_DISPLAY_SIZE, GameDimensions.PATHPOINT_DISPLAY_SIZE);
         } else if (index == -3) { // Wall
             BufferedImage wallImg = LoadSave.getImageFromPath("/Borders/wall.png");
             if (wallImg != null) {

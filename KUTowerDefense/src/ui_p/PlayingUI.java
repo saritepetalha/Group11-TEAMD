@@ -20,6 +20,7 @@ import java.util.Map;
 import static constants.Constants.Player.MAX_HEALTH;
 import static constants.Constants.Player.MAX_SHIELD;
 import constants.GameDimensions;
+import helpMethods.FontLoader;
 import managers.AudioManager;
 import scenes.Playing;
 
@@ -88,36 +89,36 @@ public class PlayingUI {
                 startY,
                 buttonSize,
                 buttonSize,
-                ButtonAssets.buttonImages.get(8));
+                AssetsLoader.getInstance().buttonImages.get(8));
 
         pauseButton = new TheButton("Pause",
                 startX + buttonSize + buttonSpacing,
                 startY,
                 buttonSize,
                 buttonSize,
-                ButtonAssets.buttonImages.get(12));
+                AssetsLoader.getInstance().buttonImages.get(12));
 
         optionsButton = new TheButton("Options",
                 startX + (buttonSize + buttonSpacing) * 2,
                 startY,
                 buttonSize,
                 buttonSize,
-                ButtonAssets.buttonImages.get(1));
+                AssetsLoader.getInstance().buttonImages.get(1));
 
         backOptionsButton = new TheButton("Back",
-                GameDimensions.GAME_WIDTH / 2 + ButtonAssets.optionsMenuImg.getWidth() / 4,
-                GameDimensions.GAME_HEIGHT / 2 - ButtonAssets.optionsMenuImg.getHeight() / 3,
+                GameDimensions.GAME_WIDTH / 2 + AssetsLoader.getInstance().optionsMenuImg.getWidth() / 4,
+                GameDimensions.GAME_HEIGHT / 2 - AssetsLoader.getInstance().optionsMenuImg.getHeight() / 3,
                 buttonSize,
                 buttonSize,
-                ButtonAssets.backOptionsImg);
+                AssetsLoader.getInstance().backOptionsImg);
 
         // Initialize save button
         saveButton = new TheButton("Save Game",
-                GameDimensions.GAME_WIDTH / 2 - ButtonAssets.optionsMenuImg.getWidth() / 4,
-                GameDimensions.GAME_HEIGHT / 2 - ButtonAssets.optionsMenuImg.getHeight() / 3,
+                GameDimensions.GAME_WIDTH / 2 - AssetsLoader.getInstance().optionsMenuImg.getWidth() / 4,
+                GameDimensions.GAME_HEIGHT / 2 - AssetsLoader.getInstance().optionsMenuImg.getHeight() / 3,
                 buttonSize,
                 buttonSize,
-                ButtonAssets.buttonImages.get(1));
+                AssetsLoader.getInstance().buttonImages.get(1));
 
         // Initialize main menu button
         mainMenuButton = new TheButton("Main Menu",
@@ -167,7 +168,7 @@ public class PlayingUI {
         int buttonWidth = 120;
         int buttonHeight = 32;
 
-        statusBarImg = ButtonAssets.statusBarImg;
+        statusBarImg = AssetsLoader.getInstance().statusBarImg;
 
         // draw the statusBarImg at half its original size
         if (statusBarImg != null) {
@@ -202,7 +203,7 @@ public class PlayingUI {
         int estimatedTotalWaves = 5;
 
         // draw wave icon
-        g.drawImage(ButtonAssets.waveImg, startX, startY, iconSize, iconSize, null);
+        g.drawImage(AssetsLoader.getInstance().waveImg, startX, startY, iconSize, iconSize, null);
 
         // draw wave status bar with the full status text
         drawSlideButton(g, waveStatus,
@@ -215,7 +216,7 @@ public class PlayingUI {
     private void drawSlideButton(Graphics g, String text, int x, int y, int width, int height, int value, int maxValue) {
         Graphics2D g2d = (Graphics2D) g;
 
-        buttonBgImg = ButtonAssets.modeImage;
+        buttonBgImg = AssetsLoader.getInstance().modeImage;
 
         if (buttonBgImg != null) {
             // calculate how much of the button width is filled based on value/maxValue ratio
@@ -270,15 +271,7 @@ public class PlayingUI {
         Font mvBoliFont = new Font("MV Boli", Font.BOLD, 14);
         g2d.setFont(mvBoliFont);
         g2d.setColor(Color.WHITE);
-
-        /*
-
-        FontMetrics fm = g2d.getFontMetrics();
-        int textX = x + (width - fm.stringWidth(text)) / 2;
-        int textY = y + ((height - fm.getHeight()) / 4) + fm.getAscent();
-        g2d.setColor(new Color(0, 0, 0, 120));
-        g2d.drawString(text, textX, textY);*/
-
+        
         FontMetrics fm = g2d.getFontMetrics();
         String[] lines = text.split("\n");
         String firstLine = lines.length > 0 ? lines[0] : "";
@@ -305,20 +298,20 @@ public class PlayingUI {
         Graphics2D g2d = (Graphics2D) g;
 
         drawControlButton(g2d, fastForwardButton, startX , startY, buttonSize, buttonSize,
-                ButtonAssets.buttonImages.get(8),
-                ButtonAssets.buttonHoverEffectImages.get(13),
-                ButtonAssets.buttonPressedEffectImages.get(9));
+                AssetsLoader.getInstance().buttonImages.get(8),
+                AssetsLoader.getInstance().buttonHoverEffectImages.get(13),
+                AssetsLoader.getInstance().buttonPressedEffectImages.get(9));
 
 
         drawControlButton(g2d, pauseButton, startX + buttonSize + buttonSpacing, startY, buttonSize, buttonSize,
-                ButtonAssets.buttonImages.get(12),
-                ButtonAssets.buttonHoverEffectImages.get(3),
-                ButtonAssets.buttonPressedEffectImages.get(13));
+                AssetsLoader.getInstance().buttonImages.get(12),
+                AssetsLoader.getInstance().buttonHoverEffectImages.get(3),
+                AssetsLoader.getInstance().buttonPressedEffectImages.get(13));
 
         drawControlButton(g2d, optionsButton, startX + (buttonSize + buttonSpacing) * 2, startY, buttonSize, buttonSize,
-                ButtonAssets.buttonImages.get(1),
-                ButtonAssets.buttonHoverEffectImages.get(2),
-                ButtonAssets.buttonPressedEffectImages.get(11));
+                AssetsLoader.getInstance().buttonImages.get(1),
+                AssetsLoader.getInstance().buttonHoverEffectImages.get(2),
+                AssetsLoader.getInstance().buttonPressedEffectImages.get(11));
     }
 
 
@@ -425,7 +418,7 @@ public class PlayingUI {
     public void drawOptionsMenu(Graphics g) {
         Graphics2D g2d = (Graphics2D) g.create();
 
-        BufferedImage optionsImg = ButtonAssets.optionsMenuImg;
+        BufferedImage optionsImg = AssetsLoader.getInstance().optionsMenuImg;
         int menuWidth = optionsImg.getWidth() / 2;
         int menuHeight = optionsImg.getHeight() / 2;
         int menuX = (GameDimensions.GAME_WIDTH - menuWidth) / 2;
@@ -438,14 +431,14 @@ public class PlayingUI {
         g2d.drawImage(optionsImg, menuX, menuY, menuWidth, menuHeight, null);
 
         // draw back button
-        if (ButtonAssets.backOptionsImg != null) {
+        if (AssetsLoader.getInstance().backOptionsImg != null) {
             int backButtonX = menuX + menuWidth - buttonSize;
             int backButtonY = menuY + 10;
 
             backOptionsButton.setX(backButtonX);
             backOptionsButton.setY(backButtonY);
 
-            g2d.drawImage(ButtonAssets.backOptionsImg, backButtonX, backButtonY, buttonSize, buttonSize, null);
+            g2d.drawImage(AssetsLoader.getInstance().backOptionsImg, backButtonX, backButtonY, buttonSize, buttonSize, null);
 
             if (backOptionsButton.isMouseOver()) {
                 g2d.setColor(new Color(255, 255, 255, 80));
@@ -466,12 +459,12 @@ public class PlayingUI {
         int difficultyY = startY + spacing * 2 + 5;
 
         // display the correct difficulty image
-        if (currentDifficulty.equals("Normal") && ButtonAssets.difficultyNormalImg != null) {
-            g2d.drawImage(ButtonAssets.difficultyNormalImg, controlX, difficultyY, difficultyWidth, difficultyHeight, null);
-        } else if (currentDifficulty.equals("Easy") && ButtonAssets.difficultyEasyImg != null) {
-            g2d.drawImage(ButtonAssets.difficultyEasyImg, controlX, difficultyY, difficultyWidth, difficultyHeight, null);
-        } else if (currentDifficulty.equals("Hard") && ButtonAssets.difficultyHardImg != null) {
-            g2d.drawImage(ButtonAssets.difficultyHardImg, controlX, difficultyY, difficultyWidth, difficultyHeight, null);
+        if (currentDifficulty.equals("Normal") && AssetsLoader.getInstance().difficultyNormalImg != null) {
+            g2d.drawImage(AssetsLoader.getInstance().difficultyNormalImg, controlX, difficultyY, difficultyWidth, difficultyHeight, null);
+        } else if (currentDifficulty.equals("Easy") && AssetsLoader.getInstance().difficultyEasyImg != null) {
+            g2d.drawImage(AssetsLoader.getInstance().difficultyEasyImg, controlX, difficultyY, difficultyWidth, difficultyHeight, null);
+        } else if (currentDifficulty.equals("Hard") && AssetsLoader.getInstance().difficultyHardImg != null) {
+            g2d.drawImage(AssetsLoader.getInstance().difficultyHardImg, controlX, difficultyY, difficultyWidth, difficultyHeight, null);
         } else {
             // fallback if images are not available
             g2d.setColor(new Color(80, 80, 200));
@@ -489,7 +482,7 @@ public class PlayingUI {
         g2d.fillRoundRect(controlX - 10, dropdownY, dropdownWidth, dropdownHeight, 5, 5);
 
         g2d.setColor(Color.WHITE);
-        Font dropdownFont = helpMethods.FontLoader.loadMedodicaFont(14f);
+        Font dropdownFont = FontLoader.loadMedodicaFont(14f);
         g2d.setFont(dropdownFont);
 
         // truncate music name if it's too long
@@ -928,7 +921,7 @@ public class PlayingUI {
     private String getSliderAtPosition(int mouseX, int mouseY) {
         if (!playing.isOptionsMenuOpen()) return "";
 
-        BufferedImage optionsImg = ButtonAssets.optionsMenuImg;
+        BufferedImage optionsImg = AssetsLoader.getInstance().optionsMenuImg;
         int menuWidth = optionsImg.getWidth() / 2;
         int menuHeight = optionsImg.getHeight() / 2;
         int menuX = (GameDimensions.GAME_WIDTH - menuWidth) / 2;
@@ -960,7 +953,7 @@ public class PlayingUI {
     public void updateSliderValue(int mouseX) {
         if (!sliderDragging || currentSlider.isEmpty()) return;
 
-        BufferedImage optionsImg = ButtonAssets.optionsMenuImg;
+        BufferedImage optionsImg = AssetsLoader.getInstance().optionsMenuImg;
         int menuWidth = optionsImg.getWidth() / 2;
         int menuX = (GameDimensions.GAME_WIDTH - menuWidth) / 2;
         int controlX = menuX + menuWidth / 2 + 10;
