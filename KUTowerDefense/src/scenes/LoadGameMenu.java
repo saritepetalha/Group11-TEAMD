@@ -34,7 +34,7 @@ import helpMethods.LoadSave;
 import main.Game;
 import main.GameStates;
 import managers.TileManager;
-import ui_p.ButtonAssets;
+import ui_p.AssetsLoader;
 
 public class LoadGameMenu extends JPanel { // Changed to JPanel
     private Game game;
@@ -62,7 +62,7 @@ public class LoadGameMenu extends JPanel { // Changed to JPanel
     public LoadGameMenu(Game game) {
         this.game = game;
         this.tileManager = game.getTileManager();
-        this.backgroundImg = ButtonAssets.loadGameMenuBackgroundImg;
+        this.backgroundImg = AssetsLoader.getInstance().loadGameMenuBackgroundImg;
         this.medodicaFontSmall = FontLoader.loadMedodicaFont(14f);
         this.medodicaFontSmallBold = FontLoader.loadMedodicaFont(14f).deriveFont(Font.BOLD);
         this.medodicaFontMedium = FontLoader.loadMedodicaFont(16f);

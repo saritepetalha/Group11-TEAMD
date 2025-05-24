@@ -1,27 +1,24 @@
 package managers;
 
-import java.awt.AlphaComposite;
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
 import constants.GameDimensions;
 import enemies.Enemy;
 import helpMethods.LoadSave;
-import helpMethods.Utils;
 import objects.ArcherTower;
 import objects.ArtilleryTower;
 import objects.MageTower;
 import objects.Tower;
 import objects.TowerDecorator;
+import strategies.TargetingStrategy;
 import scenes.Playing;
 import ui_p.DeadTree;
+import helpMethods.Utils;
 import ui_p.LiveTree;
+
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 public class TowerManager {
     private Playing playing;
@@ -66,16 +63,26 @@ public class TowerManager {
     }
 
     private void attackEnemyIfInRange(Tower tower) {
+        if (!tower.isCooldownOver()) {
+            return; // Tower is on cooldown
+        }
+
+        // Collect all enemies in range
+        List<Enemy> enemiesInRange = new ArrayList<>();
         for (Enemy enemy : playing.getEnemyManager().getEnemies()) {
-            if (enemy.isAlive()) {
-                if (isEnemyInRange(tower, enemy)) {
-                    if (tower.isCooldownOver()){
-                        playing.shootEnemy(tower, enemy);
-                        tower.resetCooldown();
-                    }
-                } else {
-                    // PASS
-                }
+            if (enemy.isAlive() && isEnemyInRange(tower, enemy)) {
+                enemiesInRange.add(enemy);
+            }
+        }
+
+        // Use the tower's targeting strategy to select the best target
+        if (!enemiesInRange.isEmpty()) {
+            TargetingStrategy strategy = tower.getTargetingStrategy();
+            Enemy target = strategy.selectTarget(enemiesInRange, tower);
+
+            if (target != null) {
+                playing.shootEnemy(tower, target);
+                tower.resetCooldown();
             }
         }
     }
@@ -153,12 +160,27 @@ public class TowerManager {
         towers.add(new ArcherTower(x, y));
     }
 
+    // Method to build tower with custom targeting strategy
+    public void buildArcherTower(int x, int y, TargetingStrategy targetingStrategy) {
+        towers.add(new ArcherTower(x, y, targetingStrategy));
+    }
+
     public void buildMageTower(int x, int y) {
         towers.add(new MageTower(x, y));
     }
 
+    // Method to build tower with custom targeting strategy
+    public void buildMageTower(int x, int y, TargetingStrategy targetingStrategy) {
+        towers.add(new MageTower(x, y, targetingStrategy));
+    }
+
     public void buildArtilerryTower(int x, int y) {
         towers.add(new ArtilleryTower(x, y));
+    }
+
+    // Method to build tower with custom targeting strategy
+    public void buildArtilleryTower(int x, int y, TargetingStrategy targetingStrategy) {
+        towers.add(new ArtilleryTower(x, y, targetingStrategy));
     }
 
     public ArrayList<Tower> getTowers() {return towers;}

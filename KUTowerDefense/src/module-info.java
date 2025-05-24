@@ -7,4 +7,6 @@ module KUTowerDefense {
 	// allow Gson to see private fields in helpMethods
 	opens helpMethods to com.google.gson;
 	opens stats to com.google.gson;
+	opens managers to com.google.gson;
+
 }
