@@ -7,6 +7,7 @@ import objects.Projectile;
 import objects.Tower;
 import scenes.Playing;
 import helpMethods.RotSprite;
+import helpMethods.RotatedProjectileFrameGenerator;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -20,6 +21,7 @@ public class ProjectileManager {
     private ArrayList<Projectile> projectiles = new ArrayList<>();
     private BufferedImage[] proj_imgs; // Index 0: ARROW, 1: CANNONBALL (L1), 2: MAGICBOLT (L1)
     private BufferedImage[] fireball_imgs; // For L2 CANNONBALL animation
+    private BufferedImage[][] rotatedFireballFrames; // For rotated L2 CANNONBALL animation [animFrame][rotFrame]
     private BufferedImage[] explosion_imgs;
     private BufferedImage[] arrowFrames; // Array for rotated arrow sprites
     private int projID = 0;
@@ -38,17 +40,52 @@ public class ProjectileManager {
 
         fireball_imgs = LoadSave.getFireballAnimation();
         explosion_imgs = LoadSave.getExplosionAnimation();
+
+        // Load rotated fireball frames
+        loadRotatedFireballFrames();
     }
 
     private void loadArrowFrames() {
-        BufferedImage baseArrow = LoadSave.getImageFromPath("/TowerAssets/arrow.png");
-        BufferedImage[] originalFrames = RotSprite.generateSpriteSheet(baseArrow, null, 72, 5.0);
+        final int frameCount = 72; // Same as original: 72 frames with 5.0 degree steps
 
-        arrowFrames = new BufferedImage[originalFrames.length];
+        // Try to load pre-generated frames
+        arrowFrames = LoadSave.loadArrowFrames(frameCount);
 
-        // Resize each frame to 24x24 pixels using LoadSave's utility method
-        for (int i = 0; i < originalFrames.length; i++) {
-            arrowFrames[i] = LoadSave.resizeImage(originalFrames[i], 24, 24);
+        if (arrowFrames == null) {
+            System.out.println("Pre-generated arrow frames not found. Generating them automatically...");
+            RotatedProjectileFrameGenerator.generateAndSaveArrowFrames();
+
+            // Try loading again after generation
+            arrowFrames = LoadSave.loadArrowFrames(frameCount);
+
+            if (arrowFrames != null) {
+                System.out.println("Arrow frames generated and loaded successfully.");
+            } else {
+                System.err.println("Failed to generate or load arrow frames!");
+            }
+        } else {
+            System.out.println("Loaded " + frameCount + " pre-generated arrow frames.");
+        }
+    }
+
+    private void loadRotatedFireballFrames() {
+        // Try to load pre-generated rotated fireball frames
+        rotatedFireballFrames = LoadSave.loadFireballFrames();
+
+        if (rotatedFireballFrames == null) {
+            System.out.println("Pre-generated rotated fireball frames not found. Generating them automatically...");
+            RotatedProjectileFrameGenerator.generateAndSaveFireballFrames();
+
+            // Try loading again after generation
+            rotatedFireballFrames = LoadSave.loadFireballFrames();
+
+            if (rotatedFireballFrames != null) {
+                System.out.println("Rotated fireball frames generated and loaded successfully.");
+            } else {
+                System.err.println("Failed to generate or load rotated fireball frames!");
+            }
+        } else {
+            System.out.println("Loaded pre-generated rotated fireball frames (5 animation frames × 36 rotation frames).");
         }
     }
 
@@ -284,12 +321,26 @@ public class ProjectileManager {
                             null);
                 }
             } else if (currentProjectile.getProjectileType() == Constants.Projectiles.CANNONBALL && currentProjectile.getLevel() == 2) {
-                // Draw Lvl 2 Cannonball animation (fireball)
-                int frame = currentProjectile.getAnimationFrame();
-                if (fireball_imgs != null && frame >= 0 && frame < fireball_imgs.length) {
-                    g.drawImage(fireball_imgs[frame],
-                            (int) currentProjectile.getPos().x - fireball_imgs[frame].getWidth() / 2,
-                            (int) currentProjectile.getPos().y - fireball_imgs[frame].getHeight() / 2,
+                // Draw Lvl 2 Cannonball animation (rotated fireball)
+                int animFrame = currentProjectile.getAnimationFrame();
+
+                if (rotatedFireballFrames != null && animFrame >= 0 && animFrame < rotatedFireballFrames.length) {
+                    // Calculate rotation frame based on projectile angle (10-degree intervals)
+                    float angle = currentProjectile.getRotationAngle();
+                    int rotationFrame = Math.round(angle / 10.0f) % 36; // 36 frames for 360°
+
+                    BufferedImage fireballImg = rotatedFireballFrames[animFrame][rotationFrame];
+                    if (fireballImg != null) {
+                        g.drawImage(fireballImg,
+                                (int) currentProjectile.getPos().x - fireballImg.getWidth() / 2,
+                                (int) currentProjectile.getPos().y - fireballImg.getHeight() / 2,
+                                null);
+                    }
+                } else if (fireball_imgs != null && animFrame >= 0 && animFrame < fireball_imgs.length) {
+                    // Fallback to non-rotated fireball if rotated frames are not available
+                    g.drawImage(fireball_imgs[animFrame],
+                            (int) currentProjectile.getPos().x - fireball_imgs[animFrame].getWidth() / 2,
+                            (int) currentProjectile.getPos().y - fireball_imgs[animFrame].getHeight() / 2,
                             null);
                 }
             } else if (currentProjectile.getProjectileType() == Constants.Projectiles.ARROW && arrowFrames != null) {

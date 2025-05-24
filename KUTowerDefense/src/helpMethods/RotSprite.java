@@ -18,7 +18,8 @@ public class RotSprite {
     public static BufferedImage scale2x(BufferedImage src) {
         int w = src.getWidth();
         int h = src.getHeight();
-        BufferedImage dst = new BufferedImage(w * 2, h * 2, src.getType());
+        // Use TYPE_INT_ARGB to support transparency
+        BufferedImage dst = new BufferedImage(w * 2, h * 2, BufferedImage.TYPE_INT_ARGB);
 
         for (int y = 0; y < h; y++) {
             for (int x = 0; x < w; x++) {
@@ -47,10 +48,14 @@ public class RotSprite {
         int w = src.getWidth();
         int h = src.getHeight();
 
-        BufferedImage rotated = new BufferedImage(w, h, src.getType());
+        // Use TYPE_INT_ARGB to support transparency
+        BufferedImage rotated = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2d = rotated.createGraphics();
 
+        // Enable transparency support
         g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         double angle = Math.toRadians(angleDegrees);
         AffineTransform transform = AffineTransform.getRotateInstance(angle, w / 2.0, h / 2.0);
@@ -114,7 +119,13 @@ public class RotSprite {
 
         BufferedImage result = new BufferedImage(src.getWidth(), src.getHeight(), BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2d = result.createGraphics();
+
+        // Set up proper transparency handling
         g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
+
         g2d.drawImage(rotated, 0, 0, result.getWidth(), result.getHeight(), null);
         g2d.dispose();
 
