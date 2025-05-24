@@ -39,6 +39,7 @@ import objects.Tower;
 import objects.UpgradedArcherTower;
 import objects.UpgradedArtilleryTower;
 import objects.UpgradedMageTower;
+import stats.GameStatsRecord;
 import ui_p.DeadTree;
 import ui_p.LiveTree;
 import ui_p.PlayingUI;
@@ -791,7 +792,9 @@ public class Playing extends GameScene implements SceneMethods {
         // stop any ongoing waves/spawning
         enemyManager.getEnemies().clear();
 
-        game.getGameOverScene().setStats(
+        GameStatsRecord record = new GameStatsRecord(
+
+                game.getPlaying().getMapName(),
                 false,
                 playerManager.getGold(),
                 totalEnemiesSpawned,
@@ -802,6 +805,19 @@ public class Playing extends GameScene implements SceneMethods {
                 timePlayedInSeconds
         );
 
+        game.getStatsManager().addRecord(record);
+        game.getStatsManager().saveToFile(record);
+
+        game.getGameOverScene().setStats(
+                false,
+                playerManager.getGold(),
+                totalEnemiesSpawned,
+                enemiesReachedEnd,
+                towerManager.getTowers().size(),
+                enemyDefeated,
+                totalDamage,
+                timePlayedInSeconds
+        );
 
         game.changeGameState(main.GameStates.GAME_OVER);
     }
@@ -830,6 +846,19 @@ public class Playing extends GameScene implements SceneMethods {
                 totalDamage,
                 timePlayedInSeconds
         );
+        GameStatsRecord record = new GameStatsRecord(
+                currentMapName, true,
+                playerManager.getGold(),
+                totalEnemiesSpawned,
+                enemiesReachedEnd,
+                towerManager.getTowers().size(),
+                enemyDefeated,
+                totalDamage,
+                timePlayedInSeconds
+        );
+        game.getStatsManager().addRecord(record);
+        game.getStatsManager().saveToFile(record);
+
         game.changeGameState(main.GameStates.GAME_OVER);
     }
 
@@ -1158,7 +1187,9 @@ public class Playing extends GameScene implements SceneMethods {
 
     public void setCurrentMapName(String mapName) {
         this.currentMapName = mapName;
-
+    }
+    public String getMapName() {
+        return currentMapName != null ? currentMapName : "default";
     }
 
     public Tower getDisplayedTower() {

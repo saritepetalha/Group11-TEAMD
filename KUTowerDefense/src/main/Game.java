@@ -10,15 +10,9 @@ import java.awt.image.BufferedImage;
 import javax.swing.JFrame;
 
 import managers.AudioManager;
+import managers.GameStatsManager;
 import managers.TileManager;
-import scenes.GameOverScene;
-import scenes.Intro;
-import scenes.LoadGameMenu;
-import scenes.Loaded;
-import scenes.MapEditing;
-import scenes.Menu;
-import scenes.Options;
-import scenes.Playing;
+import scenes.*;
 
 public class Game extends JFrame implements Runnable{
 
@@ -39,7 +33,10 @@ public class Game extends JFrame implements Runnable{
 	private Loaded loaded;
 	private LoadGameMenu loadGameMenu;
 	private GameOverScene gameOverScene;
+	private StatisticsScene statisticsScene;
 	private TileManager tileManager;
+	private GameStatsManager statsManager;
+
 
 	public Game() {
 		this.tileManager = new TileManager();
@@ -133,6 +130,9 @@ public class Game extends JFrame implements Runnable{
 
 	private void initClasses() {
 		AudioManager.getInstance();
+
+		statsManager = new GameStatsManager();
+
 		gamescreen = new GameScreen(this);
 		render = new Render(this);
 		intro = new Intro(this);
@@ -145,7 +145,9 @@ public class Game extends JFrame implements Runnable{
 		loaded = new Loaded(this);
 		loadGameMenu = new LoadGameMenu(this);
 		gameOverScene = new GameOverScene(this);
+		statisticsScene = new StatisticsScene(this);
 		tileManager = new TileManager();
+
 	}
 
 
@@ -169,6 +171,10 @@ public class Game extends JFrame implements Runnable{
 				break;
 			case GAME_OVER:
 				gameOverScene.update();
+				break;
+			case STATISTICS:
+				statisticsScene.update();
+				break;
 			default:
 				break;
 		}
@@ -306,5 +312,14 @@ public class Game extends JFrame implements Runnable{
 			setLocationRelativeTo(null);
 		}
 	}
-
+	public GameStatsManager getStatsManager() {
+		return statsManager;
+	}
+	public StatisticsScene getStatisticsScene() {
+		return statisticsScene;
+	}
+	public void repaintGameScreen() {
+		if (gamescreen != null)
+			gamescreen.repaint();
+	}
 }
