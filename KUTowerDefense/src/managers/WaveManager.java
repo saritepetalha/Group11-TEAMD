@@ -1,22 +1,20 @@
 package managers;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-
-import config.EnemyType;
 import config.GameOptions;
 import config.Group;
 import config.Wave;
-import static constants.Constants.Enemies.BARREL;
-import static constants.Constants.Enemies.GOBLIN;
-import static constants.Constants.Enemies.TNT;
-import static constants.Constants.Enemies.TROLL;
-import static constants.Constants.Enemies.WARRIOR;
+import config.EnemyType;
 import helpMethods.OptionsIO;
 import scenes.Playing;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.LinkedList;
+import java.util.Queue;
+
+import static constants.Constants.Enemies.*;
 
 public class WaveManager {
 
@@ -31,8 +29,8 @@ public class WaveManager {
     private int enemyDelayTickLimit = 0; // Will be set from config.Group
     private int enemyDelayTick = 0;
 
-    private int waveIndex = 0;
-    private int groupIndex = 0;
+    private int waveIndex;
+    private int groupIndex;
     private Queue<Integer> currentGroupEnemyQueue = new LinkedList<>(); // Enemies left in the current group
     private boolean waitingForNextWave = true; // Start by waiting for the first wave
     private boolean waitingForNextGroup = false;
@@ -51,7 +49,8 @@ public class WaveManager {
             System.out.println("Error initializing WaveManager with options: " + e.getMessage() + ". Using defaults.");
             this.gameOptions = GameOptions.defaults();
         }
-
+        this.waveIndex = gameOptions.getCurrentWaveIndex();
+        this.groupIndex = gameOptions.getCurrentGroupIndex();
         loadWavesFromOptions();
 
         setInterWaveDelay(gameOptions.getInterWaveDelay());
@@ -266,23 +265,13 @@ public class WaveManager {
         return waveIndex;
     }
 
-    public void setWaveIndex(int waveIndex) {
-        this.waveIndex = Math.max(0, Math.min(waveIndex, waves.size() - 1));
-    }
-
-    public int getCurrentGroupIndex() {
-        return groupIndex;
-    }
-
-    public void setCurrentGroupIndex(int groupIndex) {
-        if (waveIndex < waves.size()) {
-            this.groupIndex = Math.max(0, Math.min(groupIndex, waves.get(waveIndex).getGroups().size() - 1));
-        }
-    }
-
     public int getWaveCount() {
         return waves.size();
     }
+
+    public void setWaveIndex(int currentWaveIndex) {this.waveIndex = currentWaveIndex;}
+
+    public void setGroupIndex(int currentGroupIndex) {this.groupIndex = currentGroupIndex;}
 
     public float getTimeUntilNextSpawn() {
         if (waitingForNextWave && waveTimerActive) {
@@ -382,4 +371,6 @@ public class WaveManager {
                 return null;
         }
     }
+
+
 }

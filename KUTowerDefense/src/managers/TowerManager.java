@@ -1,19 +1,8 @@
 package managers;
 
-import java.awt.AlphaComposite;
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
 import constants.GameDimensions;
 import enemies.Enemy;
 import helpMethods.LoadSave;
-import helpMethods.Utils;
 import objects.ArcherTower;
 import objects.ArtilleryTower;
 import objects.MageTower;
@@ -21,7 +10,14 @@ import objects.Tower;
 import objects.TowerDecorator;
 import scenes.Playing;
 import ui_p.DeadTree;
+import helpMethods.Utils;
 import ui_p.LiveTree;
+
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 public class TowerManager {
     private Playing playing;
@@ -167,10 +163,6 @@ public class TowerManager {
         towers.clear();
     }
 
-    public void addTower(Tower tower) {
-        towers.add(tower);
-    }
-
     // Method to replace an old tower instance with a new one (e.g., after upgrading)
     public void replaceTower(Tower oldTower, Tower newTower) {
         int index = towers.indexOf(oldTower);
@@ -216,8 +208,5 @@ public class TowerManager {
         upgradeEffects.add(new TowerUpgradeEffect(tower.getX() + 32, tower.getY() + 32));
     }
 }
-
-
-
 
 

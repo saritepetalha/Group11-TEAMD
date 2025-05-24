@@ -1,37 +1,25 @@
 package managers;
 
-import java.awt.AlphaComposite;
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
+import config.GameOptions;
+import constants.GameDimensions;
+import enemies.Enemy;
+import enemies.*;
+import scenes.Playing;
+import helpMethods.LoadSave;
+import helpMethods.OptionsIO;
+import objects.GridPoint;
+
+import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.Queue;
+import java.util.LinkedList;
 import java.util.Set;
 
-import config.GameOptions;
-import static constants.Constants.Enemies.BARREL;
-import static constants.Constants.Enemies.GOBLIN;
-import static constants.Constants.Enemies.TNT;
-import static constants.Constants.Enemies.TROLL;
-import static constants.Constants.Enemies.WARRIOR;
-import static constants.Constants.PathPoints.END_POINT;
-import static constants.Constants.PathPoints.START_POINT;
-import constants.GameDimensions;
-import enemies.Barrel;
-import enemies.Enemy;
-import enemies.Goblin;
-import enemies.TNT;
-import enemies.Troll;
-import enemies.Warrior;
-import helpMethods.LoadSave;
-import helpMethods.OptionsIO;
-import objects.GridPoint;
-import scenes.Playing;
+import static constants.Constants.PathPoints.*;
+import static constants.Constants.Enemies.*;
 
 public class EnemyManager {
     private Playing playing;
@@ -679,14 +667,6 @@ public class EnemyManager {
         return enemies;
     }
 
-    public void clearEnemies() {
-        enemies.clear();
-    }
-
-    public void addEnemy(Enemy enemy) {
-        enemies.add(enemy);
-    }
-
     /**
      * Teleports an enemy back to the starting point of the path.
      * The enemy retains its current HP and status effects.
@@ -716,9 +696,5 @@ public class EnemyManager {
 
         System.out.println("Enemy " + enemy.getId() + " teleported back to start!");
         return true;
-    }
-
-    public int getNextEnemyID() {
-        return nextEnemyID++;
     }
 }
