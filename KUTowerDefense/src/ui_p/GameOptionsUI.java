@@ -11,13 +11,8 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.MatteBorder;
 import java.awt.*;
-import java.awt.event.ActionListener;
-import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 import java.util.List;
-import javax.imageio.ImageIO;
 
 /**
  * UI component for editing game options.
@@ -149,23 +144,23 @@ public class GameOptionsUI extends JPanel {
         super.paintComponent(g);
 
         // Draw background image with transparency
-        if (ButtonAssets.backgroundImg != null) {
+        if (AssetsLoader.getInstance().backgroundImg != null) {
             Graphics2D g2d = (Graphics2D) g.create();
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, backgroundOpacity));
 
             // Scale image to fill panel while maintaining aspect ratio
-            double scaleX = (double) getWidth() / ButtonAssets.backgroundImg.getWidth();
-            double scaleY = (double) getHeight() / ButtonAssets.backgroundImg.getHeight();
+            double scaleX = (double) getWidth() / AssetsLoader.getInstance().backgroundImg.getWidth();
+            double scaleY = (double) getHeight() / AssetsLoader.getInstance().backgroundImg.getHeight();
             double scale = Math.max(scaleX, scaleY);
 
-            int scaledWidth = (int) (ButtonAssets.backgroundImg.getWidth() * scale);
-            int scaledHeight = (int) (ButtonAssets.backgroundImg.getHeight() * scale);
+            int scaledWidth = (int) (AssetsLoader.getInstance().backgroundImg.getWidth() * scale);
+            int scaledHeight = (int) (AssetsLoader.getInstance().backgroundImg.getHeight() * scale);
 
             // Center the image
             int x = (getWidth() - scaledWidth) / 2;
             int y = (getHeight() - scaledHeight) / 2;
 
-            g2d.drawImage(ButtonAssets.backgroundImg, x, y, scaledWidth, scaledHeight, null);
+            g2d.drawImage(AssetsLoader.getInstance().backgroundImg, x, y, scaledWidth, scaledHeight, null);
             g2d.dispose();
         }
     }

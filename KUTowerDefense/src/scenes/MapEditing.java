@@ -8,7 +8,7 @@ import main.Game;
 import managers.TileManager;
 import objects.Tile;
 import objects.Tower;
-import ui_p.ButtonAssets;
+import ui_p.AssetsLoader;
 import ui_p.EditTiles;
 
 import java.awt.*;
@@ -107,9 +107,9 @@ public class MapEditing extends GameScene implements SceneMethods{
 
                 // then draw any overlay (start/end points) if they exist
                 if (overlayData[i][j] == START_POINT) {
-                    drawOverlayImage(g, ButtonAssets.startPointImg, j, i);
+                    drawOverlayImage(g, AssetsLoader.getInstance().startPointImg, j, i);
                 } else if (overlayData[i][j] == END_POINT) {
-                    drawOverlayImage(g, ButtonAssets.endPointImg, j, i);
+                    drawOverlayImage(g, AssetsLoader.getInstance().endPointImg, j, i);
                 }
             }
         }
