@@ -161,6 +161,8 @@ public class LoadSave {
 
     public static void saveLevel(String fileName, int[][] tiles) {
         createLevel(fileName, tiles);
+        // Invalidate thumbnail cache when level is saved
+        ThumbnailCache.getInstance().invalidateLevel(fileName);
     }
 
     public static ArrayList<String> getSavedLevels() {

@@ -31,6 +31,7 @@ import javax.swing.UIManager;
 import constants.GameDimensions;
 import helpMethods.FontLoader;
 import helpMethods.LoadSave;
+import helpMethods.ThumbnailCache;
 import main.Game;
 import main.GameStates;
 import managers.TileManager;
@@ -83,6 +84,7 @@ public class LoadGameMenu extends JPanel { // Changed to JPanel
      */
     public void refreshMapPreviews() {
         System.out.println("Refreshing map previews...");
+        System.out.println("Cache stats before refresh: " + ThumbnailCache.getInstance().getCacheStats());
 
         // Remove the current main content
         if (mainContentPanel != null) {
@@ -97,6 +99,7 @@ public class LoadGameMenu extends JPanel { // Changed to JPanel
         repaint();
 
         System.out.println("Map previews refreshed successfully.");
+        System.out.println("Cache stats after refresh: " + ThumbnailCache.getInstance().getCacheStats());
     }
 
     private void initUI() {
@@ -113,6 +116,7 @@ public class LoadGameMenu extends JPanel { // Changed to JPanel
         // Debug: Print saved levels and their content
         System.out.println("=== DEBUG: createMainContent() ===");
         System.out.println("Found " + savedLevels.size() + " saved levels:");
+        System.out.println("Thumbnail cache stats: " + ThumbnailCache.getInstance().getCacheStats());
         for (String levelName : savedLevels) {
             System.out.println("  - Level: " + levelName);
             int[][] levelData = LoadSave.loadLevel(levelName);
@@ -173,7 +177,7 @@ public class LoadGameMenu extends JPanel { // Changed to JPanel
         for (String levelName : savedLevels) {
             int[][] levelData = LoadSave.loadLevel(levelName);
             if (levelData != null) {
-                BufferedImage thumbnail = generateThumbnail(levelData);
+                BufferedImage thumbnail = generateThumbnailWithCache(levelName, levelData);
                 RoundedButton previewButton = new RoundedButton("");
                 previewButton.setIcon(new ImageIcon(thumbnail));
                 previewButton.setFont(medodicaFontSmall);
@@ -334,6 +338,33 @@ public class LoadGameMenu extends JPanel { // Changed to JPanel
         }
         g2d.dispose();
         return thumbnail;
+    }
+
+    /**
+     * Generates a thumbnail with caching support
+     * @param levelName The name of the level
+     * @param levelData The level data array
+     * @return BufferedImage thumbnail
+     */
+    private BufferedImage generateThumbnailWithCache(String levelName, int[][] levelData) {
+        // Calculate hash of level data for cache validation
+        int levelDataHash = java.util.Arrays.deepHashCode(levelData);
+
+        // Try to get from cache first
+        ThumbnailCache cache = ThumbnailCache.getInstance();
+        BufferedImage cachedThumbnail = cache.getCachedThumbnail(levelName, levelDataHash);
+
+        if (cachedThumbnail != null) {
+            return cachedThumbnail;
+        }
+
+        // Cache miss - generate new thumbnail
+        BufferedImage newThumbnail = generateThumbnail(levelData);
+
+        // Cache the generated thumbnail
+        cache.cacheThumbnail(levelName, newThumbnail, levelDataHash);
+
+        return newThumbnail;
     }
 
     private void showPlayEditDialog(String levelName, int[][] levelData) {
