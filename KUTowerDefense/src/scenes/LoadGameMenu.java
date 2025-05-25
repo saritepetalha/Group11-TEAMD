@@ -58,6 +58,8 @@ public class LoadGameMenu extends JPanel { // Changed to JPanel
     private final Color BUTTON_HOVER_BG_COLOR = new Color(80, 140, 210);
     private final Color BUTTON_BORDER_COLOR = new Color(40, 80, 140);
 
+    // Store the main content panel for refreshing
+    private JPanel mainContentPanel;
 
     public LoadGameMenu(Game game) {
         this.game = game;
@@ -74,55 +76,138 @@ public class LoadGameMenu extends JPanel { // Changed to JPanel
         initUI();
     }
 
+    /**
+     * Refreshes the map previews by regenerating the UI content.
+     * This should be called when entering the LoadGameMenu to ensure
+     * newly added or edited maps are visible.
+     */
+    public void refreshMapPreviews() {
+        System.out.println("Refreshing map previews...");
+
+        // Remove the current main content
+        if (mainContentPanel != null) {
+            remove(mainContentPanel);
+        }
+
+        // Recreate the UI content
+        createMainContent();
+
+        // Refresh the display
+        revalidate();
+        repaint();
+
+        System.out.println("Map previews refreshed successfully.");
+    }
+
     private void initUI() {
-        JPanel previewsContainer = new JPanel();
-        previewsContainer.setOpaque(false);
-        previewsContainer.setLayout(new GridLayout(2, 2, PREVIEW_MARGIN, PREVIEW_MARGIN));
-        previewsContainer.setBorder(BorderFactory.createEmptyBorder(PREVIEW_MARGIN, PREVIEW_MARGIN, PREVIEW_MARGIN, PREVIEW_MARGIN));
+        createMainContent();
+        createBackButton();
+    }
+
+    private void createMainContent() {
+        mainContentPanel = new JPanel(new BorderLayout());
+        mainContentPanel.setOpaque(false);
 
         ArrayList<String> savedLevels = LoadSave.getSavedLevels();
-        if (savedLevels.isEmpty()) {
-            JLabel noLevelsLabel = new JLabel("No saved levels found. Create a map in Edit Mode!");
-            noLevelsLabel.setFont(medodicaFontMedium);
-            noLevelsLabel.setForeground(Color.WHITE);
-            noLevelsLabel.setHorizontalAlignment(SwingConstants.CENTER);
-            JPanel centerPanel = new JPanel(new GridBagLayout());
-            centerPanel.setOpaque(false);
-            centerPanel.add(noLevelsLabel);
-            previewsContainer.setLayout(new BorderLayout());
-            previewsContainer.add(centerPanel, BorderLayout.CENTER);
-        } else {
-            for (String levelName : savedLevels) {
-                int[][] levelData = LoadSave.loadLevel(levelName);
-                if (levelData != null) {
-                    BufferedImage thumbnail = generateThumbnail(levelData);
-                    RoundedButton previewButton = new RoundedButton("");
-                    previewButton.setIcon(new ImageIcon(thumbnail));
-                    previewButton.setFont(medodicaFontSmall);
-                    previewButton.setToolTipText("Load " + levelName);
-                    previewButton.setPreferredSize(new Dimension(PREVIEW_WIDTH, PREVIEW_HEIGHT));
 
-                    JPanel buttonPanel = new JPanel(new BorderLayout());
-                    buttonPanel.setOpaque(false);
-                    buttonPanel.setPreferredSize(new Dimension(PREVIEW_WIDTH, PREVIEW_HEIGHT + 25));
-
-                    JLabel nameLabel = new JLabel(levelName, SwingConstants.CENTER);
-                    nameLabel.setFont(medodicaFontSmallBold);
-                    nameLabel.setForeground(Color.black);
-                    nameLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
-
-                    buttonPanel.add(previewButton, BorderLayout.CENTER);
-                    buttonPanel.add(nameLabel, BorderLayout.SOUTH);
-
-                    previewButton.addActionListener(e -> showPlayEditDialog(levelName, levelData));
-
-                    JPanel cellWrapperPanel = new JPanel(new GridBagLayout());
-                    cellWrapperPanel.setOpaque(false);
-                    cellWrapperPanel.add(buttonPanel);
-
-                    previewsContainer.add(cellWrapperPanel);
+        // Debug: Print saved levels and their content
+        System.out.println("=== DEBUG: createMainContent() ===");
+        System.out.println("Found " + savedLevels.size() + " saved levels:");
+        for (String levelName : savedLevels) {
+            System.out.println("  - Level: " + levelName);
+            int[][] levelData = LoadSave.loadLevel(levelName);
+            if (levelData != null) {
+                System.out.println("    Content: " + levelData.length + "x" + levelData[0].length + " array");
+                // Print first few tiles to verify content
+                System.out.print("    First row sample: [");
+                for (int i = 0; i < Math.min(5, levelData[0].length); i++) {
+                    System.out.print(levelData[0][i]);
+                    if (i < Math.min(4, levelData[0].length - 1)) System.out.print(", ");
                 }
+                System.out.println(levelData[0].length > 5 ? ", ...]" : "]");
+
+                // Print a hash of the entire array to detect content changes
+                int contentHash = java.util.Arrays.deepHashCode(levelData);
+                System.out.println("    Content hash: " + contentHash);
+            } else {
+                System.out.println("    Content: NULL (failed to load)");
             }
+        }
+        System.out.println("=== END DEBUG ===");
+
+        if (savedLevels.isEmpty()) {
+            createNoLevelsPanel();
+        } else {
+            createLevelsGrid(savedLevels);
+        }
+
+        add(mainContentPanel, BorderLayout.CENTER);
+    }
+
+    private void createNoLevelsPanel() {
+        JLabel noLevelsLabel = new JLabel("No saved levels found. Create a map in Edit Mode!");
+        noLevelsLabel.setFont(medodicaFontMedium);
+        noLevelsLabel.setForeground(Color.WHITE);
+        noLevelsLabel.setHorizontalAlignment(SwingConstants.CENTER);
+
+        JPanel centerPanel = new JPanel(new GridBagLayout());
+        centerPanel.setOpaque(false);
+        centerPanel.add(noLevelsLabel);
+
+        mainContentPanel.add(centerPanel, BorderLayout.CENTER);
+    }
+
+    private void createLevelsGrid(ArrayList<String> savedLevels) {
+        // Calculate grid dimensions based on number of levels
+        int numLevels = savedLevels.size();
+        int cols = PREVIEWS_PER_ROW;
+        int rows = (int) Math.ceil((double) numLevels / cols);
+
+        System.out.println("Creating grid for " + numLevels + " levels: " + rows + " rows x " + cols + " cols");
+
+        JPanel previewsContainer = new JPanel();
+        previewsContainer.setOpaque(false);
+        previewsContainer.setLayout(new GridLayout(rows, cols, PREVIEW_MARGIN, PREVIEW_MARGIN));
+        previewsContainer.setBorder(BorderFactory.createEmptyBorder(PREVIEW_MARGIN, PREVIEW_MARGIN, PREVIEW_MARGIN, PREVIEW_MARGIN));
+
+        for (String levelName : savedLevels) {
+            int[][] levelData = LoadSave.loadLevel(levelName);
+            if (levelData != null) {
+                BufferedImage thumbnail = generateThumbnail(levelData);
+                RoundedButton previewButton = new RoundedButton("");
+                previewButton.setIcon(new ImageIcon(thumbnail));
+                previewButton.setFont(medodicaFontSmall);
+                previewButton.setToolTipText("Load " + levelName);
+                previewButton.setPreferredSize(new Dimension(PREVIEW_WIDTH, PREVIEW_HEIGHT));
+
+                JPanel buttonPanel = new JPanel(new BorderLayout());
+                buttonPanel.setOpaque(false);
+                buttonPanel.setPreferredSize(new Dimension(PREVIEW_WIDTH, PREVIEW_HEIGHT + 25));
+
+                JLabel nameLabel = new JLabel(levelName, SwingConstants.CENTER);
+                nameLabel.setFont(medodicaFontSmallBold);
+                nameLabel.setForeground(Color.black);
+                nameLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
+
+                buttonPanel.add(previewButton, BorderLayout.CENTER);
+                buttonPanel.add(nameLabel, BorderLayout.SOUTH);
+
+                previewButton.addActionListener(e -> showPlayEditDialog(levelName, levelData));
+
+                JPanel cellWrapperPanel = new JPanel(new GridBagLayout());
+                cellWrapperPanel.setOpaque(false);
+                cellWrapperPanel.add(buttonPanel);
+
+                previewsContainer.add(cellWrapperPanel);
+            }
+        }
+
+        // Fill remaining cells with empty panels if needed
+        int remainingCells = (rows * cols) - numLevels;
+        for (int i = 0; i < remainingCells; i++) {
+            JPanel emptyPanel = new JPanel();
+            emptyPanel.setOpaque(false);
+            previewsContainer.add(emptyPanel);
         }
 
         JScrollPane scrollPane = new JScrollPane(previewsContainer);
@@ -134,8 +219,10 @@ public class LoadGameMenu extends JPanel { // Changed to JPanel
         // Adjust scroll speed
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
-        add(scrollPane, BorderLayout.CENTER);
+        mainContentPanel.add(scrollPane, BorderLayout.CENTER);
+    }
 
+    private void createBackButton() {
         // Back button
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         bottomPanel.setOpaque(false);
