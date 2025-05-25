@@ -3,6 +3,7 @@ package ui_p;
 import helpMethods.LoadSave;
 
 import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,6 +37,13 @@ public class AssetsLoader {
     public BufferedImage menuBackgroundImg;
     public BufferedImage teamLogoImg;
     public BufferedImage loadGameMenuBackgroundImg;
+    public BufferedImage earthquakeButtonImg;
+    public BufferedImage earthquakeButtonHoverImg;
+    public BufferedImage earthquakeButtonPressedImg;
+    public BufferedImage lightningButtonNormal;
+    public BufferedImage lightningButtonHover;
+    public BufferedImage lightningButtonPressed;
+    public BufferedImage[] lightningFrames;
 
     // Private constructor
     private AssetsLoader() {
@@ -72,6 +80,10 @@ public class AssetsLoader {
         loadMenuBackgroundImage();
         loadLogoImages();
         loadLoadGameMenuBackgroundImg();
+        loadEarthquakeButtonImages();
+        loadLightningButtonImages();
+        loadLightningAssets();
+
     }
 
     private void loadButtonImageFile() {
@@ -281,6 +293,34 @@ public class AssetsLoader {
         try (InputStream is = LoadSave.class.getResourceAsStream("/UI/PressedMusic.png")) {
             pressedMusicImg = ImageIO.read(is);
         } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void loadEarthquakeButtonImages() {
+        earthquakeButtonImg = loadImage("/UI/earthquake_button.png");
+        earthquakeButtonHoverImg = loadImage("/UI/earthquake_button_hover.png");
+        earthquakeButtonPressedImg = loadImage("/UI/earthquake_button_pressed.png");
+    }
+
+    private void loadLightningButtonImages() {
+        lightningButtonNormal = loadImage("/UI/lightning_button.png");
+        lightningButtonHover = loadImage("/UI/lightning_button_hover.png");
+        lightningButtonPressed = loadImage("/UI/lightning_button_pressed.png");
+    }
+
+    private void loadLightningAssets() {
+        try {
+            BufferedImage sheet = LoadSave.getImageFromPath("/UI/lightning.png");
+            int frameWidth = sheet.getWidth() / 6;
+            int frameHeight = sheet.getHeight();
+
+            lightningFrames = new BufferedImage[6];
+            for (int i = 0; i < 6; i++) {
+                lightningFrames[i] = sheet.getSubimage(i * frameWidth, 0, frameWidth, frameHeight);
+            }
+        } catch (Exception e) {
+            System.err.println("⚠️ Lightning frames could not be loaded: " + e.getMessage());
             e.printStackTrace();
         }
     }
