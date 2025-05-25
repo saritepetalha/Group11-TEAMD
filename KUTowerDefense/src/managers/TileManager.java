@@ -136,8 +136,6 @@ public class TileManager {
                 y * GameDimensions.TILE_DISPLAY_SIZE,
                 GameDimensions.TILE_DISPLAY_SIZE,
                 GameDimensions.TILE_DISPLAY_SIZE);
-
-        System.out.println("Tile 1 loaded: " + (tile != null));  // for debugging
         return tile;
 
 
