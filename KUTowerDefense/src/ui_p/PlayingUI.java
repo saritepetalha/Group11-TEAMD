@@ -50,6 +50,10 @@ public class PlayingUI {
     private TheButton mainMenuButton;
     private TheButton saveButton;
 
+    // ulti buttons
+    private TheButton earthquakeButton;
+    private TheButton lightningButton;
+
     // option values (WILL BE CHANGED TO BE READ FROM FILE)
     private int soundVolume = 50;
     private int musicVolume = 50;
@@ -105,6 +109,20 @@ public class PlayingUI {
                 buttonSize,
                 AssetsLoader.getInstance().buttonImages.get(1));
 
+        earthquakeButton = new TheButton(
+                "Earthquake",
+                startX - 2 * (buttonSize + buttonSpacing),
+                startY,
+                buttonSize,
+                buttonSize,
+                AssetsLoader.getInstance().earthquakeButtonImg);
+
+        lightningButton = new TheButton("Lightning",
+                startX - 3 * (buttonSize + buttonSpacing), startY,
+                buttonSize, buttonSize,
+                AssetsLoader.getInstance().lightningButtonNormal
+        );
+
         backOptionsButton = new TheButton("Back",
                 GameDimensions.GAME_WIDTH / 2 + AssetsLoader.getInstance().optionsMenuImg.getWidth() / 4,
                 GameDimensions.GAME_HEIGHT / 2 - AssetsLoader.getInstance().optionsMenuImg.getHeight() / 3,
@@ -123,7 +141,6 @@ public class PlayingUI {
         // Initialize main menu button
         mainMenuButton = new TheButton("Main Menu",
                 0, 0, 200, 40, null);
-
 
         // Initialize volumes from AudioManager
         soundVolume = (int)(AudioManager.getInstance().getSoundVolume() * 100);
@@ -153,6 +170,10 @@ public class PlayingUI {
         // Draw options menu if it's open
         if (playing.isOptionsMenuOpen()) {
             drawOptionsMenu(g);
+        }
+
+        if (playing.getUltiManager().isWaitingForLightningTarget()) {
+            drawLightningPreview((Graphics2D) g);
         }
     }
 
@@ -312,6 +333,20 @@ public class PlayingUI {
                 AssetsLoader.getInstance().buttonImages.get(1),
                 AssetsLoader.getInstance().buttonHoverEffectImages.get(2),
                 AssetsLoader.getInstance().buttonPressedEffectImages.get(11));
+
+        drawControlButton(g2d, earthquakeButton,
+                startX - 2 * (buttonSize + buttonSpacing), startY,
+                buttonSize, buttonSize,
+                AssetsLoader.getInstance().earthquakeButtonImg,
+                AssetsLoader.getInstance().earthquakeButtonHoverImg,
+                AssetsLoader.getInstance().earthquakeButtonPressedImg);
+
+        drawControlButton(g2d, lightningButton,
+                startX - 3 * (buttonSize + buttonSpacing), startY,
+                buttonSize, buttonSize,
+                AssetsLoader.getInstance().lightningButtonNormal,
+                AssetsLoader.getInstance().lightningButtonHover,
+                AssetsLoader.getInstance().lightningButtonPressed);
     }
 
 
@@ -341,19 +376,22 @@ public class PlayingUI {
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
         }
 
-        g2d.drawImage(normalImg, x, y, width, height, null); // draw base image
+        g2d.drawImage(normalImg, x, y, width, height, null);
 
-        if (button.isMousePressed()) {               // if button is pressed, draw pressed effect
+        boolean isEarthquakeCooldown = (button == earthquakeButton && !playing.getUltiManager().canUseEarthquake());
+        boolean isLightningCooldown = (button == lightningButton && !playing.getUltiManager().canUseLightning());
+
+        if (isEarthquakeCooldown || isLightningCooldown || button.isMousePressed()) {
             g2d.drawImage(pressedImg, x, y, width, height, null);
-        } else if (button.isMouseOver()) {           // if mouse is hovering, draw hover effect with animation
-            // create a shining animation effect
+        } else if (button.isMouseOver()) {
             long currentTime = System.currentTimeMillis();
-            float alpha = (float) (0.5f + 0.5f * Math.sin(currentTime * 0.003)); // oscillate between 0.5 and 1.0
+            float alpha = (float) (0.5f + 0.5f * Math.sin(currentTime * 0.003));
 
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
             g2d.drawImage(hoverImg, x, y, width, height, null);
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
         }
+
     }
 
     /**
@@ -674,6 +712,18 @@ public class PlayingUI {
         g2d.drawRect(thumbRectX, thumbRectY, thumbWidth, thumbHeight);
     }
 
+    private void drawLightningPreview(Graphics2D g2d) {
+        int radius = playing.getUltiManager().getLightningRadius();
+        int diameter = radius * 2;
+        int circleX = mouseX - radius;
+        int circleY = mouseY - radius;
+
+        g2d.setColor(new Color(0, 200, 255, 80));
+        g2d.fillOval(circleX, circleY, diameter, diameter);
+
+        g2d.setColor(new Color(0, 150, 255, 180));
+        g2d.drawOval(circleX, circleY, diameter, diameter);
+    }
 
     public void setGoldAmount(int goldAmount) {
         this.goldAmount = goldAmount;
@@ -728,6 +778,13 @@ public class PlayingUI {
     public void mousePressed(int mouseX, int mouseY) {
         this.mouseX = mouseX;
         this.mouseY = mouseY;
+
+        if (playing.getUltiManager().isWaitingForLightningTarget() &&
+                !lightningButton.getBounds().contains(mouseX, mouseY)) {
+
+            playing.getUltiManager().triggerLightningAt(mouseX, mouseY);
+            return;
+        }
 
         if (pauseButton.getBounds().contains(mouseX, mouseY)) {
             AudioManager.getInstance().playButtonClickSound();
@@ -843,6 +900,24 @@ public class PlayingUI {
                 }
             }
         }
+        if (earthquakeButton.getBounds().contains(mouseX, mouseY)) {
+            if (playing.getUltiManager().canUseEarthquake()) {
+                AudioManager.getInstance().playButtonClickSound();
+                toggleButtonState(earthquakeButton);
+                playing.getUltiManager().triggerEarthquake();
+            }
+            return;
+        }
+
+        if (lightningButton.getBounds().contains(mouseX, mouseY)) {
+            if (playing.getUltiManager().isWaitingForLightningTarget()) {
+                playing.getUltiManager().setWaitingForLightningTarget(false);
+            } else if (playing.getUltiManager().canUseLightning() &&
+                    playing.getPlayerManager().getGold() >= 75) {
+                playing.getUltiManager().setWaitingForLightningTarget(true);
+            }
+            return;
+        }
     }
 
     // helper method to toggle button state
@@ -866,6 +941,9 @@ public class PlayingUI {
 
         sliderDragging = false;
         currentSlider = "";
+
+        earthquakeButton.setMousePressed(false);
+        lightningButton.setMousePressed(false);
     }
 
     public void mouseDragged(int mouseX, int mouseY) {

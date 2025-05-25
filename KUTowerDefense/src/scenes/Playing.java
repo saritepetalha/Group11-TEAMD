@@ -20,18 +20,7 @@ import enemies.Enemy;
 import helpMethods.LoadSave;
 import helpMethods.OptionsIO;
 import main.Game;
-import managers.AudioManager;
-import managers.EnemyManager;
-import managers.FireAnimationManager;
-import managers.GameStateManager;
-import managers.GameStateMemento;
-import managers.GoldBagManager;
-import managers.PlayerManager;
-import managers.ProjectileManager;
-import managers.TileManager;
-import managers.TowerManager;
-import managers.TreeInteractionManager;
-import managers.WaveManager;
+import managers.*;
 import objects.ArcherTower;
 import objects.ArtilleryTower;
 import objects.MageTower;
@@ -61,6 +50,7 @@ public class Playing extends GameScene implements SceneMethods {
     private PlayerManager playerManager;
     private ProjectileManager projectileManager;
 
+    private UltiManager ultiManager;
     private EnemyManager enemyManager;
 
     private DeadTree selectedDeadTree;
@@ -108,6 +98,8 @@ public class Playing extends GameScene implements SceneMethods {
     private boolean isFirstReset = true; // <-- ADD THIS NEW FLAG
 
     private TowerSelectionUI towerSelectionUI;
+
+    private long gameTimeMillis = 0;
 
     public Playing(Game game) {
         super(game);
@@ -173,6 +165,7 @@ public class Playing extends GameScene implements SceneMethods {
         enemyManager = new EnemyManager(this, overlay, level, this.gameOptions);
         towerManager = new TowerManager(this);
         playerManager = new PlayerManager(this.gameOptions);
+        ultiManager = new UltiManager(this);
         this.selectedDeadTree = null;
 
         if (towerManager.findDeadTrees(level) != null)
@@ -367,9 +360,14 @@ public class Playing extends GameScene implements SceneMethods {
 
     public void update() {
         if (!gamePaused) {
+
+            long delta = (long)(16 * gameSpeedMultiplier); // yaklaşık 60FPS frame time
+            gameTimeMillis += delta;
+
             waveManager.update();
             projectileManager.update();
             fireAnimationManager.update();
+            ultiManager.update(gameTimeMillis);
 
             // Check enemy status and handle wave completion
             if (isAllEnemiesDead()) {
@@ -435,6 +433,8 @@ public class Playing extends GameScene implements SceneMethods {
 
     @Override
     public void render(Graphics g) {
+
+        ultiManager.applyShakeIfNeeded(g);
         drawMap(g);
         towerManager.draw(g);
         enemyManager.draw(g, gamePaused);         // pass the paused state to enemyManager.draw
@@ -447,6 +447,8 @@ public class Playing extends GameScene implements SceneMethods {
         playingUI.draw(g);
         goldBagManager.draw(g);
         drawCastleHealthBar(g);
+        ultiManager.reverseShake(g);
+        ultiManager.draw(g);
 
         if (towerSelectionUI != null) {
             towerSelectionUI.draw(g);
@@ -1216,5 +1218,16 @@ public class Playing extends GameScene implements SceneMethods {
         if (towerSelectionUI != null) {
             towerSelectionUI.setSelectedTower(tower);
         }
+    }
+    public UltiManager getUltiManager() {
+        return ultiManager;
+    }
+
+    public void setUltiManager(UltiManager ultiManager) {
+        this.ultiManager = ultiManager;
+    }
+
+    public long getGameTime() {
+        return gameTimeMillis;
     }
 }

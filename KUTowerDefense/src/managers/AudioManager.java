@@ -126,6 +126,9 @@ public class AudioManager {
         loadSound(LOSE_3, LOSE_3 + ".wav");
         loadSound(LOSE_4, LOSE_4 + ".wav");
         loadSound(LOSE_5, LOSE_5 + ".wav");
+
+        loadSound("earthquake", "earthquake_audio.wav");
+        loadSound("lightning", "lightning_audio.wav");
     }
 
     private void loadMusic(String name, String filename) {
