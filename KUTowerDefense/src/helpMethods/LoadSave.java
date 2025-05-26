@@ -81,16 +81,48 @@ public class LoadSave {
 
 
 
+    /**
+     * Detects if we're running in a Maven project structure
+     */
+    private static boolean isMavenProject() {
+        // Check if we're in a Maven project by looking for pom.xml in the expected location
+        File pomFile = new File("demo/pom.xml");
+        return pomFile.exists();
+    }
+
+    /**
+     * Gets the appropriate levels directory path based on project structure
+     */
+    private static String getLevelsDirectoryPath() {
+        if (isMavenProject()) {
+            return "demo/src/main/resources/Levels";
+        } else {
+            return "KUTowerDefense/resources/Levels";
+        }
+    }
+
+    /**
+     * Gets the appropriate level overlays directory path based on project structure
+     */
+    private static String getLevelOverlaysDirectoryPath() {
+        if (isMavenProject()) {
+            return "demo/src/main/resources/LevelOverlays";
+        } else {
+            return "KUTowerDefense/resources/LevelOverlays";
+        }
+    }
+
     //This function saves the game to a json file as a 2d array with key: tiles
     //If it is wished the same json file could be used for saving the game state
     //As in the location of the enemy groups, location of towers etc.
     public static void createLevel(String fileName, int[][] tiles) {
-        File levelsFolder = new File("resources/Levels");
+        String levelsPath = getLevelsDirectoryPath();
+        File levelsFolder = new File(levelsPath);
         if (!levelsFolder.exists()) {
             levelsFolder.mkdirs();
         }
 
-        File file = new File("KUTowerDefense/resources/Levels/" + fileName + ".json");
+        File file = new File(levelsPath + "/" + fileName + ".json");
         Gson gson = new GsonBuilder()
                 .setPrettyPrinting()
                 .create();
@@ -100,6 +132,7 @@ public class LoadSave {
 
         // write it out
         try (Writer w = new FileWriter(file)) {
+            System.out.println("Saving level to: " + file.getAbsolutePath());
             System.out.println(gson.toJson(root));
             gson.toJson(root, w);
         } catch (IOException e) {
@@ -128,18 +161,22 @@ public class LoadSave {
 
     public static void saveLevel(String fileName, int[][] tiles) {
         createLevel(fileName, tiles);
+        // Invalidate thumbnail cache when level is saved
+        ThumbnailCache.getInstance().invalidateLevel(fileName);
     }
 
     public static ArrayList<String> getSavedLevels() {
         ArrayList<String> levelNames = new ArrayList<>();
-        String levelsPath = "KUTowerDefense/resources/Levels";
+
+        // Use the appropriate path based on project structure
+        String levelsPath = getLevelsDirectoryPath();
         File levelsFolder = new File(levelsPath);
 
-        System.out.println("Levels folder path: " + levelsFolder.getAbsolutePath());
-        System.out.println("Levels folder exists: " + levelsFolder.exists());
+        System.out.println("Checking levels path: " + levelsFolder.getAbsolutePath() + " - exists: " + levelsFolder.exists());
 
         if (!levelsFolder.exists()) {
-            System.out.println("Levels folder not found, creating...");
+            // Create the directory if it doesn't exist
+            System.out.println("Levels folder not found, creating: " + levelsFolder.getAbsolutePath());
             levelsFolder.mkdirs();
             return levelNames;
         }
@@ -158,10 +195,42 @@ public class LoadSave {
         } else {
             System.out.println("Could not get file list!");
         }
+
         return levelNames;
     }
 
     public static int[][] loadLevel(String levelName) {
+        // First try to load from the appropriate file system location
+        String levelsPath = getLevelsDirectoryPath();
+        String levelFilePath = levelsPath + "/" + levelName + ".json";
+        File levelFile = new File(levelFilePath);
+
+        System.out.println("Checking level file: " + levelFile.getAbsolutePath() + " - exists: " + levelFile.exists());
+
+        if (levelFile.exists()) {
+            try (FileReader reader = new FileReader(levelFile)) {
+                JsonObject jsonObject = JsonParser.parseReader(reader).getAsJsonObject();
+                JsonArray tilesArray = jsonObject.getAsJsonArray("tiles");
+
+                int rows = tilesArray.size();
+                int cols = tilesArray.get(0).getAsJsonArray().size();
+                int[][] level = new int[rows][cols];
+
+                for (int i = 0; i < rows; i++) {
+                    JsonArray row = tilesArray.get(i).getAsJsonArray();
+                    for (int j = 0; j < cols; j++) {
+                        level[i][j] = row.get(j).getAsInt();
+                    }
+                }
+                System.out.println("Level successfully loaded from file system: " + levelName + " at " + levelFilePath);
+                return level;
+            } catch (Exception e) {
+                System.out.println("Error loading level from file system: " + levelFilePath + " - " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+
+        // Fallback: try to load from classpath (for built-in levels)
         String resourcePath = "/Levels/" + levelName + ".json";
         InputStream is = LoadSave.class.getResourceAsStream(resourcePath);
 
@@ -209,12 +278,13 @@ public class LoadSave {
     }
 
     public static void saveOverlay(String fileName, int[][] overlay) {
-        File levelsFolder = new File("KUTowerDefense/resources/LevelOverlays");
+        String overlaysPath = getLevelOverlaysDirectoryPath();
+        File levelsFolder = new File(overlaysPath);
         if (!levelsFolder.exists()) {
             levelsFolder.mkdirs();
         }
 
-        File file = new File("KUTowerDefense/resources/LevelOverlays/" + fileName + "_overlay.json");
+        File file = new File(overlaysPath + "/" + fileName + "_overlay.json");
         Gson gson = new GsonBuilder()
                 .setPrettyPrinting()
                 .create();
@@ -223,7 +293,7 @@ public class LoadSave {
         root.add("overlay", overlayJson);
 
         try (Writer writer = new FileWriter(file)) {
-            System.out.println("Overlay saved to: " + file.getName());
+            System.out.println("Overlay saved to: " + file.getAbsolutePath());
             gson.toJson(root, writer);
         } catch (IOException e) {
             throw new RuntimeException("Error saving overlay: " + e.getMessage());
@@ -231,6 +301,30 @@ public class LoadSave {
     }
 
     public static int[][] loadOverlay(String fileName) {
+        // First try to load from the appropriate file system location
+        String overlaysPath = getLevelOverlaysDirectoryPath();
+        String overlayFilePath = overlaysPath + "/" + fileName + "_overlay.json";
+        File overlayFile = new File(overlayFilePath);
+
+        System.out.println("Checking overlay file: " + overlayFile.getAbsolutePath() + " - exists: " + overlayFile.exists());
+
+        if (overlayFile.exists()) {
+            try (FileReader reader = new FileReader(overlayFile)) {
+                JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
+                JsonElement overlayElement = root.get("overlay");
+                if (overlayElement == null) {
+                    System.out.println("Overlay data not found in JSON for: " + fileName);
+                    return null;
+                }
+                System.out.println("Overlay successfully loaded from file system: " + fileName + " at " + overlayFilePath);
+                return GSON.fromJson(overlayElement, int[][].class);
+            } catch (Exception e) {
+                System.out.println("Error loading overlay from file system: " + overlayFilePath + " - " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+
+        // Fallback: try to load from classpath (for built-in overlays)
         String resourcePath = "/LevelOverlays/" + fileName + "_overlay.json";
         InputStream is = LoadSave.class.getResourceAsStream(resourcePath);
 

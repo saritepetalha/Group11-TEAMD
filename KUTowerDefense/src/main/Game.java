@@ -116,10 +116,9 @@ public class Game extends JFrame implements Runnable{
 		pack();
 		setLocationRelativeTo(null);
 
-		if (previousState == GameStates.MENU && newState == GameStates.LOAD_GAME) {
+		if (newState == GameStates.LOAD_GAME) {
 			if (loadGameMenu != null) {
-				// Potentially add a method to LoadGameMenu to refresh its list if levels can be saved/deleted during runtime
-				// e.g., loadGameMenu.refreshMapPreviews();
+				loadGameMenu.refreshMapPreviews();
 			}
 		}
 

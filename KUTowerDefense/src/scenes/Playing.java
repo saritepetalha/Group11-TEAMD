@@ -441,8 +441,6 @@ public class Playing extends GameScene implements SceneMethods {
         drawTowerButtons(g);
         drawLiveTreeButtons(g);
         projectileManager.draw(g);
-        drawHighlight(g);
-        drawDisplayedTower(g);
         fireAnimationManager.draw(g);
         playingUI.draw(g);
         goldBagManager.draw(g);
@@ -453,102 +451,6 @@ public class Playing extends GameScene implements SceneMethods {
         if (towerSelectionUI != null) {
             towerSelectionUI.draw(g);
         }
-    }
-
-    private void drawHighlight(Graphics g) {
-        Graphics2D g2d = (Graphics2D) g.create();
-
-        // Set transparency level (0.0f = fully transparent, 1.0f = fully opaque)
-        float alpha = 0.2f; // Adjust the transparency as needed
-        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-
-        // Set fill color to white
-        g2d.setColor(Color.WHITE);
-        g2d.fillRect(mouseX, mouseY, 64, 64);
-
-        // Optional: draw white border with full opacity
-        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));
-        g2d.setColor(Color.WHITE);
-        g2d.drawRect(mouseX, mouseY, 64, 64);
-
-        g2d.dispose();
-    }
-
-    private void drawDisplayedTower(Graphics g) {
-        if (displayedTower == null) return;
-        drawDisplayedTowerBorder(g);
-        drawDisplayedTowerRange(g);
-        // Draw upgrade button (smaller pixel-art style)
-        int btnW = 64, btnH = 24;
-        int btnX = displayedTower.getX() + 32 - btnW / 2;
-        int btnY = displayedTower.getY() + 80;
-        upgradeButtonBounds = new Rectangle(btnX, btnY, btnW, btnH);
-        if (displayedTower.isUpgradeable()) {
-            boolean canAfford = playerManager.getGold() >= getUpgradeCost(displayedTower);
-            // Draw thick dark border
-            g.setColor(new Color(40, 24, 8));
-            g.fillRect(btnX - 3, btnY - 3, btnW + 6, btnH + 6);
-            // Fill with parchment/wood color
-            g.setColor(new Color(210, 180, 140));
-            g.fillRect(btnX, btnY, btnW, btnH);
-            // Pixel-art highlight (top 3px)
-            g.setColor(new Color(255, 255, 255, 80));
-            g.fillRect(btnX + 3, btnY + 3, btnW - 6, 3);
-            // Draw blocky border (simulate pixel art)
-            g.setColor(new Color(80, 40, 10));
-            for (int i = 0; i < 2; i++) {
-                g.drawRect(btnX + i, btnY + i, btnW - 1 - 2 * i, btnH - 1 - 2 * i);
-            }
-            // Draw text (smaller, bold)
-            g.setFont(new Font("Dialog", Font.BOLD, 14));
-            g.setColor(canAfford ? new Color(30, 20, 10) : new Color(80, 80, 80));
-            String text = "Upgrade";
-            int textWidth = g.getFontMetrics().stringWidth(text);
-            int textHeight = g.getFontMetrics().getAscent();
-            int textX = btnX + (btnW - textWidth) / 2;
-            int textY = btnY + (btnH + textHeight) / 2 - 2;
-            g.drawString(text, textX, textY);
-            // If not affordable, draw X
-            if (!canAfford) {
-                g.setColor(new Color(200, 0, 0, 180));
-                g.drawLine(btnX + 4, btnY + 4, btnX + btnW - 4, btnY + btnH - 4);
-                g.drawLine(btnX + btnW - 4, btnY + 4, btnX + 4, btnY + btnH - 4);
-            }
-        } else {
-            upgradeButtonBounds = null;
-        }
-    }
-
-    private void drawDisplayedTowerRange(Graphics g) {
-        Graphics2D g2d = (Graphics2D) g.create();
-
-        int range = (int) displayedTower.getRange();
-        int centerX = displayedTower.getX() + 32;
-        int centerY = displayedTower.getY() + 32;
-        int topLeftX = centerX - range;
-        int topLeftY = centerY - range;
-
-        // Brown fill (solid)
-        Color brownFill = new Color(139, 69, 19, 60); // SaddleBrown
-        g2d.setColor(brownFill);
-        g2d.fillOval(topLeftX, topLeftY, range * 2, range * 2);
-
-        float[] dashPattern = {10f, 5f}; // 10px dash, 5px gap
-
-        // Yellow outline (semi-transparent)
-        Color yellowOutline = new Color(255, 255, 0); // Yellow with 50% opacity
-        g2d.setColor(yellowOutline);
-        g2d.setStroke(new BasicStroke(2, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, dashPattern, 0));
-        g2d.drawOval(topLeftX, topLeftY, range * 2, range * 2);
-
-        g2d.dispose();
-
-    }
-
-
-    private void drawDisplayedTowerBorder(Graphics g) {
-        g.setColor(Color.CYAN);
-        g.drawRect(displayedTower.getX(), displayedTower.getY(), 64, 64);
     }
 
     public void modifyTile(int x, int y, String tile) {
