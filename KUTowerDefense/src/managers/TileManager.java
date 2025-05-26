@@ -5,6 +5,8 @@ import objects.Tile;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import helpMethods.LoadSave;
 import ui_p.AssetsLoader;
 
@@ -22,13 +24,131 @@ public class TileManager {
     public BufferedImage atlas;
     public ArrayList<Tile> tiles = new ArrayList<>();
 
+    // Kar çimi karoları için değişkenler
+    private BufferedImage[] snowyGrassSprites;
+    private Map<String, Integer> grassSnowStages = new HashMap<>();
+    private long lastSnowUpdateTime = 0;
+    private static final long SNOW_UPDATE_INTERVAL = 30000; // 30 saniye (milisaniye cinsinden)
+    private static final int MAX_SNOW_STAGES = 4; // 4 aşamalı kar birikimi
+
     public TileManager() {
         loadAtlas();
+        loadSnowyGrassSprites();
         createTiles();
     }
 
     public Tile getTile(int id){
         return tiles.get(id);
+    }
+
+    // Kar çimi sprite'larını yükle
+    private void loadSnowyGrassSprites() {
+        try {
+            System.out.println("Kar çimi sprite'ları yükleniyor...");
+            BufferedImage snowyGrassAtlas = LoadSave.getImageFromPath("/Tiles/snowy_grass.png");
+            if (snowyGrassAtlas != null) {
+                System.out.println("Kar çimi atlas yüklendi. Boyut: " + snowyGrassAtlas.getWidth() + "x" + snowyGrassAtlas.getHeight());
+                snowyGrassSprites = new BufferedImage[MAX_SNOW_STAGES];
+
+                // Asset 4 farklı kar aşamasını içeriyor (1024x1536 toplam boyut)
+                // 2x2 grid halinde düzenlenmiş: 1024/2 = 512 genişlik, 1536/2 = 768 yükseklik
+                int tileWidth = 512;  // Her tile'ın genişliği
+                int tileHeight = 768; // Her tile'ın yüksekliği
+
+                System.out.println("Her sprite boyutu: " + tileWidth + "x" + tileHeight);
+
+                // 4 farklı kar aşamasını yükle (2x2 grid)
+                // Aşama 0: Az kar (sol-üst), Aşama 1: Orta kar (sağ-üst)
+                // Aşama 2: Çok kar (sol-alt), Aşama 3: Tam kar (sağ-alt)
+                int[] xPositions = {0, 512, 0, 512};
+                int[] yPositions = {0, 0, 768, 768};
+
+                for (int i = 0; i < MAX_SNOW_STAGES; i++) {
+                    snowyGrassSprites[i] = snowyGrassAtlas.getSubimage(
+                            xPositions[i], yPositions[i], tileWidth, tileHeight
+                    );
+                    // Sprite'ları oyun boyutuna yeniden boyutlandır
+                    snowyGrassSprites[i] = resizeImage(snowyGrassSprites[i],
+                            GameDimensions.TILE_DISPLAY_SIZE, GameDimensions.TILE_DISPLAY_SIZE);
+                    System.out.println("Kar çimi sprite " + i + " yüklendi (x:" + xPositions[i] + ", y:" + yPositions[i] + ")");
+                }
+                System.out.println("Kar çimi sprite'ları başarıyla yüklendi: " + MAX_SNOW_STAGES + " aşama");
+            } else {
+                System.err.println("Kar çimi sprite'ları yüklenemedi! snowy_grass.png dosyası bulunamadı.");
+            }
+        } catch (Exception e) {
+            System.err.println("Kar çimi sprite'ları yüklenirken hata: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    // Kar modunda çim karolarının kar aşamasını güncelle
+    public void updateSnowOnGrass(boolean isSnowing) {
+        long currentTime = System.currentTimeMillis();
+
+        if (isSnowing && currentTime - lastSnowUpdateTime >= SNOW_UPDATE_INTERVAL) {
+            // Kar yağıyorsa kar aşamasını artır
+            int updatedCount = 0;
+            for (Map.Entry<String, Integer> entry : grassSnowStages.entrySet()) {
+                int currentStage = entry.getValue();
+                if (currentStage < MAX_SNOW_STAGES - 1) {
+                    grassSnowStages.put(entry.getKey(), currentStage + 1);
+                    updatedCount++;
+                }
+            }
+            if (updatedCount > 0) {
+                System.out.println("Kar yağıyor! " + updatedCount + " çim karosu kar aşaması artırıldı");
+            }
+            lastSnowUpdateTime = currentTime;
+        } else if (!isSnowing && currentTime - lastSnowUpdateTime >= SNOW_UPDATE_INTERVAL * 2) {
+            // Kar yağmıyorsa kar aşamasını azalt (daha yavaş)
+            int updatedCount = 0;
+            for (Map.Entry<String, Integer> entry : grassSnowStages.entrySet()) {
+                int currentStage = entry.getValue();
+                if (currentStage > 0) {
+                    grassSnowStages.put(entry.getKey(), currentStage - 1);
+                    updatedCount++;
+                }
+            }
+            if (updatedCount > 0) {
+                System.out.println("Kar yağmıyor! " + updatedCount + " çim karosu kar aşaması azaltıldı");
+            }
+            lastSnowUpdateTime = currentTime;
+        }
+    }
+
+    // Belirli bir pozisyondaki çim karosunun kar aşamasını al
+    public int getGrassSnowStage(int x, int y) {
+        String key = x + "," + y;
+        return grassSnowStages.getOrDefault(key, 0);
+    }
+
+    // Belirli bir pozisyondaki çim karosunun kar aşamasını ayarla
+    public void setGrassSnowStage(int x, int y, int stage) {
+        String key = x + "," + y;
+        grassSnowStages.put(key, Math.max(0, Math.min(stage, MAX_SNOW_STAGES - 1)));
+    }
+
+    // Kar çimi sprite'ını al
+    public BufferedImage getSnowyGrassSprite(int stage) {
+        if (snowyGrassSprites != null && stage >= 0 && stage < snowyGrassSprites.length) {
+            return snowyGrassSprites[stage];
+        }
+        return null;
+    }
+
+    // Haritadaki tüm çim karolarını başlat
+    public void initializeGrassSnowStages(int[][] level) {
+        if (level == null) return;
+
+        for (int i = 0; i < level.length; i++) {
+            for (int j = 0; j < level[i].length; j++) {
+                if (level[i][j] == 5) { // Çim karosu ID'si
+                    setGrassSnowStage(j, i, 0); // Başlangıçta kar yok
+                }
+            }
+        }
+        System.out.println("Çim karolarının kar aşamaları başlatıldı");
     }
 
     // This method is used to load the tile atlas from the resources by using LoadSave class

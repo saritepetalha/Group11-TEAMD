@@ -129,6 +129,7 @@ public class AudioManager {
 
         loadSound("earthquake", "earthquake_audio.wav");
         loadSound("lightning", "lightning_audio.wav");
+        loadSound("coin_drop", "coin_drop.wav");
 
         loadWeatherSound("rain", "rain.wav");
         loadWeatherSound("snow", "snow.wav");
@@ -428,6 +429,7 @@ public class AudioManager {
             setClipVolume(clip, soundVolume * 0.8f);
             clip.setFramePosition(0);
             clip.loop(Clip.LOOP_CONTINUOUSLY);
+        } else {
         }
     }
 

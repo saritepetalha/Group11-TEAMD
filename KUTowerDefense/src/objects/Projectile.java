@@ -9,6 +9,7 @@ public class Projectile {
     private boolean active = true;
     private boolean exploding = false;
     private boolean hit = false;
+    private boolean willMiss = false; // Flag for arrows that will miss in windy weather
     private long hitTime = 0;
     private static final long HIT_DISPLAY_TIME = 50_000_000; // 50ms in nanoseconds
     private float rotationAngle; // Stores the rotation angle in degrees
@@ -132,5 +133,13 @@ public class Projectile {
     public int getRotationFrameIndex() {
         int frameIndex = Math.round(rotationAngle / 5.0f) % 72;
         return frameIndex;
+    }
+
+    public void setWillMiss(boolean willMiss) {
+        this.willMiss = willMiss;
+    }
+
+    public boolean willMiss() {
+        return willMiss;
     }
 }

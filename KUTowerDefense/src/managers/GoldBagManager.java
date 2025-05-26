@@ -13,6 +13,7 @@ public class GoldBagManager {
     public void spawnGoldBag(float x, float y, int minGold, int maxGold) {
         int goldAmount = minGold + random.nextInt(maxGold - minGold + 1);
         goldBags.add(new GoldBag(x, y, goldAmount));
+        AudioManager.getInstance().playSound("coin_drop");
     }
 
     public void update() {

@@ -210,6 +210,16 @@ public class WeatherManager {
         return isRaining() ? 0.8f : 1.0f;
     }
 
+
+
+    /**
+     * Returns the enemy speed multiplier based on weather
+     * Snowy weather slows down enemies by 25%
+     */
+    public float getEnemySpeedMultiplier() {
+        return isSnowing() ? 0.75f : 1.0f;
+    }
+
     private void initializeWeatherParticles() {
         for (int i = 0; i < MAX_PARTICLES; i++) {
             weatherParticles.add(new WeatherParticle(
@@ -275,6 +285,7 @@ public class WeatherManager {
         try {
             AudioManager audioManager = AudioManager.getInstance();
 
+            // Sadece hava durumu seslerini durdur, müziği durdurmayalım
             audioManager.stopWeatherSounds();
 
             switch (currentWeather) {
@@ -291,6 +302,7 @@ public class WeatherManager {
                     break;
             }
         } catch (Exception e) {
+            System.err.println("Hava durumu sesi çalarken hata: " + e.getMessage());
         }
     }
 
@@ -298,6 +310,7 @@ public class WeatherManager {
         try {
             AudioManager.getInstance().stopAllWeatherAndMusic();
         } catch (Exception e) {
+            System.err.println("Hava durumu sesleri durdurulurken hata: " + e.getMessage());
         }
     }
 }

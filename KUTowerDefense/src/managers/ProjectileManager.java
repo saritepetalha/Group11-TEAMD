@@ -140,12 +140,38 @@ public class ProjectileManager {
         angle = (float) Math.toDegrees(Math.atan2(yDiff, xDiff));
         if (angle < 0) angle += 360;
 
+        // Windy weather effect: Archer arrows have 30% chance to miss and fly off-map
+        boolean willMiss = false;
+        if (playing.getWeatherManager().isWindy() &&
+                projType == Constants.Projectiles.ARROW &&
+                Math.random() < 0.3) {
+            willMiss = true;
+
+            // Calculate a direction that will make the arrow fly off the map
+            // Add random deviation of 45-90 degrees from the original direction
+            float deviationAngle = (float) (Math.random() * 45 + 45); // 45-90 degrees
+            if (Math.random() < 0.5) deviationAngle = -deviationAngle; // Random left or right
+
+            angle += deviationAngle;
+            if (angle < 0) angle += 360;
+            if (angle >= 360) angle -= 360;
+
+            // Recalculate direction for the missed shot
+            float missAngleRad = (float) Math.toRadians(angle);
+            xDiff = (float) Math.cos(missAngleRad) * distance;
+            yDiff = (float) Math.sin(missAngleRad) * distance;
+        }
+
         // Normalize direction and apply speed
         float xSpeed = (xDiff / distance) * adjustedSpeed;
         float ySpeed = (yDiff / distance) * adjustedSpeed;
 
-        // Pass tower level and rotation angle to projectile
-        projectiles.add(new Projectile(towerCenterX, towerCenterY, xSpeed, ySpeed, projID++, tower.getDamage(), projType, tower.getLevel(), angle));
+        // Create projectile with miss flag
+        Projectile projectile = new Projectile(towerCenterX, towerCenterY, xSpeed, ySpeed, projID++, tower.getDamage(), projType, tower.getLevel(), angle);
+        if (willMiss) {
+            projectile.setWillMiss(true);
+        }
+        projectiles.add(projectile);
     }
 
     public void update() {
@@ -164,6 +190,15 @@ public class ProjectileManager {
                         } else {
                             currentProjectile.setHit();
                         }
+                    }
+
+                    // Check if projectile is off-screen and deactivate it
+                    // But allow missed arrows to fly off-map completely
+                    if (!currentProjectile.willMiss() && isProjectileOffScreen(currentProjectile)) {
+                        currentProjectile.setActive(false);
+                    } else if (currentProjectile.willMiss() && isProjectileFarOffScreen(currentProjectile)) {
+                        // Only deactivate missed arrows when they're very far off screen
+                        currentProjectile.setActive(false);
                     }
                 }
                 currentProjectile.update();
@@ -188,6 +223,15 @@ public class ProjectileManager {
                             currentProjectile.setHit();
                         }
                     }
+
+                    // Check if projectile is off-screen and deactivate it
+                    // But allow missed arrows to fly off-map completely
+                    if (!currentProjectile.willMiss() && isProjectileOffScreen(currentProjectile)) {
+                        currentProjectile.setActive(false);
+                    } else if (currentProjectile.willMiss() && isProjectileFarOffScreen(currentProjectile)) {
+                        // Only deactivate missed arrows when they're very far off screen
+                        currentProjectile.setActive(false);
+                    }
                 }
                 currentProjectile.update();
             }
@@ -195,6 +239,11 @@ public class ProjectileManager {
     }
 
     private boolean isEnemyShot(Projectile projectile) {
+        // If projectile is marked to miss, it won't hit any enemy
+        if (projectile.willMiss()) {
+            return false;
+        }
+
         for (Enemy enemy : playing.getEnemyManager().getEnemies()) {
             if (enemy.isAlive()) {
                 // Get enemy's actual sprite bounds for visual hit detection
@@ -381,5 +430,21 @@ public class ProjectileManager {
 
     public void clearProjectiles() {
         projectiles.clear();
+    }
+
+    /**
+     * Checks if a projectile is off-screen (normal boundary check)
+     */
+    private boolean isProjectileOffScreen(Projectile projectile) {
+        Point pos = projectile.getPos();
+        return pos.x < -50 || pos.x > 1024 + 50 || pos.y < -50 || pos.y > 576 + 50;
+    }
+
+    /**
+     * Checks if a projectile is very far off-screen (for missed arrows)
+     */
+    private boolean isProjectileFarOffScreen(Projectile projectile) {
+        Point pos = projectile.getPos();
+        return pos.x < -200 || pos.x > 1024 + 200 || pos.y < -200 || pos.y > 576 + 200;
     }
 }
