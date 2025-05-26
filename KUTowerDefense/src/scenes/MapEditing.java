@@ -79,7 +79,6 @@ public class MapEditing extends GameScene implements SceneMethods{
     }
 
     private void drawMap(Graphics g) {
-
         g.setColor(new Color(134,177,63,255));
         g.fillRect(0, 0, GameDimensions.GAME_WIDTH, GameDimensions.GAME_HEIGHT);
 
@@ -87,25 +86,28 @@ public class MapEditing extends GameScene implements SceneMethods{
             for (int j = 0; j < level[i].length; j++) {
                 int tileId = level[i][j];
 
-                // Special handling for wall and gate
                 if (tileId == -3 && wallImage != null) { // Wall
-                    // Draw wall as silhouette in map editing mode
-                    drawSilhouette(g, wallImage, j * GameDimensions.TILE_DISPLAY_SIZE,
+                    BufferedImage wallToDraw;
+                    if (isCorner(i, j, level.length, level[0].length)) {
+                        int angle = getCornerStraightRotation(i, j, level);
+                        wallToDraw = rotateImage(wallImage, angle);
+                    } else {
+                        wallToDraw = getTransformedBorderImage(wallImage, i, j, level.length, level[0].length);
+                    }
+                    drawSilhouette(g, wallToDraw, j * GameDimensions.TILE_DISPLAY_SIZE,
                             i * GameDimensions.TILE_DISPLAY_SIZE,
                             GameDimensions.TILE_DISPLAY_SIZE,
                             GameDimensions.TILE_DISPLAY_SIZE);
                 } else if (tileId == -4 && gateImage != null) { // Gate
-                    // Draw gate as silhouette in map editing mode
-                    drawSilhouette(g, gateImage, j * GameDimensions.TILE_DISPLAY_SIZE,
+                    BufferedImage gateToDraw = getTransformedBorderImage(gateImage, i, j, level.length, level[0].length);
+                    drawSilhouette(g, gateToDraw, j * GameDimensions.TILE_DISPLAY_SIZE,
                             i * GameDimensions.TILE_DISPLAY_SIZE,
                             GameDimensions.TILE_DISPLAY_SIZE,
                             GameDimensions.TILE_DISPLAY_SIZE);
                 } else {
-                    // Normal tiles
                     g.drawImage(tileManager.getSprite(tileId), j * GameDimensions.TILE_DISPLAY_SIZE, i * GameDimensions.TILE_DISPLAY_SIZE, null);
                 }
 
-                // then draw any overlay (start/end points) if they exist
                 if (overlayData[i][j] == START_POINT) {
                     drawOverlayImage(g, AssetsLoader.getInstance().startPointImg, j, i);
                 } else if (overlayData[i][j] == END_POINT) {
@@ -115,6 +117,37 @@ public class MapEditing extends GameScene implements SceneMethods{
         }
 
         drawMapGrid(g);
+    }
+
+    private BufferedImage getTransformedBorderImage(BufferedImage img, int i, int j, int rowCount, int colCount) {
+        if (i == 0 && j == 0) return rotateImage(img, -90);
+        if (i == 0 && j == colCount - 1) return rotateImage(img, 90);
+        if (i == rowCount - 1 && j == 0) return rotateImage(img, 90);
+        if (i == rowCount - 1 && j == colCount - 1) return rotateImage(img, -90);
+
+        if (i == 0) return img; // üst
+        if (i == rowCount - 1) return rotateImage(img, 180);
+        if (j == 0) return rotateImage(img, -90);
+        if (j == colCount - 1) return rotateImage(img, 90);
+
+        return img;
+    }
+
+    private BufferedImage rotateImage(BufferedImage original, double degrees) {
+        double rads = Math.toRadians(degrees);
+        double sin = Math.abs(Math.sin(rads));
+        double cos = Math.abs(Math.cos(rads));
+        int w = original.getWidth();
+        int h = original.getHeight();
+        int newWidth = (int) Math.floor(w * cos + h * sin);
+        int newHeight = (int) Math.floor(h * cos + w * sin);
+        BufferedImage rotated = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2d = rotated.createGraphics();
+        g2d.translate((newWidth - w) / 2, (newHeight - h) / 2);
+        g2d.rotate(rads, w / 2, h / 2);
+        g2d.drawImage(original, 0, 0, null);
+        g2d.dispose();
+        return rotated;
     }
 
     private void drawMapGrid(Graphics g) {
@@ -891,6 +924,22 @@ public class MapEditing extends GameScene implements SceneMethods{
         }
 
         System.out.println("Walls and gate added successfully");
+    }
+
+    private boolean isCorner(int i, int j, int rowCount, int colCount) {
+        return (i == 0 || i == rowCount - 1) && (j == 0 || j == colCount - 1);
+    }
+
+    private int getCornerStraightRotation(int i, int j, int[][] level) {
+        boolean right = (j + 1 < level[0].length) && (level[i][j + 1] == -3);
+        boolean left = (j - 1 >= 0) && (level[i][j - 1] == -3);
+        boolean up = (i - 1 >= 0) && (level[i - 1][j] == -3);
+        boolean down = (i + 1 < level.length) && (level[i + 1][j] == -3);
+        if (right) return 0;
+        if (down) return 90;
+        if (left) return 180;
+        if (up) return 270;
+        return 0;
     }
 
 }

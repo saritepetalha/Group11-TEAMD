@@ -95,7 +95,7 @@ public class Playing extends GameScene implements SceneMethods {
 
     private GameStateManager gameStateManager;
     private String currentMapName = "defaultlevel"; // Default map name
-    private boolean isFirstReset = true; // <-- ADD THIS NEW FLAG
+    private boolean isFirstReset = true;
 
     private TowerSelectionUI towerSelectionUI;
 
@@ -335,27 +335,67 @@ public class Playing extends GameScene implements SceneMethods {
         for (int i = 0; i < level.length; i++) {
             for (int j = 0; j < level[i].length; j++) {
                 int tileId = level[i][j];
-
-                // Skip drawing tower tiles (20=Mage, 21=Artillery, 26=Archer)
                 if (tileId != 20 && tileId != 21 && tileId != 26) {
-                    // Special handling for wall and gate in playing mode - draw them normally
                     if (tileId == -3) { // Wall
                         if (wallImage != null) {
-                            g.drawImage(wallImage, j * GameDimensions.TILE_DISPLAY_SIZE, i * GameDimensions.TILE_DISPLAY_SIZE,
+                            BufferedImage wallToDraw;
+                            if (isCorner(i, j, level.length, level[0].length)) {
+                                int angle = getCornerStraightRotation(i, j, level);
+                                wallToDraw = rotateImage(wallImage, angle);
+                            } else {
+                                wallToDraw = getTransformedBorderImage(wallImage, i, j, level.length, level[0].length);
+                            }
+                            g.drawImage(wallToDraw, j * GameDimensions.TILE_DISPLAY_SIZE, i * GameDimensions.TILE_DISPLAY_SIZE,
                                     GameDimensions.TILE_DISPLAY_SIZE, GameDimensions.TILE_DISPLAY_SIZE, null);
                         }
                     } else if (tileId == -4) { // Gate
                         if (gateImage != null) {
-                            g.drawImage(gateImage, j * GameDimensions.TILE_DISPLAY_SIZE, i * GameDimensions.TILE_DISPLAY_SIZE,
+                            BufferedImage gateToDraw = getTransformedBorderImage(gateImage, i, j, level.length, level[0].length);
+                            g.drawImage(gateToDraw, j * GameDimensions.TILE_DISPLAY_SIZE, i * GameDimensions.TILE_DISPLAY_SIZE,
                                     GameDimensions.TILE_DISPLAY_SIZE, GameDimensions.TILE_DISPLAY_SIZE, null);
                         }
                     } else {
-                        // Regular tiles
                         g.drawImage(tileManager.getSprite(tileId), j * GameDimensions.TILE_DISPLAY_SIZE, i * GameDimensions.TILE_DISPLAY_SIZE, null);
                     }
                 }
             }
         }
+    }
+
+    private BufferedImage getTransformedBorderImage(BufferedImage img, int i, int j, int rowCount, int colCount) {
+        if (i == 0 && j == 0) return rotateImage(img, -90);
+        if (i == 0 && j == colCount - 1) return rotateImage(img, 90);
+        if (i == rowCount - 1 && j == 0) return rotateImage(img, 90);
+        if (i == rowCount - 1 && j == colCount - 1) return rotateImage(img, -90);
+
+        if (i == 0) return img;
+        if (i == rowCount - 1) return rotateImage(img, 180);
+        if (j == 0) return rotateImage(img, -90);
+        if (j == colCount - 1) return rotateImage(img, 90);
+
+        return img;
+    }
+
+    private BufferedImage rotateImage(BufferedImage original, double degrees) {
+        double rads = Math.toRadians(degrees);
+        double sin = Math.abs(Math.sin(rads));
+        double cos = Math.abs(Math.cos(rads));
+
+        int w = original.getWidth();
+        int h = original.getHeight();
+
+        int newWidth = (int) Math.floor(w * cos + h * sin);
+        int newHeight = (int) Math.floor(h * cos + w * sin);
+
+        BufferedImage rotated = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2d = rotated.createGraphics();
+
+        g2d.translate((newWidth - w) / 2, (newHeight - h) / 2);
+        g2d.rotate(rads, w / 2, h / 2);
+        g2d.drawImage(original, 0, 0, null);
+        g2d.dispose();
+
+        return rotated;
     }
 
     public void update() {
@@ -1131,5 +1171,21 @@ public class Playing extends GameScene implements SceneMethods {
 
     public long getGameTime() {
         return gameTimeMillis;
+    }
+
+    private boolean isCorner(int i, int j, int rowCount, int colCount) {
+        return (i == 0 || i == rowCount - 1) && (j == 0 || j == colCount - 1);
+    }
+
+    private int getCornerStraightRotation(int i, int j, int[][] level) {
+        boolean right = (j + 1 < level[0].length) && (level[i][j + 1] == -3);
+        boolean left = (j - 1 >= 0) && (level[i][j - 1] == -3);
+        boolean up = (i - 1 >= 0) && (level[i - 1][j] == -3);
+        boolean down = (i + 1 < level.length) && (level[i + 1][j] == -3);
+        if (right) return 0;
+        if (down) return 90;
+        if (left) return 180;
+        if (up) return 270;
+        return 0;
     }
 }
