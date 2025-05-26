@@ -129,6 +129,10 @@ public class AudioManager {
 
         loadSound("earthquake", "earthquake_audio.wav");
         loadSound("lightning", "lightning_audio.wav");
+
+        loadWeatherSound("rain", "rain.mp3");
+        loadWeatherSound("snow", "snow.mp3");
+        loadWeatherSound("wind", "wind.mp3");
     }
 
     private void loadMusic(String name, String filename) {
@@ -173,6 +177,27 @@ public class AudioManager {
 
         } catch (Exception e) {
             System.err.println("Failed to load sound: " + name + " - " + e.getMessage());
+        }
+    }
+
+    private void loadWeatherSound(String name, String filename) {
+        try {
+            String fullPath = SFX_PATH + filename;
+
+            InputStream is = getClass().getResourceAsStream(fullPath);
+            if (is == null) throw new IllegalArgumentException("Weather sound not found: " + fullPath);
+
+            BufferedInputStream bis = new BufferedInputStream(is);
+            AudioInputStream audioStream = AudioSystem.getAudioInputStream(bis);
+
+            Clip clip = AudioSystem.getClip();
+            clip.open(audioStream);
+
+            musicClips.put(name, clip);
+            System.out.println("Loaded weather sound: " + name);
+
+        } catch (Exception e) {
+            System.err.println("Failed to load weather sound: " + name + " - " + e.getMessage());
         }
     }
 
@@ -383,5 +408,35 @@ public class AudioManager {
 
     public void playButtonClickSound() {
         playSound("button_click");
+    }
+
+    public void playWeatherSound(String weatherType) {
+        if (musicMuted) return;
+
+        stopWeatherSounds();
+
+        Clip clip = musicClips.get(weatherType);
+        if (clip != null) {
+            setClipVolume(clip, musicVolume * 0.3f);
+            clip.setFramePosition(0);
+            clip.loop(Clip.LOOP_CONTINUOUSLY);
+
+        }
+    }
+
+    public void stopWeatherSounds() {
+        String[] weatherSounds = {"rain", "snow", "wind"};
+        for (String weather : weatherSounds) {
+            Clip clip = musicClips.get(weather);
+            if (clip != null && clip.isRunning()) {
+                clip.stop();
+
+            }
+        }
+    }
+
+    public void stopAllWeatherAndMusic() {
+        stopMusic();
+        stopWeatherSounds();
     }
 }

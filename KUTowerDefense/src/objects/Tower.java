@@ -14,6 +14,7 @@ public abstract class Tower {
     protected float range, cooldown;
     private static int num = 0;
     protected int level = 1;
+    protected float attackSpeedMultiplier = 1.0f;
 
     // Strategy Pattern: Tower targeting behavior
     protected TargetingStrategy targetingStrategy;
@@ -88,11 +89,11 @@ public abstract class Tower {
     }
 
     public void update() {
-        countDownClock++;
+        countDownClock += 1.0f * attackSpeedMultiplier;
     }
 
     public void update(float gameSpeedMultiplier) {
-        countDownClock += gameSpeedMultiplier;
+        countDownClock += gameSpeedMultiplier * attackSpeedMultiplier;
     }
 
     public int getLevel() { return level; }
@@ -104,5 +105,25 @@ public abstract class Tower {
     public void applyOnHitEffect(Enemy enemy, scenes.Playing playingScene) {
         // Base towers typically don't have special on-hit effects beyond damage.
         // This can be left empty or log a message if needed.
+    }
+
+    public void setAttackSpeedMultiplier(float multiplier) {
+        this.attackSpeedMultiplier = multiplier;
+    }
+
+    public float getAttackSpeedMultiplier() {
+        return attackSpeedMultiplier;
+    }
+
+    public float getEffectiveRange() {
+        return getRange();
+    }
+
+    public int getWidth() {
+        return 64;
+    }
+
+    public int getHeight() {
+        return 64;
     }
 }

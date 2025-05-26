@@ -98,6 +98,8 @@ public class Game extends JFrame implements Runnable{
 				case EDIT:
 				case LOADED:
 				case GAME_OVER:
+					audioManager.stopAllWeatherAndMusic();
+					break;
 				default:
 					break;
 			}

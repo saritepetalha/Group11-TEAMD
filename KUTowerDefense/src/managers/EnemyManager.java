@@ -9,7 +9,10 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 
@@ -30,8 +33,10 @@ import enemies.Troll;
 import enemies.Warrior;
 import helpMethods.LoadSave;
 import helpMethods.OptionsIO;
+import helpMethods.Utils;
 import objects.GridPoint;
 import scenes.Playing;
+import objects.Tower;
 
 public class EnemyManager {
     private Playing playing;
@@ -44,6 +49,8 @@ public class EnemyManager {
     private boolean pathFound = false;
     private static final Set<Integer> ROAD_IDS = Set.of(0,1,2,3,4,6,7,8,9,10,11,12,13,14,32);
     private GameOptions gameOptions;
+    private WeatherManager weatherManager;
+    private Map<Enemy, Long> enemySpawnTimes;
 
     public EnemyManager(Playing playing, int[][] overlayData, int [][] tileData, GameOptions options) {
         this.playing = playing;
@@ -53,6 +60,8 @@ public class EnemyManager {
             this.gameOptions = GameOptions.defaults();
         }
         enemyImages = extractEnemyFrames();
+        this.enemySpawnTimes = new HashMap<>();
+        this.weatherManager = playing.getWeatherManager();
 
         findStartAndEndPoints(overlayData);
 
@@ -173,7 +182,7 @@ public class EnemyManager {
             System.out.println("Path found with " + pathPoints.size() + " points");
         } else {
             System.out.println("No path found!");
-            // Yol bulunamadığında detaylı hata ayıklama bilgisi
+
             System.out.println("Start point: " + startPoint);
             System.out.println("End point: " + endPoint);
             System.out.println("Current map state:");
@@ -278,7 +287,7 @@ public class EnemyManager {
             }
         }
 
-        // Spawn noktasının merkez koordinatlarını hesapla
+
         int x = spawnPoint.getX() * tileSize + tileSize / 2;
         int y = spawnPoint.getY() * tileSize + tileSize / 2;
 
@@ -315,6 +324,9 @@ public class EnemyManager {
         if (enemy != null) {
             applyOptionsToEnemy(enemy);
             enemies.add(enemy);
+            long spawnTime = System.currentTimeMillis();
+            enemySpawnTimes.put(enemy, spawnTime);
+
         }
     }
 
@@ -402,30 +414,25 @@ public class EnemyManager {
         e.move(xSpeed, ySpeed);
     }
 
-    public void draw(Graphics g){
-        // Create a copy of the enemies list to avoid concurrent modification
-        ArrayList<Enemy> enemiesCopy = new ArrayList<>(enemies);
+    public void draw(Graphics g, boolean gamePaused) {
 
-        for (Enemy enemy: enemiesCopy){
-            if (enemy.isAlive()) {
-                // Update animation in normal speed
+        List<Enemy> enemiesCopy = new ArrayList<>(enemies);
+
+
+        for (Enemy enemy : enemiesCopy) {
+            if (enemy.isAlive() && !gamePaused) {
                 enemy.updateAnimationTick();
-                drawEnemy(enemy, g);
             }
         }
-    }
 
-    public void draw(Graphics g, boolean gamePaused){
-        // Create a copy of the enemies list to avoid concurrent modification
-        ArrayList<Enemy> enemiesCopy = new ArrayList<>(enemies);
 
-        for (Enemy enemy: enemiesCopy){
+        for (Enemy enemy : enemiesCopy) {
             if (enemy.isAlive()) {
-                // only update animation if game is not paused
-                if (!gamePaused) {
-                    enemy.updateAnimationTick();
+                if (isGoblinInvisible(enemy)) {
+                    drawEnemySilhouette(enemy, g);
+                } else {
+                    drawEnemy(enemy, g);
                 }
-                drawEnemy(enemy, g);
             }
         }
     }
@@ -685,6 +692,9 @@ public class EnemyManager {
 
     public void addEnemy(Enemy enemy) {
         enemies.add(enemy);
+        long spawnTime = System.currentTimeMillis();
+        enemySpawnTimes.put(enemy, spawnTime);
+
     }
 
     /**
@@ -721,4 +731,105 @@ public class EnemyManager {
     public int getNextEnemyID() {
         return nextEnemyID++;
     }
+
+    public boolean canTargetEnemy(Enemy enemy) {
+        return isEnemyTargetable(enemy);
+    }
+
+    public void render(Graphics g) {
+        for (Enemy e : enemies) {
+            if (e.isAlive()) {
+                if (isGoblinInvisible(e)) {
+                    drawEnemySilhouette(e, g);
+                } else {
+                    drawEnemy(e, g);
+                }
+            }
+        }
+    }
+
+    private boolean wasNight = false;
+
+    private boolean isGoblinInvisible(Enemy enemy) {
+        if (weatherManager == null) {
+
+            return false;
+        }
+
+        boolean isNight = weatherManager.isNight();
+
+        if (isNight && !wasNight) {
+
+            long currentTime = System.currentTimeMillis();
+            for (Enemy e : enemies) {
+                if (e.getEnemyType() == 0) { // GOBLIN
+                    enemySpawnTimes.put(e, currentTime);
+
+                }
+            }
+        }
+        wasNight = isNight;
+
+        if (isNight && enemy.getEnemyType() == 0) { // GOBLIN = 0
+            Long spawnTime = enemySpawnTimes.get(enemy);
+
+            if (spawnTime == null) {
+                long currentTime = System.currentTimeMillis();
+                enemySpawnTimes.put(enemy, currentTime);
+
+                return true;
+            }
+
+            long currentTime = System.currentTimeMillis();
+            boolean isInvisible = (currentTime - spawnTime) < 10000; // İlk 10 saniye görünmez
+
+            if (isInvisible) {
+
+            }
+
+            return isInvisible;
+        }
+
+        return false;
+    }
+
+    private boolean isEnemyTargetable(Enemy enemy) {
+        return !isGoblinInvisible(enemy);
+    }
+
+    private void drawEnemySilhouette(Enemy enemy, Graphics g) {
+        Graphics2D g2d = (Graphics2D) g;
+
+        AlphaComposite originalComposite = (AlphaComposite) g2d.getComposite();
+
+        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));
+        g2d.setColor(new Color(0, 0, 0, 150));
+
+        int drawX = (int)(enemy.getX() - 25);
+        int drawY = (int)(enemy.getY() - 30);
+        int drawWidth = 50;
+        int drawHeight = 60;
+
+        g2d.fillOval(drawX + 10, drawY + 20, drawWidth - 20, drawHeight - 25);
+
+        g2d.fillOval(drawX + 15, drawY + 5, drawWidth - 30, 25);
+
+        g2d.fillOval(drawX + 8, drawY + 8, 8, 12);
+        g2d.fillOval(drawX + drawWidth - 16, drawY + 8, 8, 12);
+
+        g2d.setColor(new Color(255, 0, 0, 100)); // Kırmızı parıltı
+        g2d.fillOval(drawX + 18, drawY + 12, 3, 3);
+        g2d.fillOval(drawX + 28, drawY + 12, 3, 3);
+
+        g2d.setComposite(originalComposite);
+    }
+
+    private void drawEnemies(Graphics g) {
+        for (Enemy e : enemies) {
+            if (e.isAlive()) {
+                drawEnemy(e, g);
+            }
+        }
+    }
 }
+
