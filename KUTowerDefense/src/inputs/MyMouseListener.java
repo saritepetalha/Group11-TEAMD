@@ -37,6 +37,11 @@ public class MyMouseListener implements MouseListener, MouseMotionListener, Mous
                 game.getGameOverScene().mouseDragged(e.getX(), e.getY());
             }
         }
+        else if (GameStates.gameState == GameStates.STATISTICS) {
+            if (game.getStatisticsScene() != null) {
+                game.getStatisticsScene().mouseDragged(e.getX(), e.getY());
+            }
+        }
     }
 
     @Override
