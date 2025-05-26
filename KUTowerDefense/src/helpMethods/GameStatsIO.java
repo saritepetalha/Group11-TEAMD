@@ -10,7 +10,27 @@ import java.util.List;
 
 public class GameStatsIO {
 
-    private static final String STATS_FOLDER_PATH = "KUTowerDefense/resources/gameStats/";
+    private static final String STATS_FOLDER_PATH = getStatsDirectoryPath();
+
+    /**
+     * Detects if we're running in a Maven project structure
+     */
+    private static boolean isMavenProject() {
+        // Check if we're in a Maven project by looking for pom.xml in the expected location
+        File folder = new File("demo/pom.xml");
+        return folder.exists();
+    }
+
+    /**
+     * Gets the appropriate stats directory path based on project structure
+     */
+    private static String getStatsDirectoryPath() {
+        if (isMavenProject()) {
+            return "demo/src/main/resources/gameStats/";
+        } else {
+            return "KUTowerDefense/resources/gameStats/";
+        }
+    }
 
     public static void saveToFile(GameStatsRecord record) {
         File folder = new File(STATS_FOLDER_PATH);
