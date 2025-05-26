@@ -231,6 +231,97 @@ public class PlayingUI {
                 startX + iconSize + buttonSpacing, startY,
                 barWidth, barHeight,
                 currentWave, estimatedTotalWaves);
+
+        // Draw weather information below wave indicator
+        drawWeatherInfo(g, startX, startY + barHeight + 8);
+    }
+
+    /**
+     * Draws weather information including current weather type and effects
+     */
+    private void drawWeatherInfo(Graphics g, int x, int y) {
+        if (playing.getWeatherManager() == null) return;
+
+        Graphics2D g2d = (Graphics2D) g;
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        // Weather info panel dimensions
+        int panelWidth = 180;
+        int panelHeight = 60;
+
+        // Background panel
+        g2d.setColor(new Color(0, 0, 0, 120));
+        g2d.fillRoundRect(x, y, panelWidth, panelHeight, 8, 8);
+
+        // Border
+        g2d.setColor(new Color(255, 255, 255, 180));
+        g2d.drawRoundRect(x, y, panelWidth, panelHeight, 8, 8);
+
+        // Weather type and time of day
+        String weatherType = playing.getWeatherManager().getCurrentWeatherType().toString();
+        String timeOfDay = playing.getWeatherManager().getCurrentTimeOfDay();
+
+        // Format weather name
+        weatherType = weatherType.substring(0, 1).toUpperCase() + weatherType.substring(1).toLowerCase();
+
+        // Draw weather icon based on type
+        Color weatherColor = getWeatherColor(playing.getWeatherManager().getCurrentWeatherType());
+        g2d.setColor(weatherColor);
+        g2d.fillOval(x + 8, y + 8, 16, 16);
+
+        // Draw weather text
+        g2d.setColor(Color.WHITE);
+        g2d.setFont(new Font("Arial", Font.BOLD, 12));
+        g2d.drawString(weatherType + " - " + timeOfDay, x + 30, y + 20);
+
+        // Draw weather effects
+        g2d.setFont(new Font("Arial", Font.PLAIN, 10));
+        String effectText = getWeatherEffectText(playing.getWeatherManager().getCurrentWeatherType());
+        if (!effectText.isEmpty()) {
+            g2d.setColor(new Color(255, 255, 100));
+            g2d.drawString(effectText, x + 8, y + 38);
+        }
+
+        // Draw additional effect if applicable
+        String secondEffect = getSecondaryWeatherEffect(playing.getWeatherManager().getCurrentWeatherType());
+        if (!secondEffect.isEmpty()) {
+            g2d.drawString(secondEffect, x + 8, y + 50);
+        }
+    }
+
+    /**
+     * Gets the color associated with a weather type
+     */
+    private Color getWeatherColor(managers.WeatherManager.WeatherType weatherType) {
+        switch (weatherType) {
+            case RAINY: return new Color(100, 150, 255);
+            case SNOWY: return new Color(255, 255, 255);
+            case WINDY: return new Color(139, 69, 19);
+            case CLEAR: return new Color(255, 255, 100);
+            default: return Color.WHITE;
+        }
+    }
+
+    /**
+     * Gets the primary effect text for a weather type
+     */
+    private String getWeatherEffectText(managers.WeatherManager.WeatherType weatherType) {
+        switch (weatherType) {
+            case RAINY: return "Tower Range -20%";
+            case SNOWY: return "Enemy Speed -25%";
+            case WINDY: return "Archer Miss Chance +30%";
+            case CLEAR: return "No Effects";
+            default: return "";
+        }
+    }
+
+    /**
+     * Gets the secondary effect text for a weather type
+     */
+    private String getSecondaryWeatherEffect(managers.WeatherManager.WeatherType weatherType) {
+        switch (weatherType) {
+            default: return "";
+        }
     }
 
 
@@ -888,7 +979,6 @@ public class PlayingUI {
                 if (isMouseOverButton(mainMenuButton, mouseX, mouseY)) {
                     AudioManager.getInstance().playButtonClickSound();
                     toggleButtonState(mainMenuButton);
-                    playing.returnToMainMenu();
                     return;
                 }
 

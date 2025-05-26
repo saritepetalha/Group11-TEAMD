@@ -83,6 +83,16 @@ public class TowerManager {
             if (target != null) {
                 playing.shootEnemy(tower, target);
                 tower.resetCooldown();
+
+                // Windy weather effect: Archer towers have 30% chance to miss
+                if (playing.getWeatherManager().isWindy() && tower.getType() == constants.Constants.Towers.ARCHER) {
+                    // 30% chance to miss in windy weather
+                    if (Math.random() < 0.3) {
+                        // Miss the shot - don't actually shoot
+                        System.out.println("Archer tower missed due to windy weather!");
+                        return; // Exit without shooting
+                    }
+                }
             }
         }
     }

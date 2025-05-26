@@ -408,8 +408,15 @@ public class EnemyManager {
         }
 
         // calculate movement speed components
-        float xSpeed = (xDiff / distance) * e.getSpeed() * speedMultiplier;
-        float ySpeed = (yDiff / distance) * e.getSpeed() * speedMultiplier;
+        float baseSpeed = e.getSpeed() * speedMultiplier;
+
+        // Apply weather effects to enemy speed
+        if (weatherManager != null && weatherManager.isSnowing()) {
+            baseSpeed *= weatherManager.getEnemySpeedMultiplier();
+        }
+
+        float xSpeed = (xDiff / distance) * baseSpeed;
+        float ySpeed = (yDiff / distance) * baseSpeed;
 
         e.move(xSpeed, ySpeed);
     }

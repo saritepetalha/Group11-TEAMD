@@ -182,6 +182,10 @@ public class Playing extends GameScene implements SceneMethods {
         goldBagManager = new GoldBagManager();
         towerSelectionUI = new TowerSelectionUI(this);
 
+        if (tileManager != null && level != null) {
+            tileManager.initializeGrassSnowStages(level);
+        }
+
         updateUIResources();
     }
 
@@ -353,6 +357,19 @@ public class Playing extends GameScene implements SceneMethods {
                             g.drawImage(gateImage, j * GameDimensions.TILE_DISPLAY_SIZE, i * GameDimensions.TILE_DISPLAY_SIZE,
                                     GameDimensions.TILE_DISPLAY_SIZE, GameDimensions.TILE_DISPLAY_SIZE, null);
                         }
+                    } else if (tileId == 5 && weatherManager != null) {
+                        int snowStage = tileManager.getGrassSnowStage(j, i);
+
+                        if (snowStage > 0) {
+                            BufferedImage snowyGrassSprite = tileManager.getSnowyGrassSprite(snowStage);
+                            if (snowyGrassSprite != null) {
+                                g.drawImage(snowyGrassSprite, j * GameDimensions.TILE_DISPLAY_SIZE, i * GameDimensions.TILE_DISPLAY_SIZE, null);
+                            } else {
+                                g.drawImage(tileManager.getSprite(tileId), j * GameDimensions.TILE_DISPLAY_SIZE, i * GameDimensions.TILE_DISPLAY_SIZE, null);
+                            }
+                        } else {
+                            g.drawImage(tileManager.getSprite(tileId), j * GameDimensions.TILE_DISPLAY_SIZE, i * GameDimensions.TILE_DISPLAY_SIZE, null);
+                        }
                     } else {
                         // Regular tiles
                         g.drawImage(tileManager.getSprite(tileId), j * GameDimensions.TILE_DISPLAY_SIZE, i * GameDimensions.TILE_DISPLAY_SIZE, null);
@@ -378,6 +395,10 @@ public class Playing extends GameScene implements SceneMethods {
         fireAnimationManager.update();
         ultiManager.update(gameTimeMillis);
         weatherManager.update(delta / 1000.0f);
+
+        if (tileManager != null && weatherManager != null) {
+            tileManager.updateSnowOnGrass(weatherManager.isSnowing());
+        }
 
         // Check enemy status and handle wave completion
         if (isAllEnemiesDead()) {
@@ -461,46 +482,6 @@ public class Playing extends GameScene implements SceneMethods {
         if (towerSelectionUI != null) {
             towerSelectionUI.draw(g);
         }
-        drawWeatherInfo(g);
-    }
-
-    private void drawWeatherInfo(Graphics g) {
-        Graphics2D g2d = (Graphics2D) g;
-
-        String timeInfo = weatherManager.getCurrentTimeOfDay();
-        String weatherType = "";
-
-        switch (weatherManager.getCurrentWeatherType()) {
-            case CLEAR:
-                weatherType = "Clear";
-                break;
-            case RAINY:
-                weatherType = "Rainy";
-                break;
-            case SNOWY:
-                weatherType = "Snowy";
-                break;
-            case WINDY:
-                weatherType = "Windy";
-                break;
-        }
-
-        String weatherInfo = timeInfo + " | " + weatherType;
-
-        if (weatherManager.isNight()) {
-            weatherInfo += String.format(" (Darkness: %.0f%%)", weatherManager.getNightIntensity() * 100);
-        }
-
-        g2d.setColor(Color.WHITE);
-        g2d.setFont(new Font("Arial", Font.BOLD, 16));
-
-        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
-        g2d.setColor(Color.BLACK);
-        g2d.fillRoundRect(10, 10, 350, 30, 10, 10);
-
-        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
-        g2d.setColor(Color.WHITE);
-        g2d.drawString(weatherInfo, 20, 30);
     }
 
     public void modifyTile(int x, int y, String tile) {
@@ -628,6 +609,10 @@ public class Playing extends GameScene implements SceneMethods {
 
         if (playingUI.getOptionsButton().isMousePressed()) {
             handleOptionsButton(true);
+        } else if (playingUI.getBackOptionsButton().isMousePressed()) {
+            handleBackOptionsButton(true);
+        } else if (playingUI.getMainMenuButton().isMousePressed()) {
+            handleMainMenuButton(true);
         } else {
             handleOptionsButton(false);
         }
@@ -670,6 +655,26 @@ public class Playing extends GameScene implements SceneMethods {
             // Hide options menu
             optionsMenuOpen = false;
             System.out.println("Options menu closed");
+        }
+    }
+
+    private void handleBackOptionsButton(boolean isPressed) {
+        // Close options menu when back button is pressed
+        if (isPressed && optionsMenuOpen) {
+            // Hide options menu
+            optionsMenuOpen = false;
+            System.out.println("Options menu closed via back button");
+        }
+    }
+
+    private void handleMainMenuButton(boolean isPressed) {
+        // Close options menu and return to main menu when main menu button is pressed
+        if (isPressed && optionsMenuOpen) {
+            // Hide options menu first
+            optionsMenuOpen = false;
+            System.out.println("Options menu closed via main menu button");
+            // Then return to main menu
+            returnToMainMenu();
         }
     }
 
