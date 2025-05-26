@@ -275,7 +275,7 @@ public class WeatherManager {
         try {
             AudioManager audioManager = AudioManager.getInstance();
 
-            audioManager.stopMusic();
+            audioManager.stopWeatherSounds();
 
             switch (currentWeather) {
                 case RAINY:
@@ -288,11 +288,9 @@ public class WeatherManager {
                     audioManager.playWeatherSound("wind");
                     break;
                 case CLEAR:
-                    audioManager.stopWeatherSounds();
                     break;
             }
         } catch (Exception e) {
-            System.err.println("Hava durumu sesi çalarken hata: " + e.getMessage());
         }
     }
 
@@ -300,7 +298,6 @@ public class WeatherManager {
         try {
             AudioManager.getInstance().stopAllWeatherAndMusic();
         } catch (Exception e) {
-            System.err.println("Hava durumu sesleri durdurulurken hata: " + e.getMessage());
         }
     }
 }

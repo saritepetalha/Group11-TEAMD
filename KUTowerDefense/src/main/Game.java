@@ -81,6 +81,7 @@ public class Game extends JFrame implements Runnable{
 		if (!isMenuRelatedToggle) {
 			switch (newState) {
 				case MENU:
+					audioManager.stopWeatherSounds();
 					audioManager.playMusic("lonelyhood");
 					break;
 				case PLAYING:
