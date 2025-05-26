@@ -1,32 +1,38 @@
 package scenes;
 
-import java.awt.*;
-import java.awt.image.BufferedImage;
-
+import java.awt.AlphaComposite;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.event.MouseWheelEvent;
-
+import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.ArrayList;
-import main.Game;
 
+import config.GameOptions;
+import constants.Constants;
 import constants.GameDimensions;
 import enemies.Enemy;
-
 import helpMethods.LoadSave;
 import helpMethods.OptionsIO;
-import config.GameOptions;
-
+import main.Game;
 import managers.*;
-import managers.AudioManager;
-
+import objects.ArcherTower;
+import objects.ArtilleryTower;
+import objects.MageTower;
 import objects.Tower;
-
+import objects.UpgradedArcherTower;
+import objects.UpgradedArtilleryTower;
+import objects.UpgradedMageTower;
+import stats.GameStatsRecord;
 import ui_p.DeadTree;
-import ui_p.PlayingUI;
 import ui_p.LiveTree;
-
-import managers.GoldBagManager;
+import ui_p.PlayingUI;
+import ui_p.TowerSelectionUI;
 
 public class Playing extends GameScene implements SceneMethods {
     private int[][] level;
@@ -44,6 +50,7 @@ public class Playing extends GameScene implements SceneMethods {
     private PlayerManager playerManager;
     private ProjectileManager projectileManager;
 
+    private UltiManager ultiManager;
     private EnemyManager enemyManager;
 
     private DeadTree selectedDeadTree;
@@ -64,6 +71,11 @@ public class Playing extends GameScene implements SceneMethods {
 
     private int totalEnemiesSpawned = 0;
     private int enemiesReachedEnd = 0;
+    private int enemyDefeated = 0;
+    private int totalDamage = 0;
+    private int timePlayedInSeconds = 0;
+
+    private int updateCounter = 0;
 
     private GoldBagManager goldBagManager;
 
@@ -81,6 +93,14 @@ public class Playing extends GameScene implements SceneMethods {
     private static final int CASTLE_HEALTH_BAR_X = 50;
     private static final int CASTLE_HEALTH_BAR_Y = 50;
 
+    private GameStateManager gameStateManager;
+    private String currentMapName = "defaultlevel"; // Default map name
+    private boolean isFirstReset = true; // <-- ADD THIS NEW FLAG
+
+    private TowerSelectionUI towerSelectionUI;
+
+    private long gameTimeMillis = 0;
+
     public Playing(Game game) {
         super(game);
         this.tileManager = new TileManager();
@@ -90,6 +110,7 @@ public class Playing extends GameScene implements SceneMethods {
         initializeManagers();
         this.castleMaxHealth = calculateCastleMaxHealth();
         this.castleCurrentHealth = castleMaxHealth;
+        this.gameStateManager = new GameStateManager();
     }
 
     public Playing(Game game, TileManager tileManager) {
@@ -101,6 +122,7 @@ public class Playing extends GameScene implements SceneMethods {
         initializeManagers();
         this.castleMaxHealth = calculateCastleMaxHealth();
         this.castleCurrentHealth = castleMaxHealth;
+        this.gameStateManager = new GameStateManager();
     }
 
     public Playing(Game game, TileManager tileManager, int[][] customLevel, int[][] customOverlay) {
@@ -117,6 +139,7 @@ public class Playing extends GameScene implements SceneMethods {
         initializeManagers();
         this.castleMaxHealth = calculateCastleMaxHealth();
         this.castleCurrentHealth = castleMaxHealth;
+        this.gameStateManager = new GameStateManager();
     }
 
     private GameOptions loadOptionsOrDefault() {
@@ -142,16 +165,18 @@ public class Playing extends GameScene implements SceneMethods {
         enemyManager = new EnemyManager(this, overlay, level, this.gameOptions);
         towerManager = new TowerManager(this);
         playerManager = new PlayerManager(this.gameOptions);
+        ultiManager = new UltiManager(this);
         this.selectedDeadTree = null;
 
-        if(towerManager.findDeadTrees(level) != null)
+        if (towerManager.findDeadTrees(level) != null)
             deadTrees = towerManager.findDeadTrees(level);
-        if(towerManager.findLiveTrees(level) != null)
+        if (towerManager.findLiveTrees(level) != null)
             liveTrees = towerManager.findLiveTrees(level);
 
         playingUI = new PlayingUI(this);
 
         goldBagManager = new GoldBagManager();
+        towerSelectionUI = new TowerSelectionUI(this);
 
         updateUIResources();
     }
@@ -178,7 +203,7 @@ public class Playing extends GameScene implements SceneMethods {
     }
 
     public void saveLevel(String filename) {
-        LoadSave.saveLevel(filename,level);
+        LoadSave.saveLevel(filename, level);
 
     }
 
@@ -221,6 +246,7 @@ public class Playing extends GameScene implements SceneMethods {
     public void loadLevel(String levelName) {
         int[][] loadedLevel = LoadSave.loadLevel(levelName);
         if (loadedLevel != null) {
+            this.currentMapName = levelName; // Update current map name
             level = loadedLevel;
             overlay = new int[loadedLevel.length][loadedLevel[0].length];
             boolean foundStart = false;
@@ -255,10 +281,16 @@ public class Playing extends GameScene implements SceneMethods {
             enemyManager = new EnemyManager(this, overlay, level, this.gameOptions);
             waveManager = new WaveManager(this, this.gameOptions);
 
-            resetGameState();
+            // Only reset game state if we're not loading from a save
+            if (!gameStateManager.saveFileExists(currentMapName)) {
+                resetGameState();
+            }
             startEnemySpawning();
 
             updateUIResources();
+
+            // Load the game state if it exists
+            loadGameState();
         }
     }
 
@@ -328,9 +360,14 @@ public class Playing extends GameScene implements SceneMethods {
 
     public void update() {
         if (!gamePaused) {
+
+            long delta = (long)(16 * gameSpeedMultiplier); // yaklaşık 60FPS frame time
+            gameTimeMillis += delta;
+
             waveManager.update();
             projectileManager.update();
             fireAnimationManager.update();
+            ultiManager.update(gameTimeMillis);
 
             // Check enemy status and handle wave completion
             if (isAllEnemiesDead()) {
@@ -353,6 +390,12 @@ public class Playing extends GameScene implements SceneMethods {
             }
 
             goldBagManager.update();
+
+            updateCounter++;
+            if (updateCounter >= 60) {
+                timePlayedInSeconds++;
+                updateCounter = 0;
+            }
         }
         checkButtonStates();
     }
@@ -390,114 +433,24 @@ public class Playing extends GameScene implements SceneMethods {
 
     @Override
     public void render(Graphics g) {
+
+        ultiManager.applyShakeIfNeeded(g);
         drawMap(g);
         towerManager.draw(g);
         enemyManager.draw(g, gamePaused);         // pass the paused state to enemyManager.draw
         drawTowerButtons(g);
         drawLiveTreeButtons(g);
         projectileManager.draw(g);
-        drawHighlight(g);
-        drawDisplayedTower(g);
         fireAnimationManager.draw(g);
         playingUI.draw(g);
         goldBagManager.draw(g);
         drawCastleHealthBar(g);
-    }
+        ultiManager.reverseShake(g);
+        ultiManager.draw(g);
 
-    private void drawHighlight(Graphics g) {
-        Graphics2D g2d = (Graphics2D) g.create();
-
-        // Set transparency level (0.0f = fully transparent, 1.0f = fully opaque)
-        float alpha = 0.2f; // Adjust the transparency as needed
-        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-
-        // Set fill color to white
-        g2d.setColor(Color.WHITE);
-        g2d.fillRect(mouseX, mouseY, 64, 64);
-
-        // Optional: draw white border with full opacity
-        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));
-        g2d.setColor(Color.WHITE);
-        g2d.drawRect(mouseX, mouseY, 64, 64);
-
-        g2d.dispose();
-    }
-
-    private void drawDisplayedTower(Graphics g) {
-        if (displayedTower == null) return;
-        drawDisplayedTowerBorder(g);
-        drawDisplayedTowerRange(g);
-        // Draw upgrade button (smaller pixel-art style)
-        int btnW = 64, btnH = 24;
-        int btnX = displayedTower.getX() + 32 - btnW/2;
-        int btnY = displayedTower.getY() + 80;
-        upgradeButtonBounds = new Rectangle(btnX, btnY, btnW, btnH);
-        if (displayedTower.isUpgradeable()) {
-            boolean canAfford = playerManager.getGold() >= getUpgradeCost(displayedTower);
-            // Draw thick dark border
-            g.setColor(new Color(40, 24, 8));
-            g.fillRect(btnX-3, btnY-3, btnW+6, btnH+6);
-            // Fill with parchment/wood color
-            g.setColor(new Color(210, 180, 140));
-            g.fillRect(btnX, btnY, btnW, btnH);
-            // Pixel-art highlight (top 3px)
-            g.setColor(new Color(255, 255, 255, 80));
-            g.fillRect(btnX+3, btnY+3, btnW-6, 3);
-            // Draw blocky border (simulate pixel art)
-            g.setColor(new Color(80, 40, 10));
-            for (int i = 0; i < 2; i++) {
-                g.drawRect(btnX+i, btnY+i, btnW-1-2*i, btnH-1-2*i);
-            }
-            // Draw text (smaller, bold)
-            g.setFont(new Font("Dialog", Font.BOLD, 14));
-            g.setColor(canAfford ? new Color(30, 20, 10) : new Color(80,80,80));
-            String text = "Upgrade";
-            int textWidth = g.getFontMetrics().stringWidth(text);
-            int textHeight = g.getFontMetrics().getAscent();
-            int textX = btnX + (btnW - textWidth) / 2;
-            int textY = btnY + (btnH + textHeight) / 2 - 2;
-            g.drawString(text, textX, textY);
-            // If not affordable, draw X
-            if (!canAfford) {
-                g.setColor(new Color(200,0,0,180));
-                g.drawLine(btnX+4, btnY+4, btnX+btnW-4, btnY+btnH-4);
-                g.drawLine(btnX+btnW-4, btnY+4, btnX+4, btnY+btnH-4);
-            }
-        } else {
-            upgradeButtonBounds = null;
+        if (towerSelectionUI != null) {
+            towerSelectionUI.draw(g);
         }
-    }
-
-    private void drawDisplayedTowerRange(Graphics g) {
-        Graphics2D g2d = (Graphics2D) g.create();
-
-        int range = (int) displayedTower.getRange();
-        int centerX = displayedTower.getX() + 32;
-        int centerY = displayedTower.getY() + 32;
-        int topLeftX = centerX - range;
-        int topLeftY = centerY - range;
-
-        // Brown fill (solid)
-        Color brownFill = new Color(139, 69, 19, 60); // SaddleBrown
-        g2d.setColor(brownFill);
-        g2d.fillOval(topLeftX, topLeftY, range * 2, range * 2);
-
-        float[] dashPattern = {10f, 5f}; // 10px dash, 5px gap
-
-        // Yellow outline (semi-transparent)
-        Color yellowOutline = new Color(255, 255, 0); // Yellow with 50% opacity
-        g2d.setColor(yellowOutline);
-        g2d.setStroke(new BasicStroke(2, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, dashPattern, 0));
-        g2d.drawOval(topLeftX, topLeftY, range * 2, range * 2);
-
-        g2d.dispose();
-
-    }
-
-
-    private void drawDisplayedTowerBorder(Graphics g) {
-        g.setColor(Color.CYAN);
-        g.drawRect(displayedTower.getX(), displayedTower.getY(), 64, 64);
     }
 
     public void modifyTile(int x, int y, String tile) {
@@ -507,14 +460,11 @@ public class Playing extends GameScene implements SceneMethods {
 
         if (tile.equals("ARCHER")) {
             level[y][x] = 26;
-        }
-        else if (tile.equals("MAGE")) {
+        } else if (tile.equals("MAGE")) {
             level[y][x] = 20;
-        }
-        else if (tile.equals("ARTILERRY")) {
+        } else if (tile.equals("ARTILERRY")) {
             level[y][x] = 21;
-        }
-        else if (tile.equals("DEADTREE")) {
+        } else if (tile.equals("DEADTREE")) {
             level[y][x] = 15;
         }
 
@@ -525,17 +475,15 @@ public class Playing extends GameScene implements SceneMethods {
     public void mouseClicked(int x, int y) {
         this.mouseX = x;
         this.mouseY = y;
-        // Handle upgrade button click
-        if (displayedTower != null && upgradeButtonBounds != null && upgradeButtonBounds.contains(x, y)) {
-            if (displayedTower.isUpgradeable() && playerManager.getGold() >= getUpgradeCost(displayedTower)) {
-                playerManager.spendGold(getUpgradeCost(displayedTower));
-                displayedTower.upgrade();
-                towerManager.triggerUpgradeEffect(displayedTower);
-                updateUIResources();
+
+        // Handle tower selection UI clicks first - only return early if actually handled
+        if (towerSelectionUI != null && towerSelectionUI.hasTowerSelected()) {
+            boolean uiHandledClick = towerSelectionUI.mouseClicked(x, y);
+            if (uiHandledClick) {
+                return; // UI button was clicked, don't process other interactions
             }
-            return; // Prevent other actions if upgrade is performed
         }
-        displayedTower = null;
+        // Handle dead trees
         if (deadTrees != null) {
             treeInteractionManager.handleDeadTreeInteraction(mouseX, mouseY);
         }
@@ -548,19 +496,29 @@ public class Playing extends GameScene implements SceneMethods {
             playerManager.addGold(collectedBag.getGoldAmount());
             updateUIResources();
         }
-        handleTowerClick();
-    }
 
-    private void handleTowerClick() {
-        for (Tower tower : towerManager.getTowers()) {
-            if (tower.isClicked(mouseX, mouseY)) {
-                playButtonClickSound();
-                displayedTower = tower;
-                return;
-            }
+        // Check for tower selection/deselection
+        Tower clickedTower = getTowerAt(x, y);
+        if (clickedTower != null) {
+            towerSelectionUI.setSelectedTower(clickedTower);
+            playButtonClickSound();
+        } else {
+            towerSelectionUI.setSelectedTower(null); // Clear selection when clicking elsewhere
         }
     }
 
+
+    /**
+     * Helper method to find tower at mouse position
+     */
+    private Tower getTowerAt(int mouseX, int mouseY) {
+        for (Tower tower : towerManager.getTowers()) {
+            if (tower.isClicked(mouseX, mouseY)) {
+                return tower;
+            }
+        }
+        return null;
+    }
 
 
     public TowerManager getTowerManager() {
@@ -582,16 +540,27 @@ public class Playing extends GameScene implements SceneMethods {
 
         playingUI.mouseMoved(x, y);
 
+        if (towerSelectionUI != null) {
+            towerSelectionUI.mouseMoved(x, y);
+        }
+
     }
 
     @Override
     public void mousePressed(int x, int y) {
         playingUI.mousePressed(x, y);
+        if (towerSelectionUI != null) {
+            towerSelectionUI.mousePressed(x, y);
+        }
     }
 
     @Override
     public void mouseReleased(int x, int y) {
         playingUI.mouseReleased();
+
+        if (towerSelectionUI != null) {
+            towerSelectionUI.mouseReleased();
+        }
     }
 
     @Override
@@ -664,11 +633,13 @@ public class Playing extends GameScene implements SceneMethods {
         return waveManager;
     }
 
-    public DeadTree getSelectedDeadTree() {return selectedDeadTree;}
+    public DeadTree getSelectedDeadTree() {
+        return selectedDeadTree;
+    }
 
-    public void setSelectedDeadTree(DeadTree deadTree) {this.selectedDeadTree = deadTree;}
-
-    public Tower getDisplayedTower() {return displayedTower;}
+    public void setSelectedDeadTree(DeadTree deadTree) {
+        this.selectedDeadTree = deadTree;
+    }
 
     public void spawnEnemy(int enemyType) {
         if (enemyType != -1) {
@@ -683,8 +654,6 @@ public class Playing extends GameScene implements SceneMethods {
     private boolean isTimeForNewEnemy() {
         return false;
     }
-
-    public void setDisplayedTower(Tower tower) {displayedTower = tower;}
 
     public void startEnemySpawning() {
         if (waveManager != null) {
@@ -719,18 +688,40 @@ public class Playing extends GameScene implements SceneMethods {
         System.out.println("Game Over!");
         gameOverHandled = true;
 
+        // Delete the save file
+        gameStateManager.deleteSaveFile(currentMapName);
+
         // Play the specific lose sound
         AudioManager.getInstance().playSound("lose5");
 
         // stop any ongoing waves/spawning
         enemyManager.getEnemies().clear();
 
+        GameStatsRecord record = new GameStatsRecord(
+
+                game.getPlaying().getMapName(),
+                false,
+                playerManager.getGold(),
+                totalEnemiesSpawned,
+                enemiesReachedEnd,
+                towerManager.getTowers().size(),
+                enemyDefeated,
+                totalDamage,
+                timePlayedInSeconds
+        );
+
+        game.getStatsManager().addRecord(record);
+        game.getStatsManager().saveToFile(record);
+
         game.getGameOverScene().setStats(
                 false,
                 playerManager.getGold(),
                 totalEnemiesSpawned,
                 enemiesReachedEnd,
-                towerManager.getTowers().size()
+                towerManager.getTowers().size(),
+                enemyDefeated,
+                totalDamage,
+                timePlayedInSeconds
         );
 
         game.changeGameState(main.GameStates.GAME_OVER);
@@ -739,11 +730,14 @@ public class Playing extends GameScene implements SceneMethods {
     // add a method to handle victory
     private void handleVictory() {
         // Prevent multiple calls to handleVictory
-        // Zafer sadece tüm dalgalar bittiğinde ve oyuncu hayattaysa!
+        // Victory only when all waves are finished and player is alive!
         if (victoryHandled || !waveManager.isAllWavesFinished() || !playerManager.isAlive()) return;
 
         System.out.println("Victory!");
         victoryHandled = true;
+
+        // Delete the save file
+        gameStateManager.deleteSaveFile(currentMapName);
 
         // play the specific victory sound
         AudioManager.getInstance().playSound("win4");
@@ -752,8 +746,24 @@ public class Playing extends GameScene implements SceneMethods {
                 playerManager.getGold(),
                 totalEnemiesSpawned,
                 enemiesReachedEnd,
-                towerManager.getTowers().size()
+                towerManager.getTowers().size(),
+                enemyDefeated,
+                totalDamage,
+                timePlayedInSeconds
         );
+        GameStatsRecord record = new GameStatsRecord(
+                currentMapName, true,
+                playerManager.getGold(),
+                totalEnemiesSpawned,
+                enemiesReachedEnd,
+                towerManager.getTowers().size(),
+                enemyDefeated,
+                totalDamage,
+                timePlayedInSeconds
+        );
+        game.getStatsManager().addRecord(record);
+        game.getStatsManager().saveToFile(record);
+
         game.changeGameState(main.GameStates.GAME_OVER);
     }
 
@@ -765,6 +775,7 @@ public class Playing extends GameScene implements SceneMethods {
 
     /**
      * Handles mouse wheel events and forwards them to PlayingUI
+     *
      * @param e The mouse wheel event
      */
     public void mouseWheelMoved(MouseWheelEvent e) {
@@ -773,6 +784,9 @@ public class Playing extends GameScene implements SceneMethods {
 
     public void shootEnemy(Tower tower, Enemy enemy) {
         projectileManager.newProjectile(tower, enemy);
+        // After a projectile is launched (or hits), apply any on-hit effects from the tower itself.
+        // This is particularly for direct effects like the Mage's slow, not projectile-specific effects.
+        tower.applyOnHitEffect(enemy, this);
     }
 
     public boolean isGamePaused() {
@@ -847,6 +861,10 @@ public class Playing extends GameScene implements SceneMethods {
 
         // 5. Reset UI selections
         displayedTower = null;
+
+        if (towerSelectionUI != null) {
+            towerSelectionUI.setSelectedTower(null);
+        }
         selectedDeadTree = null;
 
         // 6. Clear active entities from managers
@@ -887,10 +905,24 @@ public class Playing extends GameScene implements SceneMethods {
 
         // 9. Update UI to reflect the reset state
         updateUIResources();
+
+        // Warm-up render on first reset to prevent initial flash
+        if (isFirstReset) {
+            System.out.println("Performing first-time render warm-up for Playing scene...");
+            BufferedImage dummyImg = new BufferedImage(GameDimensions.GAME_WIDTH, GameDimensions.GAME_HEIGHT, BufferedImage.TYPE_INT_ARGB);
+            Graphics g = dummyImg.getGraphics();
+            if (g != null) {
+                this.render(g); // Call render once to an offscreen buffer
+                g.dispose();
+            }
+            isFirstReset = false;
+            System.out.println("Render warm-up complete.");
+        }
     }
 
     /**
      * Add a helper method to get and display wave status
+     *
      * @return Current wave and state information
      */
     public String getWaveStatus() {
@@ -907,10 +939,14 @@ public class Playing extends GameScene implements SceneMethods {
     // Helper to get upgrade cost
     private int getUpgradeCost(Tower tower) {
         switch (tower.getType()) {
-            case 0: return 75; // Archer
-            case 1: return 120; // Artillery
-            case 2: return 100; // Mage
-            default: return 100;
+            case 0:
+                return 75; // Archer
+            case 1:
+                return 120; // Artillery
+            case 2:
+                return 100; // Mage
+            default:
+                return 100;
         }
     }
 
@@ -932,9 +968,9 @@ public class Playing extends GameScene implements SceneMethods {
         for (int i = 0; i < level.length - 1; i++) {
             for (int j = 0; j < level[i].length - 1; j++) {
                 if (level[i][j] == tileManager.CastleTopLeft.getId() &&
-                        level[i][j+1] == tileManager.CastleTopRight.getId() &&
-                        level[i+1][j] == tileManager.CastleBottomLeft.getId() &&
-                        level[i+1][j+1] == tileManager.CastleBottomRight.getId()) {
+                        level[i][j + 1] == tileManager.CastleTopRight.getId() &&
+                        level[i + 1][j] == tileManager.CastleBottomLeft.getId() &&
+                        level[i + 1][j + 1] == tileManager.CastleBottomRight.getId()) {
                     castleX = j;
                     castleY = i;
                     break outer;
@@ -951,9 +987,9 @@ public class Playing extends GameScene implements SceneMethods {
 
         g.setColor(Color.DARK_GRAY);
         g.fillRoundRect(barX, barY, barWidth, barHeight, 6, 6);
-        float healthPercent = Math.max(0, (float)playerManager.getHealth() / playerManager.getStartingHealthAmount());
-        Color healthColor = new Color((int)(255 * (1-healthPercent)), (int)(220 * healthPercent), 40);
-        int healthBarWidth = (int)(barWidth * healthPercent);
+        float healthPercent = Math.max(0, (float) playerManager.getHealth() / playerManager.getStartingHealthAmount());
+        Color healthColor = new Color((int) (255 * (1 - healthPercent)), (int) (220 * healthPercent), 40);
+        int healthBarWidth = (int) (barWidth * healthPercent);
         g.setColor(healthColor);
         g.fillRoundRect(barX, barY, healthBarWidth, barHeight, 6, 6);
 
@@ -963,5 +999,137 @@ public class Playing extends GameScene implements SceneMethods {
 
     public boolean isAllWavesFinished() {
         return waveManager.isAllWavesFinished();
+    }
+
+
+    public void incrementEnemyDefeated() {
+        enemyDefeated++;
+    }
+
+    public void addTotalDamage(int damage) {
+        totalDamage += damage;
+    }
+
+    // Save game state
+    public void saveGameState() {
+        // Create lists to store tower states
+        List<GameStateMemento.TowerState> towerStates = new ArrayList<>();
+
+        // Save tower states
+        for (Tower tower : towerManager.getTowers()) {
+            towerStates.add(new GameStateMemento.TowerState(
+                    tower.getX(),
+                    tower.getY(),
+                    tower.getType(),
+                    tower.getLevel()
+            ));
+        }
+
+        // Create memento with all game state including GameOptions, but without enemy states
+        GameStateMemento memento = new GameStateMemento(
+                playerManager.getGold(),
+                playerManager.getHealth(),
+                playerManager.getShield(),
+                waveManager.getWaveIndex(),
+                waveManager.getCurrentGroupIndex(),
+                towerStates,
+                new ArrayList<>(), // Empty list for enemy states
+                gameOptions
+        );
+
+        // Save the memento using the current map name
+        gameStateManager.saveGameState(memento, currentMapName);
+    }
+
+    // Load game state
+    public void loadGameState() {
+        GameStateMemento memento = gameStateManager.loadGameState(currentMapName);
+        if (memento == null) {
+            System.out.println("Failed to load game state from " + currentMapName);
+            return;
+        }
+
+        // Restore game options first
+        this.gameOptions = memento.getGameOptions();
+
+        // Restore player state
+        playerManager.setGold(memento.getGold());
+        playerManager.setHealth(memento.getHealth());
+        playerManager.setShield(memento.getShield());
+
+        // Restore wave state
+        waveManager.setWaveIndex(memento.getWaveIndex());
+        waveManager.setCurrentGroupIndex(memento.getGroupIndex());
+
+        // Clear existing towers and enemies
+        towerManager.clearTowers();
+        enemyManager.clearEnemies();
+
+        // Restore towers
+        for (GameStateMemento.TowerState towerState : memento.getTowerStates()) {
+            Tower tower = null;
+            switch (towerState.getType()) {
+                case Constants.Towers.ARCHER:
+                    tower = new ArcherTower(towerState.getX(), towerState.getY());
+                    break;
+                case Constants.Towers.ARTILLERY:
+                    tower = new ArtilleryTower(towerState.getX(), towerState.getY());
+                    break;
+                case Constants.Towers.MAGE:
+                    tower = new MageTower(towerState.getX(), towerState.getY());
+                    break;
+            }
+            if (tower != null) {
+                tower.setLevel(towerState.getLevel());
+                // If the tower is level 2, create the appropriate upgraded version
+                if (towerState.getLevel() == 2) {
+                    switch (towerState.getType()) {
+                        case Constants.Towers.ARCHER:
+                            tower = new UpgradedArcherTower(tower);
+                            break;
+                        case Constants.Towers.ARTILLERY:
+                            tower = new UpgradedArtilleryTower(tower);
+                            break;
+                        case Constants.Towers.MAGE:
+                            tower = new UpgradedMageTower(tower);
+                            break;
+                    }
+                }
+                towerManager.addTower(tower);
+            }
+        }
+
+        // Update UI with restored player state
+        updateUIResources();
+    }
+
+    public void setCurrentMapName(String mapName) {
+        this.currentMapName = mapName;
+    }
+    public String getMapName() {
+        return currentMapName != null ? currentMapName : "default";
+    }
+
+    public Tower getDisplayedTower() {
+        // Return the currently selected tower from TowerSelectionUI for backward compatibility
+        return towerSelectionUI != null ? towerSelectionUI.getSelectedTower() : null;
+    }
+
+
+    public void setDisplayedTower(Tower tower) {
+        if (towerSelectionUI != null) {
+            towerSelectionUI.setSelectedTower(tower);
+        }
+    }
+    public UltiManager getUltiManager() {
+        return ultiManager;
+    }
+
+    public void setUltiManager(UltiManager ultiManager) {
+        this.ultiManager = ultiManager;
+    }
+
+    public long getGameTime() {
+        return gameTimeMillis;
     }
 }

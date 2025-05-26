@@ -11,6 +11,7 @@ public class Projectile {
     private boolean hit = false;
     private long hitTime = 0;
     private static final long HIT_DISPLAY_TIME = 50_000_000; // 50ms in nanoseconds
+    private float rotationAngle; // Stores the rotation angle in degrees
 
     private int animationFrame = 0;
     private int explosionFrame = 0;
@@ -28,6 +29,12 @@ public class Projectile {
         this.damage = damage;
         this.projectileType = projectileType;
         this.level = level;
+        this.rotationAngle = 0; // Default angle
+    }
+
+    public Projectile(float x, float y, float xSpeed, float ySpeed, int id, int damage, int projectileType, int level, float rotationAngle) {
+        this(x, y, xSpeed, ySpeed, id, damage, projectileType, level);
+        this.rotationAngle = rotationAngle;
     }
 
     public void move() {
@@ -118,4 +125,12 @@ public class Projectile {
         return level;
     }
 
+    public float getRotationAngle() {
+        return rotationAngle;
+    }
+
+    public int getRotationFrameIndex() {
+        int frameIndex = Math.round(rotationAngle / 5.0f) % 72;
+        return frameIndex;
+    }
 }

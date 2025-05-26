@@ -9,7 +9,8 @@ public enum GameStates {
     LOADED,
     LOAD_GAME,
     QUIT,
-    GAME_OVER;
+    GAME_OVER,
+    STATISTICS;
 
     public static GameStates gameState = GameStates.INTRO;
     public static void setGameState(GameStates gameState) {

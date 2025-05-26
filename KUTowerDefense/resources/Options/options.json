@@ -1,17 +1,18 @@
 {
   "startingGold": 300,
-  "startingPlayerHP": 150,
-  "startingShield": 100,
+  "startingPlayerHP": 15,
+  "startingShield": 25,
+  "currentGold": 500,
   "enemyStats": {
     "GOBLIN": {
-      "hitPoints": 20,
-      "moveSpeed": 0.2,
-      "goldReward": 300
+      "hitPoints": 100,
+      "moveSpeed": 0.85,
+      "goldReward": 5
     },
     "WARRIOR": {
-      "hitPoints": 3,
-      "moveSpeed": 0.2,
-      "goldReward": 400
+      "hitPoints": 200,
+      "moveSpeed": 0.45,
+      "goldReward": 25
     },
     "BARREL": {
       "hitPoints": 150,
@@ -57,19 +58,33 @@
       "groups": [
         {
           "composition": {
-            "GOBLIN": 1
-          },
-          "intraEnemyDelay": 0.5
-        },
-        {
-          "composition": {
-            "WARRIOR": 5
+            "GOBLIN": 8
           },
           "intraEnemyDelay": 0.5
         }
       ],
       "intraGroupDelay": 0.0
+    },
+    {
+      "groups": [
+        {
+          "composition": {
+            "GOBLIN": 8
+          },
+          "intraEnemyDelay": 0.5
+        },
+        {
+          "composition": {
+            "GOBLIN": 5,
+            "WARRIOR": 2
+          },
+          "intraEnemyDelay": 0.4
+        }
+      ],
+      "intraGroupDelay": 1.5
     }
   ],
-  "interWaveDelay": 8.0
+  "interWaveDelay": 8.0,
+  "currentWaveIndex": 0,
+  "currentGroupIndex": 0
 }

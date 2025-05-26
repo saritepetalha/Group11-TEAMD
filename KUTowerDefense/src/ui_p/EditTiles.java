@@ -9,7 +9,6 @@ import static main.GameStates.MENU;
 import constants.GameDimensions;
 import main.Game;
 import managers.AudioManager;
-import popUps.DialogueFactory;
 import scenes.MapEditing;
 import objects.Tile;
 import javax.swing.*;
@@ -47,7 +46,7 @@ public class EditTiles extends Bar {
                 GameDimensions.BUTTON_PADDING,
                 GameDimensions.ButtonSize.SMALL.getSize(),
                 GameDimensions.ButtonSize.SMALL.getSize(),
-                ButtonAssets.buttonImages.get(0)
+                AssetsLoader.getInstance().buttonImages.get(0)
         );
 
         // Add 4 pixels to Y position for better spacing
@@ -58,7 +57,7 @@ public class EditTiles extends Bar {
                 buttonYPos,
                 GameDimensions.ButtonSize.SMALL.getSize(),
                 GameDimensions.ButtonSize.SMALL.getSize(),
-                ButtonAssets.buttonImages.get(11)
+                AssetsLoader.getInstance().buttonImages.get(11)
         );
 
         erase = new TheButton("Erase",
@@ -66,7 +65,7 @@ public class EditTiles extends Bar {
                 buttonYPos,
                 GameDimensions.ButtonSize.SMALL.getSize(),
                 GameDimensions.ButtonSize.SMALL.getSize(),
-                ButtonAssets.buttonImages.get(10)
+                AssetsLoader.getInstance().buttonImages.get(10)
         );
 
         fill = new TheButton("Fill",
@@ -74,7 +73,7 @@ public class EditTiles extends Bar {
                 buttonYPos,
                 GameDimensions.ButtonSize.SMALL.getSize(),
                 GameDimensions.ButtonSize.SMALL.getSize(),
-                ButtonAssets.buttonImages.get(6)
+                AssetsLoader.getInstance().buttonImages.get(6)
         );
 
         trash = new TheButton("Trash",
@@ -82,7 +81,7 @@ public class EditTiles extends Bar {
                 buttonYPos,
                 GameDimensions.ButtonSize.SMALL.getSize(),
                 GameDimensions.ButtonSize.SMALL.getSize(),
-                ButtonAssets.buttonImages.get(3)
+                AssetsLoader.getInstance().buttonImages.get(3)
         );
 
         save = new TheButton("Save",
@@ -90,7 +89,7 @@ public class EditTiles extends Bar {
                 buttonYPos,
                 GameDimensions.ButtonSize.SMALL.getSize(),
                 GameDimensions.ButtonSize.SMALL.getSize(),
-                ButtonAssets.buttonImages.get(7)
+                AssetsLoader.getInstance().buttonImages.get(7)
         );
 
         mode = new ModeButton(currentMode + " Mode",
@@ -98,7 +97,7 @@ public class EditTiles extends Bar {
                 GameDimensions.BUTTON_PADDING,
                 192*2/3,
                 64*2/3,
-                ButtonAssets.modeImage
+                AssetsLoader.getInstance().modeImage
         );
 
         int widthButton = GameDimensions.ButtonSize.MEDIUM.getSize();
@@ -161,24 +160,24 @@ public class EditTiles extends Bar {
         mode.setText(currentMode + " Mode");
         mode.draw(g);
 
-        drawActionButton(g2d, draw, ButtonAssets.buttonImages.get(11));
-        drawActionButton(g2d, erase, ButtonAssets.buttonImages.get(10));
-        drawActionButton(g2d, fill, ButtonAssets.buttonImages.get(6));
-        drawActionButton(g2d, trash, ButtonAssets.buttonImages.get(3));
-        drawActionButton(g2d, save, ButtonAssets.buttonImages.get(7));
-        drawActionButton(g2d, backMenu, ButtonAssets.buttonImages.get(0));
+        drawActionButton(g2d, draw, AssetsLoader.getInstance().buttonImages.get(11));
+        drawActionButton(g2d, erase, AssetsLoader.getInstance().buttonImages.get(10));
+        drawActionButton(g2d, fill, AssetsLoader.getInstance().buttonImages.get(6));
+        drawActionButton(g2d, trash, AssetsLoader.getInstance().buttonImages.get(3));
+        drawActionButton(g2d, save, AssetsLoader.getInstance().buttonImages.get(7));
+        drawActionButton(g2d, backMenu, AssetsLoader.getInstance().buttonImages.get(0));
 
         for (TheButton btn : tilesButtons){
             drawTilesButtonEffect(g2d, btn);
         }
 
-        drawPathPointButton(g2d, startPoint, ButtonAssets.startPointImg, ButtonAssets.startPointHoverImg, ButtonAssets.startPointPressedImg);
-        drawPathPointButton(g2d, endPoint, ButtonAssets.endPointImg, ButtonAssets.endPointHoverImg, ButtonAssets.endPointPressedImg);
+        drawPathPointButton(g2d, startPoint, AssetsLoader.getInstance().startPointImg);
+        drawPathPointButton(g2d, endPoint, AssetsLoader.getInstance().endPointImg);
 
     }
 
-    // method for drawing path point buttons with hover/press animations
-    private void drawPathPointButton(Graphics2D g2d, TheButton button, BufferedImage normalImg, BufferedImage hoverImg, BufferedImage pressedImg) {
+    // method for drawing path point buttons
+    private void drawPathPointButton(Graphics2D g2d, TheButton button, BufferedImage normalImg) {
         int x = button.getX();
         int y = button.getY();
         int width = button.getWidth();
@@ -194,12 +193,9 @@ public class EditTiles extends Bar {
         int imageY = y;
 
         if (button.isMousePressed()) {
-            toDraw = pressedImg;
             imageX += 2; // add slight offset for pressed effect
             imageY += 2; // add slight offset for pressed effect
         } else if (button.isMouseOver()) {
-            toDraw = hoverImg;
-
             // add subtle animation for hover - subtle pulsing or glow effect
             long currentTime = System.currentTimeMillis();
             float pulseAmount = (float) Math.sin(currentTime * 0.005) * 0.1f + 0.9f;
@@ -207,12 +203,10 @@ public class EditTiles extends Bar {
             height = (int)(height * pulseAmount);
             imageX = x + (button.getWidth() - width) / 2;
             imageY = y + (button.getHeight() - height) / 2;
-        } else {
-            toDraw = normalImg;
         }
 
         // draw the appropriate image
-        g2d.drawImage(toDraw, imageX, imageY, width, height, null);
+        g2d.drawImage(normalImg, imageX, imageY, width, height, null);
 
         // draw text label below the image for clarity
         g2d.setColor(Color.WHITE);
@@ -317,12 +311,12 @@ public class EditTiles extends Bar {
 
         if (button.isMousePressed()) {
             // if button is pressed, draw the pressed effect
-            BufferedImage pressedEffect = ButtonAssets.buttonPressedEffectImages.get(buttonIdP);
+            BufferedImage pressedEffect = AssetsLoader.getInstance().buttonPressedEffectImages.get(buttonIdP);
             g2d.drawImage(pressedEffect, x, y, width, height, null);
 
         } else if (button.isMouseOver()) {
             // if mouse is hovering, draw the hover effect with animation
-            BufferedImage hoverEffect = ButtonAssets.buttonHoverEffectImages.get(buttonIdH);
+            BufferedImage hoverEffect = AssetsLoader.getInstance().buttonHoverEffectImages.get(buttonIdH);
 
             // create a shining animation effect
             long currentTime = System.currentTimeMillis();
@@ -420,12 +414,12 @@ public class EditTiles extends Bar {
             }
         }
         else if (startPoint.getBounds().contains(x, y)) {
-            selectedTile = new Tile(ButtonAssets.startPointImg,-1,"Start Point");
+            selectedTile = new Tile(AssetsLoader.getInstance().startPointImg,-1,"Start Point");
             mapEditing.setSelectedTile(selectedTile);
             System.out.println("Start point selected"); // Debug output
         }
         else if (endPoint.getBounds().contains(x, y)) {
-            selectedTile = new Tile(ButtonAssets.endPointImg, -2, "End Point");
+            selectedTile = new Tile(AssetsLoader.getInstance().endPointImg, -2, "End Point");
             mapEditing.setSelectedTile(selectedTile);
             System.out.println("End point selected"); // Debug output
         }

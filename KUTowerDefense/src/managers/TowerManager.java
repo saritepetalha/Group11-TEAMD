@@ -7,6 +7,8 @@ import objects.ArcherTower;
 import objects.ArtilleryTower;
 import objects.MageTower;
 import objects.Tower;
+import objects.TowerDecorator;
+import strategies.TargetingStrategy;
 import scenes.Playing;
 import ui_p.DeadTree;
 import helpMethods.Utils;
@@ -21,16 +23,13 @@ import java.util.List;
 public class TowerManager {
     private Playing playing;
     private BufferedImage[] towerImages;
-    private Tower tower;
     private ArrayList<Tower> towers = new ArrayList<>();
     private List<TowerUpgradeEffect> upgradeEffects = new ArrayList<>();
 
     public TowerManager(Playing playing) {
-
         this.playing = playing;
         loadTowerImages();
     }
-
 
     private void loadTowerImages() {
         BufferedImage tilesetImage = LoadSave.getSpriteAtlas();
@@ -64,16 +63,26 @@ public class TowerManager {
     }
 
     private void attackEnemyIfInRange(Tower tower) {
+        if (!tower.isCooldownOver()) {
+            return; // Tower is on cooldown
+        }
+
+        // Collect all enemies in range
+        List<Enemy> enemiesInRange = new ArrayList<>();
         for (Enemy enemy : playing.getEnemyManager().getEnemies()) {
-            if (enemy.isAlive()) {
-                if (isEnemyInRange(tower, enemy)) {
-                    if (tower.isCooldownOver()){
-                        playing.shootEnemy(tower, enemy);
-                        tower.resetCooldown();
-                    }
-                } else {
-                    // PASS
-                }
+            if (enemy.isAlive() && isEnemyInRange(tower, enemy)) {
+                enemiesInRange.add(enemy);
+            }
+        }
+
+        // Use the tower's targeting strategy to select the best target
+        if (!enemiesInRange.isEmpty()) {
+            TargetingStrategy strategy = tower.getTargetingStrategy();
+            Enemy target = strategy.selectTarget(enemiesInRange, tower);
+
+            if (target != null) {
+                playing.shootEnemy(tower, target);
+                tower.resetCooldown();
             }
         }
     }
@@ -90,19 +99,19 @@ public class TowerManager {
     public void draw(Graphics g) {
         for (Tower tower : towers) {
             BufferedImage sprite = null;
-            if (tower instanceof objects.ArcherTower) {
-                objects.ArcherTower archer = (objects.ArcherTower) tower;
-                sprite = (archer.getLevel() == 2 && archer.upgradedSprite != null) ? 
-                    archer.upgradedSprite : towerImages[0];
+            if (tower instanceof TowerDecorator) {
+                sprite = ((TowerDecorator) tower).getSprite();
+            } else if (tower instanceof objects.ArcherTower) {
+                // Level 1 Archer
+                sprite = towerImages[0];
             } else if (tower instanceof objects.ArtilleryTower) {
-                objects.ArtilleryTower artillery = (objects.ArtilleryTower) tower;
-                sprite = (artillery.getLevel() == 2 && artillery.upgradedSprite != null) ? 
-                    artillery.upgradedSprite : towerImages[1];
+                // Level 1 Artillery
+                sprite = towerImages[1];
             } else if (tower instanceof objects.MageTower) {
-                objects.MageTower mage = (objects.MageTower) tower;
-                sprite = (mage.getLevel() == 2 && mage.upgradedSprite != null) ? 
-                    mage.upgradedSprite : towerImages[2];
+                // Level 1 Mage
+                sprite = towerImages[2];
             }
+
             if (sprite != null) {
                 g.drawImage(sprite, tower.getX(), tower.getY(), 64, 64, null);
             }
@@ -121,7 +130,6 @@ public class TowerManager {
     }
 
     public List<DeadTree> findDeadTrees(int[][] level){
-
         List<DeadTree> trees = new ArrayList<>();
         for (int row = 0; row < level.length; row++) {
             for (int col = 0; col < level[row].length; col++) {
@@ -135,7 +143,6 @@ public class TowerManager {
         return trees;
     }
     public List<LiveTree> findLiveTrees(int[][] level){
-
         List<LiveTree> trees = new ArrayList<>();
         for (int row = 0; row < level.length; row++) {
             for (int col = 0; col < level[row].length; col++) {
@@ -149,23 +156,53 @@ public class TowerManager {
         return trees;
     }
 
-
     public void buildArcherTower(int x, int y) {
         towers.add(new ArcherTower(x, y));
+    }
+
+    // Method to build tower with custom targeting strategy
+    public void buildArcherTower(int x, int y, TargetingStrategy targetingStrategy) {
+        towers.add(new ArcherTower(x, y, targetingStrategy));
     }
 
     public void buildMageTower(int x, int y) {
         towers.add(new MageTower(x, y));
     }
 
+    // Method to build tower with custom targeting strategy
+    public void buildMageTower(int x, int y, TargetingStrategy targetingStrategy) {
+        towers.add(new MageTower(x, y, targetingStrategy));
+    }
+
     public void buildArtilerryTower(int x, int y) {
         towers.add(new ArtilleryTower(x, y));
+    }
+
+    // Method to build tower with custom targeting strategy
+    public void buildArtilleryTower(int x, int y, TargetingStrategy targetingStrategy) {
+        towers.add(new ArtilleryTower(x, y, targetingStrategy));
     }
 
     public ArrayList<Tower> getTowers() {return towers;}
 
     public void clearTowers() {
         towers.clear();
+    }
+
+    public void addTower(Tower tower) {
+        towers.add(tower);
+    }
+
+    // Method to replace an old tower instance with a new one (e.g., after upgrading)
+    public void replaceTower(Tower oldTower, Tower newTower) {
+        int index = towers.indexOf(oldTower);
+        if (index != -1) {
+            towers.set(index, newTower);
+        } else {
+            // This case should ideally not happen if oldTower was in the list.
+            // Log an error or handle as appropriate.
+            System.err.println("Error: Old tower not found in list for replacement.");
+        }
     }
 
     // Inner class for upgrade visual effect

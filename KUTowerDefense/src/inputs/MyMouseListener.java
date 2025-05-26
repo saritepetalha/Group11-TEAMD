@@ -60,6 +60,12 @@ public class MyMouseListener implements MouseListener, MouseMotionListener, Mous
                 game.getGameOverScene().mouseMoved(e.getX(), e.getY());
             }
         }
+        else if (GameStates.gameState == GameStates.STATISTICS) {
+            if (game.getStatisticsScene() != null) {
+                game.getStatisticsScene().mouseMoved(e.getX(), e.getY());
+            }
+        }
+
     }
 
     @Override
@@ -83,6 +89,9 @@ public class MyMouseListener implements MouseListener, MouseMotionListener, Mous
                 if (game.getGameOverScene() != null) {
                     game.getGameOverScene().mouseClicked(e.getX(), e.getY());
                 }
+            }
+            else if (GameStates.gameState == GameStates.STATISTICS) {
+                game.getStatisticsScene().mouseClicked(e.getX(), e.getY());
             }
 
         }
@@ -113,6 +122,10 @@ public class MyMouseListener implements MouseListener, MouseMotionListener, Mous
                 game.getGameOverScene().mousePressed(e.getX(), e.getY());
             }
         }
+        else if (GameStates.gameState == GameStates.STATISTICS) {
+            game.getStatisticsScene().mousePressed(e.getX(), e.getY());
+        }
+
     }
 
     @Override
@@ -130,6 +143,9 @@ public class MyMouseListener implements MouseListener, MouseMotionListener, Mous
         }
         else if (GameStates.gameState == GameStates.EDIT) {
             game.getMapEditing().mouseReleased(e.getX(), e.getY());
+        }
+        else if (GameStates.gameState == GameStates.STATISTICS) {
+            game.getStatisticsScene().mouseReleased(e.getX(), e.getY());
         }
     }
 
@@ -149,6 +165,9 @@ public class MyMouseListener implements MouseListener, MouseMotionListener, Mous
         }
         else if (GameStates.gameState == GameStates.EDIT) {
             // Add mouseWheelMoved method to MapEditing class if needed
+        }
+        else if (GameStates.gameState == GameStates.STATISTICS) {
+            game.getStatisticsScene().mouseWheelMoved(e);
         }
     }
 

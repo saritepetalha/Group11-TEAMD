@@ -35,9 +35,10 @@ public class Render {
                 break;
             case GAME_OVER:
                 game.getGameOverScene().render(g);
+                break;
+            case STATISTICS:
+                game.getStatisticsScene().render(g);
+                break;
         }
     }
-
-
-   
 }

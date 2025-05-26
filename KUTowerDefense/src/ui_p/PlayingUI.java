@@ -1,16 +1,28 @@
 package ui_p;
 
-import constants.GameDimensions;
-import static constants.Constants.Player.*;
-import scenes.Playing;
-import managers.AudioManager;
-
-import java.awt.*;
+import java.awt.AlphaComposite;
+import java.awt.Color;
+import java.awt.Composite;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RadialGradientPaint;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.Shape;
 import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+
+import static constants.Constants.Player.MAX_HEALTH;
+import static constants.Constants.Player.MAX_SHIELD;
+import constants.GameDimensions;
+import helpMethods.FontLoader;
+import managers.AudioManager;
+import scenes.Playing;
 
 public class PlayingUI {
     private Playing playing;
@@ -36,6 +48,11 @@ public class PlayingUI {
     // options menu back button
     private TheButton backOptionsButton;
     private TheButton mainMenuButton;
+    private TheButton saveButton;
+
+    // ulti buttons
+    private TheButton earthquakeButton;
+    private TheButton lightningButton;
 
     // option values (WILL BE CHANGED TO BE READ FROM FILE)
     private int soundVolume = 50;
@@ -76,33 +93,54 @@ public class PlayingUI {
                 startY,
                 buttonSize,
                 buttonSize,
-                ButtonAssets.buttonImages.get(8));
+                AssetsLoader.getInstance().buttonImages.get(8));
 
         pauseButton = new TheButton("Pause",
                 startX + buttonSize + buttonSpacing,
                 startY,
                 buttonSize,
                 buttonSize,
-                ButtonAssets.buttonImages.get(12));
+                AssetsLoader.getInstance().buttonImages.get(12));
 
         optionsButton = new TheButton("Options",
                 startX + (buttonSize + buttonSpacing) * 2,
                 startY,
                 buttonSize,
                 buttonSize,
-                ButtonAssets.buttonImages.get(1));
+                AssetsLoader.getInstance().buttonImages.get(1));
+
+        earthquakeButton = new TheButton(
+                "Earthquake",
+                startX - 2 * (buttonSize + buttonSpacing),
+                startY,
+                buttonSize,
+                buttonSize,
+                AssetsLoader.getInstance().earthquakeButtonImg);
+
+        lightningButton = new TheButton("Lightning",
+                startX - 3 * (buttonSize + buttonSpacing), startY,
+                buttonSize, buttonSize,
+                AssetsLoader.getInstance().lightningButtonNormal
+        );
 
         backOptionsButton = new TheButton("Back",
-                GameDimensions.GAME_WIDTH / 2 + ButtonAssets.optionsMenuImg.getWidth() / 4,
-                GameDimensions.GAME_HEIGHT / 2 - ButtonAssets.optionsMenuImg.getHeight() / 3,
+                GameDimensions.GAME_WIDTH / 2 + AssetsLoader.getInstance().optionsMenuImg.getWidth() / 4,
+                GameDimensions.GAME_HEIGHT / 2 - AssetsLoader.getInstance().optionsMenuImg.getHeight() / 3,
                 buttonSize,
                 buttonSize,
-                ButtonAssets.backOptionsImg);
+                AssetsLoader.getInstance().backOptionsImg);
+
+        // Initialize save button
+        saveButton = new TheButton("Save Game",
+                GameDimensions.GAME_WIDTH / 2 - AssetsLoader.getInstance().optionsMenuImg.getWidth() / 4,
+                GameDimensions.GAME_HEIGHT / 2 - AssetsLoader.getInstance().optionsMenuImg.getHeight() / 3,
+                buttonSize,
+                buttonSize,
+                AssetsLoader.getInstance().buttonImages.get(1));
 
         // Initialize main menu button
         mainMenuButton = new TheButton("Main Menu",
                 0, 0, 200, 40, null);
-
 
         // Initialize volumes from AudioManager
         soundVolume = (int)(AudioManager.getInstance().getSoundVolume() * 100);
@@ -133,6 +171,10 @@ public class PlayingUI {
         if (playing.isOptionsMenuOpen()) {
             drawOptionsMenu(g);
         }
+
+        if (playing.getUltiManager().isWaitingForLightningTarget()) {
+            drawLightningPreview((Graphics2D) g);
+        }
     }
 
     private void drawStatusBars(Graphics g) {
@@ -147,7 +189,7 @@ public class PlayingUI {
         int buttonWidth = 120;
         int buttonHeight = 32;
 
-        statusBarImg = ButtonAssets.statusBarImg;
+        statusBarImg = AssetsLoader.getInstance().statusBarImg;
 
         // draw the statusBarImg at half its original size
         if (statusBarImg != null) {
@@ -182,7 +224,7 @@ public class PlayingUI {
         int estimatedTotalWaves = 5;
 
         // draw wave icon
-        g.drawImage(ButtonAssets.waveImg, startX, startY, iconSize, iconSize, null);
+        g.drawImage(AssetsLoader.getInstance().waveImg, startX, startY, iconSize, iconSize, null);
 
         // draw wave status bar with the full status text
         drawSlideButton(g, waveStatus,
@@ -195,7 +237,7 @@ public class PlayingUI {
     private void drawSlideButton(Graphics g, String text, int x, int y, int width, int height, int value, int maxValue) {
         Graphics2D g2d = (Graphics2D) g;
 
-        buttonBgImg = ButtonAssets.modeImage;
+        buttonBgImg = AssetsLoader.getInstance().modeImage;
 
         if (buttonBgImg != null) {
             // calculate how much of the button width is filled based on value/maxValue ratio
@@ -250,15 +292,7 @@ public class PlayingUI {
         Font mvBoliFont = new Font("MV Boli", Font.BOLD, 14);
         g2d.setFont(mvBoliFont);
         g2d.setColor(Color.WHITE);
-
-        /*
-
-        FontMetrics fm = g2d.getFontMetrics();
-        int textX = x + (width - fm.stringWidth(text)) / 2;
-        int textY = y + ((height - fm.getHeight()) / 4) + fm.getAscent();
-        g2d.setColor(new Color(0, 0, 0, 120));
-        g2d.drawString(text, textX, textY);*/
-
+        
         FontMetrics fm = g2d.getFontMetrics();
         String[] lines = text.split("\n");
         String firstLine = lines.length > 0 ? lines[0] : "";
@@ -285,20 +319,34 @@ public class PlayingUI {
         Graphics2D g2d = (Graphics2D) g;
 
         drawControlButton(g2d, fastForwardButton, startX , startY, buttonSize, buttonSize,
-                ButtonAssets.buttonImages.get(8),
-                ButtonAssets.buttonHoverEffectImages.get(13),
-                ButtonAssets.buttonPressedEffectImages.get(9));
+                AssetsLoader.getInstance().buttonImages.get(8),
+                AssetsLoader.getInstance().buttonHoverEffectImages.get(13),
+                AssetsLoader.getInstance().buttonPressedEffectImages.get(9));
 
 
         drawControlButton(g2d, pauseButton, startX + buttonSize + buttonSpacing, startY, buttonSize, buttonSize,
-                ButtonAssets.buttonImages.get(12),
-                ButtonAssets.buttonHoverEffectImages.get(3),
-                ButtonAssets.buttonPressedEffectImages.get(13));
+                AssetsLoader.getInstance().buttonImages.get(12),
+                AssetsLoader.getInstance().buttonHoverEffectImages.get(3),
+                AssetsLoader.getInstance().buttonPressedEffectImages.get(13));
 
         drawControlButton(g2d, optionsButton, startX + (buttonSize + buttonSpacing) * 2, startY, buttonSize, buttonSize,
-                ButtonAssets.buttonImages.get(1),
-                ButtonAssets.buttonHoverEffectImages.get(2),
-                ButtonAssets.buttonPressedEffectImages.get(11));
+                AssetsLoader.getInstance().buttonImages.get(1),
+                AssetsLoader.getInstance().buttonHoverEffectImages.get(2),
+                AssetsLoader.getInstance().buttonPressedEffectImages.get(11));
+
+        drawControlButton(g2d, earthquakeButton,
+                startX - 2 * (buttonSize + buttonSpacing), startY,
+                buttonSize, buttonSize,
+                AssetsLoader.getInstance().earthquakeButtonImg,
+                AssetsLoader.getInstance().earthquakeButtonHoverImg,
+                AssetsLoader.getInstance().earthquakeButtonPressedImg);
+
+        drawControlButton(g2d, lightningButton,
+                startX - 3 * (buttonSize + buttonSpacing), startY,
+                buttonSize, buttonSize,
+                AssetsLoader.getInstance().lightningButtonNormal,
+                AssetsLoader.getInstance().lightningButtonHover,
+                AssetsLoader.getInstance().lightningButtonPressed);
     }
 
 
@@ -313,34 +361,37 @@ public class PlayingUI {
             // Draw a more prominent pulsing glow effect
             long currentTime = System.currentTimeMillis();
             float alpha = (float) (0.5f + 0.3f * Math.sin(currentTime * 0.005)); // Stronger pulse
-            
+
             // Draw outer glow
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha * 0.5f));
             g2d.setColor(new Color(255, 255, 0)); // Yellow glow
             g2d.fillOval(x - 4, y - 4, width + 8, height + 8);
-            
+
             // Draw inner glow
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
             g2d.setColor(new Color(255, 255, 200)); // Brighter inner glow
             g2d.fillOval(x - 2, y - 2, width + 4, height + 4);
-            
+
             // Reset composite
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
         }
 
-        g2d.drawImage(normalImg, x, y, width, height, null); // draw base image
+        g2d.drawImage(normalImg, x, y, width, height, null);
 
-        if (button.isMousePressed()) {               // if button is pressed, draw pressed effect
+        boolean isEarthquakeCooldown = (button == earthquakeButton && !playing.getUltiManager().canUseEarthquake());
+        boolean isLightningCooldown = (button == lightningButton && !playing.getUltiManager().canUseLightning());
+
+        if (isEarthquakeCooldown || isLightningCooldown || button.isMousePressed()) {
             g2d.drawImage(pressedImg, x, y, width, height, null);
-        } else if (button.isMouseOver()) {           // if mouse is hovering, draw hover effect with animation
-            // create a shining animation effect
+        } else if (button.isMouseOver()) {
             long currentTime = System.currentTimeMillis();
-            float alpha = (float) (0.5f + 0.5f * Math.sin(currentTime * 0.003)); // oscillate between 0.5 and 1.0
+            float alpha = (float) (0.5f + 0.5f * Math.sin(currentTime * 0.003));
 
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
             g2d.drawImage(hoverImg, x, y, width, height, null);
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
         }
+
     }
 
     /**
@@ -355,19 +406,19 @@ public class PlayingUI {
         int pauseButtonX = pauseButton.getX();
         int pauseButtonY = pauseButton.getY();
         int pauseButtonSize = pauseButton.getWidth();
-        
+
         // Create a radial gradient that's more transparent around the pause button
         RadialGradientPaint gradient = new RadialGradientPaint(
-            pauseButtonX + pauseButtonSize/2, pauseButtonY + pauseButtonSize/2, // center point
-            pauseButtonSize * 2, // radius
-            new float[]{0.0f, 0.5f, 1.0f}, // fractions
-            new Color[]{
-                new Color(0, 0, 0, 0), // transparent at center
-                new Color(0, 0, 0, 100), // semi-transparent in middle
-                new Color(0, 0, 0, 150) // darker at edges
-            }
+                pauseButtonX + pauseButtonSize/2, pauseButtonY + pauseButtonSize/2, // center point
+                pauseButtonSize * 2, // radius
+                new float[]{0.0f, 0.5f, 1.0f}, // fractions
+                new Color[]{
+                        new Color(0, 0, 0, 0), // transparent at center
+                        new Color(0, 0, 0, 100), // semi-transparent in middle
+                        new Color(0, 0, 0, 150) // darker at edges
+                }
         );
-        
+
         g2d.setPaint(gradient);
         g2d.fillRect(0, 0, GameDimensions.GAME_WIDTH, GameDimensions.GAME_HEIGHT);
 
@@ -405,7 +456,7 @@ public class PlayingUI {
     public void drawOptionsMenu(Graphics g) {
         Graphics2D g2d = (Graphics2D) g.create();
 
-        BufferedImage optionsImg = ButtonAssets.optionsMenuImg;
+        BufferedImage optionsImg = AssetsLoader.getInstance().optionsMenuImg;
         int menuWidth = optionsImg.getWidth() / 2;
         int menuHeight = optionsImg.getHeight() / 2;
         int menuX = (GameDimensions.GAME_WIDTH - menuWidth) / 2;
@@ -418,14 +469,14 @@ public class PlayingUI {
         g2d.drawImage(optionsImg, menuX, menuY, menuWidth, menuHeight, null);
 
         // draw back button
-        if (ButtonAssets.backOptionsImg != null) {
+        if (AssetsLoader.getInstance().backOptionsImg != null) {
             int backButtonX = menuX + menuWidth - buttonSize;
             int backButtonY = menuY + 10;
 
             backOptionsButton.setX(backButtonX);
             backOptionsButton.setY(backButtonY);
 
-            g2d.drawImage(ButtonAssets.backOptionsImg, backButtonX, backButtonY, buttonSize, buttonSize, null);
+            g2d.drawImage(AssetsLoader.getInstance().backOptionsImg, backButtonX, backButtonY, buttonSize, buttonSize, null);
 
             if (backOptionsButton.isMouseOver()) {
                 g2d.setColor(new Color(255, 255, 255, 80));
@@ -446,12 +497,12 @@ public class PlayingUI {
         int difficultyY = startY + spacing * 2 + 5;
 
         // display the correct difficulty image
-        if (currentDifficulty.equals("Normal") && ButtonAssets.difficultyNormalImg != null) {
-            g2d.drawImage(ButtonAssets.difficultyNormalImg, controlX, difficultyY, difficultyWidth, difficultyHeight, null);
-        } else if (currentDifficulty.equals("Easy") && ButtonAssets.difficultyEasyImg != null) {
-            g2d.drawImage(ButtonAssets.difficultyEasyImg, controlX, difficultyY, difficultyWidth, difficultyHeight, null);
-        } else if (currentDifficulty.equals("Hard") && ButtonAssets.difficultyHardImg != null) {
-            g2d.drawImage(ButtonAssets.difficultyHardImg, controlX, difficultyY, difficultyWidth, difficultyHeight, null);
+        if (currentDifficulty.equals("Normal") && AssetsLoader.getInstance().difficultyNormalImg != null) {
+            g2d.drawImage(AssetsLoader.getInstance().difficultyNormalImg, controlX, difficultyY, difficultyWidth, difficultyHeight, null);
+        } else if (currentDifficulty.equals("Easy") && AssetsLoader.getInstance().difficultyEasyImg != null) {
+            g2d.drawImage(AssetsLoader.getInstance().difficultyEasyImg, controlX, difficultyY, difficultyWidth, difficultyHeight, null);
+        } else if (currentDifficulty.equals("Hard") && AssetsLoader.getInstance().difficultyHardImg != null) {
+            g2d.drawImage(AssetsLoader.getInstance().difficultyHardImg, controlX, difficultyY, difficultyWidth, difficultyHeight, null);
         } else {
             // fallback if images are not available
             g2d.setColor(new Color(80, 80, 200));
@@ -469,7 +520,7 @@ public class PlayingUI {
         g2d.fillRoundRect(controlX - 10, dropdownY, dropdownWidth, dropdownHeight, 5, 5);
 
         g2d.setColor(Color.WHITE);
-        Font dropdownFont = helpMethods.FontLoader.loadMedodicaFont(14f);
+        Font dropdownFont = FontLoader.loadMedodicaFont(14f);
         g2d.setFont(dropdownFont);
 
         // truncate music name if it's too long
@@ -597,8 +648,7 @@ public class PlayingUI {
         // 4. Music slider
         drawSlider(g2d, controlX, startY + spacing, 70, 20, musicVolume, "music");
 
-
-        // 5. Return to Main Menu - no visible button, just hitbox
+        // 6. Return to Main Menu - no visible button, just hitbox
         int btnWidth = 242;
         int btnHeight = 38;
         int btnX = menuX + (menuWidth - btnWidth) / 2;
@@ -613,6 +663,28 @@ public class PlayingUI {
         if (mainMenuButton.isMouseOver()) {
             g2d.setColor(new Color(255, 255, 255, 40));
             g2d.fillRoundRect(btnX, btnY, btnWidth, btnHeight, 15, 15);
+        }
+
+        // 7. Save button - positioned below main menu button
+        int saveLoadWidth = 120;
+        int saveLoadHeight = 30;
+        int saveLoadY = btnY + btnHeight + 10; // Position below main menu button
+
+        // Save button
+        saveButton.setX(btnX + (btnWidth - saveLoadWidth) / 2); // Center horizontally with main menu button
+        saveButton.setY(saveLoadY);
+        saveButton.setWidth(saveLoadWidth);
+        saveButton.setHeight(saveLoadHeight);
+
+        g2d.setColor(new Color(60, 60, 60));
+        g2d.fillRoundRect(saveButton.getX(), saveLoadY, saveLoadWidth, saveLoadHeight, 5, 5);
+        g2d.setColor(Color.WHITE);
+        g2d.drawString("Save Game", saveButton.getX() + 5, saveLoadY + 20);
+        if (saveButton.isMouseOver()) {
+            g2d.setColor(new Color(100, 100, 255));
+            g2d.fillRoundRect(saveButton.getX(), saveLoadY, saveLoadWidth, saveLoadHeight, 5, 5);
+            g2d.setColor(Color.WHITE);
+            g2d.drawString("Save Game", saveButton.getX() + 5, saveLoadY + 20);
         }
     }
 
@@ -640,6 +712,18 @@ public class PlayingUI {
         g2d.drawRect(thumbRectX, thumbRectY, thumbWidth, thumbHeight);
     }
 
+    private void drawLightningPreview(Graphics2D g2d) {
+        int radius = playing.getUltiManager().getLightningRadius();
+        int diameter = radius * 2;
+        int circleX = mouseX - radius;
+        int circleY = mouseY - radius;
+
+        g2d.setColor(new Color(0, 200, 255, 80));
+        g2d.fillOval(circleX, circleY, diameter, diameter);
+
+        g2d.setColor(new Color(0, 150, 255, 180));
+        g2d.drawOval(circleX, circleY, diameter, diameter);
+    }
 
     public void setGoldAmount(int goldAmount) {
         this.goldAmount = goldAmount;
@@ -662,28 +746,27 @@ public class PlayingUI {
         this.mouseX = mouseX;
         this.mouseY = mouseY;
 
-        // reset all hover states
-        pauseButton.setMouseOver(false);
+        // Reset all button hover states
         fastForwardButton.setMouseOver(false);
+        pauseButton.setMouseOver(false);
         optionsButton.setMouseOver(false);
         backOptionsButton.setMouseOver(false);
         mainMenuButton.setMouseOver(false);
+        saveButton.setMouseOver(false);
 
         // check which button is hovered
-        if (pauseButton.getBounds().contains(mouseX, mouseY)) {
-            pauseButton.setMouseOver(true);
-        } else if (fastForwardButton.getBounds().contains(mouseX, mouseY)) {
+        if (isMouseOverButton(fastForwardButton, mouseX, mouseY)) {
             fastForwardButton.setMouseOver(true);
-        } else if (optionsButton.getBounds().contains(mouseX, mouseY)) {
+        } else if (isMouseOverButton(pauseButton, mouseX, mouseY)) {
+            pauseButton.setMouseOver(true);
+        } else if (isMouseOverButton(optionsButton, mouseX, mouseY)) {
             optionsButton.setMouseOver(true);
-        } else if (playing.isOptionsMenuOpen()) {
-            if (isMouseOverButton(backOptionsButton, mouseX, mouseY)) {
-                backOptionsButton.setMouseOver(true);
-            }
-            // only set hover for main menu button if music dropdown is closed
-            else if (!musicDropdownOpen && isMouseOverButton(mainMenuButton, mouseX, mouseY)) {
-                mainMenuButton.setMouseOver(true);
-            }
+        } else if (isMouseOverButton(backOptionsButton, mouseX, mouseY)) {
+            backOptionsButton.setMouseOver(true);
+        } else if (isMouseOverButton(saveButton, mouseX, mouseY)) {
+            saveButton.setMouseOver(true);
+        } else if (!musicDropdownOpen && isMouseOverButton(mainMenuButton, mouseX, mouseY)) {
+            mainMenuButton.setMouseOver(true);
         }
     }
 
@@ -695,6 +778,13 @@ public class PlayingUI {
     public void mousePressed(int mouseX, int mouseY) {
         this.mouseX = mouseX;
         this.mouseY = mouseY;
+
+        if (playing.getUltiManager().isWaitingForLightningTarget() &&
+                !lightningButton.getBounds().contains(mouseX, mouseY)) {
+
+            playing.getUltiManager().triggerLightningAt(mouseX, mouseY);
+            return;
+        }
 
         if (pauseButton.getBounds().contains(mouseX, mouseY)) {
             AudioManager.getInstance().playButtonClickSound();
@@ -783,10 +873,23 @@ public class PlayingUI {
             }
             // pnly process other buttons if dropdown is closed
             else if (!musicDropdownOpen) {
+                if (isMouseOverButton(backOptionsButton, mouseX, mouseY)) {
+                    AudioManager.getInstance().playButtonClickSound();
+                    toggleButtonState(backOptionsButton);
+                    musicDropdownOpen = false;
+                    return;
+                }
+                if (isMouseOverButton(saveButton, mouseX, mouseY)) {
+                    AudioManager.getInstance().playButtonClickSound();
+                    toggleButtonState(saveButton);
+                    playing.saveGameState();
+                    return;
+                }
                 if (isMouseOverButton(mainMenuButton, mouseX, mouseY)) {
                     AudioManager.getInstance().playButtonClickSound();
                     toggleButtonState(mainMenuButton);
                     playing.returnToMainMenu();
+                    return;
                 }
 
                 // check slider interaction
@@ -795,8 +898,25 @@ public class PlayingUI {
                     sliderDragging = true;
                     updateSliderValue(mouseX);
                 }
-
             }
+        }
+        if (earthquakeButton.getBounds().contains(mouseX, mouseY)) {
+            if (playing.getUltiManager().canUseEarthquake()) {
+                AudioManager.getInstance().playButtonClickSound();
+                toggleButtonState(earthquakeButton);
+                playing.getUltiManager().triggerEarthquake();
+            }
+            return;
+        }
+
+        if (lightningButton.getBounds().contains(mouseX, mouseY)) {
+            if (playing.getUltiManager().isWaitingForLightningTarget()) {
+                playing.getUltiManager().setWaitingForLightningTarget(false);
+            } else if (playing.getUltiManager().canUseLightning() &&
+                    playing.getPlayerManager().getGold() >= 75) {
+                playing.getUltiManager().setWaitingForLightningTarget(true);
+            }
+            return;
         }
     }
 
@@ -812,6 +932,7 @@ public class PlayingUI {
             if (button != optionsButton) optionsButton.setMousePressed(false);
             if (button != backOptionsButton) backOptionsButton.setMousePressed(false);
             if (button != mainMenuButton) mainMenuButton.setMousePressed(false);
+            if (button != saveButton) saveButton.setMousePressed(false);
         }
     }
 
@@ -820,6 +941,9 @@ public class PlayingUI {
 
         sliderDragging = false;
         currentSlider = "";
+
+        earthquakeButton.setMousePressed(false);
+        lightningButton.setMousePressed(false);
     }
 
     public void mouseDragged(int mouseX, int mouseY) {
@@ -875,7 +999,7 @@ public class PlayingUI {
     private String getSliderAtPosition(int mouseX, int mouseY) {
         if (!playing.isOptionsMenuOpen()) return "";
 
-        BufferedImage optionsImg = ButtonAssets.optionsMenuImg;
+        BufferedImage optionsImg = AssetsLoader.getInstance().optionsMenuImg;
         int menuWidth = optionsImg.getWidth() / 2;
         int menuHeight = optionsImg.getHeight() / 2;
         int menuX = (GameDimensions.GAME_WIDTH - menuWidth) / 2;
@@ -907,7 +1031,7 @@ public class PlayingUI {
     public void updateSliderValue(int mouseX) {
         if (!sliderDragging || currentSlider.isEmpty()) return;
 
-        BufferedImage optionsImg = ButtonAssets.optionsMenuImg;
+        BufferedImage optionsImg = AssetsLoader.getInstance().optionsMenuImg;
         int menuWidth = optionsImg.getWidth() / 2;
         int menuX = (GameDimensions.GAME_WIDTH - menuWidth) / 2;
         int controlX = menuX + menuWidth / 2 + 10;

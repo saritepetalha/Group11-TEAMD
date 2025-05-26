@@ -1,14 +1,16 @@
 package main;
 
-import javax.swing.JFrame;
 import java.awt.Cursor;
+import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.RenderingHints;
 import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import managers.AudioManager;
 
+import javax.swing.JFrame;
+
+import managers.AudioManager;
+import managers.GameStatsManager;
 import managers.TileManager;
 import scenes.*;
 
@@ -31,7 +33,10 @@ public class Game extends JFrame implements Runnable{
 	private Loaded loaded;
 	private LoadGameMenu loadGameMenu;
 	private GameOverScene gameOverScene;
+	private StatisticsScene statisticsScene;
 	private TileManager tileManager;
+	private GameStatsManager statsManager;
+
 
 	public Game() {
 		this.tileManager = new TileManager();
@@ -59,16 +64,6 @@ public class Game extends JFrame implements Runnable{
 		GameStates previousState = GameStates.gameState;
 		GameStates.gameState = newState;
 
-		if (gamescreen != null) {
-			gamescreen.updateContentForState(newState, previousState);
-		}
-
-		if (gamescreen != null) {
-			gamescreen.setPanelSize();
-		}
-		pack();
-		setLocationRelativeTo(null);
-
 		AudioManager audioManager = AudioManager.getInstance();
 		boolean isMenuRelatedToggle = (
 				(previousState == GameStates.MENU && (newState == GameStates.OPTIONS || newState == GameStates.EDIT || newState == GameStates.LOAD_GAME)) ||
@@ -82,20 +77,15 @@ public class Game extends JFrame implements Runnable{
 			}
 		}
 
-		if (previousState == GameStates.MENU && newState == GameStates.LOAD_GAME) {
-			if (loadGameMenu != null) {
-				// Potentially add a method to LoadGameMenu to refresh its list if levels can be saved/deleted during runtime
-				// e.g., loadGameMenu.refreshMapPreviews();
-			}
-		}
-
+		// Handle heavy initialization BEFORE UI updates to prevent black flash
 		if (!isMenuRelatedToggle) {
 			switch (newState) {
 				case MENU:
 					audioManager.playMusic("lonelyhood");
 					break;
 				case PLAYING:
-					if (playing != null) {
+					// Reset game state BEFORE making window visible to prevent black flash
+					if (playing != null && previousState != GameStates.LOAD_GAME) {
 						playing.resetGameState();
 					}
 					audioManager.playRandomGameMusic();
@@ -112,10 +102,38 @@ public class Game extends JFrame implements Runnable{
 					break;
 			}
 		}
+
+		if (gamescreen != null) {
+			gamescreen.updateContentForState(newState, previousState);
+		}
+
+		if (gamescreen != null) {
+			gamescreen.setPanelSize();
+		}
+		getContentPane().removeAll();
+		add(gamescreen);
+
+		pack();
+		setLocationRelativeTo(null);
+
+		if (newState == GameStates.LOAD_GAME) {
+			if (loadGameMenu != null) {
+				loadGameMenu.refreshMapPreviews();
+			}
+		}
+
+		if (gamescreen != null) {
+			gamescreen.setPanelSize();
+			gamescreen.revalidate();
+			gamescreen.repaint();
+		}
 	}
 
 	private void initClasses() {
 		AudioManager.getInstance();
+
+		statsManager = new GameStatsManager();
+
 		gamescreen = new GameScreen(this);
 		render = new Render(this);
 		intro = new Intro(this);
@@ -128,7 +146,9 @@ public class Game extends JFrame implements Runnable{
 		loaded = new Loaded(this);
 		loadGameMenu = new LoadGameMenu(this);
 		gameOverScene = new GameOverScene(this);
+		statisticsScene = new StatisticsScene(this);
 		tileManager = new TileManager();
+
 	}
 
 
@@ -152,6 +172,10 @@ public class Game extends JFrame implements Runnable{
 				break;
 			case GAME_OVER:
 				gameOverScene.update();
+				break;
+			case STATISTICS:
+				statisticsScene.update();
+				break;
 			default:
 				break;
 		}
@@ -268,6 +292,12 @@ public class Game extends JFrame implements Runnable{
 		this.playing = new Playing(this, tileManager, levelData, overlayData);
 	}
 
+	public void startPlayingWithLevel(int[][] levelData, int[][] overlayData, String mapName) {
+		this.playing = new Playing(this, tileManager, levelData, overlayData);
+		this.playing.setCurrentMapName(mapName);
+		this.playing.loadGameState();
+	}
+
 	public void resetGameWithSameLevel() {
 		if (playing != null) {
 			playing.resetGameState();
@@ -283,5 +313,14 @@ public class Game extends JFrame implements Runnable{
 			setLocationRelativeTo(null);
 		}
 	}
-
+	public GameStatsManager getStatsManager() {
+		return statsManager;
+	}
+	public StatisticsScene getStatisticsScene() {
+		return statisticsScene;
+	}
+	public void repaintGameScreen() {
+		if (gamescreen != null)
+			gamescreen.repaint();
+	}
 }

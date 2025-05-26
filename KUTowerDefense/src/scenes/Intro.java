@@ -3,15 +3,12 @@ package scenes;
 import constants.GameDimensions;
 import main.Game;
 import main.GameStates;
-import ui_p.ButtonAssets;
+import ui_p.AssetsLoader;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
-import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import javax.imageio.ImageIO;
 import javax.sound.sampled.*;
 
 public class Intro {
@@ -146,13 +143,13 @@ public class Intro {
             g2d.setColor(backgroundColor);
             g2d.fillRect(0, 0, game.getWidth(), game.getHeight());
             // logo display with fading, rotation, and scaling
-            if (ButtonAssets.teamLogoImg != null) {
+            if (AssetsLoader.getInstance().teamLogoImg != null) {
                 g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
 
                 // resizing the logo
                 float finalScale = logoScale + (introState == 1 ? currentPulseScale : 0);
-                int scaledWidth = (int)(ButtonAssets.teamLogoImg.getWidth() * finalScale);
-                int scaledHeight = (int)(ButtonAssets.teamLogoImg.getHeight() * finalScale);
+                int scaledWidth = (int)(AssetsLoader.getInstance().teamLogoImg.getWidth() * finalScale);
+                int scaledHeight = (int)(AssetsLoader.getInstance().teamLogoImg.getHeight() * finalScale);
 
                 int centerX = game.getWidth() / 2;
                 int centerY = game.getHeight() / 2;
@@ -172,7 +169,7 @@ public class Intro {
                         logoY + scaledHeight/2.0);
                 g2d.setTransform(transform);
 
-                g2d.drawImage(ButtonAssets.teamLogoImg, logoX, logoY, scaledWidth, scaledHeight, null);
+                g2d.drawImage(AssetsLoader.getInstance().teamLogoImg, logoX, logoY, scaledWidth, scaledHeight, null);
                 g2d.setTransform(oldTransform);
             }
             // draw the skip text last so it stays on top
@@ -190,8 +187,8 @@ public class Intro {
             g2d.drawString(skipText, textX, textY);
         } else if (introState == 3) {
             // loading screen
-            if (ButtonAssets.backgroundImg != null) {
-                g2d.drawImage(ButtonAssets.backgroundImg, 0, 0, GameDimensions.MAIN_MENU_SCREEN_WIDTH, GameDimensions.MAIN_MENU_SCREEN_HEIGHT, null);
+            if (AssetsLoader.getInstance().backgroundImg != null) {
+                g2d.drawImage(AssetsLoader.getInstance().backgroundImg, 0, 0, GameDimensions.MAIN_MENU_SCREEN_WIDTH, GameDimensions.MAIN_MENU_SCREEN_HEIGHT, null);
             } else {
                 // fallback if image not found
                 g2d.setColor(backgroundColor);

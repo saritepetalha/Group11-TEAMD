@@ -1,14 +1,23 @@
 package objects;
 
 import constants.Constants;
-import java.awt.image.BufferedImage;
+import strategies.TargetingStrategy;
+// import java.awt.image.BufferedImage; // No longer needed here
 
 public class MageTower extends Tower {
-    public BufferedImage upgradedSprite;
-    private boolean isLevel2 = false;
+    // public BufferedImage upgradedSprite; // No longer needed
+    // private boolean isLevel2 = false; // No longer needed, level is in Tower and decorator handles upgraded state
 
     public MageTower(int x, int y) {
         super(x, y);
+        setDefaultDamage();
+        setDefaultRange();
+        setDefaultCooldown();
+    }
+
+    // Constructor with custom targeting strategy
+    public MageTower(int x, int y, TargetingStrategy targetingStrategy) {
+        super(x, y, targetingStrategy);
         setDefaultDamage();
         setDefaultRange();
         setDefaultCooldown();
@@ -19,6 +28,7 @@ public class MageTower extends Tower {
         return Constants.Towers.getCooldown(Constants.Towers.MAGE);
     }
 
+    @Override
     public float getRange() {
         return Constants.Towers.getRange(Constants.Towers.MAGE);
     }
@@ -34,14 +44,16 @@ public class MageTower extends Tower {
     }
 
     @Override
-    public void upgrade() {
+    public Tower upgrade() {
         if (level == 1) {
-            level = 2;
-            isLevel2 = true;
-            // Load upgraded sprite
-            upgradedSprite = helpMethods.LoadSave.getImageFromPath("/TowerAssets/mage_up.png");
+            this.level = 2;
+            // Stats are handled by the decorator (slow effect).
+            // Base tower stats remain as level 1 defaults.
+            // Decorator handles its own sprite.
+            return new UpgradedMageTower(this);
         }
+        return this; // Already upgraded
     }
 
-    public boolean isLevel2() { return isLevel2; }
+    // public boolean isLevel2() { return isLevel2; } // No longer needed
 }

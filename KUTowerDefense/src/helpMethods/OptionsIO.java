@@ -22,6 +22,8 @@ public final class OptionsIO {
     private static final Path CONFIG_PATH =
             Paths.get("resources", "Options", "options.json");
 
+    private static final Path CONFIG_DIR  = Paths.get("resources", "Options");
+
     /** Re-use one configured Gson instance for the entire app. */
     private static final Gson GSON = new GsonBuilder()
             .setPrettyPrinting()
@@ -70,16 +72,39 @@ public final class OptionsIO {
         }
     }
 
-    /**
-     * Serialises the given options back to <kbd>options.json</kbd>.
-     * Call it when the player hits “Save” in your Options Scene.
-     */
-    public static void save(GameOptions opts) {
+    public static GameOptions load(String filename) {
+        Path path = CONFIG_DIR.resolve(filename + ".json");
         synchronized (GSON) {
             try {
-                Files.createDirectories(CONFIG_PATH.getParent());
+                if (Files.notExists(path) || Files.size(path) == 0) {
+                    return null;
+                }
+                try (var reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
+                    return GSON.fromJson(reader, GameOptions.class);
+                }
+            } catch (IOException | RuntimeException ex) {
+                ex.printStackTrace();
+                return null;
+            }
+        }
+    }
 
-                try (var writer = Files.newBufferedWriter(CONFIG_PATH,
+    /** write to the *default* options.json */
+    public static void save(GameOptions opts) {
+        save(opts, CONFIG_PATH);
+    }
+
+    /** write to a *custom* path (e.g. level1_slot0_options.json) */
+    public static void save(GameOptions opts, String filename) {
+        save(opts, Paths.get("resources","Options", filename + ".json"));
+    }
+
+    /** internal helper */
+    private static void save(GameOptions opts, Path path) {
+        synchronized (GSON) {
+            try {
+                Files.createDirectories(path.getParent());
+                try (var writer = Files.newBufferedWriter(path,
                         StandardCharsets.UTF_8,
                         StandardOpenOption.CREATE,
                         StandardOpenOption.TRUNCATE_EXISTING,
@@ -88,7 +113,6 @@ public final class OptionsIO {
                 }
             } catch (IOException ex) {
                 ex.printStackTrace();
-                // Decide if you want to show an in-game popup; here we just log.
             }
         }
     }
