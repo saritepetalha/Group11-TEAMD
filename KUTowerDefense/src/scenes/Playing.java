@@ -1184,4 +1184,5 @@ public class Playing extends GameScene implements SceneMethods {
     public WeatherManager getWeatherManager() {
         return weatherManager;
     }
+
 }
