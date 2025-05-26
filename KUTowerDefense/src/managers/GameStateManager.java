@@ -11,9 +11,29 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 public class GameStateManager {
-    private static final String SAVE_DIR = "resources/Saves";
+    private static final String SAVE_DIR = getSavesDirectoryPath();
     private static final String DEFAULT_SAVE_FILE = "defaultlevel.json";
     private final Gson gson;
+
+    /**
+     * Detects if we're running in a Maven project structure
+     */
+    private static boolean isMavenProject() {
+        // Check if we're in a Maven project by looking for pom.xml in the expected location
+        File pomFile = new File("demo/pom.xml");
+        return pomFile.exists();
+    }
+
+    /**
+     * Gets the appropriate saves directory path based on project structure
+     */
+    private static String getSavesDirectoryPath() {
+        if (isMavenProject()) {
+            return "demo/src/main/resources/Saves";
+        } else {
+            return "resources/Saves";
+        }
+    }
 
     public GameStateManager() {
         // Create saves directory if it doesn't exist

@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import config.GameOptions;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
@@ -20,9 +21,9 @@ public final class OptionsIO {
 
     /** Where the JSON file lives – change if you prefer another folder. */
     private static final Path CONFIG_PATH =
-            Paths.get("resources", "Options", "options.json");
+            Paths.get(getOptionsDirectoryPath(), "options.json");
 
-    private static final Path CONFIG_DIR  = Paths.get("resources", "Options");
+    private static final Path CONFIG_DIR  = Paths.get(getOptionsDirectoryPath());
 
     /** Re-use one configured Gson instance for the entire app. */
     private static final Gson GSON = new GsonBuilder()
@@ -32,6 +33,26 @@ public final class OptionsIO {
 
     /** Utility class – no instances allowed. */
     private OptionsIO() { }
+
+    /**
+     * Detects if we're running in a Maven project structure
+     */
+    private static boolean isMavenProject() {
+        // Check if we're in a Maven project by looking for pom.xml in the expected location
+        File pomFile = new File("demo/pom.xml");
+        return pomFile.exists();
+    }
+
+    /**
+     * Gets the appropriate options directory path based on project structure
+     */
+    private static String getOptionsDirectoryPath() {
+        if (isMavenProject()) {
+            return "demo/src/main/resources/Options";
+        } else {
+            return "resources/Options";
+        }
+    }
 
     // ---------------------------------------------------------------------
     //  PUBLIC API
@@ -96,7 +117,7 @@ public final class OptionsIO {
 
     /** write to a *custom* path (e.g. level1_slot0_options.json) */
     public static void save(GameOptions opts, String filename) {
-        save(opts, Paths.get("resources","Options", filename + ".json"));
+        save(opts, Paths.get(getOptionsDirectoryPath(), filename + ".json"));
     }
 
     /** internal helper */
