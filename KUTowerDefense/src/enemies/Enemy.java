@@ -400,6 +400,32 @@ public abstract class Enemy {
         return dirY;
     }
 
+    public int getWidth() {
+        switch (size) {
+            case SMALL:
+                return 32;
+            case MEDIUM:
+                return 48;
+            case LARGE:
+                return 64;
+            default:
+                return 32;
+        }
+    }
+
+    public int getHeight() {
+        switch (size) {
+            case SMALL:
+                return 32;
+            case MEDIUM:
+                return 48;
+            case LARGE:
+                return 64;
+            default:
+                return 32;
+        }
+    }
+
     public void applySlow(float slowFactor, int durationTicks) {
         if (!isSlowed || slowFactor < this.currentSlowFactor) { // Apply new slow if not slowed, or if new slow is stronger
             this.isSlowed = true;

@@ -55,8 +55,8 @@ public class PlayingUI {
     private TheButton lightningButton;
 
     // option values (WILL BE CHANGED TO BE READ FROM FILE)
-    private int soundVolume = 50;
-    private int musicVolume = 50;
+    private int soundVolume = 80;
+    private int musicVolume = 80;
     private boolean sliderDragging = false;
     private String currentSlider = "";
     private String currentDifficulty = "Normal";
@@ -292,7 +292,7 @@ public class PlayingUI {
         Font mvBoliFont = new Font("MV Boli", Font.BOLD, 14);
         g2d.setFont(mvBoliFont);
         g2d.setColor(Color.WHITE);
-        
+
         FontMetrics fm = g2d.getFontMetrics();
         String[] lines = text.split("\n");
         String firstLine = lines.length > 0 ? lines[0] : "";

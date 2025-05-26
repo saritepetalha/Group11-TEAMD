@@ -95,11 +95,13 @@ public class Playing extends GameScene implements SceneMethods {
 
     private GameStateManager gameStateManager;
     private String currentMapName = "defaultlevel"; // Default map name
-    private boolean isFirstReset = true; // <-- ADD THIS NEW FLAG
+    private boolean isFirstReset = true;
 
     private TowerSelectionUI towerSelectionUI;
 
     private long gameTimeMillis = 0;
+
+    private WeatherManager weatherManager;
 
     public Playing(Game game) {
         super(game);
@@ -157,6 +159,8 @@ public class Playing extends GameScene implements SceneMethods {
             System.out.println("Critical Error: gameOptions is null during initializeManagers. Using defaults.");
             this.gameOptions = GameOptions.defaults();
         }
+
+        weatherManager = new WeatherManager();
 
         projectileManager = new ProjectileManager(this);
         treeInteractionManager = new TreeInteractionManager(this);
@@ -360,44 +364,49 @@ public class Playing extends GameScene implements SceneMethods {
 
     public void update() {
         if (!gamePaused) {
-
-            long delta = (long)(16 * gameSpeedMultiplier); // yaklaşık 60FPS frame time
-            gameTimeMillis += delta;
-
-            waveManager.update();
-            projectileManager.update();
-            fireAnimationManager.update();
-            ultiManager.update(gameTimeMillis);
-
-            // Check enemy status and handle wave completion
-            if (isAllEnemiesDead()) {
-                if (waveManager.isThereMoreWaves()) {
-                    // Just let WaveManager handle the wave timing and progression
-                    // The WaveManager.update() call above will handle all the wave timing
-                } else if (waveManager.isAllWavesFinished()) {
-                    // Only trigger victory if all waves are processed and finished
-                    handleVictory();
-                }
-            }
-
-            // Update other game elements
-            enemyManager.update(gameSpeedMultiplier);
-            towerManager.update(gameSpeedMultiplier);
-            updateUIResources();
-
-            if (!playerManager.isAlive()) {
-                handleGameOver();
-            }
-
-            goldBagManager.update();
-
-            updateCounter++;
-            if (updateCounter >= 60) {
-                timePlayedInSeconds++;
-                updateCounter = 0;
-            }
+            updateGame();
         }
         checkButtonStates();
+    }
+
+    private void updateGame() {
+        long delta = (long)(16 * gameSpeedMultiplier);
+        gameTimeMillis += delta;
+
+        waveManager.update();
+        projectileManager.update();
+        fireAnimationManager.update();
+        ultiManager.update(gameTimeMillis);
+        weatherManager.update(delta / 1000.0f);
+
+        // Check enemy status and handle wave completion
+        if (isAllEnemiesDead()) {
+            if (waveManager.isThereMoreWaves()) {
+                // Just let WaveManager handle the wave timing and progression
+                // The WaveManager.update() call above will handle all the wave timing
+            } else if (waveManager.isAllWavesFinished()) {
+                // Only trigger victory if all waves are processed and finished
+                handleVictory();
+            }
+        }
+
+        // Update other game elements
+        enemyManager.update(gameSpeedMultiplier);
+        towerManager.update(gameSpeedMultiplier);
+        updateUIResources();
+
+        if (!playerManager.isAlive()) {
+            handleGameOver();
+        }
+
+        goldBagManager.update();
+
+        updateCounter++;
+        if (updateCounter >= 60) {
+            timePlayedInSeconds++;
+            updateCounter = 0;
+        }
+
     }
 
     private boolean isWaveTimerOver() {
@@ -433,15 +442,16 @@ public class Playing extends GameScene implements SceneMethods {
 
     @Override
     public void render(Graphics g) {
-
         ultiManager.applyShakeIfNeeded(g);
+
         drawMap(g);
         towerManager.draw(g);
-        enemyManager.draw(g, gamePaused);         // pass the paused state to enemyManager.draw
+        enemyManager.draw(g, gamePaused);
         drawTowerButtons(g);
         drawLiveTreeButtons(g);
         projectileManager.draw(g);
         fireAnimationManager.draw(g);
+        weatherManager.draw(g);
         playingUI.draw(g);
         goldBagManager.draw(g);
         drawCastleHealthBar(g);
@@ -451,10 +461,49 @@ public class Playing extends GameScene implements SceneMethods {
         if (towerSelectionUI != null) {
             towerSelectionUI.draw(g);
         }
+        drawWeatherInfo(g);
+    }
+
+    private void drawWeatherInfo(Graphics g) {
+        Graphics2D g2d = (Graphics2D) g;
+
+        String timeInfo = weatherManager.getCurrentTimeOfDay();
+        String weatherType = "";
+
+        switch (weatherManager.getCurrentWeatherType()) {
+            case CLEAR:
+                weatherType = "Clear";
+                break;
+            case RAINY:
+                weatherType = "Rainy";
+                break;
+            case SNOWY:
+                weatherType = "Snowy";
+                break;
+            case WINDY:
+                weatherType = "Windy";
+                break;
+        }
+
+        String weatherInfo = timeInfo + " | " + weatherType;
+
+        if (weatherManager.isNight()) {
+            weatherInfo += String.format(" (Darkness: %.0f%%)", weatherManager.getNightIntensity() * 100);
+        }
+
+        g2d.setColor(Color.WHITE);
+        g2d.setFont(new Font("Arial", Font.BOLD, 16));
+
+        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
+        g2d.setColor(Color.BLACK);
+        g2d.fillRoundRect(10, 10, 350, 30, 10, 10);
+
+        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
+        g2d.setColor(Color.WHITE);
+        g2d.drawString(weatherInfo, 20, 30);
     }
 
     public void modifyTile(int x, int y, String tile) {
-
         x /= 64;
         y /= 64;
 
@@ -467,9 +516,7 @@ public class Playing extends GameScene implements SceneMethods {
         } else if (tile.equals("DEADTREE")) {
             level[y][x] = 15;
         }
-
     }
-
 
     @Override
     public void mouseClicked(int x, int y) {
@@ -507,7 +554,6 @@ public class Playing extends GameScene implements SceneMethods {
         }
     }
 
-
     /**
      * Helper method to find tower at mouse position
      */
@@ -519,7 +565,6 @@ public class Playing extends GameScene implements SceneMethods {
         }
         return null;
     }
-
 
     public TowerManager getTowerManager() {
         return towerManager;
@@ -543,7 +588,6 @@ public class Playing extends GameScene implements SceneMethods {
         if (towerSelectionUI != null) {
             towerSelectionUI.mouseMoved(x, y);
         }
-
     }
 
     @Override
@@ -688,6 +732,8 @@ public class Playing extends GameScene implements SceneMethods {
         System.out.println("Game Over!");
         gameOverHandled = true;
 
+        weatherManager.stopAllWeatherSounds();
+
         // Delete the save file
         gameStateManager.deleteSaveFile(currentMapName);
 
@@ -698,7 +744,6 @@ public class Playing extends GameScene implements SceneMethods {
         enemyManager.getEnemies().clear();
 
         GameStatsRecord record = new GameStatsRecord(
-
                 game.getPlaying().getMapName(),
                 false,
                 playerManager.getGold(),
@@ -736,6 +781,8 @@ public class Playing extends GameScene implements SceneMethods {
         System.out.println("Victory!");
         victoryHandled = true;
 
+        weatherManager.stopAllWeatherSounds();
+
         // Delete the save file
         gameStateManager.deleteSaveFile(currentMapName);
 
@@ -766,7 +813,6 @@ public class Playing extends GameScene implements SceneMethods {
 
         game.changeGameState(main.GameStates.GAME_OVER);
     }
-
 
     @Override
     public void playButtonClickSound() {
@@ -804,7 +850,6 @@ public class Playing extends GameScene implements SceneMethods {
     public void returnToMainMenu() {
         System.out.println("Returning to main menu");
         game.changeGameState(main.GameStates.MENU);
-
     }
 
     public FireAnimationManager getFireAnimationManager() {
@@ -1001,7 +1046,6 @@ public class Playing extends GameScene implements SceneMethods {
         return waveManager.isAllWavesFinished();
     }
 
-
     public void incrementEnemyDefeated() {
         enemyDefeated++;
     }
@@ -1115,7 +1159,6 @@ public class Playing extends GameScene implements SceneMethods {
         return towerSelectionUI != null ? towerSelectionUI.getSelectedTower() : null;
     }
 
-
     public void setDisplayedTower(Tower tower) {
         if (towerSelectionUI != null) {
             towerSelectionUI.setSelectedTower(tower);
@@ -1131,5 +1174,9 @@ public class Playing extends GameScene implements SceneMethods {
 
     public long getGameTime() {
         return gameTimeMillis;
+    }
+
+    public WeatherManager getWeatherManager() {
+        return weatherManager;
     }
 }

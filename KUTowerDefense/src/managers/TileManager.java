@@ -95,6 +95,28 @@ public class TileManager {
         } else if (index == -3) { // Wall
             BufferedImage wallImg = LoadSave.getImageFromPath("/Borders/wall.png");
             if (wallImg != null) {
+                // Determine wall orientation based on position
+                int[][] levelData = LoadSave.getLevelData("defaultleveltest1");
+                if (levelData != null) {
+                    // Find the wall's position in the level data
+                    for (int i = 0; i < levelData.length; i++) {
+                        for (int j = 0; j < levelData[i].length; j++) {
+                            if (levelData[i][j] == -3) {
+                                // Check which edge the wall is on
+                                if (i == 0) { // Top edge
+                                    return resizeImage(wallImg, GameDimensions.TILE_DISPLAY_SIZE, GameDimensions.TILE_DISPLAY_SIZE);
+                                } else if (i == levelData.length - 1) { // Bottom edge
+                                    return rotateImage(wallImg, 180);
+                                } else if (j == 0) { // Left edge
+                                    return rotateImage(wallImg, -90);
+                                } else if (j == levelData[i].length - 1) { // Right edge
+                                    return rotateImage(wallImg, 90);
+                                }
+                            }
+                        }
+                    }
+                }
+                // Default case: return original image
                 return resizeImage(wallImg, GameDimensions.TILE_DISPLAY_SIZE, GameDimensions.TILE_DISPLAY_SIZE);
             }
         } else if (index == -4) { // Gate
@@ -109,6 +131,28 @@ public class TileManager {
             throw new IndexOutOfBoundsException("Invalid tile index: " + index);
         }
         return tiles.get(index).getSprite();
+    }
+
+    private BufferedImage rotateImage(BufferedImage original, double degrees) {
+        double rads = Math.toRadians(degrees);
+        double sin = Math.abs(Math.sin(rads));
+        double cos = Math.abs(Math.cos(rads));
+
+        int w = original.getWidth();
+        int h = original.getHeight();
+
+        int newWidth = (int) Math.floor(w * cos + h * sin);
+        int newHeight = (int) Math.floor(h * cos + w * sin);
+
+        BufferedImage rotated = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2d = rotated.createGraphics();
+
+        g2d.translate((newWidth - w) / 2, (newHeight - h) / 2);
+        g2d.rotate(rads, w / 2, h / 2);
+        g2d.drawImage(original, 0, 0, null);
+        g2d.dispose();
+
+        return resizeImage(rotated, GameDimensions.TILE_DISPLAY_SIZE, GameDimensions.TILE_DISPLAY_SIZE);
     }
 
     private BufferedImage resizeImage(BufferedImage original, int width, int height) {
@@ -137,8 +181,5 @@ public class TileManager {
                 GameDimensions.TILE_DISPLAY_SIZE,
                 GameDimensions.TILE_DISPLAY_SIZE);
         return tile;
-
-
     }
-
 }

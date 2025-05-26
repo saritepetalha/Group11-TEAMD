@@ -88,8 +88,16 @@ public class TowerManager {
     }
 
     private boolean isEnemyInRange(Tower tower, Enemy enemy) {
+        float effectiveRange = tower.getRange();
+        if (playing.getWeatherManager().isRaining()) {
+            effectiveRange *= playing.getWeatherManager().getTowerRangeMultiplier();
+        }
+
         int range = Utils.GetHypo(tower.getX(), tower.getY(), enemy.getX(), enemy.getY());
-        return range < tower.getRange();
+
+        boolean canTarget = playing.getEnemyManager().canTargetEnemy(enemy);
+
+        return range < effectiveRange && canTarget;
     }
 
     public BufferedImage[] getTowerImages() {

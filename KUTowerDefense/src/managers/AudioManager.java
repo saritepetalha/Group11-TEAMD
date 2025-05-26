@@ -21,8 +21,8 @@ public class AudioManager {
     private static final String GAME_MUSIC_PATH = "/GameMusic/";
 
     // Volume control (0.0f to 1.0f)
-    private float musicVolume = 0.5f;
-    private float soundVolume = 0.5f;
+    private float musicVolume = 0.8f;
+    private float soundVolume = 0.8f;
     private boolean musicMuted = false;
     private boolean soundMuted = false;
 
@@ -129,6 +129,10 @@ public class AudioManager {
 
         loadSound("earthquake", "earthquake_audio.wav");
         loadSound("lightning", "lightning_audio.wav");
+
+        loadWeatherSound("rain", "rain.wav");
+        loadWeatherSound("snow", "snow.wav");
+        loadWeatherSound("wind", "wind.wav");
     }
 
     private void loadMusic(String name, String filename) {
@@ -173,6 +177,27 @@ public class AudioManager {
 
         } catch (Exception e) {
             System.err.println("Failed to load sound: " + name + " - " + e.getMessage());
+        }
+    }
+
+    private void loadWeatherSound(String name, String filename) {
+        try {
+            String fullPath = SFX_PATH + filename;
+
+            InputStream is = getClass().getResourceAsStream(fullPath);
+            if (is == null) throw new IllegalArgumentException("Weather sound not found: " + fullPath);
+
+            BufferedInputStream bis = new BufferedInputStream(is);
+            AudioInputStream audioStream = AudioSystem.getAudioInputStream(bis);
+
+            Clip clip = AudioSystem.getClip();
+            clip.open(audioStream);
+
+            musicClips.put(name, clip);
+            System.out.println("Loaded weather sound: " + name);
+
+        } catch (Exception e) {
+            System.err.println("Failed to load weather sound: " + name + " - " + e.getMessage());
         }
     }
 
@@ -277,6 +302,14 @@ public class AudioManager {
 
     public void setSoundVolume(float volume) {
         this.soundVolume = Math.max(0.0f, Math.min(1.0f, volume));
+
+        String[] weatherSounds = {"rain", "snow", "wind"};
+        for (String weather : weatherSounds) {
+            Clip clip = musicClips.get(weather);
+            if (clip != null && clip.isRunning()) {
+                setClipVolume(clip, soundVolume * 0.8f);
+            }
+        }
     }
 
     public float getMusicVolume() {
@@ -325,7 +358,7 @@ public class AudioManager {
 
     public void playRandomGameMusic() {
         String[] gameMusic = {
-                "bounce_beanstalk", "dirtmouth","wistful_wild"
+                "dirtmouth", "intro bayonetta origins", "white palace"
         };
 
         int index = (int)(Math.random() * gameMusic.length);
@@ -383,5 +416,34 @@ public class AudioManager {
 
     public void playButtonClickSound() {
         playSound("button_click");
+    }
+
+    public void playWeatherSound(String weatherType) {
+        if (soundMuted) return;
+
+        stopWeatherSounds();
+
+        Clip clip = musicClips.get(weatherType);
+        if (clip != null) {
+            setClipVolume(clip, soundVolume * 0.8f);
+            clip.setFramePosition(0);
+            clip.loop(Clip.LOOP_CONTINUOUSLY);
+        }
+    }
+
+    public void stopWeatherSounds() {
+        String[] weatherSounds = {"rain", "snow", "wind"};
+        for (String weather : weatherSounds) {
+            Clip clip = musicClips.get(weather);
+            if (clip != null && clip.isRunning()) {
+                clip.stop();
+
+            }
+        }
+    }
+
+    public void stopAllWeatherAndMusic() {
+        stopMusic();
+        stopWeatherSounds();
     }
 }
