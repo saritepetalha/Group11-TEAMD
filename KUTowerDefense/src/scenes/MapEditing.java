@@ -82,28 +82,64 @@ public class MapEditing extends GameScene implements SceneMethods{
         g.setColor(new Color(134,177,63,255));
         g.fillRect(0, 0, GameDimensions.GAME_WIDTH, GameDimensions.GAME_HEIGHT);
 
+        int rowCount = level.length;
+        int colCount = level[0].length;
+
+        // Detect which edge contains the gate (endpoint)
+        int gateEdge = -1; // 0=top, 1=bottom, 2=left, 3=right
+        for (int i = 0; i < rowCount; i++) {
+            if (level[i][0] == -4) gateEdge = 2; // left
+            if (level[i][colCount - 1] == -4) gateEdge = 3; // right
+        }
+        for (int j = 0; j < colCount; j++) {
+            if (level[0][j] == -4) gateEdge = 0; // top
+            if (level[rowCount - 1][j] == -4) gateEdge = 1; // bottom
+        }
+
         for (int i = 0; i < level.length; i++) {
             for (int j = 0; j < level[i].length; j++) {
                 int tileId = level[i][j];
 
                 if (tileId == -3 && wallImage != null) { // Wall
-                    BufferedImage wallToDraw;
-                    if (isCorner(i, j, level.length, level[0].length)) {
-                        int angle = getCornerStraightRotation(i, j, level);
-                        wallToDraw = rotateImage(wallImage, angle);
+                    BufferedImage img = wallImage;
+                    Graphics2D g2d = (Graphics2D) g.create();
+                    int x = j * GameDimensions.TILE_DISPLAY_SIZE;
+                    int y = i * GameDimensions.TILE_DISPLAY_SIZE;
+                    int ts = GameDimensions.TILE_DISPLAY_SIZE;
+                    if (gateEdge == 0) { // top
+                        g2d.drawImage(img, x, y, ts, ts, null);
+                    } else if (gateEdge == 1) { // bottom
+                        g2d.drawImage(img, x, y + ts, ts, -ts, null); // flip vertically
+                    } else if (gateEdge == 2) { // left
+                        g2d.rotate(-Math.PI / 2, x + ts / 2, y + ts / 2);
+                        g2d.drawImage(img, x, y, ts, ts, null);
+                    } else if (gateEdge == 3) { // right
+                        g2d.rotate(Math.PI / 2, x + ts / 2, y + ts / 2);
+                        g2d.drawImage(img, x, y, ts, ts, null);
                     } else {
-                        wallToDraw = getTransformedBorderImage(wallImage, i, j, level.length, level[0].length);
+                        g2d.drawImage(img, x, y, ts, ts, null);
                     }
-                    drawSilhouette(g, wallToDraw, j * GameDimensions.TILE_DISPLAY_SIZE,
-                            i * GameDimensions.TILE_DISPLAY_SIZE,
-                            GameDimensions.TILE_DISPLAY_SIZE,
-                            GameDimensions.TILE_DISPLAY_SIZE);
+                    g2d.dispose();
                 } else if (tileId == -4 && gateImage != null) { // Gate
-                    BufferedImage gateToDraw = getTransformedBorderImage(gateImage, i, j, level.length, level[0].length);
-                    drawSilhouette(g, gateToDraw, j * GameDimensions.TILE_DISPLAY_SIZE,
-                            i * GameDimensions.TILE_DISPLAY_SIZE,
-                            GameDimensions.TILE_DISPLAY_SIZE,
-                            GameDimensions.TILE_DISPLAY_SIZE);
+                    BufferedImage img = gateImage;
+                    Graphics2D g2d = (Graphics2D) g.create();
+                    int x = j * GameDimensions.TILE_DISPLAY_SIZE;
+                    int y = i * GameDimensions.TILE_DISPLAY_SIZE;
+                    int ts = GameDimensions.TILE_DISPLAY_SIZE;
+                    if (gateEdge == 0) { // top
+                        g2d.drawImage(img, x, y, ts, ts, null);
+                    } else if (gateEdge == 1) { // bottom
+                        g2d.drawImage(img, x, y + ts, ts, -ts, null); // flip vertically
+                    } else if (gateEdge == 2) { // left
+                        g2d.rotate(-Math.PI / 2, x + ts / 2, y + ts / 2);
+                        g2d.drawImage(img, x, y, ts, ts, null);
+                    } else if (gateEdge == 3) { // right
+                        g2d.rotate(Math.PI / 2, x + ts / 2, y + ts / 2);
+                        g2d.drawImage(img, x, y, ts, ts, null);
+                    } else {
+                        g2d.drawImage(img, x, y, ts, ts, null);
+                    }
+                    g2d.dispose();
                 } else {
                     g.drawImage(tileManager.getSprite(tileId), j * GameDimensions.TILE_DISPLAY_SIZE, i * GameDimensions.TILE_DISPLAY_SIZE, null);
                 }
