@@ -41,6 +41,11 @@ public abstract class Enemy {
     private long teleportEffectTimer = 0;
     public static final long TELEPORT_EFFECT_DURATION = 500_000_000L; // 0.5 seconds
 
+    // Combat synergy fields
+    private boolean hasCombatSynergy = false;
+    private float originalSpeed;
+    public static BufferedImage thunderIcon = null;
+
     public void setAlive(boolean alive) {
         this.alive = alive;
     }
@@ -477,11 +482,19 @@ public abstract class Enemy {
     }
 
     public float getEffectiveSpeed() {
-        float currentSpeed = this.speed;
+        float effectiveSpeed = speed;
+        
+        // Apply slow effect if active
         if (isSlowed) {
-            currentSpeed *= currentSlowFactor;
+            effectiveSpeed *= currentSlowFactor;
         }
-        return currentSpeed;
+        
+        // Apply combat synergy if active
+        if (hasCombatSynergy) {
+            effectiveSpeed = originalSpeed;
+        }
+        
+        return effectiveSpeed;
     }
 
     /**
@@ -490,5 +503,28 @@ public abstract class Enemy {
      */
     public long getTeleportEffectTimer() {
         return teleportEffectTimer;
+    }
+
+    public void applyCombatSynergy(float goblinSpeed) {
+        if (!hasCombatSynergy) {
+            originalSpeed = speed;
+            // Set speed to average of knight and goblin speed
+            speed = (originalSpeed + goblinSpeed) / 2;
+            hasCombatSynergy = true;
+            if (thunderIcon == null) {
+                thunderIcon = LoadSave.getImageFromPath("/TowerAssets/thunder_icon.png");
+            }
+        }
+    }
+
+    public void removeCombatSynergy() {
+        if (hasCombatSynergy) {
+            speed = originalSpeed;
+            hasCombatSynergy = false;
+        }
+    }
+
+    public boolean hasCombatSynergy() {
+        return hasCombatSynergy;
     }
 }
