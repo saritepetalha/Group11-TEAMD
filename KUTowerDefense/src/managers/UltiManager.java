@@ -64,7 +64,7 @@ public class UltiManager {
         // Counter effect: 50% chance to destroy level 1 towers
         for (objects.Tower tower : playing.getTowerManager().getTowers()) {
             if (tower.getLevel() == 1 && !tower.isDestroyed()) {
-                if (Math.random() < 0.99) {
+                if (Math.random() < 0.5) {
                     tower.setDestroyed(true);
                     if (tower instanceof objects.MageTower) {
                         tower.setDestroyedSprite(LoadSave.getImageFromPath("/TowerAssets/Tower_spell_destroyed.png"));
