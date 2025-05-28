@@ -751,7 +751,7 @@ public class Playing extends GameScene implements SceneMethods {
         GameStatsRecord record = new GameStatsRecord(
                 game.getPlaying().getMapName(),
                 false,
-                playerManager.getGold(),
+                playerManager.getTotalGoldEarned(),
                 totalEnemiesSpawned,
                 enemiesReachedEnd,
                 towerManager.getTowers().size(),
@@ -765,7 +765,7 @@ public class Playing extends GameScene implements SceneMethods {
 
         game.getGameOverScene().setStats(
                 false,
-                playerManager.getGold(),
+                playerManager.getTotalGoldEarned(),
                 totalEnemiesSpawned,
                 enemiesReachedEnd,
                 towerManager.getTowers().size(),
@@ -795,7 +795,7 @@ public class Playing extends GameScene implements SceneMethods {
         AudioManager.getInstance().playSound("win4");
         game.getGameOverScene().setStats(
                 true,
-                playerManager.getGold(),
+                playerManager.getTotalGoldEarned(),
                 totalEnemiesSpawned,
                 enemiesReachedEnd,
                 towerManager.getTowers().size(),
@@ -805,7 +805,7 @@ public class Playing extends GameScene implements SceneMethods {
         );
         GameStatsRecord record = new GameStatsRecord(
                 currentMapName, true,
-                playerManager.getGold(),
+                playerManager.getTotalGoldEarned(),
                 totalEnemiesSpawned,
                 enemiesReachedEnd,
                 towerManager.getTowers().size(),
