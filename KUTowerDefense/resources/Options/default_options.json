@@ -24,7 +24,7 @@
     },
     "TROLL": {
       "hitPoints": 300,
-      "moveSpeed": 0.15,
+      "moveSpeed": 0.85,
       "goldReward": 10
     }
   },

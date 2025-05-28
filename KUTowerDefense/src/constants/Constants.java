@@ -157,7 +157,7 @@ public class Constants {
                 case TNT:
                     return 1.2f;
                 case TROLL:
-                    return 0.15f;
+                    return 0.35f;
             }
             return 0;
         }
