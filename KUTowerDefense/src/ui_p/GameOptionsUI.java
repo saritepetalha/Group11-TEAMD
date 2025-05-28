@@ -122,6 +122,7 @@ public class GameOptionsUI extends JPanel {
         });
 
         tabbedPane.addTab("General", createGeneralPanel());
+        tabbedPane.addTab("Weather", createWeatherPanel());
         tabbedPane.addTab("Enemy Stats", createEnemyStatsPanel());
         tabbedPane.addTab("Tower Stats", createTowerStatsPanel());
         tabbedPane.addTab("Wave Config", createWavesPanel());
@@ -923,5 +924,54 @@ public class GameOptionsUI extends JPanel {
                 button.setBackground(originalColor);
             }
         });
+    }
+
+    private JPanel createWeatherPanel() {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setOpaque(false);
+        panel.setBorder(new EmptyBorder(10, 10, 10, 10));
+
+        // Weather enabled checkbox
+        JCheckBox weatherEnabledCheck = new JCheckBox("Enable Weather Effects");
+        weatherEnabledCheck.setFont(labelFont);
+        weatherEnabledCheck.setSelected(options.isWeatherEnabled());
+        weatherEnabledCheck.addActionListener(e -> options.setWeatherEnabled(weatherEnabledCheck.isSelected()));
+        panel.add(weatherEnabledCheck);
+        panel.add(Box.createVerticalStrut(10));
+
+        // Weather type selection
+        JLabel weatherTypeLabel = new JLabel("Weather Type:");
+        styleLabel(weatherTypeLabel);
+        panel.add(weatherTypeLabel);
+        panel.add(Box.createVerticalStrut(5));
+
+        String[] weatherTypes = {"Random", "Clear", "Rainy", "Snowy", "Windy"};
+        JComboBox<String> weatherTypeCombo = new JComboBox<>(weatherTypes);
+        weatherTypeCombo.setFont(fieldFont);
+        weatherTypeCombo.setSelectedItem(options.getCurrentWeather());
+        weatherTypeCombo.addActionListener(e -> options.setCurrentWeather((String)weatherTypeCombo.getSelectedItem()));
+        panel.add(weatherTypeCombo);
+
+        // Add weather effects description
+        JTextArea effectsArea = new JTextArea();
+        effectsArea.setEditable(false);
+        effectsArea.setOpaque(false);
+        effectsArea.setFont(labelFont.deriveFont(14f));
+        effectsArea.setForeground(new Color(20, 40, 80));
+        effectsArea.setText(
+            "Weather Effects:\n" +
+            "• Rain: Reduces tower range by 20%\n" +
+            "• Snow: Slows enemies by 25%\n" +
+            "• Wind: Archers have 30% chance to miss\n" +
+            "• Clear: No special effects"
+        );
+        panel.add(Box.createVerticalStrut(15));
+        panel.add(effectsArea);
+
+        // Add some spacing at the bottom
+        panel.add(Box.createVerticalStrut(20));
+
+        return panel;
     }
 }
