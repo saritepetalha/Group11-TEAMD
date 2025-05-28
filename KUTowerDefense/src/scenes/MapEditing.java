@@ -422,10 +422,38 @@ public class MapEditing extends GameScene implements SceneMethods{
             }
 
             // clear any existing end points
+            int prevEndX = -1, prevEndY = -1;
             for (int i = 0; i < overlayData.length; i++) {
                 for (int j = 0; j < overlayData[0].length; j++) {
                     if (overlayData[i][j] == END_POINT) {
                         overlayData[i][j] = NO_OVERLAY;  // rest overlay to no_overlay
+                        prevEndX = j;
+                        prevEndY = i;
+                    }
+                }
+            }
+
+            // Remove previous walls/gate if previous endpoint existed
+            if (prevEndX != -1 && prevEndY != -1) {
+                boolean wasOnLeft = (prevEndX == 0);
+                boolean wasOnRight = (prevEndX == level[0].length - 1);
+                boolean wasOnTop = (prevEndY == 0);
+                boolean wasOnBottom = (prevEndY == level.length - 1);
+                if (wasOnLeft) {
+                    for (int i = 0; i < level.length; i++) {
+                        if (level[i][0] == -3 || level[i][0] == -4) level[i][0] = 5;
+                    }
+                } else if (wasOnRight) {
+                    for (int i = 0; i < level.length; i++) {
+                        if (level[i][level[0].length - 1] == -3 || level[i][level[0].length - 1] == -4) level[i][level[0].length - 1] = 5;
+                    }
+                } else if (wasOnTop) {
+                    for (int j = 0; j < level[0].length; j++) {
+                        if (level[0][j] == -3 || level[0][j] == -4) level[0][j] = 5;
+                    }
+                } else if (wasOnBottom) {
+                    for (int j = 0; j < level[0].length; j++) {
+                        if (level[level.length - 1][j] == -3 || level[level.length - 1][j] == -4) level[level.length - 1][j] = 5;
                     }
                 }
             }
