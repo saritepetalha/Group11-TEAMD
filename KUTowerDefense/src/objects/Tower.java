@@ -23,6 +23,23 @@ public abstract class Tower {
     // Strategy Pattern: Tower targeting behavior
     protected TargetingStrategy targetingStrategy;
 
+    // Debris effect for earthquake destruction
+    public static class Debris {
+        public float x, y, vx, vy;
+        public float alpha;
+        public int color;
+        public int size;
+        public int lifetime;
+        public int age;
+        public Debris(float x, float y, float vx, float vy, int color, int size, int lifetime) {
+            this.x = x; this.y = y; this.vx = vx; this.vy = vy;
+            this.color = color; this.size = size; this.lifetime = lifetime; this.age = 0; this.alpha = 1f;
+        }
+    }
+    public java.util.List<Debris> debrisList = null;
+    public long debrisStartTime = 0;
+    public static final int DEBRIS_DURATION_MS = 500;
+
     public abstract int getType();
 
     public Tower(int x, int y) {

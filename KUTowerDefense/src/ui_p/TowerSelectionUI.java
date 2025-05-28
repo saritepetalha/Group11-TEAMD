@@ -102,6 +102,32 @@ public class TowerSelectionUI {
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
+        // Draw range preview if hovering upgrade button
+        if (upgradeButton != null && upgradeButton.isMouseOver()) {
+            int centerX = selectedTower.getX() + 32;
+            int centerY = selectedTower.getY() + 32;
+            float range = selectedTower.getRange();
+            // Simulate upgraded range for preview only
+            if (selectedTower.getLevel() == 1) {
+                switch (selectedTower.getType()) {
+                    case 0: // Archer
+                        range *= 1.5f;
+                        break;
+                    case 1: // Artillery
+                        range *= 1.2f;
+                        break;
+                    case 2: // Mage
+                        // Mage range does not change on upgrade
+                        break;
+                }
+            }
+            g2d.setColor(new Color(100, 200, 255, 60));
+            g2d.fillOval(centerX - (int)range, centerY - (int)range, (int)range * 2, (int)range * 2);
+            g2d.setColor(new Color(100, 200, 255, 180));
+            g2d.setStroke(new BasicStroke(2));
+            g2d.drawOval(centerX - (int)range, centerY - (int)range, (int)range * 2, (int)range * 2);
+        }
+
         // Draw enhanced range indicator
         drawEnhancedRangeIndicator(g2d);
 
