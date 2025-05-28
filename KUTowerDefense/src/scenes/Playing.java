@@ -340,26 +340,46 @@ public class Playing extends GameScene implements SceneMethods {
         g.setColor(new Color(134, 177, 63, 255));
         g.fillRect(0, 0, GameDimensions.GAME_WIDTH, GameDimensions.GAME_HEIGHT);
 
-        for (int i = 0; i < level.length; i++) {
-            for (int j = 0; j < level[i].length; j++) {
-                int tileId = level[i][j];
+        int rowCount = level.length;
+        int colCount = level[0].length;
 
-                // Skip drawing tower tiles (20=Mage, 21=Artillery, 26=Archer)
+        // Detect which edge contains the gate (endpoint)
+        int gateEdge = -1; // 0=top, 1=bottom, 2=left, 3=right
+        for (int i = 0; i < rowCount; i++) {
+            if (level[i][0] == -4) gateEdge = 2; // left
+            if (level[i][colCount - 1] == -4) gateEdge = 3; // right
+        }
+        for (int j = 0; j < colCount; j++) {
+            if (level[0][j] == -4) gateEdge = 0; // top
+            if (level[rowCount - 1][j] == -4) gateEdge = 1; // bottom
+        }
+
+        for (int i = 0; i < rowCount; i++) {
+            for (int j = 0; j < colCount; j++) {
+                int tileId = level[i][j];
                 if (tileId != 20 && tileId != 21 && tileId != 26) {
-                    // Special handling for wall and gate in playing mode - draw them normally
-                    if (tileId == -3) { // Wall
-                        if (wallImage != null) {
-                            g.drawImage(wallImage, j * GameDimensions.TILE_DISPLAY_SIZE, i * GameDimensions.TILE_DISPLAY_SIZE,
-                                    GameDimensions.TILE_DISPLAY_SIZE, GameDimensions.TILE_DISPLAY_SIZE, null);
+                    if ((tileId == -3 && wallImage != null) || (tileId == -4 && gateImage != null)) {
+                        BufferedImage img = (tileId == -3) ? wallImage : gateImage;
+                        Graphics2D g2d = (Graphics2D) g.create();
+                        int x = j * GameDimensions.TILE_DISPLAY_SIZE;
+                        int y = i * GameDimensions.TILE_DISPLAY_SIZE;
+                        int ts = GameDimensions.TILE_DISPLAY_SIZE;
+                        if (gateEdge == 0) { // top
+                            g2d.drawImage(img, x, y, ts, ts, null);
+                        } else if (gateEdge == 1) { // bottom
+                            g2d.drawImage(img, x, y + ts, ts, -ts, null); // flip vertically
+                        } else if (gateEdge == 2) { // left
+                            g2d.rotate(Math.PI / 2, x + ts / 2, y + ts / 2);
+                            g2d.drawImage(img, x, y, ts, ts, null);
+                        } else if (gateEdge == 3) { // right
+                            g2d.rotate(Math.PI / 2, x + ts / 2, y + ts / 2);
+                            g2d.drawImage(img, x, y, ts, ts, null);
+                        } else {
+                            g2d.drawImage(img, x, y, ts, ts, null);
                         }
-                    } else if (tileId == -4) { // Gate
-                        if (gateImage != null) {
-                            g.drawImage(gateImage, j * GameDimensions.TILE_DISPLAY_SIZE, i * GameDimensions.TILE_DISPLAY_SIZE,
-                                    GameDimensions.TILE_DISPLAY_SIZE, GameDimensions.TILE_DISPLAY_SIZE, null);
-                        }
+                        g2d.dispose();
                     } else if (tileId == 5 && weatherManager != null) {
                         int snowStage = tileManager.getGrassSnowStage(j, i);
-
                         if (snowStage > 0) {
                             BufferedImage snowyGrassSprite = tileManager.getSnowyGrassSprite(snowStage);
                             if (snowyGrassSprite != null) {
@@ -371,7 +391,6 @@ public class Playing extends GameScene implements SceneMethods {
                             g.drawImage(tileManager.getSprite(tileId), j * GameDimensions.TILE_DISPLAY_SIZE, i * GameDimensions.TILE_DISPLAY_SIZE, null);
                         }
                     } else {
-                        // Regular tiles
                         g.drawImage(tileManager.getSprite(tileId), j * GameDimensions.TILE_DISPLAY_SIZE, i * GameDimensions.TILE_DISPLAY_SIZE, null);
                     }
                 }
