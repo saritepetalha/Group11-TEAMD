@@ -136,7 +136,9 @@ public class UltiManager {
                 if(playing.getWeatherManager().isRaining()) {
                     enemy.hurt((int)(lightningDamage * 1.25f), true);
                 }
-                enemy.hurt(lightningDamage, true);
+                else{
+                    enemy.hurt(lightningDamage, true);
+                }
             }
         }
 
