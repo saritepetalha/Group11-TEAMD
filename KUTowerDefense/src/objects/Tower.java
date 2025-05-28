@@ -16,6 +16,10 @@ public abstract class Tower {
     protected int level = 1;
     protected float attackSpeedMultiplier = 1.0f;
 
+    // Destroyed state
+    protected boolean destroyed = false;
+    protected java.awt.image.BufferedImage destroyedSprite = null;
+
     // Strategy Pattern: Tower targeting behavior
     protected TargetingStrategy targetingStrategy;
 
@@ -126,4 +130,9 @@ public abstract class Tower {
     public int getHeight() {
         return 64;
     }
+
+    public boolean isDestroyed() { return destroyed; }
+    public void setDestroyed(boolean destroyed) { this.destroyed = destroyed; }
+    public void setDestroyedSprite(java.awt.image.BufferedImage sprite) { this.destroyedSprite = sprite; }
+    public java.awt.image.BufferedImage getDestroyedSprite() { return destroyedSprite; }
 }

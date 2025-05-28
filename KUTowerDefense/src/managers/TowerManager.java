@@ -47,7 +47,9 @@ public class TowerManager {
     public void update(float speedMultiplier) {
         for (Tower tower : towers) {
             tower.update(speedMultiplier);
-            attackEnemyIfInRange(tower);
+            if (!tower.isDestroyed()) {
+                attackEnemyIfInRange(tower);
+            }
         }
     }
 
@@ -58,11 +60,14 @@ public class TowerManager {
     private void attackEnemyIfInRange(float speedMultiplier) {
         for (Tower tower : towers) {
             tower.update(speedMultiplier);
-            attackEnemyIfInRange(tower);
+            if (!tower.isDestroyed()) {
+                attackEnemyIfInRange(tower);
+            }
         }
     }
 
     private void attackEnemyIfInRange(Tower tower) {
+        if (tower.isDestroyed()) return;
         if (!tower.isCooldownOver()) {
             return; // Tower is on cooldown
         }
@@ -117,16 +122,22 @@ public class TowerManager {
     public void draw(Graphics g) {
         for (Tower tower : towers) {
             BufferedImage sprite = null;
-            if (tower instanceof TowerDecorator) {
+            if (tower.isDestroyed() && tower.getDestroyedSprite() != null) {
+                sprite = tower.getDestroyedSprite();
+                // Draw at 10% size and center on tile
+                int smallW = 56;
+                int smallH = 56;
+                int centerX = tower.getX() + 32 - smallW / 2;
+                int centerY = tower.getY() + 32 - smallH / 2;
+                g.drawImage(sprite, centerX, centerY, smallW, smallH, null);
+                continue;
+            } else if (tower instanceof TowerDecorator) {
                 sprite = ((TowerDecorator) tower).getSprite();
             } else if (tower instanceof objects.ArcherTower) {
-                // Level 1 Archer
                 sprite = towerImages[0];
             } else if (tower instanceof objects.ArtilleryTower) {
-                // Level 1 Artillery
                 sprite = towerImages[1];
             } else if (tower instanceof objects.MageTower) {
-                // Level 1 Mage
                 sprite = towerImages[2];
             }
 
