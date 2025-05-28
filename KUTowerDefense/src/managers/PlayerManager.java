@@ -9,12 +9,14 @@ public class PlayerManager {
     private int health;
     private int shield;
     private GameOptions gameOptions;
+    private int totalGoldEarned;
 
     public PlayerManager(GameOptions options) {
         this.gameOptions = options;
         try {
             if (gameOptions != null) {
                 this.gold = gameOptions.getStartingGold();
+                this.totalGoldEarned = this.gold;
                 this.health = gameOptions.getStartingPlayerHP();
                 this.shield = gameOptions.getStartingShield();
                 System.out.println("PlayerManager initialized with options: Gold=" + gold + ", Health=" + health + ", Shield=" + shield);
@@ -35,6 +37,7 @@ public class PlayerManager {
 
     public void addGold(int amount) {
         this.gold += amount;
+        this.totalGoldEarned += amount;
     }
 
     public boolean spendGold(int amount) {
@@ -103,6 +106,10 @@ public class PlayerManager {
             // Fallback to default max health if options are null
             return MAX_HEALTH;
         }
+    }
+
+    public int getTotalGoldEarned() {
+        return totalGoldEarned;
     }
 
     public void setGold(int gold) {

@@ -40,6 +40,7 @@ public abstract class Enemy {
     private boolean isTeleporting = false;
     private long teleportEffectTimer = 0;
     public static final long TELEPORT_EFFECT_DURATION = 500_000_000L; // 0.5 seconds
+    private boolean invisible = false;
 
     // Combat synergy fields
     private boolean hasCombatSynergy = false;
@@ -291,6 +292,18 @@ public abstract class Enemy {
         }
     }
 
+    public void hurt(int damage, boolean ignoreInvisibility) {
+        if (!ignoreInvisibility && enemyType == Constants.Enemies.GOBLIN && invisible) {
+            return;
+        }
+        this.health -= damage;
+        if (health <= 0) {
+            playDeathSound();
+            alive = false;
+        }
+    }
+
+
     private void playDeathSound() {
         if (enemyType == Constants.Enemies.TROLL) {
             AudioManager.getInstance().playTrollDeathSound();
@@ -523,5 +536,12 @@ public abstract class Enemy {
 
     public boolean hasCombatSynergy() {
         return hasCombatSynergy;
+
+    public boolean isInvisible() {
+        return invisible;
+    }
+
+    public void setInvisible(boolean invisible) {
+        this.invisible = invisible;
     }
 }

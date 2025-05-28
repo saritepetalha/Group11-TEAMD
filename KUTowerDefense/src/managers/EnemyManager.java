@@ -797,6 +797,7 @@ public class EnemyManager {
             if (spawnTime == null) {
                 long currentTime = System.currentTimeMillis();
                 enemySpawnTimes.put(enemy, currentTime);
+                enemy.setInvisible(true);
 
                 return true;
             }
@@ -807,10 +808,10 @@ public class EnemyManager {
             if (isInvisible) {
 
             }
-
+            enemy.setInvisible(isInvisible);
             return isInvisible;
         }
-
+        enemy.setInvisible(false);
         return false;
     }
 
