@@ -143,15 +143,6 @@ public class TowerSelectionUI {
             g2d.setStroke(new BasicStroke(2));
             g2d.drawOval(centerX - (int)adjustedRange, centerY - (int)adjustedRange, 
                         (int)adjustedRange * 2, (int)adjustedRange * 2);
-
-            // Draw upgrade cost
-            g2d.setColor(Color.WHITE);
-            g2d.setFont(new Font("Monospaced", Font.BOLD, 12));
-            String costText = "Upgrade Cost: $" + getUpgradeCost(selectedTower);
-            FontMetrics fm = g2d.getFontMetrics();
-            int textX = centerX - fm.stringWidth(costText) / 2;
-            int textY = centerY - (int)adjustedRange - 10;
-            g2d.drawString(costText, textX, textY);
         }
 
         // Draw enhanced range indicator
