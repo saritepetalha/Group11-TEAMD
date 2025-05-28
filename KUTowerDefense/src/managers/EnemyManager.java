@@ -407,13 +407,7 @@ public class EnemyManager {
         float distance = (float) Math.sqrt(xDiff * xDiff + yDiff * yDiff);
 
         // if enemy is very close to the path point, move to next path point
-        float sizeOffset = 0;
-        switch (e.getSize()) {
-            case LARGE: sizeOffset = 32; break; // adjust as needed for troll size
-            case MEDIUM: sizeOffset = 16; break;
-            case SMALL: sizeOffset = 8; break;
-        }
-        if (distance < e.getSpeed() * speedMultiplier + sizeOffset) {
+        if (distance < e.getSpeed() * speedMultiplier) {
             e.setCurrentPathIndex(pathIndex + 1);
             return;
         }
