@@ -638,27 +638,11 @@ public class EnemyManager {
 
         // Health bar and effects should be drawn with the original transform
         drawHealthBar(g, enemy, drawX, drawY, drawWidth, drawHeight);
-
-        // Draw snowflake icon if slowed
-        if (enemy.isSlowed()) {
-            if (Enemy.snowflakeIcon == null) {
-                Enemy.snowflakeIcon = helpMethods.LoadSave.getImageFromPath("/TowerAssets/snow flake icon.png");
-            }
-            if (Enemy.snowflakeIcon != null) {
-                int healthBarWidth = 40;
-                int healthBarHeight = 4;
-                int healthBarX = drawX + (drawWidth - healthBarWidth) / 2;
-                boolean drawAbove = enemy.getEnemyType() % 2 == 1;
-                int healthBarY = drawAbove ? drawY - 8 : drawY + drawHeight + 2;
-                g.drawImage(Enemy.snowflakeIcon, healthBarX - 14, healthBarY - 4, 12, 12, null);
-            }
-        }
     }
 
     private void drawHealthBar(Graphics g, Enemy enemy, int x, int y, int width, int height) {
-        int healthBarWidth = 40; //enemy.getHealth()/3
+        int healthBarWidth = 40;
         int healthBarHeight = 4;
-
         int healthBarX = x + (width - healthBarWidth) / 2;
 
         // different enemy types get bars in different positions
@@ -696,6 +680,9 @@ public class EnemyManager {
         
         // Draw slow effect icon if active
         if (enemy.isSlowed()) {
+            if (Enemy.snowflakeIcon == null) {
+                Enemy.snowflakeIcon = LoadSave.getImageFromPath("/TowerAssets/snow flake icon.png");
+            }
             if (Enemy.snowflakeIcon != null) {
                 g.drawImage(Enemy.snowflakeIcon, iconX, iconY, 12, 12, null);
                 iconX -= 14; // Move left for next icon
@@ -704,6 +691,9 @@ public class EnemyManager {
         
         // Draw combat synergy icon if active
         if (enemy.hasCombatSynergy()) {
+            if (Enemy.thunderIcon == null) {
+                Enemy.thunderIcon = LoadSave.getImageFromPath("/TowerAssets/thunder_icon.png");
+            }
             if (Enemy.thunderIcon != null) {
                 g.drawImage(Enemy.thunderIcon, iconX, iconY, 12, 12, null);
             }

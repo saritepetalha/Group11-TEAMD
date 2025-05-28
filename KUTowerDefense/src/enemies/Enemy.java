@@ -44,6 +44,7 @@ public abstract class Enemy {
     // Combat synergy fields
     private boolean hasCombatSynergy = false;
     private float originalSpeed;
+    private float synergyGoblinSpeed = 0f;
     public static BufferedImage thunderIcon = null;
 
     public void setAlive(boolean alive) {
@@ -483,17 +484,14 @@ public abstract class Enemy {
 
     public float getEffectiveSpeed() {
         float effectiveSpeed = speed;
-        
-        // Apply slow effect if active
+        // Apply combat synergy first
+        if (hasCombatSynergy) {
+            effectiveSpeed = (originalSpeed + synergyGoblinSpeed) / 2f;
+        }
+        // Then apply slow if active
         if (isSlowed) {
             effectiveSpeed *= currentSlowFactor;
         }
-        
-        // Apply combat synergy if active
-        if (hasCombatSynergy) {
-            effectiveSpeed = originalSpeed;
-        }
-        
         return effectiveSpeed;
     }
 
@@ -508,19 +506,18 @@ public abstract class Enemy {
     public void applyCombatSynergy(float goblinSpeed) {
         if (!hasCombatSynergy) {
             originalSpeed = speed;
-            // Set speed to average of knight and goblin speed
-            speed = (originalSpeed + goblinSpeed) / 2;
             hasCombatSynergy = true;
-            if (thunderIcon == null) {
-                thunderIcon = LoadSave.getImageFromPath("/TowerAssets/thunder_icon.png");
-            }
+        }
+        synergyGoblinSpeed = goblinSpeed;
+        if (thunderIcon == null) {
+            thunderIcon = LoadSave.getImageFromPath("/TowerAssets/thunder_icon.png");
         }
     }
 
     public void removeCombatSynergy() {
         if (hasCombatSynergy) {
-            speed = originalSpeed;
             hasCombatSynergy = false;
+            synergyGoblinSpeed = 0f;
         }
     }
 
