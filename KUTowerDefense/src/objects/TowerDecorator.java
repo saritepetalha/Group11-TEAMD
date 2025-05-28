@@ -6,7 +6,7 @@ import scenes.Playing;
 import java.awt.image.BufferedImage;
 
 public abstract class TowerDecorator extends Tower {
-    protected Tower decoratedTower;
+    public Tower decoratedTower;
 
     public TowerDecorator(Tower decoratedTower) {
         super(decoratedTower.getX(), decoratedTower.getY()); // Pass coordinates to Tower's constructor

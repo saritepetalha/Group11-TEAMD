@@ -23,6 +23,8 @@ import java.util.List;
 public class TowerManager {
     private Playing playing;
     private BufferedImage[] towerImages;
+    private BufferedImage[] nightTowerImages; // [bomb, mage, archer] for night
+    private BufferedImage[] nightUpTowerImages; // [bomb, mage, archer] for night upgraded
     private ArrayList<Tower> towers = new ArrayList<>();
     private List<TowerUpgradeEffect> upgradeEffects = new ArrayList<>();
 
@@ -38,6 +40,22 @@ public class TowerManager {
         towerImages[0] = tilesetImage.getSubimage(2 * 64, 6 * 64, 64, 64); // Archer Tower (row 6, col 2)
         towerImages[1] = tilesetImage.getSubimage(0 * 64, 5 * 64, 64, 64); // Artillery Tower (row 5, col 0)
         towerImages[2] = tilesetImage.getSubimage(1 * 64, 5 * 64, 64, 64); // Mage Tower (row 5, col 1)
+
+        // Load night mode sprites
+        nightTowerImages = new BufferedImage[3];
+        nightUpTowerImages = new BufferedImage[3];
+        BufferedImage nightImg = LoadSave.getImageFromPath("/TowerAssets/towerNight.png");
+        BufferedImage nightUpImg = LoadSave.getImageFromPath("/TowerAssets/towerUpNight.png");
+        if (nightImg != null) {
+            for (int i = 0; i < 3; i++) {
+                nightTowerImages[i] = nightImg.getSubimage(i * 384, 0, 384, 384);
+            }
+        }
+        if (nightUpImg != null) {
+            for (int i = 0; i < 3; i++) {
+                nightUpTowerImages[i] = nightUpImg.getSubimage(i * 384, 0, 384, 384);
+            }
+        }
     }
 
     public void update() {
@@ -120,28 +138,78 @@ public class TowerManager {
     }
 
     public void draw(Graphics g) {
+        boolean isNight = playing.getWeatherManager() != null && playing.getWeatherManager().isNight();
+        float nightIntensity = 0f;
+        if (playing.getWeatherManager() != null) {
+            try {
+                nightIntensity = (float) playing.getWeatherManager().getClass().getMethod("getNightIntensity").invoke(playing.getWeatherManager());
+            } catch (Exception e) {
+                nightIntensity = isNight ? 1f : 0f;
+            }
+        }
         for (Tower tower : towers) {
             BufferedImage sprite = null;
+            BufferedImage nightSprite = null;
+            int typeIdx = -1;
+            if (tower instanceof objects.ArtilleryTower) typeIdx = 0;
+            else if (tower instanceof objects.MageTower) typeIdx = 1;
+            else if (tower instanceof objects.ArcherTower) typeIdx = 2;
+            else if (tower instanceof objects.TowerDecorator) {
+                Tower base = ((objects.TowerDecorator)tower).decoratedTower;
+                if (base instanceof objects.ArtilleryTower) typeIdx = 0;
+                else if (base instanceof objects.MageTower) typeIdx = 1;
+                else if (base instanceof objects.ArcherTower) typeIdx = 2;
+            }
+            boolean isUpgraded = (tower.getLevel() == 2 || tower instanceof objects.TowerDecorator);
+            if (typeIdx != -1) {
+                if (isUpgraded) {
+                    sprite = (nightUpTowerImages[typeIdx] != null) ? null : null; // fallback handled below
+                    nightSprite = nightUpTowerImages[typeIdx];
+                } else {
+                    sprite = (nightTowerImages[typeIdx] != null) ? null : null; // fallback handled below
+                    nightSprite = nightTowerImages[typeIdx];
+                }
+            }
+            // Destroyed towers
             if (tower.isDestroyed() && tower.getDestroyedSprite() != null) {
                 sprite = tower.getDestroyedSprite();
-                // Draw at 10% size and center on tile
                 int smallW = 56;
                 int smallH = 56;
                 int centerX = tower.getX() + 32 - smallW / 2;
                 int centerY = tower.getY() + 32 - smallH / 2;
                 g.drawImage(sprite, centerX, centerY, smallW, smallH, null);
                 continue;
-            } else if (tower instanceof TowerDecorator) {
-                sprite = ((TowerDecorator) tower).getSprite();
-            } else if (tower instanceof objects.ArcherTower) {
-                sprite = towerImages[0];
-            } else if (tower instanceof objects.ArtilleryTower) {
-                sprite = towerImages[1];
-            } else if (tower instanceof objects.MageTower) {
-                sprite = towerImages[2];
             }
-
-            if (sprite != null) {
+            // Fallback to normal logic if not found
+            if (sprite == null) {
+                if (tower instanceof TowerDecorator) {
+                    sprite = ((TowerDecorator) tower).getSprite();
+                } else if (tower instanceof objects.ArcherTower) {
+                    sprite = towerImages[0];
+                } else if (tower instanceof objects.ArtilleryTower) {
+                    sprite = towerImages[1];
+                } else if (tower instanceof objects.MageTower) {
+                    sprite = towerImages[2];
+                }
+            }
+            // Fallback to normal upgraded sprite for upgraded towers
+            if (isUpgraded && sprite == null && tower instanceof TowerDecorator) {
+                sprite = ((TowerDecorator) tower).getSprite();
+            }
+            // Cross-fade between normal and night sprite
+            if (nightSprite != null && sprite != null && nightIntensity > 0f && nightIntensity < 1f) {
+                Graphics2D g2d = (Graphics2D) g;
+                Composite oldComp = g2d.getComposite();
+                // Draw normal sprite with (1-nightIntensity)
+                g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f - nightIntensity));
+                g2d.drawImage(sprite, tower.getX(), tower.getY(), 64, 64, null);
+                // Draw night sprite with nightIntensity
+                g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, nightIntensity));
+                g2d.drawImage(nightSprite, tower.getX(), tower.getY(), 64, 64, null);
+                g2d.setComposite(oldComp);
+            } else if (nightIntensity >= 1f && nightSprite != null) {
+                g.drawImage(nightSprite, tower.getX(), tower.getY(), 64, 64, null);
+            } else if (sprite != null) {
                 g.drawImage(sprite, tower.getX(), tower.getY(), 64, 64, null);
             }
         }
