@@ -126,11 +126,26 @@ public class TowerManager {
             effectiveRange *= playing.getWeatherManager().getTowerRangeMultiplier();
         }
 
-        int range = Utils.GetHypo(tower.getX(), tower.getY(), enemy.getX(), enemy.getY());
+        // Use tower center position for range calculation
+        int towerCenterX = tower.getX() + tower.getWidth() / 2;
+        int towerCenterY = tower.getY() + tower.getHeight() / 2;
+        
+        // Get enemy center position
+        float enemyCenterX = enemy.getSpriteCenterX();
+        float enemyCenterY = enemy.getSpriteCenterY();
+        
+        // Calculate distance between centers
+        float dx = enemyCenterX - towerCenterX;
+        float dy = enemyCenterY - towerCenterY;
+        float distance = (float) Math.sqrt(dx * dx + dy * dy);
+        
+        // Add a small buffer (half of enemy size) to account for enemy hitbox
+        float enemySize = enemy.getWidth() / 2f;
+        float adjustedDistance = distance - enemySize;
 
         boolean canTarget = playing.getEnemyManager().canTargetEnemy(enemy);
 
-        return range < effectiveRange && canTarget;
+        return adjustedDistance < effectiveRange && canTarget;
     }
 
     public BufferedImage[] getTowerImages() {

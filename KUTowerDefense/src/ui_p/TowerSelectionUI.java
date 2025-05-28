@@ -104,28 +104,54 @@ public class TowerSelectionUI {
 
         // Draw range preview if hovering upgrade button
         if (upgradeButton != null && upgradeButton.isMouseOver()) {
-            int centerX = selectedTower.getX() + 32;
-            int centerY = selectedTower.getY() + 32;
-            float range = selectedTower.getRange();
-            // Simulate upgraded range for preview only
+            int centerX = selectedTower.getX() + selectedTower.getWidth() / 2;
+            int centerY = selectedTower.getY() + selectedTower.getHeight() / 2;
+            float baseRange = selectedTower.getRange();
+            float previewRange = baseRange;
+
+            // Calculate upgraded range based on tower type
             if (selectedTower.getLevel() == 1) {
                 switch (selectedTower.getType()) {
                     case 0: // Archer
-                        range *= 1.5f;
+                        previewRange *= 1.5f;
                         break;
                     case 1: // Artillery
-                        range *= 1.2f;
+                        previewRange *= 1.2f;
                         break;
                     case 2: // Mage
                         // Mage range does not change on upgrade
                         break;
                 }
             }
-            g2d.setColor(new Color(100, 200, 255, 60));
-            g2d.fillOval(centerX - (int)range, centerY - (int)range, (int)range * 2, (int)range * 2);
+
+            // Apply weather effects to range preview
+            if (playing.getWeatherManager().isRaining()) {
+                previewRange *= playing.getWeatherManager().getTowerRangeMultiplier();
+            }
+
+            // Add a small buffer to account for enemy size
+            float enemySize = 32f; // Average enemy size
+            float adjustedRange = previewRange + enemySize/2;
+
+            // Draw semi-transparent range area
+            g2d.setColor(new Color(100, 200, 255, 40));
+            g2d.fillOval(centerX - (int)adjustedRange, centerY - (int)adjustedRange, 
+                        (int)adjustedRange * 2, (int)adjustedRange * 2);
+
+            // Draw range border
             g2d.setColor(new Color(100, 200, 255, 180));
             g2d.setStroke(new BasicStroke(2));
-            g2d.drawOval(centerX - (int)range, centerY - (int)range, (int)range * 2, (int)range * 2);
+            g2d.drawOval(centerX - (int)adjustedRange, centerY - (int)adjustedRange, 
+                        (int)adjustedRange * 2, (int)adjustedRange * 2);
+
+            // Draw upgrade cost
+            g2d.setColor(Color.WHITE);
+            g2d.setFont(new Font("Monospaced", Font.BOLD, 12));
+            String costText = "Upgrade Cost: $" + getUpgradeCost(selectedTower);
+            FontMetrics fm = g2d.getFontMetrics();
+            int textX = centerX - fm.stringWidth(costText) / 2;
+            int textY = centerY - (int)adjustedRange - 10;
+            g2d.drawString(costText, textX, textY);
         }
 
         // Draw enhanced range indicator
@@ -148,8 +174,8 @@ public class TowerSelectionUI {
      * Draws an enhanced range indicator with strategy-specific effects
      */
     private void drawEnhancedRangeIndicator(Graphics2D g2d) {
-        int centerX = selectedTower.getX() + 32; // Tower center
-        int centerY = selectedTower.getY() + 32;
+        int centerX = selectedTower.getX() + selectedTower.getWidth() / 2; // Tower center
+        int centerY = selectedTower.getY() + selectedTower.getHeight() / 2;
         float baseRange = selectedTower.getRange();
         float effectiveRange = baseRange;
 
@@ -158,7 +184,11 @@ public class TowerSelectionUI {
             effectiveRange *= playing.getWeatherManager().getTowerRangeMultiplier();
         }
 
-        int range = (int) effectiveRange;
+        // Add a small buffer to account for enemy size
+        float enemySize = 32f; // Average enemy size
+        float adjustedRange = effectiveRange + enemySize/2;
+
+        int range = (int) adjustedRange;
 
         // Get current strategy for visual effects
         StrategyType strategy = targetingButton != null ?

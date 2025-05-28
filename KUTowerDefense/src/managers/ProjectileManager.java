@@ -6,7 +6,6 @@ import helpMethods.LoadSave;
 import objects.Projectile;
 import objects.Tower;
 import scenes.Playing;
-import helpMethods.RotSprite;
 import helpMethods.RotatedProjectileFrameGenerator;
 
 import java.awt.*;
@@ -19,11 +18,11 @@ import static constants.Constants.Projectiles.*;
 public class ProjectileManager {
     private Playing playing;
     private ArrayList<Projectile> projectiles = new ArrayList<>();
-    private BufferedImage[] proj_imgs; // Index 0: ARROW, 1: CANNONBALL (L1), 2: MAGICBOLT (L1)
-    private BufferedImage[] fireball_imgs; // For L2 CANNONBALL animation
-    private BufferedImage[][] rotatedFireballFrames; // For rotated L2 CANNONBALL animation [animFrame][rotFrame]
+    private BufferedImage[] proj_imgs;
+    private BufferedImage[] fireball_imgs;
+    private BufferedImage[][] rotatedFireballFrames;
     private BufferedImage[] explosion_imgs;
-    private BufferedImage[] arrowFrames; // Array for rotated arrow sprites
+    private BufferedImage[] arrowFrames;
     private int projID = 0;
 
     public ProjectileManager(Playing playing) {
@@ -37,413 +36,274 @@ public class ProjectileManager {
         for (int i = 0; i < 3; i++) {
             proj_imgs[i] = LoadSave.getTowerMaterial(i, 24, 24);
         }
-
         fireball_imgs = LoadSave.getFireballAnimation();
         explosion_imgs = LoadSave.getExplosionAnimation();
-
-        // Load rotated fireball frames
         loadRotatedFireballFrames();
     }
 
     private void loadArrowFrames() {
-        final int frameCount = 72; // Same as original: 72 frames with 5.0 degree steps
-
-        // Try to load pre-generated frames
+        final int frameCount = 72;
         arrowFrames = LoadSave.loadArrowFrames(frameCount);
-
         if (arrowFrames == null) {
-            System.out.println("Pre-generated arrow frames not found. Generating them automatically...");
             RotatedProjectileFrameGenerator.generateAndSaveArrowFrames();
-
-            // Try loading again after generation
             arrowFrames = LoadSave.loadArrowFrames(frameCount);
-
-            if (arrowFrames != null) {
-                System.out.println("Arrow frames generated and loaded successfully.");
-            } else {
-                System.err.println("Failed to generate or load arrow frames!");
-            }
-        } else {
-            System.out.println("Loaded " + frameCount + " pre-generated arrow frames.");
         }
     }
 
     private void loadRotatedFireballFrames() {
-        // Try to load pre-generated rotated fireball frames
         rotatedFireballFrames = LoadSave.loadFireballFrames();
-
         if (rotatedFireballFrames == null) {
-            System.out.println("Pre-generated rotated fireball frames not found. Generating them automatically...");
             RotatedProjectileFrameGenerator.generateAndSaveFireballFrames();
-
-            // Try loading again after generation
             rotatedFireballFrames = LoadSave.loadFireballFrames();
-
-            if (rotatedFireballFrames != null) {
-                System.out.println("Rotated fireball frames generated and loaded successfully.");
-            } else {
-                System.err.println("Failed to generate or load rotated fireball frames!");
-            }
-        } else {
-            System.out.println("Loaded pre-generated rotated fireball frames (5 animation frames × 36 rotation frames).");
         }
     }
 
     public void newProjectile(Tower tower, Enemy enemy) {
+        // Get projectile type and basic properties
         int projType = getProjectileType(tower);
+        float projectileSpeed = Constants.Projectiles.getSpeed(projType);
 
-        // get the exact center of the enemy's sprite using the dedicated methods
+        // Get tower and enemy centers
+        int towerCenterX = tower.getX() + tower.getWidth() / 2;
+        int towerCenterY = tower.getY() + tower.getHeight() / 2;
         float enemyCenterX = enemy.getSpriteCenterX();
         float enemyCenterY = enemy.getSpriteCenterY();
 
-        // tower center (32 is half of a tile's size - 64 pixels)
-        int towerCenterX = tower.getX() + 32;
-        int towerCenterY = tower.getY() + 32;
+        // Calculate direction to enemy
+        float dx = enemyCenterX - towerCenterX;
+        float dy = enemyCenterY - towerCenterY;
+        float distance = (float) Math.sqrt(dx * dx + dy * dy);
 
-        // calculate distance and direction components
-        float xDiff = enemyCenterX - towerCenterX;
-        float yDiff = enemyCenterY - towerCenterY;
-        float distance = (float) Math.sqrt(xDiff * xDiff + yDiff * yDiff);
-
-        // Calculate angle for sprite rotation (in degrees)
-        float angle = (float) Math.toDegrees(Math.atan2(yDiff, xDiff));
-        // Normalize angle to 0-360 range
+        // Calculate angle for sprite rotation
+        float angle = (float) Math.toDegrees(Math.atan2(dy, dx));
         if (angle < 0) angle += 360;
 
-        // Calculate time to reach target based on projectile speed
-        float projectileSpeed = Constants.Projectiles.getSpeed(projType);
-        float timeToTarget = distance / projectileSpeed;
+        // Calculate speed components
+        float xSpeed = (dx / distance) * projectileSpeed;
+        float ySpeed = (dy / distance) * projectileSpeed;
 
-        // Get enemy's movement direction and speed
-        float enemyDirX = enemy.getDirX();
-        float enemyDirY = enemy.getDirY();
-        float enemySpeed = enemy.getSpeed();
+        // Create and add projectile
+        Projectile projectile = new Projectile(
+            towerCenterX,
+            towerCenterY,
+            xSpeed,
+            ySpeed,
+            projID++,
+            tower.getDamage(),
+            projType,
+            tower.getLevel(),
+            angle
+        );
 
-        // Get current game speed multiplier
-        float gameSpeedMultiplier = playing.getGameSpeedMultiplier();
-
-        // Predict enemy position after timeToTarget, considering both speed and direction
-        // Adjust prediction based on game speed
-        float predictedX = enemyCenterX + (enemySpeed * timeToTarget * enemyDirX * gameSpeedMultiplier);
-        float predictedY = enemyCenterY + (enemySpeed * timeToTarget * enemyDirY * gameSpeedMultiplier);
-
-        // Add a small random offset to make shots more natural
-        float randomOffset = (float) (Math.random() * 0.1 - 0.05); // ±5% random offset
-        float adjustedSpeed = projectileSpeed * (1 + randomOffset);
-
-        // Recalculate direction to predicted position
-        xDiff = predictedX - towerCenterX;
-        yDiff = predictedY - towerCenterY;
-        distance = (float) Math.sqrt(xDiff * xDiff + yDiff * yDiff);
-
-        // Recalculate angle based on predicted position
-        angle = (float) Math.toDegrees(Math.atan2(yDiff, xDiff));
-        if (angle < 0) angle += 360;
-
-        // Windy weather effect: Archer arrows have 30% chance to miss and fly off-map
-        boolean willMiss = false;
-        if (playing.getWeatherManager().isWindy() &&
-                projType == Constants.Projectiles.ARROW &&
-                Math.random() < 0.3) {
-            willMiss = true;
-
-            // Calculate a direction that will make the arrow fly off the map
-            // Add random deviation of 45-90 degrees from the original direction
-            float deviationAngle = (float) (Math.random() * 45 + 45); // 45-90 degrees
-            if (Math.random() < 0.5) deviationAngle = -deviationAngle; // Random left or right
-
-            angle += deviationAngle;
-            if (angle < 0) angle += 360;
-            if (angle >= 360) angle -= 360;
-
-            // Recalculate direction for the missed shot
-            float missAngleRad = (float) Math.toRadians(angle);
-            xDiff = (float) Math.cos(missAngleRad) * distance;
-            yDiff = (float) Math.sin(missAngleRad) * distance;
-        }
-
-        // Normalize direction and apply speed
-        float xSpeed = (xDiff / distance) * adjustedSpeed;
-        float ySpeed = (yDiff / distance) * adjustedSpeed;
-
-        // Create projectile with miss flag
-        Projectile projectile = new Projectile(towerCenterX, towerCenterY, xSpeed, ySpeed, projID++, tower.getDamage(), projType, tower.getLevel(), angle);
-        if (willMiss) {
+        // Handle windy weather effect for archer towers
+        if (playing.getWeatherManager().isWindy() && 
+            projType == Constants.Projectiles.ARROW && 
+            Math.random() < 0.3) {
             projectile.setWillMiss(true);
         }
+
         projectiles.add(projectile);
     }
 
     public void update() {
-        for (Projectile currentProjectile : projectiles) {
-            if (currentProjectile.isActive()) {
-                if (currentProjectile.isExploding()) {
-                    currentProjectile.incrementExplosionFrame();
-                } else {
-                    currentProjectile.move();
-                    if (currentProjectile.getProjectileType() == Constants.Projectiles.CANNONBALL) {
-                        currentProjectile.incrementAnimationFrame();
-                    }
-                    if (!currentProjectile.isHit() && isEnemyShot(currentProjectile)) {
-                        if (currentProjectile.getProjectileType() == Constants.Projectiles.CANNONBALL) {
-                            currentProjectile.setExploding(true);
-                        } else {
-                            currentProjectile.setHit();
-                        }
-                    }
-
-                    // Check if projectile is off-screen and deactivate it
-                    // But allow missed arrows to fly off-map completely
-                    if (!currentProjectile.willMiss() && isProjectileOffScreen(currentProjectile)) {
-                        currentProjectile.setActive(false);
-                    } else if (currentProjectile.willMiss() && isProjectileFarOffScreen(currentProjectile)) {
-                        // Only deactivate missed arrows when they're very far off screen
-                        currentProjectile.setActive(false);
-                    }
-                }
-                currentProjectile.update();
-            }
-        }
+        update(1.0f);
     }
 
     public void update(float gameSpeedMultiplier) {
-        for (Projectile currentProjectile : projectiles) {
-            if (currentProjectile.isActive()) {
-                if (currentProjectile.isExploding()) {
-                    currentProjectile.incrementExplosionFrame();
-                } else {
-                    currentProjectile.move(gameSpeedMultiplier);
-                    if (currentProjectile.getProjectileType() == Constants.Projectiles.CANNONBALL) {
-                        currentProjectile.incrementAnimationFrame();
-                    }
-                    if (!currentProjectile.isHit() && isEnemyShot(currentProjectile)) {
-                        if (currentProjectile.getProjectileType() == Constants.Projectiles.CANNONBALL) {
-                            currentProjectile.setExploding(true);
-                        } else {
-                            currentProjectile.setHit();
-                        }
-                    }
+        for (Projectile projectile : projectiles) {
+            if (!projectile.isActive()) continue;
 
-                    // Check if projectile is off-screen and deactivate it
-                    // But allow missed arrows to fly off-map completely
-                    if (!currentProjectile.willMiss() && isProjectileOffScreen(currentProjectile)) {
-                        currentProjectile.setActive(false);
-                    } else if (currentProjectile.willMiss() && isProjectileFarOffScreen(currentProjectile)) {
-                        // Only deactivate missed arrows when they're very far off screen
-                        currentProjectile.setActive(false);
+            if (projectile.isExploding()) {
+                projectile.incrementExplosionFrame();
+            } else {
+                // Move projectile
+                projectile.move(gameSpeedMultiplier);
+
+                // Update animation for cannonballs
+                if (projectile.getProjectileType() == CANNONBALL) {
+                    projectile.incrementAnimationFrame();
+                }
+
+                // Check for hits
+                if (!projectile.isHit() && !projectile.willMiss() && isEnemyShot(projectile)) {
+                    if (projectile.getProjectileType() == CANNONBALL) {
+                        projectile.setExploding(true);
+                    } else {
+                        projectile.setHit();
                     }
                 }
-                currentProjectile.update();
+
+                // Remove projectiles that are off screen
+                if (isProjectileOffScreen(projectile)) {
+                    projectile.setActive(false);
+                }
             }
+            projectile.update();
         }
     }
 
     private boolean isEnemyShot(Projectile projectile) {
-        // If projectile is marked to miss, it won't hit any enemy
-        if (projectile.willMiss()) {
-            return false;
-        }
-
         for (Enemy enemy : playing.getEnemyManager().getEnemies()) {
-            if (enemy.isAlive()) {
-                // Get enemy's actual sprite bounds for visual hit detection
-                Rectangle enemyBounds = enemy.getBounds();
+            if (!enemy.isAlive()) continue;
 
-                // Calculate the actual sprite center and size based on enemy type
-                float centerX = enemy.getSpriteCenterX();
-                float centerY = enemy.getSpriteCenterY();
+            // Get enemy center and hit area
+            float centerX = enemy.getSpriteCenterX();
+            float centerY = enemy.getSpriteCenterY();
+            int hitSize = getHitSize(enemy);
 
-                // Create a hit area that scales with enemy size
-                int hitSize;
-                switch (enemy.getSize()) {
-                    case SMALL:
-                        hitSize = 16;  // Smaller hit area for small enemies
-                        break;
-                    case MEDIUM:
-                        hitSize = 24;  // Medium hit area for medium enemies
-                        break;
-                    case LARGE:
-                        hitSize = 32;  // Larger hit area for large enemies
-                        break;
-                    default:
-                        hitSize = 20;
+            // Create hit area
+            Rectangle hitArea = new Rectangle(
+                (int)centerX - hitSize/2,
+                (int)centerY - hitSize/2,
+                hitSize,
+                hitSize
+            );
+
+            // Check for hit
+            if (hitArea.contains(projectile.getPos())) {
+                // Apply damage
+                enemy.hurt(projectile.getDamage());
+                playing.addTotalDamage(projectile.getDamage());
+
+                // Handle enemy death
+                if (!enemy.isAlive()) {
+                    playing.incrementEnemyDefeated();
                 }
 
-                Rectangle hitArea = new Rectangle(
-                        (int)centerX - hitSize/2,
-                        (int)centerY - hitSize/2,
-                        hitSize,
-                        hitSize
-                );
+                // Apply special effects
+                applySpecialEffects(projectile, enemy);
 
-                // Check if the projectile hits the enemy's sprite center
-                if (hitArea.contains(projectile.getPos())) {
-                    enemy.hurt(projectile.getDamage());
-                    playing.addTotalDamage(projectile.getDamage());
-
-                    if (!enemy.isAlive()) {
-                        playing.incrementEnemyDefeated();
-                    }
-
-                    // Mage slow effect
-                    if (projectile.getProjectileType() == Constants.Projectiles.MAGICBOLT && projectile.getLevel() == 2) {
-                        // Apply a default slow from projectiles, e.g., 50% slow for 2 seconds (120 ticks)
-                        enemy.applySlow(0.5f, 120);
-                    }
-
-                    // Mage teleport effect - "Back to step 1" mechanic
-                    if (projectile.getProjectileType() == Constants.Projectiles.MAGICBOLT) {
-                        if (Math.random() < 0.03) { // 3% chance to teleport
-                            // Apply teleport visual effect
-                            enemy.applyTeleportEffect();
-                            // Teleport the enemy back to the start of the path
-                            playing.getEnemyManager().teleportEnemyToStart(enemy);
-                        }
-                    }
-
-                    // handle AOE damage for CANNONBALL projectile type
-                    if (projectile.getProjectileType() == Constants.Projectiles.CANNONBALL) {
-                        handleAOEDamage(projectile, enemy);
-                    }
-
-                    return true;
-                }
+                return true;
             }
         }
         return false;
     }
 
-    /**
-     * Handles AOE (Area of Effect) damage for artillery towers
-     * @param projectile The projectile that hit
-     * @param targetEnemy The enemy that was directly hit
-     */
-    private void handleAOEDamage(Projectile projectile, Enemy targetEnemy) {
-        // get AOE radius from the constants - artillery has AOE damage
-        float aoeDamageRadius = Constants.Towers.getAOERadius(Constants.Towers.ARTILLERY);
+    private int getHitSize(Enemy enemy) {
+        switch (enemy.getSize()) {
+            case SMALL: return 16;
+            case MEDIUM: return 24;
+            case LARGE: return 32;
+            default: return 20;
+        }
+    }
 
-        // calculate center position of the hit enemy using sprite center methods
+    private void applySpecialEffects(Projectile projectile, Enemy enemy) {
+        // Mage slow effect
+        if (projectile.getProjectileType() == MAGICBOLT && projectile.getLevel() == 2) {
+            enemy.applySlow(0.5f, 120);
+        }
+
+        // Mage teleport effect
+        if (projectile.getProjectileType() == MAGICBOLT && Math.random() < 0.03) {
+            enemy.applyTeleportEffect();
+            playing.getEnemyManager().teleportEnemyToStart(enemy);
+        }
+
+        // Artillery AOE damage
+        if (projectile.getProjectileType() == CANNONBALL) {
+            handleAOEDamage(projectile, enemy);
+        }
+    }
+
+    private void handleAOEDamage(Projectile projectile, Enemy targetEnemy) {
+        float aoeRadius = Constants.Towers.getAOERadius(ARTILLERY);
         float centerX = targetEnemy.getSpriteCenterX();
         float centerY = targetEnemy.getSpriteCenterY();
 
-        // check all enemies for AOE damage
         for (Enemy enemy : playing.getEnemyManager().getEnemies()) {
-            // skip the already damaged target enemy and dead enemies
-            if (enemy == targetEnemy || !enemy.isAlive()) {
-                continue;
-            }
+            if (enemy == targetEnemy || !enemy.isAlive()) continue;
 
-            // get this enemy's sprite center
-            float enemyX = enemy.getSpriteCenterX();
-            float enemyY = enemy.getSpriteCenterY();
+            float dx = enemy.getSpriteCenterX() - centerX;
+            float dy = enemy.getSpriteCenterY() - centerY;
+            float distance = (float) Math.sqrt(dx * dx + dy * dy);
 
-            // calculate distance between this enemy and the hit enemy
-            float distX = enemyX - centerX;
-            float distY = enemyY - centerY;
-            float distance = (float) Math.sqrt(distX * distX + distY * distY);
-
-            // if within AOE radius, apply half damage
-            if (distance <= aoeDamageRadius) {
+            if (distance <= aoeRadius) {
                 enemy.hurt(projectile.getDamage() / 2);
             }
         }
     }
 
     public void draw(Graphics g) {
-        // Create a copy of the projectiles list to avoid concurrent modification
-        ArrayList<Projectile> projectilesCopy = new ArrayList<>(projectiles);
-
-        for (Projectile currentProjectile : projectilesCopy) {
-            drawProjectile(currentProjectile, g);
+        for (Projectile projectile : new ArrayList<>(projectiles)) {
+            drawProjectile(projectile, g);
         }
     }
 
-    private void drawProjectile(Projectile currentProjectile, Graphics g) {
-        if (currentProjectile.isActive()) {
-            if (currentProjectile.isExploding()) {
-                int frame = currentProjectile.getExplosionFrame();
-                if (frame >= 0 && frame < explosion_imgs.length) {
-                    g.drawImage(explosion_imgs[frame],
-                            (int) currentProjectile.getPos().x - explosion_imgs[frame].getWidth() / 2,
-                            (int) currentProjectile.getPos().y - explosion_imgs[frame].getHeight() / 2,
-                            null);
-                }
-            } else if (currentProjectile.getProjectileType() == Constants.Projectiles.CANNONBALL && currentProjectile.getLevel() == 2) {
-                // Draw Lvl 2 Cannonball animation (rotated fireball)
-                int animFrame = currentProjectile.getAnimationFrame();
+    private void drawProjectile(Projectile projectile, Graphics g) {
+        if (!projectile.isActive()) return;
 
-                if (rotatedFireballFrames != null && animFrame >= 0 && animFrame < rotatedFireballFrames.length) {
-                    // Calculate rotation frame based on projectile angle (10-degree intervals)
-                    float angle = currentProjectile.getRotationAngle();
-                    int rotationFrame = Math.round(angle / 10.0f) % 36; // 36 frames for 360°
+        if (projectile.isExploding()) {
+            drawExplosion(projectile, g);
+        } else if (projectile.getProjectileType() == CANNONBALL && projectile.getLevel() == 2) {
+            drawFireball(projectile, g);
+        } else if (projectile.getProjectileType() == ARROW && arrowFrames != null) {
+            drawArrow(projectile, g);
+        } else {
+            drawDefaultProjectile(projectile, g);
+        }
+    }
 
-                    BufferedImage fireballImg = rotatedFireballFrames[animFrame][rotationFrame];
-                    if (fireballImg != null) {
-                        g.drawImage(fireballImg,
-                                (int) currentProjectile.getPos().x - fireballImg.getWidth() / 2,
-                                (int) currentProjectile.getPos().y - fireballImg.getHeight() / 2,
-                                null);
-                    }
-                } else if (fireball_imgs != null && animFrame >= 0 && animFrame < fireball_imgs.length) {
-                    // Fallback to non-rotated fireball if rotated frames are not available
-                    g.drawImage(fireball_imgs[animFrame],
-                            (int) currentProjectile.getPos().x - fireball_imgs[animFrame].getWidth() / 2,
-                            (int) currentProjectile.getPos().y - fireball_imgs[animFrame].getHeight() / 2,
-                            null);
-                }
-            } else if (currentProjectile.getProjectileType() == Constants.Projectiles.ARROW && arrowFrames != null) {
-                // Use rotated arrow sprites based on direction (already centered)
-                int frameIndex = currentProjectile.getRotationFrameIndex();
-                if (frameIndex >= 0 && frameIndex < arrowFrames.length) {
-                    BufferedImage arrowImg = arrowFrames[frameIndex];
-                    g.drawImage(arrowImg,
-                            (int) currentProjectile.getPos().x - 12,
-                            (int) currentProjectile.getPos().y - 12,
-                            null);
-                }
-            } else {
-                // Default drawing for L1 projectiles (including L1 Cannonball, L1 Magicbolt, L1 Arrow)
-                // Uses proj_imgs and centers the image
-                BufferedImage imgToDraw = proj_imgs[currentProjectile.getProjectileType()];
-                if (imgToDraw != null) {
-                    g.drawImage(imgToDraw,
-                            (int) currentProjectile.getPos().x - imgToDraw.getWidth() / 2,
-                            (int) currentProjectile.getPos().y - imgToDraw.getHeight() / 2,
-                            null);
-                }
+    private void drawExplosion(Projectile projectile, Graphics g) {
+        int frame = projectile.getExplosionFrame();
+        if (frame >= 0 && frame < explosion_imgs.length) {
+            g.drawImage(explosion_imgs[frame],
+                (int)projectile.getPos().x - explosion_imgs[frame].getWidth() / 2,
+                (int)projectile.getPos().y - explosion_imgs[frame].getHeight() / 2,
+                null);
+        }
+    }
+
+    private void drawFireball(Projectile projectile, Graphics g) {
+        int animFrame = projectile.getAnimationFrame();
+        if (rotatedFireballFrames != null && animFrame >= 0 && animFrame < rotatedFireballFrames.length) {
+            float angle = projectile.getRotationAngle();
+            int rotationFrame = Math.round(angle / 10.0f) % 36;
+            BufferedImage fireballImg = rotatedFireballFrames[animFrame][rotationFrame];
+            if (fireballImg != null) {
+                g.drawImage(fireballImg,
+                    (int)projectile.getPos().x - fireballImg.getWidth() / 2,
+                    (int)projectile.getPos().y - fireballImg.getHeight() / 2,
+                    null);
             }
+        }
+    }
+
+    private void drawArrow(Projectile projectile, Graphics g) {
+        int frameIndex = projectile.getRotationFrameIndex();
+        if (frameIndex >= 0 && frameIndex < arrowFrames.length) {
+            g.drawImage(arrowFrames[frameIndex],
+                (int)projectile.getPos().x - 12,
+                (int)projectile.getPos().y - 12,
+                null);
+        }
+    }
+
+    private void drawDefaultProjectile(Projectile projectile, Graphics g) {
+        BufferedImage img = proj_imgs[projectile.getProjectileType()];
+        if (img != null) {
+            g.drawImage(img,
+                (int)projectile.getPos().x - img.getWidth() / 2,
+                (int)projectile.getPos().y - img.getHeight() / 2,
+                null);
         }
     }
 
     private int getProjectileType(Tower tower) {
         switch (tower.getType()) {
-            case ARCHER:
-                return ARROW;
-            case ARTILLERY:
-                return CANNONBALL;
-            case MAGE:
-                return MAGICBOLT;
+            case ARCHER: return ARROW;
+            case ARTILLERY: return CANNONBALL;
+            case MAGE: return MAGICBOLT;
+            default: return ARROW;
         }
-        return 0;
     }
 
     public void clearProjectiles() {
         projectiles.clear();
     }
 
-    /**
-     * Checks if a projectile is off-screen (normal boundary check)
-     */
     private boolean isProjectileOffScreen(Projectile projectile) {
         Point pos = projectile.getPos();
         return pos.x < -50 || pos.x > 1024 + 50 || pos.y < -50 || pos.y > 576 + 50;
-    }
-
-    /**
-     * Checks if a projectile is very far off-screen (for missed arrows)
-     */
-    private boolean isProjectileFarOffScreen(Projectile projectile) {
-        Point pos = projectile.getPos();
-        return pos.x < -200 || pos.x > 1024 + 200 || pos.y < -200 || pos.y > 576 + 200;
     }
 }
