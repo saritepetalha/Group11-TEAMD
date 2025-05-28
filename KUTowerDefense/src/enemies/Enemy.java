@@ -536,6 +536,7 @@ public abstract class Enemy {
 
     public boolean hasCombatSynergy() {
         return hasCombatSynergy;
+    }
 
     public boolean isInvisible() {
         return invisible;
