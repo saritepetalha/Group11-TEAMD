@@ -133,6 +133,9 @@ public class UltiManager {
             float dx = enemy.getX() - x;
             float dy = enemy.getY() - y;
             if (Math.sqrt(dx * dx + dy * dy) <= lightningRadius) {
+                if(playing.getWeatherManager().isRaining()) {
+                    enemy.hurt((int)(lightningDamage * 1.25f), true);
+                }
                 enemy.hurt(lightningDamage, true);
             }
         }
