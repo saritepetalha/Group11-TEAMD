@@ -42,6 +42,12 @@ public abstract class Enemy {
     public static final long TELEPORT_EFFECT_DURATION = 500_000_000L; // 0.5 seconds
     private boolean invisible = false;
 
+    // Combat synergy fields
+    private boolean hasCombatSynergy = false;
+    private float originalSpeed;
+    private float synergyGoblinSpeed = 0f;
+    public static BufferedImage thunderIcon = null;
+
     public void setAlive(boolean alive) {
         this.alive = alive;
     }
@@ -490,11 +496,16 @@ public abstract class Enemy {
     }
 
     public float getEffectiveSpeed() {
-        float currentSpeed = this.speed;
-        if (isSlowed) {
-            currentSpeed *= currentSlowFactor;
+        float effectiveSpeed = speed;
+        // Apply combat synergy first
+        if (hasCombatSynergy) {
+            effectiveSpeed = (originalSpeed + synergyGoblinSpeed) / 2f;
         }
-        return currentSpeed;
+        // Then apply slow if active
+        if (isSlowed) {
+            effectiveSpeed *= currentSlowFactor;
+        }
+        return effectiveSpeed;
     }
 
     /**
@@ -504,6 +515,27 @@ public abstract class Enemy {
     public long getTeleportEffectTimer() {
         return teleportEffectTimer;
     }
+
+    public void applyCombatSynergy(float goblinSpeed) {
+        if (!hasCombatSynergy) {
+            originalSpeed = speed;
+            hasCombatSynergy = true;
+        }
+        synergyGoblinSpeed = goblinSpeed;
+        if (thunderIcon == null) {
+            thunderIcon = LoadSave.getImageFromPath("/TowerAssets/thunder_icon.png");
+        }
+    }
+
+    public void removeCombatSynergy() {
+        if (hasCombatSynergy) {
+            hasCombatSynergy = false;
+            synergyGoblinSpeed = 0f;
+        }
+    }
+
+    public boolean hasCombatSynergy() {
+        return hasCombatSynergy;
 
     public boolean isInvisible() {
         return invisible;

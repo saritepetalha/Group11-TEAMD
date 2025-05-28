@@ -8,4 +8,9 @@ public class Troll extends Enemy {
         // trolls are large and slow, but need slower animation to match their slow movement
         setAnimationSpeed(25);
     }
+
+    @Override
+    public float getEffectiveSpeed() {
+        return 1.0f; // Force troll speed to 1.0f
+    }
 }

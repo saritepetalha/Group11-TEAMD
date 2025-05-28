@@ -37,6 +37,8 @@ import helpMethods.Utils;
 import objects.GridPoint;
 import scenes.Playing;
 import objects.Tower;
+import constants.Constants;
+import ui_p.FireAnimation;
 
 public class EnemyManager {
     private Playing playing;
@@ -228,6 +230,9 @@ public class EnemyManager {
     public void update(float speedMultiplier){
         // Create a copy of the enemies list to avoid concurrent modification
         ArrayList<Enemy> enemiesCopy = new ArrayList<>(enemies);
+
+        // First pass: Update combat synergy
+        updateCombatSynergy();
 
         for (Enemy enemy : enemiesCopy) {
             if (enemy.isAlive()) {
@@ -633,27 +638,11 @@ public class EnemyManager {
 
         // Health bar and effects should be drawn with the original transform
         drawHealthBar(g, enemy, drawX, drawY, drawWidth, drawHeight);
-
-        // Draw snowflake icon if slowed
-        if (enemy.isSlowed()) {
-            if (Enemy.snowflakeIcon == null) {
-                Enemy.snowflakeIcon = helpMethods.LoadSave.getImageFromPath("/TowerAssets/snow flake icon.png");
-            }
-            if (Enemy.snowflakeIcon != null) {
-                int healthBarWidth = 40;
-                int healthBarHeight = 4;
-                int healthBarX = drawX + (drawWidth - healthBarWidth) / 2;
-                boolean drawAbove = enemy.getEnemyType() % 2 == 1;
-                int healthBarY = drawAbove ? drawY - 8 : drawY + drawHeight + 2;
-                g.drawImage(Enemy.snowflakeIcon, healthBarX - 14, healthBarY - 4, 12, 12, null);
-            }
-        }
     }
 
     private void drawHealthBar(Graphics g, Enemy enemy, int x, int y, int width, int height) {
-        int healthBarWidth = 40; //enemy.getHealth()/3
+        int healthBarWidth = 40;
         int healthBarHeight = 4;
-
         int healthBarX = x + (width - healthBarWidth) / 2;
 
         // different enemy types get bars in different positions
@@ -684,6 +673,31 @@ public class EnemyManager {
         g.setColor(new Color(255, 0, 0));
         int currentHealthWidth = (int) (healthBarWidth * enemy.getHealthBarPercentage());
         g.fillRect(healthBarX, healthBarY, currentHealthWidth, healthBarHeight);
+
+        // Draw status effect icons
+        int iconX = healthBarX - 14;
+        int iconY = healthBarY - 4;
+        
+        // Draw slow effect icon if active
+        if (enemy.isSlowed()) {
+            if (Enemy.snowflakeIcon == null) {
+                Enemy.snowflakeIcon = LoadSave.getImageFromPath("/TowerAssets/snow flake icon.png");
+            }
+            if (Enemy.snowflakeIcon != null) {
+                g.drawImage(Enemy.snowflakeIcon, iconX, iconY, 12, 12, null);
+                iconX -= 14; // Move left for next icon
+            }
+        }
+        
+        // Draw combat synergy icon if active
+        if (enemy.hasCombatSynergy()) {
+            if (Enemy.thunderIcon == null) {
+                Enemy.thunderIcon = LoadSave.getImageFromPath("/TowerAssets/thunder_icon.png");
+            }
+            if (Enemy.thunderIcon != null) {
+                g.drawImage(Enemy.thunderIcon, iconX, iconY, 12, 12, null);
+            }
+        }
     }
     public void spawnEnemy(int nextEnemy) {
         addEnemy(nextEnemy);
@@ -838,6 +852,49 @@ public class EnemyManager {
                 drawEnemy(e, g);
             }
         }
+    }
+
+    private void updateCombatSynergy() {
+        // Get all knights and goblins
+        ArrayList<Enemy> knights = new ArrayList<>();
+        ArrayList<Enemy> goblins = new ArrayList<>();
+        
+        for (Enemy enemy : enemies) {
+            if (enemy.isAlive()) {
+                if (enemy.getEnemyType() == Constants.Enemies.WARRIOR) {
+                    knights.add(enemy);
+                } else if (enemy.getEnemyType() == Constants.Enemies.GOBLIN) {
+                    goblins.add(enemy);
+                }
+            }
+        }
+
+        // Check each knight's distance to goblins
+        for (Enemy knight : knights) {
+            boolean hasNearbyGoblin = false;
+            float closestGoblinSpeed = 0;
+            
+            for (Enemy goblin : goblins) {
+                float distance = calculateDistance(knight, goblin);
+                if (distance < 64) { // One tile width
+                    hasNearbyGoblin = true;
+                    closestGoblinSpeed = goblin.getSpeed();
+                    break;
+                }
+            }
+            
+            if (hasNearbyGoblin) {
+                knight.applyCombatSynergy(closestGoblinSpeed);
+            } else {
+                knight.removeCombatSynergy();
+            }
+        }
+    }
+
+    private float calculateDistance(Enemy e1, Enemy e2) {
+        float xDiff = e1.getSpriteCenterX() - e2.getSpriteCenterX();
+        float yDiff = e1.getSpriteCenterY() - e2.getSpriteCenterY();
+        return (float) Math.sqrt(xDiff * xDiff + yDiff * yDiff);
     }
 }
 

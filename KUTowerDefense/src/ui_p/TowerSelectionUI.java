@@ -20,6 +20,7 @@ public class TowerSelectionUI {
     private Tower selectedTower;
     private TheButton upgradeButton;
     private TargetingButton targetingButton;
+    private TheButton reviveButton;
 
     // UI positioning
     private static final int BUTTON_WIDTH = 80;
@@ -64,16 +65,22 @@ public class TowerSelectionUI {
             buttonY = selectedTower.getY() + 70; // Position below tower
         }
 
-        // Create upgrade button
-        upgradeButton = new TheButton("Upgrade", buttonX, buttonY, BUTTON_WIDTH, BUTTON_HEIGHT);
-
-        // Create targeting button below upgrade button
-        targetingButton = new TargetingButton("Targeting",
-                buttonX,
-                buttonY + BUTTON_HEIGHT + BUTTON_SPACING,
-                BUTTON_WIDTH,
-                BUTTON_HEIGHT,
-                selectedTower);
+        if (selectedTower.isDestroyed()) {
+            reviveButton = new TheButton("Revive", buttonX, buttonY, BUTTON_WIDTH, BUTTON_HEIGHT);
+            upgradeButton = null;
+            targetingButton = null;
+        } else {
+            // Create upgrade button
+            upgradeButton = new TheButton("Upgrade", buttonX, buttonY, BUTTON_WIDTH, BUTTON_HEIGHT);
+            // Create targeting button below upgrade button
+            targetingButton = new TargetingButton("Targeting",
+                    buttonX,
+                    buttonY + BUTTON_HEIGHT + BUTTON_SPACING,
+                    BUTTON_WIDTH,
+                    BUTTON_HEIGHT,
+                    selectedTower);
+            reviveButton = null;
+        }
     }
 
     /**
@@ -82,6 +89,7 @@ public class TowerSelectionUI {
     private void clearButtons() {
         upgradeButton = null;
         targetingButton = null;
+        reviveButton = null;
         selectedTower = null;
     }
 
@@ -98,12 +106,15 @@ public class TowerSelectionUI {
         drawEnhancedRangeIndicator(g2d);
 
         // Draw buttons
-        if (upgradeButton != null) {
-            drawUpgradeButton(g2d);
-        }
-
-        if (targetingButton != null) {
-            targetingButton.draw(g);
+        if (selectedTower.isDestroyed() && reviveButton != null) {
+            drawReviveButton(g2d);
+        } else {
+            if (upgradeButton != null) {
+                drawUpgradeButton(g2d);
+            }
+            if (targetingButton != null) {
+                targetingButton.draw(g);
+            }
         }
     }
 
@@ -373,6 +384,37 @@ public class TowerSelectionUI {
         }
     }
 
+    private void drawReviveButton(Graphics2D g2d) {
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+        int reviveCost = getUpgradeCost(selectedTower);
+        boolean canAfford = playing.getPlayerManager().getGold() >= reviveCost;
+        Color bgColor = canAfford ? new Color(100, 150, 100) : new Color(100, 100, 100);
+        Color borderColor = new Color(80, 80, 80);
+        Color textColor = canAfford ? Color.WHITE : new Color(180, 180, 180);
+        g2d.setColor(bgColor);
+        g2d.fillRect(reviveButton.getX(), reviveButton.getY(), reviveButton.getWidth(), reviveButton.getHeight());
+        if (reviveButton.isMouseOver() && canAfford) {
+            g2d.setColor(new Color(255, 255, 255, 50));
+            g2d.fillRect(reviveButton.getX() + 1, reviveButton.getY() + 1,
+                    reviveButton.getWidth() - 2, reviveButton.getHeight() - 2);
+        }
+        if (reviveButton.isMousePressed() && canAfford) {
+            g2d.setColor(new Color(0, 0, 0, 100));
+            g2d.fillRect(reviveButton.getX() + 1, reviveButton.getY() + 1,
+                    reviveButton.getWidth() - 2, reviveButton.getHeight() - 2);
+        }
+        g2d.setColor(borderColor);
+        g2d.setStroke(new BasicStroke(1));
+        g2d.drawRect(reviveButton.getX(), reviveButton.getY(), reviveButton.getWidth(), reviveButton.getHeight());
+        g2d.setColor(textColor);
+        g2d.setFont(new Font("Monospaced", Font.BOLD, 10));
+        String text = "Revive $" + reviveCost;
+        FontMetrics fm = g2d.getFontMetrics();
+        int textX = reviveButton.getX() + (reviveButton.getWidth() - fm.stringWidth(text)) / 2;
+        int textY = reviveButton.getY() + (reviveButton.getHeight() + fm.getAscent()) / 2 - 2;
+        g2d.drawString(text, textX, textY);
+    }
+
     /**
      * Handles mouse movement for button hover detection
      */
@@ -391,6 +433,32 @@ public class TowerSelectionUI {
      */
     public boolean mouseClicked(int mouseX, int mouseY) {
         boolean handled = false;
+
+        if (selectedTower != null && selectedTower.isDestroyed() && reviveButton != null && reviveButton.getBounds().contains(mouseX, mouseY)) {
+            int reviveCost = getUpgradeCost(selectedTower);
+            if (playing.getPlayerManager().getGold() >= reviveCost) {
+                playing.getPlayerManager().spendGold(reviveCost);
+                // Create a new base tower of the same type at the same position
+                objects.Tower newTower = null;
+                switch (selectedTower.getType()) {
+                    case 0: // Archer
+                        newTower = new objects.ArcherTower(selectedTower.getX(), selectedTower.getY());
+                        break;
+                    case 1: // Artillery
+                        newTower = new objects.ArtilleryTower(selectedTower.getX(), selectedTower.getY());
+                        break;
+                    case 2: // Mage
+                        newTower = new objects.MageTower(selectedTower.getX(), selectedTower.getY());
+                        break;
+                }
+                if (newTower != null) {
+                    playing.getTowerManager().replaceTower(selectedTower, newTower);
+                    setSelectedTower(newTower);
+                }
+                playing.updateUIResources();
+            }
+            handled = true;
+        }
 
         if (upgradeButton != null && upgradeButton.getBounds().contains(mouseX, mouseY)) {
             if (selectedTower.isUpgradeable()) {

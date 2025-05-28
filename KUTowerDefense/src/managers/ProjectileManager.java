@@ -293,10 +293,9 @@ public class ProjectileManager {
 
                     // Mage teleport effect - "Back to step 1" mechanic
                     if (projectile.getProjectileType() == Constants.Projectiles.MAGICBOLT) {
-                        if (Math.random() < 0.03) {
-                            // Play a teleport sound or effect here if available
-                            System.out.println("TELEPORT TRIGGERED for enemy " + enemy.getId());
-
+                        if (Math.random() < 0.03) { // 3% chance to teleport
+                            // Apply teleport visual effect
+                            enemy.applyTeleportEffect();
                             // Teleport the enemy back to the start of the path
                             playing.getEnemyManager().teleportEnemyToStart(enemy);
                         }
