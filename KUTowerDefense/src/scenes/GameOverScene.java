@@ -33,7 +33,7 @@ public class GameOverScene extends GameScene implements SceneMethods{
 
     public GameOverScene(Game game) {
         super(game);
-        int buttonWidth = 200;
+        int buttonWidth = 240;
         int buttonHeight = 60;
         int centerX = (1024 - buttonWidth) / 2;
 
