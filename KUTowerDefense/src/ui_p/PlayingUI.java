@@ -310,7 +310,7 @@ public class PlayingUI {
             case RAINY: return "Tower Range -20%";
             case SNOWY: return "Enemy Speed -25%";
             case WINDY: return "Archer Miss Chance +30%";
-            case CLEAR: return "No Effects";
+            case CLEAR: return "No Effect";
             default: return "";
         }
     }

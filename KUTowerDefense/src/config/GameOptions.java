@@ -9,6 +9,10 @@ public class GameOptions {
     private static int startingPlayerHP = 20;
     private int startingShield   = 25;// current in‐game gold
 
+    // ---------- Weather settings ----------
+    private boolean weatherEnabled = true;
+    private String currentWeather = "Random"; // Random, Clear, Rainy, Snowy, Windy
+
     // ---------- Static stats ----------
     private Map<EnemyType, EnemyStats> enemyStats =
             new EnumMap<>(EnemyType.class);
@@ -70,6 +74,13 @@ public class GameOptions {
 
     public int getSavedCastleHealth()      { return savedCastleHealth; }
     public void setSavedCastleHealth(int h){ this.savedCastleHealth = h; }
+
+    public boolean isWeatherEnabled() { return weatherEnabled; }
+    public void setWeatherEnabled(boolean enabled) { this.weatherEnabled = enabled; }
+
+    public String getCurrentWeather() { return currentWeather; }
+    public void setCurrentWeather(String weather) { this.currentWeather = weather; }
+
     /* ---------- Hard-coded defaults (same values as before) ---------- */
     public static GameOptions defaults() {
         GameOptions o = new GameOptions();
@@ -77,6 +88,8 @@ public class GameOptions {
         o.currentGroupIndex  = 0;
         o.savedGold          = 0;
         o.savedCastleHealth  = startingPlayerHP;
+        o.weatherEnabled     = true;
+        o.currentWeather     = "Random";
         // Reset progress trackers
         o.currentWaveIndex = 0;
         o.currentGroupIndex = 0;
