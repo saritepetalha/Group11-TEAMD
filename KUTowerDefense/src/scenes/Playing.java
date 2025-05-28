@@ -648,22 +648,34 @@ public class Playing extends GameScene implements SceneMethods {
     private void handleOptionsButton(boolean isPressed) {
         // Show/hide options menu based on button state
         if (isPressed && !optionsMenuOpen) {
-            // Show options menu
+            // Show options menu and pause the game
             optionsMenuOpen = true;
-            System.out.println("Options menu opened");
+            gamePaused = true;
+            if (playingUI != null && playingUI.getPauseButton() != null) {
+                playingUI.getPauseButton().setMousePressed(true);
+            }
+            System.out.println("Options menu opened and game paused");
         } else if (!isPressed && optionsMenuOpen) {
-            // Hide options menu
+            // Hide options menu and unpause the game
             optionsMenuOpen = false;
-            System.out.println("Options menu closed");
+            gamePaused = false;
+            if (playingUI != null && playingUI.getPauseButton() != null) {
+                playingUI.getPauseButton().setMousePressed(false);
+            }
+            System.out.println("Options menu closed and game resumed");
         }
     }
 
     private void handleBackOptionsButton(boolean isPressed) {
-        // Close options menu when back button is pressed
+        // Close options menu and unpause the game when back button is pressed
         if (isPressed && optionsMenuOpen) {
-            // Hide options menu
+            // Hide options menu and unpause the game
             optionsMenuOpen = false;
-            System.out.println("Options menu closed via back button");
+            gamePaused = false;
+            if (playingUI != null && playingUI.getPauseButton() != null) {
+                playingUI.getPauseButton().setMousePressed(false);
+            }
+            System.out.println("Options menu closed via back button and game resumed");
         }
     }
 
