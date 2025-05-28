@@ -154,37 +154,10 @@ public class TowerManager {
 
     public void draw(Graphics g) {
         boolean isNight = playing.getWeatherManager() != null && playing.getWeatherManager().isNight();
-        float nightIntensity = 0f;
-        if (playing.getWeatherManager() != null) {
-            try {
-                nightIntensity = (float) playing.getWeatherManager().getClass().getMethod("getNightIntensity").invoke(playing.getWeatherManager());
-            } catch (Exception e) {
-                nightIntensity = isNight ? 1f : 0f;
-            }
-        }
+        
         for (Tower tower : towers) {
             BufferedImage sprite = null;
-            BufferedImage nightSprite = null;
-            int typeIdx = -1;
-            if (tower instanceof objects.ArtilleryTower) typeIdx = 0;
-            else if (tower instanceof objects.MageTower) typeIdx = 1;
-            else if (tower instanceof objects.ArcherTower) typeIdx = 2;
-            else if (tower instanceof objects.TowerDecorator) {
-                Tower base = ((objects.TowerDecorator)tower).decoratedTower;
-                if (base instanceof objects.ArtilleryTower) typeIdx = 0;
-                else if (base instanceof objects.MageTower) typeIdx = 1;
-                else if (base instanceof objects.ArcherTower) typeIdx = 2;
-            }
-            boolean isUpgraded = (tower.getLevel() == 2 || tower instanceof objects.TowerDecorator);
-            if (typeIdx != -1) {
-                if (isUpgraded) {
-                    sprite = (nightUpTowerImages[typeIdx] != null) ? null : null; // fallback handled below
-                    nightSprite = nightUpTowerImages[typeIdx];
-                } else {
-                    sprite = (nightTowerImages[typeIdx] != null) ? null : null; // fallback handled below
-                    nightSprite = nightTowerImages[typeIdx];
-                }
-            }
+            
             // Destroyed towers
             if (tower.isDestroyed() && tower.getDestroyedSprite() != null) {
                 sprite = tower.getDestroyedSprite();
@@ -196,6 +169,24 @@ public class TowerManager {
                 sprite = towerImages[1];
             } else if (tower instanceof objects.MageTower) {
                 sprite = towerImages[2];
+            }
+
+            // Switch to night sprites if it's night time
+            if (sprite != null && isNight) {
+                int typeIdx = -1;
+                if (tower instanceof objects.ArtilleryTower) typeIdx = 0;
+                else if (tower instanceof objects.MageTower) typeIdx = 1;
+                else if (tower instanceof objects.ArcherTower) typeIdx = 2;
+                else if (tower instanceof objects.TowerDecorator) {
+                    Tower base = ((objects.TowerDecorator)tower).decoratedTower;
+                    if (base instanceof objects.ArtilleryTower) typeIdx = 0;
+                    else if (base instanceof objects.MageTower) typeIdx = 1;
+                    else if (base instanceof objects.ArcherTower) typeIdx = 2;
+                }
+                if (typeIdx != -1) {
+                    boolean isUpgraded = (tower.getLevel() == 2 || tower instanceof objects.TowerDecorator);
+                    sprite = isUpgraded ? nightUpTowerImages[typeIdx] : nightTowerImages[typeIdx];
+                }
             }
 
             if (sprite != null) {
