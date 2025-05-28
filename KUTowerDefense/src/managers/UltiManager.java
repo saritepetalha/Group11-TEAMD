@@ -57,7 +57,7 @@ public class UltiManager {
 
         for (Enemy enemy : playing.getEnemyManager().getEnemies()) {
             if (enemy.isAlive()) {
-                enemy.hurt(earthquakeDamage);
+                enemy.hurt(earthquakeDamage, true);
             }
         }
 
@@ -133,7 +133,7 @@ public class UltiManager {
             float dx = enemy.getX() - x;
             float dy = enemy.getY() - y;
             if (Math.sqrt(dx * dx + dy * dy) <= lightningRadius) {
-                enemy.hurt(lightningDamage);
+                enemy.hurt(lightningDamage, true);
             }
         }
 
