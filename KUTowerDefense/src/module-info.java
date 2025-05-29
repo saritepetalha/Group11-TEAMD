@@ -9,4 +9,8 @@ module KUTowerDefense {
 	opens stats to com.google.gson;
 	opens managers to com.google.gson;
 
+	exports ui_p;
+	exports scenes;
+	exports managers;
+	exports enemies;
 }

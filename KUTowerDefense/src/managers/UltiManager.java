@@ -41,6 +41,11 @@ public class UltiManager {
         this.playing = playing;
     }
 
+    /**
+     * Requires: Earthquake ability must be ready to use. Player must have enough gold.
+     * Modifies: Player’s gold, enemy health, cooldown state, and active earthquake animation.
+     * Effects: Deals area damage to all enemies on screen, deducts gold, and sets earthquake on cooldown.
+     */
     public void triggerEarthquake() {
         if (!canUseEarthquake())
             return;
@@ -151,6 +156,12 @@ public class UltiManager {
         return lightningRadius;
     }
 
+    /**
+     * Requires: x and y must be within game world bounds. Player must have enough gold.
+     * Modifies: player’s gold, list of enemies (by applying damage), ulti cooldown state.
+     * Effects: Deals 80 damage to each enemy within 100 unit radius of (x, y), spawns lightning animation,
+     *          reduces player’s gold by cost, and puts Lightning ultimate on cooldown.
+     */
     public void triggerLightningAt(int x, int y) {
         if (!canUseLightning()) return;
         if (playing.getPlayerManager().getGold() < lightningCost) return;
