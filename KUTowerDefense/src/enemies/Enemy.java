@@ -473,7 +473,7 @@ public abstract class Enemy {
      */
     public void applyTeleportEffect() {
         isTeleporting = true;
-        teleportEffectTimer = System.nanoTime();
+        teleportEffectTimer = TELEPORT_EFFECT_DURATION;
     }
 
     /**
@@ -484,11 +484,29 @@ public abstract class Enemy {
     }
 
     private void updateTeleportEffect() {
-        if (isTeleporting && System.nanoTime() - teleportEffectTimer > TELEPORT_EFFECT_DURATION) {
-            isTeleporting = false;
+        if (isTeleporting) {
+            teleportEffectTimer--;
+            if (teleportEffectTimer <= 0) {
+                isTeleporting = false;
+            }
         }
     }
 
+    /**
+     * REQUIRES:
+     * - Enemy object must have been initialized before (constructor must have been called).
+     * - This method is designed to be called on every game tick.
+
+     * MODIFIES:
+     * - slowTimer (decreased if active)
+     * - teleportEffectTimer (decreased if active)
+     * - aniTick and aniIndex (animation advances)
+
+     * EFFECTS:
+     * - If the enemy is slowed, the slow duration is reduced and if its duration expires, the effect is removed.
+     * - If the teleport effect is present, the remaining duration is reduced and if its duration expires, the effect is removed.
+     * - The enemy's animation is advanced by one step.
+     **/
     public void update() {
         updateSlow();
         updateTeleportEffect();
@@ -545,4 +563,13 @@ public abstract class Enemy {
     public void setInvisible(boolean invisible) {
         this.invisible = invisible;
     }
+
+    public long getSlowTimer() {
+        return slowTimer;
+    }
+
+    public int getAniTick() {
+        return animationTick;
+    }
+
 }
