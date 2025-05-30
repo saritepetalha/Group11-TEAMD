@@ -359,4 +359,44 @@ public class TowerManagerTest {
         assertTrue(repOk(towerManager), "Representation invariant should hold after clearing empty collection");
         assertTrue(towerManager.getTowers().isEmpty(), "Collection should remain empty");
     }
+
+    /**
+     * Test Case 6: Test update operations and state consistency.
+     *
+     * Verifies that update operations maintain the representation invariant
+     * and that the system remains in a consistent state.
+     */
+    @Test
+    @DisplayName("Test 6: Update operations maintain state consistency")
+    void testUpdateOperationsMaintainStateConsistency() {
+        // Setup: Build some towers
+        towerManager.buildArcherTower(64, 64);
+        towerManager.buildMageTower(128, 128);
+
+        assertTrue(repOk(towerManager), "Initial state should maintain invariant");
+
+        // Test basic update
+        assertDoesNotThrow(() -> {
+            towerManager.update();
+        }, "Basic update should not throw exception");
+
+        assertTrue(repOk(towerManager), "State should remain valid after update");
+
+        // Test update with speed multiplier
+        assertDoesNotThrow(() -> {
+            towerManager.update(2.0f);
+        }, "Update with speed multiplier should not throw exception");
+
+        assertTrue(repOk(towerManager), "State should remain valid after speed multiplier update");
+
+        // Test drawing (visual operations should not affect logical state)
+        assertDoesNotThrow(() -> {
+            towerManager.draw(mockGraphics);
+        }, "Drawing should not throw exception");
+
+        assertTrue(repOk(towerManager), "State should remain valid after drawing");
+
+        // Verify towers are still in collection and unchanged
+        assertEquals(2, towerManager.getTowers().size(), "Should still have 2 towers after updates");
+    }
 } 
