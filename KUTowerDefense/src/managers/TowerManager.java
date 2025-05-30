@@ -13,6 +13,9 @@ import scenes.Playing;
 import ui_p.DeadTree;
 import helpMethods.Utils;
 import ui_p.LiveTree;
+import objects.Warrior;
+import objects.WizardWarrior;
+import objects.ArcherWarrior;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -27,6 +30,7 @@ public class TowerManager {
     private BufferedImage[] nightUpTowerImages; // [bomb, mage, archer] for night upgraded
     private ArrayList<Tower> towers = new ArrayList<>();
     private List<TowerUpgradeEffect> upgradeEffects = new ArrayList<>();
+    private List<Warrior> warriors = new ArrayList<>();
 
     public TowerManager(Playing playing) {
         this.playing = playing;
@@ -69,6 +73,7 @@ public class TowerManager {
                 attackEnemyIfInRange(tower);
             }
         }
+        updateWarriors(speedMultiplier); // Ensure warriors are updated
     }
 
     private void attackEnemyIfInRange() {
@@ -249,6 +254,8 @@ public class TowerManager {
                 }
             }
         }
+        // Draw warriors
+        drawWarriors(g);
         // Draw upgrade effects
         Graphics2D g2d = (Graphics2D) g;
         Iterator<TowerUpgradeEffect> it = upgradeEffects.iterator();
@@ -369,6 +376,101 @@ public class TowerManager {
 
     public void triggerUpgradeEffect(Tower tower) {
         upgradeEffects.add(new TowerUpgradeEffect(tower.getX() + 32, tower.getY() + 32));
+    }
+
+    // Method to spawn a Wizard Warrior
+    public void spawnWizardWarrior(int x, int y) {
+        warriors.add(new WizardWarrior(x, y));
+    }
+
+    // Method to spawn an Archer Warrior
+    public void spawnArcherWarrior(int x, int y) {
+        warriors.add(new ArcherWarrior(x, y));
+    }
+
+    public List<Warrior> getWarriors() {
+        return warriors;
+    }
+
+    public void updateWarriors(float speedMultiplier) {
+        for (Warrior warrior : warriors) {
+            warrior.update(speedMultiplier); // Handles cooldown
+            warrior.updateAnimationTick(); // Update animation frame
+            if (!warrior.isCooldownOver()) {
+                continue;
+            }
+            // Attack logic for warriors
+            attackEnemyIfInRange(warrior);
+        }
+    }
+
+    private void attackEnemyIfInRange(Warrior warrior) {
+        // Collect all enemies in range
+        List<Enemy> enemiesInRange = new ArrayList<>();
+        for (Enemy enemy : playing.getEnemyManager().getEnemies()) {
+            if (enemy.isAlive() && isEnemyInRange(warrior, enemy)) {
+                enemiesInRange.add(enemy);
+            }
+        }
+
+        // Use the warrior's targeting strategy to select the best target
+        if (!enemiesInRange.isEmpty()) {
+            TargetingStrategy strategy = warrior.getTargetingStrategy();
+            Enemy target = strategy.selectTarget(enemiesInRange, warrior);
+
+            if (target != null) {
+                playing.shootEnemy(warrior, target);
+                warrior.resetCooldown();
+            }
+        }
+    }
+
+    private boolean isEnemyInRange(Warrior warrior, Enemy enemy) {
+        float effectiveRange = warrior.getRange();
+        if (playing.getWeatherManager().isRaining()) {
+            effectiveRange *= playing.getWeatherManager().getTowerRangeMultiplier();
+        }
+
+        // Use warrior center position for range calculation
+        int warriorCenterX = warrior.getX() + warrior.getWidth() / 2;
+        int warriorCenterY = warrior.getY() + warrior.getHeight() / 2;
+        
+        // Get enemy center position
+        float enemyCenterX = enemy.getSpriteCenterX();
+        float enemyCenterY = enemy.getSpriteCenterY();
+        
+        // Calculate distance between centers
+        float dx = enemyCenterX - warriorCenterX;
+        float dy = enemyCenterY - warriorCenterY;
+        float distance = (float) Math.sqrt(dx * dx + dy * dy);
+        
+        // Add a small buffer (half of enemy size) to account for enemy hitbox
+        float enemySize = enemy.getWidth() / 2f;
+        float adjustedDistance = distance - enemySize;
+
+        boolean canTarget = playing.getEnemyManager().canTargetEnemy(enemy);
+
+        return adjustedDistance < effectiveRange && canTarget;
+    }
+
+    public void drawWarriors(Graphics g) {
+        for (Warrior warrior : warriors) {
+            BufferedImage[] frames = warrior.getAnimationFrames();
+            if (frames != null && frames.length > 0) {
+                int frameIndex = warrior.getAnimationIndex();
+                if (frameIndex < frames.length) {
+                    BufferedImage sprite = frames[frameIndex];
+                    if (sprite != null) {
+                        int x = warrior.getX();
+                        int y = warrior.getY();
+                        // Adjust drawing position to center the warrior on the tile if necessary
+                        // Assuming warrior images are similar in size to tower images (64x64 or need scaling)
+                        // For now, direct drawing at x,y. May need to adjust x,y if sprite is not tile-centered.
+                        g.drawImage(sprite, x, y, 64, 64, null);
+                    }
+                }
+            }
+        }
     }
 }
 

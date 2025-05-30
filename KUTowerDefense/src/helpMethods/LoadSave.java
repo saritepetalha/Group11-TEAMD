@@ -8,6 +8,8 @@ import java.util.ArrayList;
 
 import com.google.gson.*;
 import com.google.gson.stream.JsonReader;
+import objects.Warrior;
+import objects.WizardWarrior;
 
 public class LoadSave {
 
@@ -456,6 +458,23 @@ public class LoadSave {
             }
         }
 
+        return frames;
+    }
+
+    public static BufferedImage getWarriorImage(Warrior warrior) {
+        String path = "/Warriors/" + (warrior instanceof WizardWarrior ? "wizard.png" : "archer.png");
+        return getImageFromPath(path);
+    }
+
+    public static BufferedImage[] getWarriorAnimation(Warrior warrior) {
+        BufferedImage spriteSheet = getWarriorImage(warrior);
+        int frameCount = warrior instanceof WizardWarrior ? 7 : 14;
+        int frameWidth = spriteSheet.getWidth() / frameCount;
+        int frameHeight = spriteSheet.getHeight();
+        BufferedImage[] frames = new BufferedImage[frameCount];
+        for (int i = 0; i < frameCount; i++) {
+            frames[i] = spriteSheet.getSubimage(i * frameWidth, 0, frameWidth, frameHeight);
+        }
         return frames;
     }
 

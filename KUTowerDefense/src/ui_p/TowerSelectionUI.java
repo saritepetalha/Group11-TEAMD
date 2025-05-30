@@ -4,6 +4,9 @@ import objects.Tower;
 import strategies.TargetingStrategyFactory.StrategyType;
 import scenes.Playing;
 import constants.GameDimensions;
+import objects.WizardWarrior;
+import objects.ArcherWarrior;
+import objects.Warrior;
 
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
@@ -21,6 +24,7 @@ public class TowerSelectionUI {
     private TheButton upgradeButton;
     private TargetingButton targetingButton;
     private TheButton reviveButton;
+    private TheButton spawnButton;
 
     // UI positioning
     private static final int BUTTON_WIDTH = 80;
@@ -69,6 +73,7 @@ public class TowerSelectionUI {
             reviveButton = new TheButton("Revive", buttonX, buttonY, BUTTON_WIDTH, BUTTON_HEIGHT);
             upgradeButton = null;
             targetingButton = null;
+            spawnButton = null;
         } else {
             // Create upgrade button
             upgradeButton = new TheButton("Upgrade", buttonX, buttonY, BUTTON_WIDTH, BUTTON_HEIGHT);
@@ -79,6 +84,16 @@ public class TowerSelectionUI {
                     BUTTON_WIDTH,
                     BUTTON_HEIGHT,
                     selectedTower);
+            // Create spawn button below targeting button, only for Archer and Mage Towers
+            if (selectedTower instanceof objects.ArcherTower || selectedTower instanceof objects.MageTower) {
+                spawnButton = new TheButton("Spawn",
+                        buttonX,
+                        buttonY + 2 * (BUTTON_HEIGHT + BUTTON_SPACING),
+                        BUTTON_WIDTH,
+                        BUTTON_HEIGHT);
+            } else {
+                spawnButton = null;
+            }
             reviveButton = null;
         }
     }
@@ -90,6 +105,7 @@ public class TowerSelectionUI {
         upgradeButton = null;
         targetingButton = null;
         reviveButton = null;
+        spawnButton = null;
         selectedTower = null;
     }
 
@@ -157,6 +173,9 @@ public class TowerSelectionUI {
             }
             if (targetingButton != null) {
                 targetingButton.draw(g);
+            }
+            if (spawnButton != null) {
+                drawSpawnButton(g2d);
             }
         }
     }
@@ -462,6 +481,78 @@ public class TowerSelectionUI {
         g2d.drawString(text, textX, textY);
     }
 
+    private void drawSpawnButton(Graphics2D g2d) {
+        // Determine warrior type and cost for affordability check
+        Warrior tempWarrior = null;
+        Color bgColor = new Color(100, 100, 100); // Default greyed out
+        Color textColor = new Color(180, 180, 180); // Default greyed out text
+        Color borderColor = new Color(80, 80, 80);
+        boolean canAfford = false;
+        int spawnCost = 0;
+        String text = "Spawn"; // Default text
+
+        if (selectedTower instanceof objects.MageTower) {
+            tempWarrior = new WizardWarrior(0,0); // Temporary instance for cost check
+        } else if (selectedTower instanceof objects.ArcherTower) {
+            tempWarrior = new ArcherWarrior(0,0); // Temporary instance for cost check
+        }
+
+        if (tempWarrior != null) {
+            spawnCost = tempWarrior.getCost();
+            canAfford = playing.getPlayerManager().getGold() >= spawnCost;
+            text = "Spawn $" + spawnCost;
+            if (canAfford) {
+                bgColor = spawnButton.isMouseOver() ? new Color(120, 170, 120) : new Color(100, 150, 100);
+                textColor = Color.WHITE;
+            } else {
+                // bgColor and textColor already set to greyed out defaults
+            }
+        } else {
+            // This case (spawn button for non-spawnable tower) should ideally not happen
+            // if createButtons() logic is correct. Default colors are already set.
+             canAfford = false; 
+        }
+
+        g2d.setColor(bgColor);
+        g2d.fillRect(spawnButton.getX(), spawnButton.getY(), spawnButton.getWidth(), spawnButton.getHeight());
+        
+        // Hover and Press effects (only if affordable)
+        if (canAfford) {
+            if (spawnButton.isMouseOver()) {
+                g2d.setColor(new Color(255, 255, 255, 50)); // Brighter for hover
+                g2d.fillRect(spawnButton.getX() + 1, spawnButton.getY() + 1,
+                        spawnButton.getWidth() - 2, spawnButton.getHeight() - 2);
+            }
+            if (spawnButton.isMousePressed()) {
+                g2d.setColor(new Color(0, 0, 0, 100)); // Darker for press
+                g2d.fillRect(spawnButton.getX() + 1, spawnButton.getY() + 1,
+                        spawnButton.getWidth() - 2, spawnButton.getHeight() - 2);
+            }
+        }
+
+        g2d.setColor(borderColor);
+        g2d.setStroke(new BasicStroke(1));
+        g2d.drawRect(spawnButton.getX(), spawnButton.getY(), spawnButton.getWidth(), spawnButton.getHeight());
+        
+        g2d.setColor(textColor);
+        g2d.setFont(new Font("Monospaced", Font.BOLD, 10));
+        FontMetrics fm = g2d.getFontMetrics();
+        int textX = spawnButton.getX() + (spawnButton.getWidth() - fm.stringWidth(text)) / 2;
+        int textY = spawnButton.getY() + (spawnButton.getHeight() + fm.getAscent()) / 2 - 2;
+        g2d.drawString(text, textX, textY);
+
+        // If not affordable, draw X overlay
+        if (!canAfford && tempWarrior != null) { 
+            g2d.setColor(new Color(200, 0, 0, 180));
+            g2d.setStroke(new BasicStroke(2));
+            g2d.drawLine(spawnButton.getX() + 4, spawnButton.getY() + 4,
+                    spawnButton.getX() + spawnButton.getWidth() - 4,
+                    spawnButton.getY() + spawnButton.getHeight() - 4);
+            g2d.drawLine(spawnButton.getX() + spawnButton.getWidth() - 4, spawnButton.getY() + 4,
+                    spawnButton.getX() + 4, spawnButton.getY() + spawnButton.getHeight() - 4);
+        }
+    }
+
     /**
      * Handles mouse movement for button hover detection
      */
@@ -472,6 +563,9 @@ public class TowerSelectionUI {
         if (targetingButton != null) {
             targetingButton.setMouseOver(targetingButton.getBounds().contains(mouseX, mouseY));
         }
+        if (spawnButton != null) {
+            spawnButton.setMouseOver(spawnButton.getBounds().contains(mouseX, mouseY));
+        }
     }
 
     /**
@@ -481,28 +575,15 @@ public class TowerSelectionUI {
     public boolean mouseClicked(int mouseX, int mouseY) {
         boolean handled = false;
 
-        if (selectedTower != null && selectedTower.isDestroyed() && reviveButton != null && reviveButton.getBounds().contains(mouseX, mouseY)) {
+        // Revive button interaction
+        if (reviveButton != null && reviveButton.getBounds().contains(mouseX, mouseY)) {
             int reviveCost = getUpgradeCost(selectedTower);
             if (playing.getPlayerManager().getGold() >= reviveCost) {
                 playing.getPlayerManager().spendGold(reviveCost);
-                // Create a new base tower of the same type at the same position
-                objects.Tower newTower = null;
-                switch (selectedTower.getType()) {
-                    case 0: // Archer
-                        newTower = new objects.ArcherTower(selectedTower.getX(), selectedTower.getY());
-                        break;
-                    case 1: // Artillery
-                        newTower = new objects.ArtilleryTower(selectedTower.getX(), selectedTower.getY());
-                        break;
-                    case 2: // Mage
-                        newTower = new objects.MageTower(selectedTower.getX(), selectedTower.getY());
-                        break;
-                }
-                if (newTower != null) {
-                    playing.getTowerManager().replaceTower(selectedTower, newTower);
-                    setSelectedTower(newTower);
-                }
+                selectedTower.revive();
+                setSelectedTower(selectedTower); // Refresh buttons
                 playing.updateUIResources();
+                System.out.println("Tower revived!");
             }
             handled = true;
         }
@@ -538,6 +619,26 @@ public class TowerSelectionUI {
             handled = true;
         }
 
+        if (spawnButton != null && spawnButton.getBounds().contains(mouseX, mouseY)) {
+            Warrior warriorToSpawn = null;
+            if (selectedTower instanceof objects.MageTower) {
+                warriorToSpawn = new WizardWarrior(selectedTower.getX(), selectedTower.getY());
+            } else if (selectedTower instanceof objects.ArcherTower) {
+                warriorToSpawn = new ArcherWarrior(selectedTower.getX(), selectedTower.getY());
+            }
+
+            if (warriorToSpawn != null) {
+                if (playing.getPlayerManager().getGold() >= warriorToSpawn.getCost()) {
+                    // Gold check successful, proceed to placement mode
+                    playing.startWarriorPlacement(warriorToSpawn);
+                } else {
+                    System.out.println("Not enough gold to spawn warrior!");
+                    // Optionally, provide visual feedback to the player (e.g., button turns red)
+                }
+            }
+            handled = true;
+        }
+
         return handled;
     }
 
@@ -563,6 +664,9 @@ public class TowerSelectionUI {
         if (targetingButton != null && targetingButton.getBounds().contains(mouseX, mouseY)) {
             targetingButton.setMousePressed(true);
         }
+        if (spawnButton != null && spawnButton.getBounds().contains(mouseX, mouseY)) {
+            spawnButton.setMousePressed(true);
+        }
     }
 
     /**
@@ -574,6 +678,9 @@ public class TowerSelectionUI {
         }
         if (targetingButton != null) {
             targetingButton.setMousePressed(false);
+        }
+        if (spawnButton != null) {
+            spawnButton.setMousePressed(false);
         }
     }
 

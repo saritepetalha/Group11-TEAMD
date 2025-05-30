@@ -33,6 +33,12 @@ import ui_p.DeadTree;
 import ui_p.LiveTree;
 import ui_p.PlayingUI;
 import ui_p.TowerSelectionUI;
+import objects.Warrior;
+import java.awt.Toolkit;
+import java.awt.Image;
+import java.awt.Cursor;
+import java.awt.Point;
+import javax.swing.JPanel;
 
 public class Playing extends GameScene implements SceneMethods {
     private int[][] level;
@@ -103,6 +109,26 @@ public class Playing extends GameScene implements SceneMethods {
 
     private WeatherManager weatherManager;
 
+    private Warrior pendingWarriorPlacement = null;
+
+    private JPanel gamePanel;
+
+    private BufferedImage spawnPointIndicator;
+
+    public Playing(Game game, JPanel gamePanel) {
+        super(game);
+        this.gamePanel = gamePanel;
+        this.tileManager = new TileManager();
+        this.gameOptions = loadOptionsOrDefault();
+        loadDefaultLevel();
+        loadBorderImages();
+        initializeManagers();
+        this.castleMaxHealth = calculateCastleMaxHealth();
+        this.castleCurrentHealth = castleMaxHealth;
+        this.gameStateManager = new GameStateManager();
+        loadSpawnPointIndicator();
+    }
+
     public Playing(Game game) {
         super(game);
         this.tileManager = new TileManager();
@@ -113,6 +139,7 @@ public class Playing extends GameScene implements SceneMethods {
         this.castleMaxHealth = calculateCastleMaxHealth();
         this.castleCurrentHealth = castleMaxHealth;
         this.gameStateManager = new GameStateManager();
+        loadSpawnPointIndicator();
     }
 
     public Playing(Game game, TileManager tileManager) {
@@ -125,6 +152,7 @@ public class Playing extends GameScene implements SceneMethods {
         this.castleMaxHealth = calculateCastleMaxHealth();
         this.castleCurrentHealth = castleMaxHealth;
         this.gameStateManager = new GameStateManager();
+        loadSpawnPointIndicator();
     }
 
     public Playing(Game game, TileManager tileManager, int[][] customLevel, int[][] customOverlay) {
@@ -142,6 +170,7 @@ public class Playing extends GameScene implements SceneMethods {
         this.castleMaxHealth = calculateCastleMaxHealth();
         this.castleCurrentHealth = castleMaxHealth;
         this.gameStateManager = new GameStateManager();
+        loadSpawnPointIndicator();
     }
 
     private GameOptions loadOptionsOrDefault() {
@@ -501,6 +530,68 @@ public class Playing extends GameScene implements SceneMethods {
         if (towerSelectionUI != null) {
             towerSelectionUI.draw(g);
         }
+
+        // Display warrior placement message and tile indicators only when placing a warrior
+        if (pendingWarriorPlacement != null) { 
+            drawWarriorPlacementMessage(g);
+        }
+    }
+
+    private void drawWarriorPlacementMessage(Graphics g) {
+        String message = "Place the ";
+        if (pendingWarriorPlacement instanceof objects.WizardWarrior) {
+            message += "Wizard";
+        } else if (pendingWarriorPlacement instanceof objects.ArcherWarrior) {
+            message += "Archer";
+        } else {
+            message += "Warrior"; // Fallback
+        }
+
+        g.setColor(Color.BLACK);
+        g.setFont(new Font("Arial", Font.BOLD, 20));
+        int stringWidth = g.getFontMetrics().stringWidth(message);
+        int x = (GameDimensions.GAME_WIDTH - stringWidth) / 2;
+        int y = 30; // Adjust Y position as needed
+        g.drawString(message, x, y);
+
+        // Highlight valid placement tiles with an indicator image
+        if (pendingWarriorPlacement != null && spawnPointIndicator != null) {
+            for (int r = 0; r < level.length; r++) {
+                for (int c = 0; c < level[0].length; c++) {
+                    int tilePixelX = c * GameDimensions.TILE_DISPLAY_SIZE;
+                    int tilePixelY = r * GameDimensions.TILE_DISPLAY_SIZE;
+                    if (isValidTileForPlacement(tilePixelX, tilePixelY)) {
+                        // Draw the indicator centered on the tile
+                        int indicatorX = tilePixelX + (GameDimensions.TILE_DISPLAY_SIZE - spawnPointIndicator.getWidth()) / 2;
+                        int indicatorY = tilePixelY + (GameDimensions.TILE_DISPLAY_SIZE - spawnPointIndicator.getHeight()) / 2;
+                        g.drawImage(spawnPointIndicator, indicatorX, indicatorY, null);
+                    }
+                }
+            }
+        }
+    }
+
+    private boolean isValidTileForPlacement(int pixelX, int pixelY) {
+        int tileC = pixelX / GameDimensions.TILE_DISPLAY_SIZE;
+        int tileR = pixelY / GameDimensions.TILE_DISPLAY_SIZE;
+
+        if (tileR >= 0 && tileR < level.length && tileC >= 0 && tileC < level[0].length) {
+            // Check if the tile type is grass (ID 5)
+            boolean isGrass = level[tileR][tileC] == 5; 
+            if (!isGrass) return false;
+
+            // Check if the tile is already occupied by a tower
+            // getTowerAt expects world coordinates, not necessarily snapped if it iterates through towers with their own precise x,y
+            // However, since we are checking a tile, converting tile's pixelX, pixelY to center for getTowerAt might be more robust if getTowerAt uses a radius check
+            // For simplicity, assuming getTowerAt can work with top-left tile coords if its bounds check is inclusive
+            if (getTowerAt(pixelX, pixelY) != null) return false;
+
+            // Check if the tile is already occupied by another warrior
+            if (isWarriorAt(pixelX, pixelY)) return false;
+            
+            return true; // It's a grass tile and not occupied
+        }
+        return false; // Out of bounds
     }
 
     public void modifyTile(int x, int y, String tile) {
@@ -523,6 +614,29 @@ public class Playing extends GameScene implements SceneMethods {
         this.mouseX = x;
         this.mouseY = y;
 
+        // Handle warrior placement if a warrior is pending placement
+        if (pendingWarriorPlacement != null) {
+            // Snap click coordinates to the grid
+            int tileX = (x / GameDimensions.TILE_DISPLAY_SIZE) * GameDimensions.TILE_DISPLAY_SIZE;
+            int tileY = (y / GameDimensions.TILE_DISPLAY_SIZE) * GameDimensions.TILE_DISPLAY_SIZE;
+
+            // Check if the clicked position is a valid tile for placement
+            if (isValidTileForPlacement(tileX, tileY)) { // Use snapped coordinates for validation too
+                // Deduct gold for the warrior
+                this.playerManager.spendGold(pendingWarriorPlacement.getCost());
+                updateUIResources(); // Update gold display and other UI elements
+
+                // Place the warrior at the top-left of the tile, with a slight upward offset
+                int placementY = tileY - 8; // Adjust this offset as needed (e.g., 5-10 pixels up)
+                pendingWarriorPlacement.setX(tileX);
+                pendingWarriorPlacement.setY(placementY);
+                towerManager.getWarriors().add(pendingWarriorPlacement);
+                System.out.println("Warrior placed at tile coordinates: (" + tileX + ", " + placementY + ") for " + pendingWarriorPlacement.getCost() + " gold.");
+                pendingWarriorPlacement = null; // Clear pending placement
+            }
+            return; // Exit early to prevent other interactions
+        }
+
         // Handle tower selection UI clicks first - only return early if actually handled
         if (towerSelectionUI != null && towerSelectionUI.hasTowerSelected()) {
             boolean uiHandledClick = towerSelectionUI.mouseClicked(x, y);
@@ -530,6 +644,7 @@ public class Playing extends GameScene implements SceneMethods {
                 return; // UI button was clicked, don't process other interactions
             }
         }
+
         // Handle dead trees
         if (deadTrees != null) {
             treeInteractionManager.handleDeadTreeInteraction(mouseX, mouseY);
@@ -537,6 +652,7 @@ public class Playing extends GameScene implements SceneMethods {
         if (liveTrees != null) {
             treeInteractionManager.handleLiveTreeInteraction(mouseX, mouseY);
         }
+
         // Gold bag collection
         var collectedBag = goldBagManager.tryCollect(x, y);
         if (collectedBag != null) {
@@ -580,14 +696,28 @@ public class Playing extends GameScene implements SceneMethods {
 
     @Override
     public void mouseMoved(int x, int y) {
-        mouseX = (x / 64) * 64;
-        mouseY = (y / 64) * 64;
+        mouseX = (x / GameDimensions.TILE_DISPLAY_SIZE) * GameDimensions.TILE_DISPLAY_SIZE;
+        mouseY = (y / GameDimensions.TILE_DISPLAY_SIZE) * GameDimensions.TILE_DISPLAY_SIZE;
 
         playingUI.mouseMoved(x, y);
 
         if (towerSelectionUI != null) {
             towerSelectionUI.mouseMoved(x, y);
         }
+
+        // Highlight tiles when in warrior placement mode
+        // This logic will now be handled within the render loop by drawWarriorPlacementMessage or a dedicated drawHighlight method
+        // if (pendingWarriorPlacement != null) {
+        //    // highlightValidTiles(); // We might not need a separate call if drawing happens in render
+        // }
+    }
+
+    private void highlightValidTiles() {
+        // Implement logic to highlight all valid tiles for warrior placement
+        // For now, let's assume all tiles are valid and highlight them
+        // This can be done by drawing a semi-transparent overlay on valid tiles
+        // Example: g.setColor(new Color(0, 255, 0, 100)); // Green with transparency
+        // g.fillRect(tileX, tileY, tileWidth, tileHeight);
     }
 
     @Override
@@ -864,11 +994,16 @@ public class Playing extends GameScene implements SceneMethods {
         playingUI.mouseWheelMoved(e);
     }
 
-    public void shootEnemy(Tower tower, Enemy enemy) {
-        projectileManager.newProjectile(tower, enemy);
-        // After a projectile is launched (or hits), apply any on-hit effects from the tower itself.
-        // This is particularly for direct effects like the Mage's slow, not projectile-specific effects.
-        tower.applyOnHitEffect(enemy, this);
+    public void shootEnemy(Object shooter, Enemy enemy) {
+        if (shooter instanceof Tower) {
+            Tower tower = (Tower) shooter;
+            projectileManager.newProjectile(tower, enemy);
+            tower.applyOnHitEffect(enemy, this);
+        } else if (shooter instanceof Warrior) {
+            Warrior warrior = (Warrior) shooter;
+            projectileManager.newProjectile(warrior, enemy);
+            // Warriors currently have no special on-hit effects
+        }
     }
 
     public boolean isGamePaused() {
@@ -1214,6 +1349,39 @@ public class Playing extends GameScene implements SceneMethods {
 
     public WeatherManager getWeatherManager() {
         return weatherManager;
+    }
+
+    public void startWarriorPlacement(Warrior warrior) {
+        this.pendingWarriorPlacement = warrior;
+        // Close the tower menu
+        towerSelectionUI.setSelectedTower(null);
+        System.out.println("Warrior placement mode started for: " + warrior.getClass().getSimpleName());
+        // Additional logic to highlight valid tiles for placement can be added here
+    }
+
+    private boolean isWarriorAt(int x, int y) {
+        for (Warrior warrior : towerManager.getWarriors()) {
+            if (warrior.getX() == x && warrior.getY() == y) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void loadSpawnPointIndicator() {
+        // Create a placeholder graphic directly
+        int indicatorSize = 24; // Size of the indicator
+        spawnPointIndicator = new BufferedImage(indicatorSize, indicatorSize, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = spawnPointIndicator.createGraphics();
+        
+        // Draw a yellow circle with a black border
+        g.setColor(Color.YELLOW);
+        g.fillOval(2, 2, indicatorSize - 4, indicatorSize - 4);
+        g.setColor(Color.BLACK);
+        g.setStroke(new BasicStroke(2));
+        g.drawOval(2, 2, indicatorSize - 4, indicatorSize - 4);
+        
+        g.dispose(); 
     }
 
 }
