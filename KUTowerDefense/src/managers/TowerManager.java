@@ -84,6 +84,31 @@ public class TowerManager {
         }
     }
 
+    /**
+     * Handles the tower's attack logic against enemies within its range.
+     *
+     * @requires
+     * - tower != null (tower must be initialized)
+     * - tower.getTargetingStrategy() != null (tower must have a targeting strategy)
+     * - playing != null (game state must be initialized)
+     * - playing.getEnemyManager() != null (enemy manager must be initialized)
+     * - playing.getWeatherManager() != null (weather manager must be initialized)
+     *
+     * @modifies
+     * - tower's cooldown state
+     * - enemies' health within tower's range (indirectly, via playing.shootEnemy)
+     * - playing's total damage counter (indirectly, if shootEnemy leads to damage)
+     * - playing's enemy defeated counter (indirectly, if an enemy is killed)
+     *
+     * @effects
+     * - If tower is destroyed or on cooldown, method returns without effect.
+     * - Collects all alive enemies within the tower's effective range (considering weather).
+     * - Selects a target from enemies in range based on the tower's current targeting strategy.
+     * - If a target is selected:
+     *   - For Archer towers in windy weather, there's a 30% chance the tower misses; in this case, `playing.shootEnemy` is not called, but the tower's cooldown is reset, and the method returns.
+     *   - Otherwise (no miss or not an Archer in wind), `playing.shootEnemy(tower, target)` is called.
+     *   - The tower's cooldown is reset after an attempted shot (whether it was a hit or a weather-induced miss for Archers).
+     */
     private void attackEnemyIfInRange(Tower tower) {
         if (tower.isDestroyed()) return;
         if (!tower.isCooldownOver()) {
