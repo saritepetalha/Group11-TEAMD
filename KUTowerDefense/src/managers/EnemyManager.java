@@ -121,6 +121,32 @@ public class EnemyManager {
         return null;
     }
 
+
+    /**
+     * Generates a path from the start point to the end point using Breadth-First Search (BFS) algorithm.
+     *
+     * @requires tileData != null && tileData.length > 0 && tileData[0].length > 0
+     *           && startPoint != null && endPoint != null
+     *           && 0 <= startPoint.getX() < tileData[0].length && 0 <= startPoint.getY() < tileData.length
+     *           && 0 <= endPoint.getX() < tileData[0].length && 0 <= endPoint.getY() < tileData.length
+     *
+     * @modifies this.pathPoints, this.pathFound
+     *
+     * @effects If startPoint or endPoint is null, prints error message and returns without modification.
+     *          Otherwise, performs BFS to find shortest path from startPoint to endPoint through valid road tiles.
+     *          If path is found:
+     *            - this.pathPoints is updated to contain the sequence of GridPoints from startPoint to endPoint
+     *            - this.pathFound is set to true
+     *            - prints confirmation message with path length
+     *          If no path exists:
+     *            - this.pathPoints remains unchanged
+     *            - this.pathFound remains false
+     *            - prints error message and debug information about start/end points and map state
+     *          Valid road tiles are those where isRoadTile(tileData[y][x]) returns true, or the tile is the endPoint location.
+     *          Uses 4-directional movement (up, down, left, right) for pathfinding.
+     *
+     * @param tileData 2D array representing the game map where each cell contains a tile type identifier
+     */
     private void generatePath(int[][] tileData) {
         if (startPoint == null || endPoint == null) {
             System.out.println("Cannot generate path: Start or end point is null");
