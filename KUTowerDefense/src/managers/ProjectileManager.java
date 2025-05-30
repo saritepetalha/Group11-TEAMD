@@ -7,6 +7,9 @@ import objects.Projectile;
 import objects.Tower;
 import scenes.Playing;
 import helpMethods.RotatedProjectileFrameGenerator;
+import objects.Warrior;
+import objects.WizardWarrior;
+import objects.ArcherWarrior;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -58,44 +61,59 @@ public class ProjectileManager {
         }
     }
 
-    public void newProjectile(Tower tower, Enemy enemy) {
-        // Get projectile type and basic properties
-        int projType = getProjectileType(tower);
-        float projectileSpeed = Constants.Projectiles.getSpeed(projType);
+    public void newProjectile(Object shooter, Enemy enemy) {
+        int projType;
+        float projectileSpeed;
+        int shooterCenterX;
+        int shooterCenterY;
+        int damage;
+        int level;
 
-        // Get tower and enemy centers
-        int towerCenterX = tower.getX() + tower.getWidth() / 2;
-        int towerCenterY = tower.getY() + tower.getHeight() / 2;
+        if (shooter instanceof Tower) {
+            Tower tower = (Tower) shooter;
+            projType = getProjectileType(tower);
+            projectileSpeed = Constants.Projectiles.getSpeed(projType);
+            shooterCenterX = tower.getX() + tower.getWidth() / 2;
+            shooterCenterY = tower.getY() + tower.getHeight() / 2;
+            damage = tower.getDamage();
+            level = tower.getLevel();
+        } else if (shooter instanceof Warrior) {
+            Warrior warrior = (Warrior) shooter;
+            projType = getProjectileType(warrior);
+            projectileSpeed = Constants.Projectiles.getSpeed(projType);
+            shooterCenterX = warrior.getX() + warrior.getWidth() / 2;
+            shooterCenterY = warrior.getY() + warrior.getHeight() / 2;
+            damage = warrior.getDamage();
+            level = warrior.getLevel();
+        } else {
+            return; // Invalid shooter type
+        }
+
         float enemyCenterX = enemy.getSpriteCenterX();
         float enemyCenterY = enemy.getSpriteCenterY();
 
-        // Calculate direction to enemy
-        float dx = enemyCenterX - towerCenterX;
-        float dy = enemyCenterY - towerCenterY;
+        float dx = enemyCenterX - shooterCenterX;
+        float dy = enemyCenterY - shooterCenterY;
         float distance = (float) Math.sqrt(dx * dx + dy * dy);
 
-        // Calculate angle for sprite rotation
         float angle = (float) Math.toDegrees(Math.atan2(dy, dx));
         if (angle < 0) angle += 360;
 
-        // Calculate speed components
         float xSpeed = (dx / distance) * projectileSpeed;
         float ySpeed = (dy / distance) * projectileSpeed;
 
-        // Create and add projectile
         Projectile projectile = new Projectile(
-            towerCenterX,
-            towerCenterY,
+            shooterCenterX,
+            shooterCenterY,
             xSpeed,
             ySpeed,
             projID++,
-            tower.getDamage(),
+            damage,
             projType,
-            tower.getLevel(),
+            level,
             angle
         );
 
-        // Handle windy weather effect for archer towers
         if (playing.getWeatherManager().isWindy() && 
             projType == Constants.Projectiles.ARROW && 
             Math.random() < 0.3) {
@@ -296,6 +314,15 @@ public class ProjectileManager {
             case MAGE: return MAGICBOLT;
             default: return ARROW;
         }
+    }
+
+    private int getProjectileType(Warrior warrior) {
+        if (warrior instanceof WizardWarrior) {
+            return MAGICBOLT;
+        } else if (warrior instanceof ArcherWarrior) {
+            return ARROW;
+        }
+        return ARROW; // Default to ARROW if type is unknown
     }
 
     public void clearProjectiles() {

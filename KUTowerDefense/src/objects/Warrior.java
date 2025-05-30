@@ -1,13 +1,14 @@
 package objects;
 
-import constants.Constants;
 import enemies.Enemy;
 import strategies.TargetingStrategy;
 import strategies.FirstEnemyStrategy;
+import helpMethods.LoadSave;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 
-public abstract class Tower {
+public abstract class Warrior {
 
     private int x, y, ID, countDownClock;
     protected int damage;
@@ -16,33 +17,16 @@ public abstract class Tower {
     protected int level = 1;
     protected float attackSpeedMultiplier = 1.0f;
 
-    // Destroyed state
-    protected boolean destroyed = false;
-    protected java.awt.image.BufferedImage destroyedSprite = null;
-
-    // Strategy Pattern: Tower targeting behavior
+    // Strategy Pattern: Warrior targeting behavior
     protected TargetingStrategy targetingStrategy;
 
-    // Debris effect for earthquake destruction
-    public static class Debris {
-        public float x, y, vx, vy;
-        public float alpha;
-        public int color;
-        public int size;
-        public int lifetime;
-        public int age;
-        public Debris(float x, float y, float vx, float vy, int color, int size, int lifetime) {
-            this.x = x; this.y = y; this.vx = vx; this.vy = vy;
-            this.color = color; this.size = size; this.lifetime = lifetime; this.age = 0; this.alpha = 1f;
-        }
-    }
-    public java.util.List<Debris> debrisList = null;
-    public long debrisStartTime = 0;
-    public static final int DEBRIS_DURATION_MS = 500;
+    // Animation fields
+    protected int animationIndex = 0;
+    protected int animationTick = 0;
+    protected int animationSpeed = 15; // Adjust as needed
+    protected int maxFrameCount;
 
-    public abstract int getType();
-
-    public Tower(int x, int y) {
+    public Warrior(int x, int y) {
         this.x = x;
         this.y = y;
         this.ID = num;
@@ -50,32 +34,26 @@ public abstract class Tower {
 
         // Default targeting strategy is FirstEnemy (current behavior)
         this.targetingStrategy = new FirstEnemyStrategy();
+        initializeAnimationParameters();
     }
 
     // Constructor with custom targeting strategy
-    public Tower(int x, int y, TargetingStrategy targetingStrategy) {
+    public Warrior(int x, int y, TargetingStrategy targetingStrategy) {
         this.x = x;
         this.y = y;
         this.ID = num;
         num++;
         this.targetingStrategy = targetingStrategy != null ? targetingStrategy : new FirstEnemyStrategy();
+        initializeAnimationParameters();
     }
 
+    protected abstract void initializeAnimationParameters();
+
+    public abstract int getType();
     public abstract float getCooldown();
     public abstract float getRange();
     public abstract int getDamage();
-
-    protected void setDefaultCooldown() {
-        cooldown = Constants.Towers.getCooldown(getType());
-    }
-
-    protected void setDefaultRange() {
-        range = Constants.Towers.getRange(getType());
-    }
-
-    protected void setDefaultDamage() {
-        damage = Constants.Towers.getStartDamage(getType());
-    }
+    public abstract int getCost();
 
     public boolean isClicked(int mouseX, int mouseY) {
         Rectangle bounds = new Rectangle(x, y, 64, 64);
@@ -119,14 +97,7 @@ public abstract class Tower {
 
     public int getLevel() { return level; }
     public boolean isUpgradeable() { return level == 1; }
-    public abstract Tower upgrade();
     public void setLevel(int lvl) { this.level = lvl; }
-
-    // Default implementation for on-hit effects. Can be overridden by specific towers or decorators.
-    public void applyOnHitEffect(Enemy enemy, scenes.Playing playingScene) {
-        // Base towers typically don't have special on-hit effects beyond damage.
-        // This can be left empty or log a message if needed.
-    }
 
     public void setAttackSpeedMultiplier(float multiplier) {
         this.attackSpeedMultiplier = multiplier;
@@ -148,15 +119,36 @@ public abstract class Tower {
         return 64;
     }
 
-    public boolean isDestroyed() { return destroyed; }
-    public void setDestroyed(boolean destroyed) { this.destroyed = destroyed; }
-    public void setDestroyedSprite(java.awt.image.BufferedImage sprite) { this.destroyedSprite = sprite; }
-    public java.awt.image.BufferedImage getDestroyedSprite() { return destroyedSprite; }
-
-    public void revive() {
-        this.destroyed = false;
-        // Reset any other necessary tower stats upon revival, e.g., health if towers had health
-        // For now, just resetting the destroyed flag.
-        this.countDownClock = 0; // Reset cooldown as well
+    // Default implementation for on-hit effects. Can be overridden by specific warriors.
+    public void applyOnHitEffect(Enemy enemy, scenes.Playing playingScene) {
+        // Base warriors typically don't have special on-hit effects beyond damage.
+        // This can be left empty or log a message if needed.
     }
-}
+
+    public void setX(int x) {
+        this.x = x;
+    }
+
+    public void setY(int y) {
+        this.y = y;
+    }
+
+    public BufferedImage[] getAnimationFrames() {
+        return LoadSave.getWarriorAnimation(this);
+    }
+
+    public void updateAnimationTick() {
+        animationTick++;
+        if (animationTick >= animationSpeed) {
+            animationTick = 0;
+            animationIndex++;
+            if (animationIndex >= maxFrameCount) {
+                animationIndex = 0;
+            }
+        }
+    }
+
+    public int getAnimationIndex() {
+        return animationIndex;
+    }
+} 
