@@ -36,6 +36,15 @@ public class UltiManagerTest {
         ultiManager = new UltiManager(playing);
     }
 
+    /**
+     * Test Case 1: Basic functionality of Lightning ulti.
+     *
+     * Verifies that when the Lightning ultimate is triggered,
+     * it correctly deals 80 damage to enemies within a 100-unit radius
+     * of the target position, provided the enemy is alive,
+     * it's not raining, and the player has enough gold.
+     */
+
     @Test
     public void testTriggerLightningAt_hitsEnemiesWithinRadius() {
         // Should damage a living enemy within the lightning radius.
@@ -57,6 +66,14 @@ public class UltiManagerTest {
 
         Mockito.verify(enemy).hurt(Mockito.eq(80), Mockito.eq(true));
     }
+
+    /**
+     * Test Case 2: Insufficient gold blocks Lightning usage.
+     *
+     * Ensures that if the player does not have enough gold to use
+     * the Lightning ultimate, no damage is dealt and the enemy’s
+     * state remains unaffected.
+     */
 
     @Test
     public void testTriggerLightningAt_notEnoughGold_doesNotTrigger() {
@@ -80,6 +97,14 @@ public class UltiManagerTest {
         Mockito.verify(enemy, Mockito.never()).hurt(Mockito.anyInt(), Mockito.anyBoolean());
     }
 
+    /**
+     * Test Case 3: Lightning used when no enemies are in range.
+     *
+     * Confirms that triggering the Lightning ultimate when no
+     * enemies are within the 100-unit radius results in no enemies
+     * being damaged.
+     */
+
     @Test
     public void testTriggerLightningAt_noEnemiesInRange_doesNothing() {
         // Should not damage enemies that are outside the lightning radius.
@@ -100,6 +125,14 @@ public class UltiManagerTest {
 
         Mockito.verify(enemy, Mockito.never()).hurt(Mockito.anyInt(), Mockito.anyBoolean());
     }
+
+    /**
+     * Test Case 4: Dead enemies should not be affected.
+     *
+     * Validates that dead enemies (isAlive() returns false)
+     * are not affected by the Lightning ultimate, even if
+     * within the damage radius.
+     */
 
     @Test
     public void testTriggerLightningAt_enemyDead_notHurt() {
