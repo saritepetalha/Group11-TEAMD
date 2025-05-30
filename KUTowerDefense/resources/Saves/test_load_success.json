@@ -1,0 +1,44 @@
+{
+  "gold": 1000,
+  "health": 95,
+  "shield": 50,
+  "waveIndex": 3,
+  "groupIndex": 2,
+  "towerStates": [
+    {
+      "x": 5,
+      "y": 10,
+      "type": 1,
+      "level": 2
+    },
+    {
+      "x": 15,
+      "y": 20,
+      "type": 2,
+      "level": 3
+    }
+  ],
+  "enemyStates": [
+    {
+      "x": 25.5,
+      "y": 30.7,
+      "type": 1,
+      "health": 100,
+      "pathIndex": 0
+    }
+  ],
+  "gameOptions": {
+    "startingGold": 500,
+    "startingShield": 25,
+    "weatherEnabled": true,
+    "currentWeather": "Random",
+    "enemyStats": {},
+    "towerStats": {},
+    "waves": [],
+    "interWaveDelay": 10.0,
+    "currentWaveIndex": 0,
+    "currentGroupIndex": 0,
+    "savedGold": 0,
+    "savedCastleHealth": 0
+  }
+}
