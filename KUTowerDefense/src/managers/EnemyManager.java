@@ -5,15 +5,12 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import java.util.Set;
 
 import config.GameOptions;
@@ -33,12 +30,11 @@ import enemies.Troll;
 import enemies.Warrior;
 import helpMethods.LoadSave;
 import helpMethods.OptionsIO;
-import helpMethods.Utils;
 import objects.GridPoint;
 import scenes.Playing;
-import objects.Tower;
 import constants.Constants;
-import ui_p.FireAnimation;
+import pathfinding.RoadNetworkPathfinder;
+import pathfinding.TileConnectivity;
 
 public class EnemyManager {
     private Playing playing;
@@ -53,6 +49,7 @@ public class EnemyManager {
     private GameOptions gameOptions;
     private WeatherManager weatherManager;
     private Map<Enemy, Long> enemySpawnTimes;
+    private RoadNetworkPathfinder pathfinder;
 
     public EnemyManager(Playing playing, int[][] overlayData, int [][] tileData, GameOptions options) {
         this.playing = playing;
@@ -65,6 +62,9 @@ public class EnemyManager {
         this.enemySpawnTimes = new HashMap<>();
         this.weatherManager = playing.getWeatherManager();
 
+        this.pathfinder = new RoadNetworkPathfinder(tileData[0].length, tileData.length);
+        this.pathfinder.buildGraph(tileData);
+
         findStartAndEndPoints(overlayData);
 
         if (startPoint != null && endPoint != null) {
@@ -72,6 +72,7 @@ public class EnemyManager {
         }
 
         System.out.println("EnemyManager Initialized. Path found? " + pathFound);
+        System.out.println(pathfinder.getGraphInfo());
     }
 
     private void findStartAndEndPoints(int[][] overlayData) {
@@ -98,7 +99,7 @@ public class EnemyManager {
     }
 
     private boolean isRoadTile(int tileId) {
-        return ROAD_IDS.contains(tileId) || tileId == -4;
+        return TileConnectivity.isRoadTile(tileId);
     }
 
     private boolean isGateTile(int x, int y, int[][] overlayData) {
@@ -121,9 +122,10 @@ public class EnemyManager {
         return null;
     }
 
-
     /**
-     * Generates a path from the start point to the end point using Breadth-First Search (BFS) algorithm.
+     * Generates a path from the start point to the end point using graph-based A* pathfinding.
+     * This new implementation respects road tile connectivity, ensuring that enemies can only
+     * move along properly connected road segments.
      *
      * @requires tileData != null && tileData.length > 0 && tileData[0].length > 0
      *           && startPoint != null && endPoint != null
@@ -133,17 +135,17 @@ public class EnemyManager {
      * @modifies this.pathPoints, this.pathFound
      *
      * @effects If startPoint or endPoint is null, prints error message and returns without modification.
-     *          Otherwise, performs BFS to find shortest path from startPoint to endPoint through valid road tiles.
+     *          Otherwise, uses graph-based A* pathfinding to find optimal path from startPoint to endPoint
+     *          through connected road tiles only.
      *          If path is found:
      *            - this.pathPoints is updated to contain the sequence of GridPoints from startPoint to endPoint
      *            - this.pathFound is set to true
      *            - prints confirmation message with path length
      *          If no path exists:
-     *            - this.pathPoints remains unchanged
+     *            - this.pathPoints remains empty
      *            - this.pathFound remains false
-     *            - prints error message and debug information about start/end points and map state
-     *          Valid road tiles are those where isRoadTile(tileData[y][x]) returns true, or the tile is the endPoint location.
-     *          Uses 4-directional movement (up, down, left, right) for pathfinding.
+     *            - prints error message with debugging information
+     *          Only follows valid road connections based on tile connectivity rules.
      *
      * @param tileData 2D array representing the game map where each cell contains a tile type identifier
      */
@@ -153,103 +155,84 @@ public class EnemyManager {
             return;
         }
 
-        System.out.println("Generating path from " + startPoint + " to " + endPoint);
+        System.out.println("Generating graph-based path from " + startPoint + " to " + endPoint);
 
-        int rows = tileData.length;
-        int cols = tileData[0].length;
+        // Use the new graph-based pathfinding system
+        List<GridPoint> foundPath = pathfinder.findPath(startPoint, endPoint);
 
-        // direction arrays for 4-directional movement
-        int[] dx = {-1, 0, 1, 0}; // left, up, right, down
-        int[] dy = {0, -1, 0, 1};
-
-        // initialize visited array and parent map for path reconstruction
-        boolean[][] visited = new boolean[rows][cols];
-        GridPoint[][] parent = new GridPoint[rows][cols];
-
-        // BFS queue
-        Queue<GridPoint> queue = new LinkedList<>();
-        queue.add(startPoint);
-        visited[startPoint.getY()][startPoint.getX()] = true;
-
-        boolean foundEnd = false;
-
-        // BFS to find path
-        while (!queue.isEmpty() && !foundEnd) {
-            GridPoint current = queue.poll();
-
-            // check if we reached the end
-            if (current.equals(endPoint)) {
-                System.out.println("Found end point!");
-                foundEnd = true;
-                break;
-            }
-
-            // try all four directions respectively
-            for (int i = 0; i < 4; i++) {
-                int newX = current.getX() + dx[i];
-                int newY = current.getY() + dy[i];
-
-                // check bounds and if it's a valid road and not visited
-                if (isValidPosition(newX, newY, rows, cols) &&
-                        (isRoadTile(tileData[newY][newX]) || (newX == endPoint.getX() && newY == endPoint.getY())) &&
-                        !visited[newY][newX]) {
-                    System.out.println("Found valid road tile at: " + newX + "," + newY);
-                    GridPoint next = new GridPoint(newX, newY);
-                    queue.add(next);
-                    visited[newY][newX] = true;
-                    parent[newY][newX] = current;
-                }
-            }
-        }
-
-        // if end found, reconstruct the path
-        if (foundEnd) {
-            System.out.println("Reconstructing path...");
-            reconstructPath(parent);
+        if (!foundPath.isEmpty()) {
+            pathPoints.clear();
+            pathPoints.addAll(foundPath);
             pathFound = true;
-            System.out.println("Path found with " + pathPoints.size() + " points");
-        } else {
-            System.out.println("No path found!");
 
-            System.out.println("Start point: " + startPoint);
-            System.out.println("End point: " + endPoint);
-            System.out.println("Current map state:");
-            for (int y = 0; y < rows; y++) {
-                for (int x = 0; x < cols; x++) {
-                    System.out.print(tileData[y][x] + " ");
-                }
-                System.out.println();
+            System.out.println("Graph-based path found with " + pathPoints.size() + " points");
+
+            System.out.println("Path points:");
+            for (int i = 0; i < pathPoints.size(); i++) {
+                GridPoint point = pathPoints.get(i);
+                int tileId = tileData[point.getY()][point.getX()];
+                System.out.println("  " + i + ": " + point + " (tile " + tileId + ")");
+            }
+
+            validatePathConnectivity(tileData);
+
+        } else {
+            System.out.println("No graph-based path found!");
+            pathFound = false;
+
+            System.out.println("Start point: " + startPoint + " (has road node: " + pathfinder.hasNode(startPoint) + ")");
+            System.out.println("End point: " + endPoint + " (has road node: " + pathfinder.hasNode(endPoint) + ")");
+
+            if (!pathfinder.hasNode(startPoint)) {
+                int startTileId = tileData[startPoint.getY()][startPoint.getX()];
+                System.out.println("Start tile ID " + startTileId + " is not a road tile");
+            }
+
+            if (!pathfinder.hasNode(endPoint)) {
+                int endTileId = tileData[endPoint.getY()][endPoint.getX()];
+                System.out.println("End tile ID " + endTileId + " is not a road tile");
             }
         }
     }
 
-
-    /*
-    The primary goal of this method is to reconstruct the shortest path found by the Breadth-First Search (BFS) algorithm
-    from the start point to the end point. During BFS, each visited tile's parent is recorded, allowing us to trace back
-    the path once the end point is reached. This reconstructed path is then used to guide enemy movement.
+    /**
+     * Validates that the generated path follows proper road connectivity rules
+     * @param tileData The tile data array
      */
-    private void reconstructPath(GridPoint[][] parent) {
-        // clear existing path points
-        pathPoints.clear();
+    private void validatePathConnectivity(int[][] tileData) {
+        if (pathPoints.size() < 2) return;
 
-        // start from the end and work backward
-        GridPoint current = endPoint;
+        System.out.println("Validating path connectivity...");
+        boolean isValid = true;
 
-        // temporary list to store reversed path
-        ArrayList<GridPoint> reversedPath = new ArrayList<>();
-        reversedPath.add(current);
+        for (int i = 0; i < pathPoints.size() - 1; i++) {
+            GridPoint current = pathPoints.get(i);
+            GridPoint next = pathPoints.get(i + 1);
 
-        // follow parent pointers back to start
-        while (!current.equals(startPoint)) {
-            current = parent[current.getY()][current.getX()];
-            if (current == null) break;
-            reversedPath.add(current);
+            int currentTileId = tileData[current.getY()][current.getX()];
+            int nextTileId = tileData[next.getY()][next.getX()];
+
+            // Determine direction from current to next
+            int dx = next.getX() - current.getX();
+            int dy = next.getY() - current.getY();
+
+            TileConnectivity.Direction direction = null;
+            if (dx == 1 && dy == 0) direction = TileConnectivity.Direction.EAST;
+            else if (dx == -1 && dy == 0) direction = TileConnectivity.Direction.WEST;
+            else if (dx == 0 && dy == 1) direction = TileConnectivity.Direction.SOUTH;
+            else if (dx == 0 && dy == -1) direction = TileConnectivity.Direction.NORTH;
+
+            if (direction == null || !TileConnectivity.canConnect(currentTileId, nextTileId, direction)) {
+                System.out.println("WARNING: Invalid connection from " + current + " (tile " + currentTileId +
+                        ") to " + next + " (tile " + nextTileId + ") in direction " + direction);
+                isValid = false;
+            }
         }
 
-        // reverse the path to get start-to-end order
-        for (int i = reversedPath.size() - 1; i >= 0; i--) {
-            pathPoints.add(reversedPath.get(i));
+        if (isValid) {
+            System.out.println("Path connectivity validation passed!");
+        } else {
+            System.out.println("Path connectivity validation failed!");
         }
     }
 
@@ -608,19 +591,17 @@ public class EnemyManager {
 
         boolean facingLeft = enemy.getDirX() < 0;
 
-        Graphics2D g2d = (Graphics2D) g;
-        AffineTransform oldTransform = g2d.getTransform();
-
         if (enemy.isTeleporting()) {
+            Graphics2D g2d_teleport = (Graphics2D) g.create(); // Create a copy for teleport effect if needed
             // Set a blue/cyan glow with pulse effect based on time
             long currentTime = System.nanoTime();
             float progress = 1.0f - ((float)(currentTime - enemy.getTeleportEffectTimer()) / enemy.TELEPORT_EFFECT_DURATION);
             float alpha = Math.max(0.1f, progress); // Fade out over time
 
             // Draw a pulsing blue glow
-            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha * 0.7f));
-            g2d.setColor(new Color(0, 200, 255)); // Bright blue
-            g2d.fillOval(
+            g2d_teleport.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha * 0.7f));
+            g2d_teleport.setColor(new Color(0, 200, 255)); // Bright blue
+            g2d_teleport.fillOval(
                     drawX - 10,
                     drawY - 10,
                     drawWidth + 20,
@@ -628,7 +609,7 @@ public class EnemyManager {
             );
 
             // Draw some "sparkle" effects
-            g2d.setColor(new Color(255, 255, 255, (int)(255 * alpha)));
+            g2d_teleport.setColor(new Color(255, 255, 255, (int)(255 * alpha)));
             float pulseSize = 5.0f + (float)(Math.sin(currentTime * 0.00000002) * 3.0);
             int sparkleSize = (int)pulseSize;
 
@@ -637,32 +618,25 @@ public class EnemyManager {
                 double angle = Math.random() * Math.PI * 2;
                 int offsetX = (int)(Math.cos(angle) * drawWidth/2);
                 int offsetY = (int)(Math.sin(angle) * drawHeight/2);
-                g2d.fillRect(
+                g2d_teleport.fillRect(
                         drawX + drawWidth/2 + offsetX - sparkleSize/2,
                         drawY + drawHeight/2 + offsetY - sparkleSize/2,
                         sparkleSize, sparkleSize
                 );
             }
-
-            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
+            g2d_teleport.dispose(); // Dispose of the copy
         }
 
         if (facingLeft) {
-            // Create a transform for flipping horizontally
-            AffineTransform tx = new AffineTransform();
-            tx.translate(drawX + drawWidth, drawY);
-            tx.scale(-1, 1);
-            tx.translate(-drawWidth, 0);
-            g2d.setTransform(tx);
-
-            g2d.drawImage(sprite, 0, 0, drawWidth, drawHeight, null);
-            g2d.setTransform(oldTransform);
+            // Draw the image flipped horizontally by using a negative width
+            // and adjusting the x-coordinate accordingly.
+            g.drawImage(sprite, drawX + drawWidth, drawY, -drawWidth, drawHeight, null);
         } else {
             // Normal drawing for facing right
-            g2d.drawImage(sprite, drawX, drawY, drawWidth, drawHeight, null);
+            g.drawImage(sprite, drawX, drawY, drawWidth, drawHeight, null);
         }
 
-        // Health bar and effects should be drawn with the original transform
+        // Health bar and effects should be drawn with the original transform (which we didn't change)
         drawHealthBar(g, enemy, drawX, drawY, drawWidth, drawHeight);
     }
 
@@ -703,7 +677,7 @@ public class EnemyManager {
         // Draw status effect icons
         int iconX = healthBarX - 14;
         int iconY = healthBarY - 4;
-        
+
         // Draw slow effect icon if active
         if (enemy.isSlowed()) {
             if (Enemy.snowflakeIcon == null) {
@@ -714,7 +688,7 @@ public class EnemyManager {
                 iconX -= 14; // Move left for next icon
             }
         }
-        
+
         // Draw combat synergy icon if active
         if (enemy.hasCombatSynergy()) {
             if (Enemy.thunderIcon == null) {
@@ -884,7 +858,7 @@ public class EnemyManager {
         // Get all knights and goblins
         ArrayList<Enemy> knights = new ArrayList<>();
         ArrayList<Enemy> goblins = new ArrayList<>();
-        
+
         for (Enemy enemy : enemies) {
             if (enemy.isAlive()) {
                 if (enemy.getEnemyType() == Constants.Enemies.WARRIOR) {
@@ -899,7 +873,7 @@ public class EnemyManager {
         for (Enemy knight : knights) {
             boolean hasNearbyGoblin = false;
             float closestGoblinSpeed = 0;
-            
+
             for (Enemy goblin : goblins) {
                 float distance = calculateDistance(knight, goblin);
                 if (distance < 64) { // One tile width
@@ -908,7 +882,7 @@ public class EnemyManager {
                     break;
                 }
             }
-            
+
             if (hasNearbyGoblin) {
                 knight.applyCombatSynergy(closestGoblinSpeed);
             } else {
