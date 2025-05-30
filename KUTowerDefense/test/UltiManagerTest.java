@@ -39,6 +39,7 @@ public class UltiManagerTest {
     @Test
     public void testTriggerLightningAt_hitsEnemiesWithinRadius() {
         // Should damage a living enemy within the lightning radius.
+        System.out.println("Running test: hitsEnemiesWithinRadius");
 
         ArrayList<Enemy> enemies = new ArrayList<>();
         Enemy enemy = Mockito.mock(Enemy.class);
@@ -60,6 +61,7 @@ public class UltiManagerTest {
     @Test
     public void testTriggerLightningAt_notEnoughGold_doesNotTrigger() {
         // Should not trigger lightning if player doesn't have enough gold.
+        System.out.println("Running test: notEnoughGold_doesNotTrigger");
 
         ArrayList<Enemy> enemies = new ArrayList<>();
         Enemy enemy = Mockito.mock(Enemy.class);
@@ -81,6 +83,7 @@ public class UltiManagerTest {
     @Test
     public void testTriggerLightningAt_noEnemiesInRange_doesNothing() {
         // Should not damage enemies that are outside the lightning radius.
+        System.out.println("Running test: noEnemiesInRange_doesNothing");
 
         ArrayList<Enemy> enemies = new ArrayList<>();
         Enemy enemy = Mockito.mock(Enemy.class);
@@ -101,6 +104,8 @@ public class UltiManagerTest {
     @Test
     public void testTriggerLightningAt_enemyDead_notHurt() {
         // Should not damage enemies that are already dead.
+        System.out.println("Running test: enemyDead_notHurt");
+
         ArrayList<Enemy> enemies = new ArrayList<>();
         Enemy enemy = Mockito.mock(Enemy.class);
         Mockito.when(enemy.getX()).thenReturn(100f);
