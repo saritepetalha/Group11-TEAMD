@@ -136,7 +136,7 @@ public class PlayingUI {
                 GameDimensions.GAME_HEIGHT / 2 - AssetsLoader.getInstance().optionsMenuImg.getHeight() / 3,
                 buttonSize,
                 buttonSize,
-                AssetsLoader.getInstance().buttonImages.get(1));
+                AssetsLoader.getInstance().saveButtonImg);
 
         // Initialize main menu button
         mainMenuButton = new TheButton("Main Menu",
@@ -758,7 +758,7 @@ public class PlayingUI {
 
         // 7. Save button - positioned below main menu button
         int saveLoadWidth = 120;
-        int saveLoadHeight = 30;
+        int saveLoadHeight = 50;
         int saveLoadY = btnY + btnHeight + 10; // Position below main menu button
 
         // Save button
@@ -767,16 +767,8 @@ public class PlayingUI {
         saveButton.setWidth(saveLoadWidth);
         saveButton.setHeight(saveLoadHeight);
 
-        g2d.setColor(new Color(60, 60, 60));
-        g2d.fillRoundRect(saveButton.getX(), saveLoadY, saveLoadWidth, saveLoadHeight, 5, 5);
-        g2d.setColor(Color.WHITE);
-        g2d.drawString("Save Game", saveButton.getX() + 5, saveLoadY + 20);
-        if (saveButton.isMouseOver()) {
-            g2d.setColor(new Color(100, 100, 255));
-            g2d.fillRoundRect(saveButton.getX(), saveLoadY, saveLoadWidth, saveLoadHeight, 5, 5);
-            g2d.setColor(Color.WHITE);
-            g2d.drawString("Save Game", saveButton.getX() + 5, saveLoadY + 20);
-        }
+        // Draw save button using the sprite image
+        saveButton.draw(g);
     }
 
     /**
