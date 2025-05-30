@@ -16,7 +16,7 @@ import ui_p.LiveTree;
 import objects.Warrior;
 import objects.WizardWarrior;
 import objects.ArcherWarrior;
-
+import objects.LightDecorator;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
@@ -89,31 +89,6 @@ public class TowerManager {
         }
     }
 
-    /**
-     * Handles the tower's attack logic against enemies within its range.
-     *
-     * @requires
-     * - tower != null (tower must be initialized)
-     * - tower.getTargetingStrategy() != null (tower must have a targeting strategy)
-     * - playing != null (game state must be initialized)
-     * - playing.getEnemyManager() != null (enemy manager must be initialized)
-     * - playing.getWeatherManager() != null (weather manager must be initialized)
-     *
-     * @modifies
-     * - tower's cooldown state
-     * - enemies' health within tower's range (indirectly, via playing.shootEnemy)
-     * - playing's total damage counter (indirectly, if shootEnemy leads to damage)
-     * - playing's enemy defeated counter (indirectly, if an enemy is killed)
-     *
-     * @effects
-     * - If tower is destroyed or on cooldown, method returns without effect.
-     * - Collects all alive enemies within the tower's effective range (considering weather).
-     * - Selects a target from enemies in range based on the tower's current targeting strategy.
-     * - If a target is selected:
-     *   - For Archer towers in windy weather, there's a 30% chance the tower misses; in this case, `playing.shootEnemy` is not called, but the tower's cooldown is reset, and the method returns.
-     *   - Otherwise (no miss or not an Archer in wind), `playing.shootEnemy(tower, target)` is called.
-     *   - The tower's cooldown is reset after an attempted shot (whether it was a hit or a weather-induced miss for Archers).
-     */
     private void attackEnemyIfInRange(Tower tower) {
         if (tower.isDestroyed()) return;
         if (!tower.isCooldownOver()) {
@@ -159,16 +134,16 @@ public class TowerManager {
         // Use tower center position for range calculation
         int towerCenterX = tower.getX() + tower.getWidth() / 2;
         int towerCenterY = tower.getY() + tower.getHeight() / 2;
-        
+
         // Get enemy center position
         float enemyCenterX = enemy.getSpriteCenterX();
         float enemyCenterY = enemy.getSpriteCenterY();
-        
+
         // Calculate distance between centers
         float dx = enemyCenterX - towerCenterX;
         float dy = enemyCenterY - towerCenterY;
         float distance = (float) Math.sqrt(dx * dx + dy * dy);
-        
+
         // Add a small buffer (half of enemy size) to account for enemy hitbox
         float enemySize = enemy.getWidth() / 2f;
         float adjustedDistance = distance - enemySize;
@@ -184,87 +159,181 @@ public class TowerManager {
 
     public void draw(Graphics g) {
         boolean isNight = playing.getWeatherManager() != null && playing.getWeatherManager().isNight();
-        
-        for (Tower tower : towers) {
-            BufferedImage sprite = null;
-            
-            // Destroyed towers
-            if (tower.isDestroyed() && tower.getDestroyedSprite() != null) {
-                sprite = tower.getDestroyedSprite();
-            } else if (tower instanceof TowerDecorator) {
-                sprite = ((TowerDecorator) tower).getSprite();
-            } else if (tower instanceof objects.ArcherTower) {
-                sprite = towerImages[0];
-            } else if (tower instanceof objects.ArtilleryTower) {
-                sprite = towerImages[1];
-            } else if (tower instanceof objects.MageTower) {
-                sprite = towerImages[2];
-            }
+        Graphics2D g2d = (Graphics2D) g;
 
-            // Switch to night sprites if it's night time
-            if (sprite != null && isNight) {
-                int typeIdx = -1;
-                if (tower instanceof objects.ArtilleryTower) typeIdx = 0;
-                else if (tower instanceof objects.MageTower) typeIdx = 1;
-                else if (tower instanceof objects.ArcherTower) typeIdx = 2;
-                else if (tower instanceof objects.TowerDecorator) {
-                    Tower base = ((objects.TowerDecorator)tower).decoratedTower;
-                    if (base instanceof objects.ArtilleryTower) typeIdx = 0;
-                    else if (base instanceof objects.MageTower) typeIdx = 1;
-                    else if (base instanceof objects.ArcherTower) typeIdx = 2;
-                }
-                if (typeIdx != -1) {
-                    boolean isUpgraded = (tower.getLevel() == 2 || tower instanceof objects.TowerDecorator);
-                    sprite = isUpgraded ? nightUpTowerImages[typeIdx] : nightTowerImages[typeIdx];
-                }
-            }
+        // Draw towers ONLY if it's NOT night. Night drawing is handled by drawLightEffects.
+        if (!isNight) {
+            for (Tower tower : towers) {
+                BufferedImage spriteToDraw = null;
+                Tower towerForDaySpriteLookup = tower;
 
-            if (sprite != null) {
-                int x = tower.getX();
-                int y = tower.getY();
-                int w = 64, h = 64;
-                if (tower.isDestroyed()) {
-                    g.drawImage(sprite, x, y, 56, 56, null);
-                    // Draw and update debris
-                    if (tower.debrisList != null) {
-                        long now = System.currentTimeMillis();
-                        float dt = 1.0f;
-                        java.util.Iterator<objects.Tower.Debris> it = tower.debrisList.iterator();
-                        while (it.hasNext()) {
-                            objects.Tower.Debris d = it.next();
-                            d.x += d.vx * dt;
-                            d.y += d.vy * dt;
-                            d.vy += 0.2f * dt; // gravity
-                            d.age++;
-                            d.alpha = 1f - (float)d.age / d.lifetime;
-                            if (d.age > d.lifetime) it.remove();
-                            else {
-                                g.setColor(new java.awt.Color(d.color, true));
-                                ((java.awt.Graphics2D)g).setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, Math.max(0f, d.alpha)));
-                                g.fillRect((int)d.x, (int)d.y, d.size, d.size);
-                                ((java.awt.Graphics2D)g).setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, 1f));
-                            }
-                        }
-                        if (tower.debrisList.isEmpty() || now - tower.debrisStartTime > objects.Tower.DEBRIS_DURATION_MS) {
-                            tower.debrisList = null;
+                if (tower instanceof LightDecorator) {
+                    towerForDaySpriteLookup = ((LightDecorator) tower).decoratedTower;
+                }
+
+                if (tower.isDestroyed() && tower.getDestroyedSprite() != null) {
+                    spriteToDraw = tower.getDestroyedSprite();
+                } else {
+                    // Try to get sprite from TowerDecorator.getSprite() if applicable
+                    // (e.g., for Upgraded<Type>Towers returning their specific DAY sprite)
+                    if (towerForDaySpriteLookup instanceof TowerDecorator) {
+                        spriteToDraw = ((TowerDecorator) towerForDaySpriteLookup).getSprite();
+                    }
+
+                    // If spriteToDraw is still null (e.g., it was a base tower, or a decorator that returned null like LightDecorator)
+                    // then fall back to basic tower types for day sprites.
+                    if (spriteToDraw == null) {
+                        if (towerForDaySpriteLookup instanceof objects.ArcherTower) {
+                            spriteToDraw = towerImages[0];
+                        } else if (towerForDaySpriteLookup instanceof objects.ArtilleryTower) {
+                            spriteToDraw = towerImages[1];
+                        } else if (towerForDaySpriteLookup instanceof objects.MageTower) {
+                            spriteToDraw = towerImages[2];
                         }
                     }
-                } else {
-                    g.drawImage(sprite, x, y, w, h, null);
+                }
+
+                if (spriteToDraw != null) {
+                    int x = tower.getX(); // Use original tower for position
+                    int y = tower.getY();
+                    int w = 64, h = 64;
+                    if (tower.isDestroyed()) {
+                        g.drawImage(spriteToDraw, x, y, 56, 56, null);
+                        // Draw and update debris (existing logic for daytime)
+                        if (tower.debrisList != null) {
+                            long now = System.currentTimeMillis();
+                            float dt = 1.0f;
+                            java.util.Iterator<objects.Tower.Debris> it_debris = tower.debrisList.iterator();
+                            while (it_debris.hasNext()) {
+                                objects.Tower.Debris d = it_debris.next();
+                                d.x += d.vx * dt;
+                                d.y += d.vy * dt;
+                                d.vy += 0.2f * dt;
+                                d.age++;
+                                d.alpha = 1f - (float)d.age / d.lifetime;
+                                if (d.age > d.lifetime) it_debris.remove();
+                                else {
+                                    g.setColor(new java.awt.Color(d.color, true));
+                                    ((java.awt.Graphics2D)g).setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, Math.max(0f, d.alpha)));
+                                    g.fillRect((int)d.x, (int)d.y, d.size, d.size);
+                                    ((java.awt.Graphics2D)g).setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, 1f));
+                                }
+                            }
+                            if (tower.debrisList.isEmpty() || now - tower.debrisStartTime > objects.Tower.DEBRIS_DURATION_MS) {
+                                tower.debrisList = null;
+                            }
+                        }
+                    } else {
+                        g.drawImage(spriteToDraw, x, y, w, h, null);
+                    }
                 }
             }
         }
         // Draw warriors
         drawWarriors(g);
-        // Draw upgrade effects
-        Graphics2D g2d = (Graphics2D) g;
+        // Draw upgrade effects (these are general visual effects, not tied to day/night sprites)
+        Graphics2D g2d_effects = (Graphics2D) g;
         Iterator<TowerUpgradeEffect> it = upgradeEffects.iterator();
         while (it.hasNext()) {
             TowerUpgradeEffect eff = it.next();
             if (eff.isAlive()) {
-                eff.draw(g2d);
+                eff.draw(g2d_effects);
             } else {
                 it.remove();
+            }
+        }
+    }
+
+    /**
+     * Draws light effects for towers with lights - should be called AFTER night overlay
+     * This ensures light effects appear on top of the night filter
+     */
+    public void drawLightEffects(Graphics g) {
+        boolean isNight = playing.getWeatherManager() != null && playing.getWeatherManager().isNight();
+
+        if (isNight) {
+            Graphics2D g2d = (Graphics2D) g;
+            for (Tower tower : towers) {
+                if (tower.isDestroyed()) {
+                    BufferedImage destroyedSprite = tower.getDestroyedSprite();
+                    if (destroyedSprite != null) {
+                        g.drawImage(destroyedSprite, tower.getX(), tower.getY(), 56, 56, null);
+                        // Draw and update debris for destroyed towers at night
+                        if (tower.debrisList != null) {
+                            long now = System.currentTimeMillis();
+                            float dt = 1.0f;
+                            java.util.Iterator<objects.Tower.Debris> it_debris = tower.debrisList.iterator();
+                            while (it_debris.hasNext()) {
+                                objects.Tower.Debris d = it_debris.next();
+                                d.x += d.vx * dt;
+                                d.y += d.vy * dt;
+                                d.vy += 0.2f * dt; // gravity
+                                d.age++;
+                                d.alpha = 1f - (float)d.age / d.lifetime;
+                                if (d.age > d.lifetime) it_debris.remove();
+                                else {
+                                    g.setColor(new java.awt.Color(d.color, true));
+                                    g2d.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, Math.max(0f, d.alpha)));
+                                    g.fillRect((int)d.x, (int)d.y, d.size, d.size);
+                                    g2d.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, 1f));
+                                }
+                            }
+                            if (tower.debrisList.isEmpty() || now - tower.debrisStartTime > objects.Tower.DEBRIS_DURATION_MS) {
+                                tower.debrisList = null;
+                            }
+                        }
+                    }
+                    continue; // Skip further processing for destroyed towers
+                }
+
+                BufferedImage spriteToDraw = null;
+
+                // Determine the tower instance whose state (type, upgraded status) we need to check.
+                // This is the tower directly under a LightDecorator, or the tower itself if no LightDecorator.
+                Tower towerToCheck = tower;
+                if (towerToCheck instanceof LightDecorator) {
+                    towerToCheck = ((LightDecorator) towerToCheck).decoratedTower;
+                }
+
+                // Determine the fundamental type (Archer, Mage, Artillery) for typeIdx.
+                // This requires unwrapping further decorators like Upgraded<Type>Tower.
+                Tower fundamentalTypeProvider = towerToCheck;
+                while (fundamentalTypeProvider instanceof TowerDecorator) {
+                    // Safety break for misconfigured decorators (e.g., decorating self)
+                    Tower nextDecorator = ((TowerDecorator) fundamentalTypeProvider).decoratedTower;
+                    if (nextDecorator == fundamentalTypeProvider) break;
+                    fundamentalTypeProvider = nextDecorator;
+                }
+
+                int typeIdx = -1;
+                // Based on sprite array order: nightTowerImages[0=Artillery, 1=Mage, 2=Archer]
+                if (fundamentalTypeProvider instanceof objects.ArtilleryTower) typeIdx = 0;
+                else if (fundamentalTypeProvider instanceof objects.MageTower) typeIdx = 1;
+                else if (fundamentalTypeProvider instanceof objects.ArcherTower) typeIdx = 2;
+
+                if (typeIdx != -1) {
+                    // Determine if we should use the upgraded night sprite.
+                    // This check is based on `towerToCheck` (the instance under LightDecorator or original tower).
+                    boolean useEffectiveUpgradedSprite = false;
+                    if (towerToCheck instanceof objects.UpgradedArtilleryTower ||
+                            towerToCheck instanceof objects.UpgradedMageTower ||
+                            towerToCheck instanceof objects.UpgradedArcherTower) {
+                        useEffectiveUpgradedSprite = true;
+                    } else if (towerToCheck.getLevel() == 2) { // Catches base towers upgraded to L2
+                        useEffectiveUpgradedSprite = true;
+                    }
+
+                    spriteToDraw = useEffectiveUpgradedSprite ? nightUpTowerImages[typeIdx] : nightTowerImages[typeIdx];
+                }
+
+                if (spriteToDraw != null) {
+                    g.drawImage(spriteToDraw, tower.getX(), tower.getY(), 64, 64, null);
+                }
+
+                // After drawing the tower's night sprite, draw its light effect if it's a LightDecorator
+                if (tower instanceof LightDecorator && !tower.isDestroyed()) {
+                    ((LightDecorator) tower).drawLightEffect(g2d, true);
+                }
             }
         }
     }
@@ -471,6 +540,75 @@ public class TowerManager {
                 }
             }
         }
+
+    /**
+     * Checks if any tower with light is illuminating the given position at night
+     * @param x The x coordinate to check
+     * @param y The y coordinate to check
+     * @return true if the position is lit by any tower's light, false otherwise
+     */
+    public boolean isPositionLit(float x, float y) {
+        if (playing.getWeatherManager() == null || !playing.getWeatherManager().isNight()) {
+            return true; // During day, everything is visible
+        }
+
+        for (Tower tower : towers) {
+            if (tower instanceof LightDecorator && !tower.isDestroyed()) {
+                LightDecorator lightTower = (LightDecorator) tower;
+                if (lightTower.isPositionLit(x, y)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Checks if any tower with light is illuminating the given enemy at night
+     * @param enemy The enemy to check
+     * @return true if the enemy is lit by any tower's light, false otherwise
+     */
+    public boolean isEnemyLit(enemies.Enemy enemy) {
+        return isPositionLit(enemy.getSpriteCenterX(), enemy.getSpriteCenterY());
+    }
+
+    /**
+     * Upgrades a tower with a light decorator
+     * @param tower The tower to upgrade with light
+     * @return The new LightDecorator or null if upgrade failed
+     */
+    public LightDecorator upgradeTowerWithLight(Tower tower) {
+        if (tower == null || tower.isDestroyed()) {
+            return null;
+        }
+
+        // Don't allow double decoration with light
+        if (tower instanceof LightDecorator) {
+            return (LightDecorator) tower;
+        }
+
+        LightDecorator lightTower = new LightDecorator(tower);
+        replaceTower(tower, lightTower);
+        triggerUpgradeEffect(lightTower);
+
+        return lightTower;
+    }
+
+    /**
+     * Checks if a tower can be upgraded with light
+     * @param tower The tower to check
+     * @return true if the tower can be upgraded with light
+     */
+    public boolean canUpgradeWithLight(Tower tower) {
+        return tower != null && !tower.isDestroyed() && !(tower instanceof LightDecorator);
+    }
+
+    /**
+     * Gets the cost for upgrading a tower with light
+     * @return The gold cost for light upgrade
+     */
+    public int getLightUpgradeCost() {
+        return 50; // Changed from 100 to 50
     }
 }
 

@@ -197,6 +197,10 @@ public class Playing extends GameScene implements SceneMethods {
         waveManager = new WaveManager(this, this.gameOptions);
         enemyManager = new EnemyManager(this, overlay, level, this.gameOptions);
         towerManager = new TowerManager(this);
+
+        // Set TowerManager reference in WeatherManager for lighting effects
+        weatherManager.setTowerManager(towerManager);
+
         playerManager = new PlayerManager(this.gameOptions);
         ultiManager = new UltiManager(this);
         this.selectedDeadTree = null;
@@ -312,6 +316,12 @@ public class Playing extends GameScene implements SceneMethods {
                 enemyManager.getEnemies().clear();
             }
             towerManager = new TowerManager(this);
+
+            // Update WeatherManager reference when tower manager is recreated
+            if (weatherManager != null) {
+                weatherManager.setTowerManager(towerManager);
+            }
+
             deadTrees = towerManager.findDeadTrees(level);
             liveTrees = towerManager.findLiveTrees(level);
 
@@ -521,6 +531,16 @@ public class Playing extends GameScene implements SceneMethods {
         projectileManager.draw(g);
         fireAnimationManager.draw(g);
         weatherManager.draw(g);
+
+        // Draw light effects AFTER weather manager (including night overlay)
+        // This ensures lights appear on top of the night filter
+        towerManager.drawLightEffects(g);
+
+        // Draw tower selection UI (range indicators, buttons, etc.)
+        if (towerSelectionUI != null) {
+            towerSelectionUI.draw(g);
+        }
+
         playingUI.draw(g);
         goldBagManager.draw(g);
         drawCastleHealthBar(g);
