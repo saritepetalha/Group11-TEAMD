@@ -78,6 +78,24 @@ public class GameStateManager {
         return loadGameState(DEFAULT_SAVE_FILE);
     }
 
+    /**
+     * Loads a game state from a JSON file with the specified filename.
+     *
+     * @requires saveFileName != null
+     * @modifies this.gson (internal state during JSON parsing), file system (file read operations),
+     *           console output (via System.out.println and System.err.println)
+     * @effects If saveFileName does not end with ".json", appends ".json" to the filename.
+     *          If the save file exists at the computed path:
+     *            - Reads and parses the JSON content into a GameStateMemento object
+     *            - Prints success message to console
+     *            - Returns the parsed GameStateMemento object
+     *          If the save file does not exist:
+     *            - Prints "No save file found" message to console
+     *            - Returns null
+     *          If an IOException occurs during file reading or JSON parsing:
+     *            - Prints error message to console
+     *            - Returns null
+     */
     public GameStateMemento loadGameState(String saveFileName) {
         // Ensure the filename has .json extension
         if (!saveFileName.toLowerCase().endsWith(".json")) {
