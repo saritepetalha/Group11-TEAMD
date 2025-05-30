@@ -399,4 +399,104 @@ public class TowerManagerTest {
         // Verify towers are still in collection and unchanged
         assertEquals(2, towerManager.getTowers().size(), "Should still have 2 towers after updates");
     }
+
+    /**
+     * Test Case 7: Test tower positioning constraints.
+     *
+     * Verifies that towers can be placed at various positions and that
+     * the position invariants are maintained.
+     *
+     * NOTE: In the actual game, towers can only be built on dead tree locations.
+     * This test validates the underlying ADT positioning capabilities, but
+     * real gameplay would enforce additional constraints through TreeInteractionManager.
+     */
+    @Test
+    @DisplayName("Test 7: Tower positioning constraints")
+    void testTowerPositioningConstraints() {
+        // Test building towers at positions that would correspond to dead tree locations
+        // Dead trees are typically placed on 64x64 tile boundaries
+        towerManager.buildArcherTower(0, 0);     // Top-left corner (valid dead tree position)
+        assertTrue(repOk(towerManager), "Tower at (0,0) should maintain invariant");
+
+        towerManager.buildMageTower(320, 256);   // Mid-map position (5*64, 4*64 - tile-aligned)
+        assertTrue(repOk(towerManager), "Tower at (320,256) should maintain invariant");
+
+        // Test building multiple towers at different tile-aligned positions
+        towerManager.buildArtilerryTower(64, 128);    // Tile position (1,2)
+        towerManager.buildArcherTower(192, 192);      // Tile position (3,3)
+        towerManager.buildMageTower(448, 320);        // Tile position (7,5)
+
+        assertTrue(repOk(towerManager), "Multiple towers at different positions should maintain invariant");
+        assertEquals(5, towerManager.getTowers().size(), "Should have 5 towers total");
+
+        // Verify no position conflicts (invariant 10)
+        ArrayList<Tower> towers = towerManager.getTowers();
+        for (int i = 0; i < towers.size(); i++) {
+            for (int j = i + 1; j < towers.size(); j++) {
+                Tower tower1 = towers.get(i);
+                Tower tower2 = towers.get(j);
+                assertFalse(tower1.getX() == tower2.getX() && tower1.getY() == tower2.getY(),
+                        "No two towers should occupy the same position");
+            }
+        }
+
+        // Verify positions are reasonable for a tile-based game
+        for (Tower tower : towers) {
+            assertTrue(tower.getX() % 64 == 0, "Tower X position should be tile-aligned (64px tiles)");
+            assertTrue(tower.getY() % 64 == 0, "Tower Y position should be tile-aligned (64px tiles)");
+        }
+
+        // Test invalid placement scenarios
+        testInvalidTowerPlacements();
+    }
+
+    /**
+     * Helper method to test invalid tower placement scenarios.
+     * Tests various edge cases for tower positioning that should violate invariants.
+     */
+    private void testInvalidTowerPlacements() {
+        // Clear towers for clean testing
+        towerManager.clearTowers();
+        assertTrue(repOk(towerManager), "Should start with valid empty state");
+
+        // Test 1: Negative coordinates (should violate invariant 6)
+        towerManager.buildArcherTower(-64, 0);  // Negative X
+        assertFalse(repOk(towerManager), "Negative X coordinate should violate representation invariant");
+        towerManager.clearTowers();
+
+        towerManager.buildMageTower(0, -64);    // Negative Y
+        assertFalse(repOk(towerManager), "Negative Y coordinate should violate representation invariant");
+        towerManager.clearTowers();
+
+        towerManager.buildArtilerryTower(-32, -32);  // Both negative
+        assertFalse(repOk(towerManager), "Both negative coordinates should violate representation invariant");
+        towerManager.clearTowers();
+
+        // Test 2: Coordinates far outside reasonable game bounds
+        // Game dimensions from constants: GAME_WIDTH = 1024, GAME_HEIGHT = 576
+        towerManager.buildArcherTower(2000, 100);   // Far beyond screen width
+        // Note: Current invariant only checks >= 0, not upper bounds
+        // This would pass current repOk but represents unrealistic placement
+        assertTrue(repOk(towerManager), "Current invariant allows large coordinates (design decision)");
+        towerManager.clearTowers();
+
+        towerManager.buildMageTower(100, 1500);     // Far beyond screen height
+        assertTrue(repOk(towerManager), "Current invariant allows large coordinates (design decision)");
+        towerManager.clearTowers();
+
+        // Test 3: Edge case coordinates (just at boundaries)
+        towerManager.buildArtilerryTower(0, 0);     // Minimum valid coordinates
+        assertTrue(repOk(towerManager), "Minimum coordinates (0,0) should be valid");
+
+        towerManager.buildArcherTower(1024, 576);   // At game dimension boundaries
+        assertTrue(repOk(towerManager), "Boundary coordinates should be valid for ADT");
+
+        // Test 4: Attempt to add towers with invalid internal state would be caught by other invariants
+        // (This would require creating towers with null targeting strategies, etc.,
+        //  but our tower constructors prevent this)
+
+        // Verify final state
+        assertEquals(2, towerManager.getTowers().size(), "Should have 2 valid towers remaining");
+        assertTrue(repOk(towerManager), "Final state should be valid");
+    }
 } 
