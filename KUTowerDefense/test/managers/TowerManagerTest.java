@@ -1,6 +1,7 @@
+package managers;
+
 import static org.junit.jupiter.api.Assertions.*;
 
-import managers.TowerManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -11,10 +12,6 @@ import static org.mockito.Mockito.*;
 import objects.*;
 import scenes.Playing;
 import strategies.TargetingStrategy;
-import strategies.FirstEnemyStrategy;
-import enemies.Enemy;
-import managers.EnemyManager;
-import managers.WeatherManager;
 
 import java.awt.Graphics2D;
 import java.util.ArrayList;
