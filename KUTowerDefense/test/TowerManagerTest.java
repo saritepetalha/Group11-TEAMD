@@ -313,4 +313,50 @@ public class TowerManagerTest {
                     "Tower should have the custom targeting strategy");
         }
     }
+
+    /**
+     * Test Case 5: Test edge cases and error conditions.
+     *
+     * Verifies that the TowerManager handles edge cases gracefully while
+     * maintaining the representation invariant.
+     */
+    @Test
+    @DisplayName("Test 5: Edge cases and error conditions")
+    void testEdgeCasesAndErrorConditions() {
+        // Test adding null tower (should be handled gracefully)
+        assertDoesNotThrow(() -> {
+            // Note: The actual implementation might allow null towers,
+            // but repOk should catch this as an invariant violation
+            towerManager.addTower(null);
+        }, "Adding null tower should not throw exception");
+
+        // If null was added, repOk should fail and we need to remove it for further testing
+        if (towerManager.getTowers().contains(null)) {
+            assertFalse(repOk(towerManager), "RepOk should fail if null tower is in collection");
+            // Clear the collection to continue testing with valid state
+            towerManager.clearTowers();
+        }
+
+        // Ensure we have a valid state for the next test
+        assertTrue(repOk(towerManager), "Should have valid state after clearing");
+
+        // Test replacing non-existent tower
+        ArcherTower nonExistentTower = new ArcherTower(999, 999);
+        ArcherTower replacementTower = new ArcherTower(1000, 1000);
+
+        assertDoesNotThrow(() -> {
+            towerManager.replaceTower(nonExistentTower, replacementTower);
+        }, "Replacing non-existent tower should not throw exception");
+
+        assertTrue(repOk(towerManager), "Representation invariant should hold after failed replacement");
+
+        // Test clearing empty collection
+        towerManager.clearTowers();
+        assertDoesNotThrow(() -> {
+            towerManager.clearTowers();
+        }, "Clearing already empty collection should not throw exception");
+
+        assertTrue(repOk(towerManager), "Representation invariant should hold after clearing empty collection");
+        assertTrue(towerManager.getTowers().isEmpty(), "Collection should remain empty");
+    }
 } 
