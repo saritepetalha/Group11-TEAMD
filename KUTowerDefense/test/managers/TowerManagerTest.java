@@ -27,7 +27,7 @@ import java.lang.reflect.Field;
  * - Building and placing different types of towers (Archer, Mage, Artillery)
  * - Managing tower collection operations (add, remove, replace, clear)
  * - Coordinating tower attacks against enemies
- * - Handling visual effects and rendering
+ * - Handling visual effects and rendering (but it should not do, the code must be refactored)
  * - Processing game state updates (cooldowns, targeting, weather effects)
  * 
  * The TowerManager acts as a centralized controller for all tower-related operations,
