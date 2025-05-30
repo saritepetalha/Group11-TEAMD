@@ -773,41 +773,40 @@ public class EnemyManager {
 
     private boolean isGoblinInvisible(Enemy enemy) {
         if (weatherManager == null) {
-
             return false;
         }
 
         boolean isNight = weatherManager.isNight();
 
         if (isNight && !wasNight) {
-
             long currentTime = System.currentTimeMillis();
             for (Enemy e : enemies) {
                 if (e.getEnemyType() == 0) { // GOBLIN
                     enemySpawnTimes.put(e, currentTime);
-
                 }
             }
         }
         wasNight = isNight;
 
         if (isNight && enemy.getEnemyType() == 0) { // GOBLIN = 0
+            // Check if goblin is lit by any tower with light
+            if (playing.getTowerManager().isEnemyLit(enemy)) {
+                enemy.setInvisible(false);
+                return false; // Goblin is visible due to tower light
+            }
+
             Long spawnTime = enemySpawnTimes.get(enemy);
 
             if (spawnTime == null) {
                 long currentTime = System.currentTimeMillis();
                 enemySpawnTimes.put(enemy, currentTime);
                 enemy.setInvisible(true);
-
                 return true;
             }
 
             long currentTime = System.currentTimeMillis();
-            boolean isInvisible = (currentTime - spawnTime) < 10000; // İlk 10 saniye görünmez
+            boolean isInvisible = (currentTime - spawnTime) < 10000; // First 10 seconds invisible
 
-            if (isInvisible) {
-
-            }
             enemy.setInvisible(isInvisible);
             return isInvisible;
         }
@@ -839,7 +838,7 @@ public class EnemyManager {
         g2d.fillOval(drawX + 8, drawY + 8, 8, 12);
         g2d.fillOval(drawX + drawWidth - 16, drawY + 8, 8, 12);
 
-        g2d.setColor(new Color(255, 0, 0, 100)); // Kırmızı parıltı
+        g2d.setColor(new Color(255, 0, 0, 100)); // Red glow for eyes
         g2d.fillOval(drawX + 18, drawY + 12, 3, 3);
         g2d.fillOval(drawX + 28, drawY + 12, 3, 3);
 
