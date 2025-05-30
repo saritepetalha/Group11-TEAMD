@@ -5,6 +5,8 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import objects.Tower;
+import objects.LightDecorator;
 
 public class WeatherManager {
     private static final int MAX_PARTICLES = 200;
@@ -29,6 +31,7 @@ public class WeatherManager {
     private float dayTime;
     private float nightIntensity;
     private boolean lastNightState = false;
+    private TowerManager towerManager;
 
     public WeatherManager() {
         weatherParticles = new ArrayList<>();
@@ -171,10 +174,50 @@ public class WeatherManager {
 
     private void drawNightOverlay(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
-        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, nightIntensity));
-        g2d.setColor(Color.BLACK);
-        g2d.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
+
+        BufferedImage nightOverlay = new BufferedImage(GAME_WIDTH, GAME_HEIGHT, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D overlayG2d = nightOverlay.createGraphics();
+        overlayG2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        overlayG2d.setColor(new Color(0, 0, 0, (int)(nightIntensity * 255)));
+        overlayG2d.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+        if (towerManager != null) {
+            overlayG2d.setComposite(AlphaComposite.DstOut);
+
+            for (Tower tower : towerManager.getTowers()) {
+                if (tower instanceof LightDecorator && !tower.isDestroyed()) {
+                    LightDecorator lightTower = (LightDecorator) tower;
+                    float lightRadius = lightTower.getLightRadius();
+
+                    int centerX = tower.getX() + 32;
+                    int centerY = tower.getY() + 32;
+
+                    RadialGradientPaint lightGradient = new RadialGradientPaint(
+                            centerX, centerY, lightRadius,
+                            new float[]{0.0f, 0.3f, 0.7f, 1.0f},
+                            new Color[]{
+                                    new Color(255, 255, 255, (int)(nightIntensity * 255 * 0.85f)),
+                                    new Color(255, 255, 255, (int)(nightIntensity * 255 * 0.65f)),
+                                    new Color(255, 255, 255, (int)(nightIntensity * 255 * 0.25f)),
+                                    new Color(255, 255, 255, 0)
+                            }
+                    );
+
+                    overlayG2d.setPaint(lightGradient);
+                    overlayG2d.fillOval(
+                            (int)(centerX - lightRadius),
+                            (int)(centerY - lightRadius),
+                            (int)(lightRadius * 2),
+                            (int)(lightRadius * 2)
+                    );
+                }
+            }
+        }
+
+        overlayG2d.dispose();
+
+        g2d.drawImage(nightOverlay, 0, 0, null);
     }
 
     public boolean isNight() {
@@ -285,7 +328,6 @@ public class WeatherManager {
         try {
             AudioManager audioManager = AudioManager.getInstance();
 
-            // Sadece hava durumu seslerini durdur, müziği durdurmayalım
             audioManager.stopWeatherSounds();
 
             switch (currentWeather) {
@@ -312,5 +354,9 @@ public class WeatherManager {
         } catch (Exception e) {
             System.err.println("Hava durumu sesleri durdurulurken hata: " + e.getMessage());
         }
+    }
+
+    public void setTowerManager(TowerManager towerManager) {
+        this.towerManager = towerManager;
     }
 }

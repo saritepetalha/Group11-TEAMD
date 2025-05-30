@@ -21,6 +21,7 @@ public class TowerSelectionUI {
     private TheButton upgradeButton;
     private TargetingButton targetingButton;
     private TheButton reviveButton;
+    private TheButton lightUpgradeButton;
 
     // UI positioning
     private static final int BUTTON_WIDTH = 80;
@@ -69,9 +70,11 @@ public class TowerSelectionUI {
             reviveButton = new TheButton("Revive", buttonX, buttonY, BUTTON_WIDTH, BUTTON_HEIGHT);
             upgradeButton = null;
             targetingButton = null;
+            lightUpgradeButton = null;
         } else {
             // Create upgrade button
             upgradeButton = new TheButton("Upgrade", buttonX, buttonY, BUTTON_WIDTH, BUTTON_HEIGHT);
+
             // Create targeting button below upgrade button
             targetingButton = new TargetingButton("Targeting",
                     buttonX,
@@ -79,6 +82,14 @@ public class TowerSelectionUI {
                     BUTTON_WIDTH,
                     BUTTON_HEIGHT,
                     selectedTower);
+
+            // Create light upgrade button below targeting button
+            lightUpgradeButton = new TheButton("Light",
+                    buttonX,
+                    buttonY + 2 * (BUTTON_HEIGHT + BUTTON_SPACING),
+                    BUTTON_WIDTH,
+                    BUTTON_HEIGHT);
+
             reviveButton = null;
         }
     }
@@ -90,6 +101,7 @@ public class TowerSelectionUI {
         upgradeButton = null;
         targetingButton = null;
         reviveButton = null;
+        lightUpgradeButton = null;
         selectedTower = null;
     }
 
@@ -135,14 +147,14 @@ public class TowerSelectionUI {
 
             // Draw semi-transparent range area
             g2d.setColor(new Color(100, 200, 255, 40));
-            g2d.fillOval(centerX - (int)adjustedRange, centerY - (int)adjustedRange, 
-                        (int)adjustedRange * 2, (int)adjustedRange * 2);
+            g2d.fillOval(centerX - (int)adjustedRange, centerY - (int)adjustedRange,
+                    (int)adjustedRange * 2, (int)adjustedRange * 2);
 
             // Draw range border
             g2d.setColor(new Color(100, 200, 255, 180));
             g2d.setStroke(new BasicStroke(2));
-            g2d.drawOval(centerX - (int)adjustedRange, centerY - (int)adjustedRange, 
-                        (int)adjustedRange * 2, (int)adjustedRange * 2);
+            g2d.drawOval(centerX - (int)adjustedRange, centerY - (int)adjustedRange,
+                    (int)adjustedRange * 2, (int)adjustedRange * 2);
         }
 
         // Draw enhanced range indicator
@@ -157,6 +169,9 @@ public class TowerSelectionUI {
             }
             if (targetingButton != null) {
                 targetingButton.draw(g);
+            }
+            if (lightUpgradeButton != null) {
+                drawLightUpgradeButton(g2d);
             }
         }
     }
@@ -463,6 +478,86 @@ public class TowerSelectionUI {
     }
 
     /**
+     * Draws the light upgrade button with pixel art styling
+     */
+    private void drawLightUpgradeButton(Graphics2D g2d) {
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+
+        // Check if tower can be upgraded with light and if player can afford it
+        boolean canUpgrade = playing.getTowerManager().canUpgradeWithLight(selectedTower);
+        int lightCost = playing.getTowerManager().getLightUpgradeCost();
+        boolean canAfford = canUpgrade && playing.getPlayerManager().getGold() >= lightCost;
+
+        Color bgColor = canAfford ? new Color(255, 215, 0) : new Color(100, 100, 100); // Gold color for light
+        Color borderColor = new Color(80, 80, 80);
+        Color textColor = canAfford ? Color.BLACK : new Color(180, 180, 180);
+
+        // Button background
+        g2d.setColor(bgColor);
+        g2d.fillRect(lightUpgradeButton.getX(), lightUpgradeButton.getY(),
+                lightUpgradeButton.getWidth(), lightUpgradeButton.getHeight());
+
+        // Hover effect
+        if (lightUpgradeButton.isMouseOver() && canAfford) {
+            g2d.setColor(new Color(255, 255, 255, 80));
+            g2d.fillRect(lightUpgradeButton.getX() + 1, lightUpgradeButton.getY() + 1,
+                    lightUpgradeButton.getWidth() - 2, lightUpgradeButton.getHeight() - 2);
+        }
+
+        // Press effect
+        if (lightUpgradeButton.isMousePressed() && canAfford) {
+            g2d.setColor(new Color(0, 0, 0, 100));
+            g2d.fillRect(lightUpgradeButton.getX() + 1, lightUpgradeButton.getY() + 1,
+                    lightUpgradeButton.getWidth() - 2, lightUpgradeButton.getHeight() - 2);
+        }
+
+        // Border
+        g2d.setColor(borderColor);
+        g2d.setStroke(new BasicStroke(1));
+        g2d.drawRect(lightUpgradeButton.getX(), lightUpgradeButton.getY(),
+                lightUpgradeButton.getWidth(), lightUpgradeButton.getHeight());
+
+        // Text
+        g2d.setColor(textColor);
+        g2d.setFont(new Font("Monospaced", Font.BOLD, 10));
+        String text = canUpgrade ? ("Light $" + lightCost) : "Has Light";
+        FontMetrics fm = g2d.getFontMetrics();
+        int textX = lightUpgradeButton.getX() + (lightUpgradeButton.getWidth() - fm.stringWidth(text)) / 2;
+        int textY = lightUpgradeButton.getY() + (lightUpgradeButton.getHeight() + fm.getAscent()) / 2;
+        g2d.drawString(text, textX, textY);
+
+        // If not affordable, draw X overlay
+        if (canUpgrade && !canAfford) {
+            g2d.setColor(new Color(200, 0, 0, 180));
+            g2d.setStroke(new BasicStroke(2));
+            g2d.drawLine(lightUpgradeButton.getX() + 4, lightUpgradeButton.getY() + 4,
+                    lightUpgradeButton.getX() + lightUpgradeButton.getWidth() - 4,
+                    lightUpgradeButton.getY() + lightUpgradeButton.getHeight() - 4);
+            g2d.drawLine(lightUpgradeButton.getX() + lightUpgradeButton.getWidth() - 4,
+                    lightUpgradeButton.getY() + 4,
+                    lightUpgradeButton.getX() + 4,
+                    lightUpgradeButton.getY() + lightUpgradeButton.getHeight() - 4);
+        }
+
+        // Light effect when hovering (preview the light range)
+        if (lightUpgradeButton.isMouseOver() && canUpgrade && playing.getWeatherManager().isNight()) {
+            float lightRadius = selectedTower.getRange() * 0.7f;
+            int centerX = selectedTower.getX() + selectedTower.getWidth() / 2;
+            int centerY = selectedTower.getY() + selectedTower.getHeight() / 2;
+
+            // Draw preview light circle
+            g2d.setColor(new Color(255, 255, 150, 60));
+            g2d.fillOval(centerX - (int)lightRadius, centerY - (int)lightRadius,
+                    (int)lightRadius * 2, (int)lightRadius * 2);
+
+            g2d.setColor(new Color(255, 255, 100, 120));
+            g2d.setStroke(new BasicStroke(2.0f));
+            g2d.drawOval(centerX - (int)lightRadius, centerY - (int)lightRadius,
+                    (int)lightRadius * 2, (int)lightRadius * 2);
+        }
+    }
+
+    /**
      * Handles mouse movement for button hover detection
      */
     public void mouseMoved(int mouseX, int mouseY) {
@@ -471,6 +566,9 @@ public class TowerSelectionUI {
         }
         if (targetingButton != null) {
             targetingButton.setMouseOver(targetingButton.getBounds().contains(mouseX, mouseY));
+        }
+        if (lightUpgradeButton != null) {
+            lightUpgradeButton.setMouseOver(lightUpgradeButton.getBounds().contains(mouseX, mouseY));
         }
     }
 
@@ -533,6 +631,30 @@ public class TowerSelectionUI {
             handled = true;
         }
 
+        if (lightUpgradeButton != null && lightUpgradeButton.getBounds().contains(mouseX, mouseY)) {
+            if (playing.getTowerManager().canUpgradeWithLight(selectedTower)) {
+                int lightCost = playing.getTowerManager().getLightUpgradeCost();
+                if (playing.getPlayerManager().getGold() >= lightCost) {
+                    // Spend the gold
+                    playing.getPlayerManager().spendGold(lightCost);
+
+                    // Handle light upgrade logic
+                    objects.LightDecorator lightTower = playing.getTowerManager().upgradeTowerWithLight(selectedTower);
+
+                    if (lightTower != null) {
+                        // Update the selection to the new light tower
+                        setSelectedTower(lightTower);
+
+                        // Update UI resources
+                        playing.updateUIResources();
+
+                        System.out.println("Tower upgraded with light!");
+                    }
+                }
+            }
+            handled = true;
+        }
+
         if (targetingButton != null && targetingButton.getBounds().contains(mouseX, mouseY)) {
             targetingButton.cycleStrategy();
             handled = true;
@@ -563,6 +685,9 @@ public class TowerSelectionUI {
         if (targetingButton != null && targetingButton.getBounds().contains(mouseX, mouseY)) {
             targetingButton.setMousePressed(true);
         }
+        if (lightUpgradeButton != null && lightUpgradeButton.getBounds().contains(mouseX, mouseY)) {
+            lightUpgradeButton.setMousePressed(true);
+        }
     }
 
     /**
@@ -574,6 +699,9 @@ public class TowerSelectionUI {
         }
         if (targetingButton != null) {
             targetingButton.setMousePressed(false);
+        }
+        if (lightUpgradeButton != null) {
+            lightUpgradeButton.setMousePressed(false);
         }
     }
 
