@@ -281,4 +281,36 @@ public class TowerManagerTest {
         assertEquals(0, towerManager.getTowers().size(), "Should have 0 towers after clearing");
         assertTrue(towerManager.getTowers().isEmpty(), "Tower list should be empty after clearing");
     }
+
+    /**
+     * Test Case 4: Test tower building with custom targeting strategies.
+     *
+     * Verifies that towers can be built with custom targeting strategies and that
+     * the representation invariant is maintained.
+     */
+    @Test
+    @DisplayName("Test 4: Tower building with custom targeting strategies")
+    void testTowerBuildingWithCustomTargetingStrategies() {
+        // Setup: Create custom targeting strategy
+        TargetingStrategy customStrategy = mock(TargetingStrategy.class);
+
+        // Act: Build towers with custom targeting strategies
+        towerManager.buildArcherTower(0, 0, customStrategy);
+        assertTrue(repOk(towerManager), "Building archer with custom strategy should maintain invariant");
+
+        towerManager.buildMageTower(64, 0, customStrategy);
+        assertTrue(repOk(towerManager), "Building mage with custom strategy should maintain invariant");
+
+        towerManager.buildArtilleryTower(128, 0, customStrategy);
+        assertTrue(repOk(towerManager), "Building artillery with custom strategy should maintain invariant");
+
+        // Assert: Verify towers have custom targeting strategies
+        ArrayList<Tower> towers = towerManager.getTowers();
+        assertEquals(3, towers.size(), "Should have 3 towers");
+
+        for (Tower tower : towers) {
+            assertEquals(customStrategy, tower.getTargetingStrategy(),
+                    "Tower should have the custom targeting strategy");
+        }
+    }
 } 
