@@ -77,35 +77,39 @@ public class TowerSelectionUI {
             spawnButton = null;
             lightUpgradeButton = null;
         } else {
+            int currentButtonY = buttonY;
             // Create upgrade button
-            upgradeButton = new TheButton("Upgrade", buttonX, buttonY, BUTTON_WIDTH, BUTTON_HEIGHT);
+            upgradeButton = new TheButton("Upgrade", buttonX, currentButtonY, BUTTON_WIDTH, BUTTON_HEIGHT);
+            currentButtonY += BUTTON_HEIGHT + BUTTON_SPACING;
 
             // Create targeting button below upgrade button
             targetingButton = new TargetingButton("Targeting",
                     buttonX,
-                    buttonY + BUTTON_HEIGHT + BUTTON_SPACING,
+                    currentButtonY,
                     BUTTON_WIDTH,
                     BUTTON_HEIGHT,
                     selectedTower);
+            currentButtonY += BUTTON_HEIGHT + BUTTON_SPACING;
+
             // Create spawn button below targeting button, only for Archer and Mage Towers
             if (selectedTower instanceof objects.ArcherTower || selectedTower instanceof objects.MageTower) {
                 spawnButton = new TheButton("Spawn",
                         buttonX,
-                        buttonY + 2 * (BUTTON_HEIGHT + BUTTON_SPACING),
+                        currentButtonY,
                         BUTTON_WIDTH,
                         BUTTON_HEIGHT);
+                currentButtonY += BUTTON_HEIGHT + BUTTON_SPACING;        
             } else {
                 spawnButton = null;
             }
-
-
-            // Create light upgrade button below targeting button
+ 
+            // Create light upgrade button below the last button
             lightUpgradeButton = new TheButton("Light",
                     buttonX,
-                    buttonY + 2 * (BUTTON_HEIGHT + BUTTON_SPACING),
+                    currentButtonY, // Positioned below the previous button
                     BUTTON_WIDTH,
                     BUTTON_HEIGHT);
-
+ 
             reviveButton = null;
         }
     }
@@ -160,18 +164,18 @@ public class TowerSelectionUI {
 
             // Add a small buffer to account for enemy size
             float enemySize = 32f; // Average enemy size
-            float adjustedRange = previewRange + enemySize/2;
+            float adjustedRange = previewRange + enemySize / 2;
 
             // Draw semi-transparent range area
             g2d.setColor(new Color(100, 200, 255, 40));
-            g2d.fillOval(centerX - (int)adjustedRange, centerY - (int)adjustedRange,
-                    (int)adjustedRange * 2, (int)adjustedRange * 2);
+            g2d.fillOval(centerX - (int) adjustedRange, centerY - (int) adjustedRange,
+                    (int) adjustedRange * 2, (int) adjustedRange * 2);
 
             // Draw range border
             g2d.setColor(new Color(100, 200, 255, 180));
             g2d.setStroke(new BasicStroke(2));
-            g2d.drawOval(centerX - (int)adjustedRange, centerY - (int)adjustedRange,
-                    (int)adjustedRange * 2, (int)adjustedRange * 2);
+            g2d.drawOval(centerX - (int) adjustedRange, centerY - (int) adjustedRange,
+                    (int) adjustedRange * 2, (int) adjustedRange * 2);
         }
 
         // Draw enhanced range indicator
@@ -189,6 +193,7 @@ public class TowerSelectionUI {
             }
             if (spawnButton != null) {
                 drawSpawnButton(g2d);
+            }
             if (lightUpgradeButton != null) {
                 drawLightUpgradeButton(g2d);
             }
@@ -660,6 +665,7 @@ public class TowerSelectionUI {
         }
         if (spawnButton != null) {
             spawnButton.setMouseOver(spawnButton.getBounds().contains(mouseX, mouseY));
+        }
         if (lightUpgradeButton != null) {
             lightUpgradeButton.setMouseOver(lightUpgradeButton.getBounds().contains(mouseX, mouseY));
         }
@@ -787,6 +793,7 @@ public class TowerSelectionUI {
         }
         if (spawnButton != null && spawnButton.getBounds().contains(mouseX, mouseY)) {
             spawnButton.setMousePressed(true);
+        }
         if (lightUpgradeButton != null && lightUpgradeButton.getBounds().contains(mouseX, mouseY)) {
             lightUpgradeButton.setMousePressed(true);
         }
@@ -804,6 +811,7 @@ public class TowerSelectionUI {
         }
         if (spawnButton != null) {
             spawnButton.setMousePressed(false);
+        }
         if (lightUpgradeButton != null) {
             lightUpgradeButton.setMousePressed(false);
         }
