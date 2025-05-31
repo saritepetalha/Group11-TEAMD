@@ -540,7 +540,7 @@ public class TowerManager {
                 }
             }
         }
-
+    }
     /**
      * Checks if any tower with light is illuminating the given position at night
      * @param x The x coordinate to check
