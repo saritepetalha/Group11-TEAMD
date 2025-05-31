@@ -92,7 +92,13 @@ public class TowerSelectionUI {
             currentButtonY += BUTTON_HEIGHT + BUTTON_SPACING;
 
             // Create spawn button below targeting button, only for Archer and Mage Towers
-            if (selectedTower instanceof objects.ArcherTower || selectedTower instanceof objects.MageTower) {
+            // Also check if the tower is a LightDecorator wrapping an Archer or Mage Tower
+            Tower towerToCheckForSpawn = selectedTower;
+            if (selectedTower instanceof objects.LightDecorator) {
+                towerToCheckForSpawn = ((objects.LightDecorator) selectedTower).decoratedTower;
+            }
+
+            if (towerToCheckForSpawn instanceof objects.ArcherTower || towerToCheckForSpawn instanceof objects.MageTower) {
                 spawnButton = new TheButton("Spawn",
                         buttonX,
                         currentButtonY,
@@ -511,10 +517,15 @@ public class TowerSelectionUI {
         int spawnCost = 0;
         String text = "Spawn"; // Default text
 
-        if (selectedTower instanceof objects.MageTower) {
-            tempWarrior = new WizardWarrior(0,0); // Temporary instance for cost check
-        } else if (selectedTower instanceof objects.ArcherTower) {
-            tempWarrior = new ArcherWarrior(0,0); // Temporary instance for cost check
+        Tower towerForSpawning = selectedTower;
+        if (selectedTower instanceof objects.LightDecorator) {
+            towerForSpawning = ((objects.LightDecorator) selectedTower).decoratedTower;
+        }
+
+        if (towerForSpawning instanceof objects.MageTower) {
+            tempWarrior = new WizardWarrior(selectedTower.getX(), selectedTower.getY());
+        } else if (towerForSpawning instanceof objects.ArcherTower) {
+            tempWarrior = new ArcherWarrior(selectedTower.getX(), selectedTower.getY());
         }
 
         if (tempWarrior != null) {
@@ -748,9 +759,17 @@ public class TowerSelectionUI {
 
         if (spawnButton != null && spawnButton.getBounds().contains(mouseX, mouseY)) {
             Warrior warriorToSpawn = null;
-            if (selectedTower instanceof objects.MageTower) {
+
+            // Determine the correct tower to check for spawning capabilities
+            Tower towerForSpawningCheck = selectedTower;
+            if (selectedTower instanceof objects.LightDecorator) {
+                towerForSpawningCheck = ((objects.LightDecorator) selectedTower).decoratedTower;
+            }
+
+            // Check the type of the (potentially unwrapped) tower
+            if (towerForSpawningCheck instanceof objects.MageTower) {
                 warriorToSpawn = new WizardWarrior(selectedTower.getX(), selectedTower.getY());
-            } else if (selectedTower instanceof objects.ArcherTower) {
+            } else if (towerForSpawningCheck instanceof objects.ArcherTower) {
                 warriorToSpawn = new ArcherWarrior(selectedTower.getX(), selectedTower.getY());
             }
 
