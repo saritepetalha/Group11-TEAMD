@@ -543,7 +543,10 @@ public class Playing extends GameScene implements SceneMethods {
 
         playingUI.draw(g);
         goldBagManager.draw(g);
-        drawCastleHealthBar(g);
+        // Only draw castle health bar if options menu is not open
+        if (!optionsMenuOpen) {
+            drawCastleHealthBar(g);
+        }
         ultiManager.reverseShake(g);
         ultiManager.draw(g);
 
