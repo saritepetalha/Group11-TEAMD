@@ -5,11 +5,13 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Map;
 
 import com.google.gson.*;
 import com.google.gson.stream.JsonReader;
 import objects.Warrior;
 import objects.WizardWarrior;
+import helpMethods.ThumbnailCache;
 
 public class LoadSave {
 
@@ -476,6 +478,91 @@ public class LoadSave {
             frames[i] = spriteSheet.getSubimage(i * frameWidth, 0, frameWidth, frameHeight);
         }
         return frames;
+    }
+
+    /**
+     * Loads snow tilesets and extracts individual tiles
+     * @param mediumSnowTiles Map to store medium snow tiles
+     * @param fullSnowTiles Map to store full snow tiles
+     * @param spriteCache Map to cache sprites for quick access
+     * @return true if loading was successful, false otherwise
+     */
+    public static boolean loadSnowTilesets(Map<Integer, BufferedImage> mediumSnowTiles,
+                                           Map<Integer, BufferedImage> fullSnowTiles,
+                                           Map<String, BufferedImage> spriteCache) {
+        try {
+            boolean success = true;
+
+            BufferedImage mediumSnowAtlas = getImageFromPath("/Tiles/midSnow.png");
+            if (mediumSnowAtlas != null) {
+                extractSnowTilesFromAtlas(mediumSnowAtlas, mediumSnowTiles, spriteCache, "medium");
+                System.out.println("Medium snow tileset loaded successfully");
+            } else {
+                System.err.println("Failed to load medium snow tileset (midSnow.png)");
+                success = false;
+            }
+
+            BufferedImage fullSnowAtlas = getImageFromPath("/Tiles/fullSnow.png");
+            if (fullSnowAtlas != null) {
+                extractSnowTilesFromAtlas(fullSnowAtlas, fullSnowTiles, spriteCache, "full");
+                System.out.println("Full snow tileset loaded successfully");
+            } else {
+                System.err.println("Failed to load full snow tileset (fullSnow.png)");
+                success = false;
+            }
+
+            return success;
+
+        } catch (Exception e) {
+            System.err.println("Error loading snow tilesets: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * Extracts individual tiles from a snow atlas and caches them
+     * @param atlas The snow tileset atlas
+     * @param tileMap Map to store extracted tiles
+     * @param spriteCache Map to cache sprites for quick access
+     * @param type Type identifier ("medium" or "full")
+     */
+    public static void extractSnowTilesFromAtlas(BufferedImage atlas,
+                                                 Map<Integer, BufferedImage> tileMap,
+                                                 Map<String, BufferedImage> spriteCache,
+                                                 String type) {
+        if (atlas == null) return;
+
+        final int TILESET_COLUMNS = 4;
+        final int TILESET_ROWS = 5;
+        final int TILE_SIZE = 128; // Source tileset tile size
+
+        int tileId = 0;
+        for (int row = 0; row < TILESET_ROWS; row++) {
+            for (int col = 0; col < TILESET_COLUMNS; col++) {
+                try {
+                    BufferedImage tile = atlas.getSubimage(
+                            col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE
+                    );
+
+                    // Resize to game tile size and cache
+                    BufferedImage resizedTile = resizeImage(tile,
+                            constants.GameDimensions.TILE_DISPLAY_SIZE,
+                            constants.GameDimensions.TILE_DISPLAY_SIZE);
+
+                    tileMap.put(tileId, resizedTile);
+
+                    // Cache the sprite for quick access
+                    String cacheKey = type + "_" + tileId;
+                    spriteCache.put(cacheKey, resizedTile);
+
+                    tileId++;
+                } catch (Exception e) {
+                    System.err.println("Error extracting snow tile at row " + row + ", col " + col + ": " + e.getMessage());
+                }
+            }
+        }
+        System.out.println("Extracted " + tileId + " tiles from " + type + " snow atlas");
     }
 
 }

@@ -215,10 +215,6 @@ public class Playing extends GameScene implements SceneMethods {
         goldBagManager = new GoldBagManager();
         towerSelectionUI = new TowerSelectionUI(this);
 
-        if (tileManager != null && level != null) {
-            tileManager.initializeGrassSnowStages(level);
-        }
-
         updateUIResources();
     }
 
@@ -376,65 +372,172 @@ public class Playing extends GameScene implements SceneMethods {
     }
 
     private void drawMap(Graphics g) {
+        // Fill background color
         g.setColor(new Color(134, 177, 63, 255));
         g.fillRect(0, 0, GameDimensions.GAME_WIDTH, GameDimensions.GAME_HEIGHT);
 
         int rowCount = level.length;
         int colCount = level[0].length;
 
-        // Detect which edge contains the gate (endpoint)
-        int gateEdge = -1; // 0=top, 1=bottom, 2=left, 3=right
-        for (int i = 0; i < rowCount; i++) {
-            if (level[i][0] == -4) gateEdge = 2; // left
-            if (level[i][colCount - 1] == -4) gateEdge = 3; // right
+        // Check if we're in snow mode
+        boolean isSnowActive = tileManager != null && tileManager.getSnowState() !=
+                managers.SnowTransitionManager.SnowState.NORMAL;
+
+        // Detect which edge contains the gate (endpoint) for border rendering
+        int gateEdge = detectGateEdge(rowCount, colCount);
+
+        if (isSnowActive) {
+            drawSnowLayeredMap(g, rowCount, colCount, gateEdge);
+        } else {
+            drawNormalMap(g, rowCount, colCount, gateEdge);
         }
-        for (int j = 0; j < colCount; j++) {
-            if (level[0][j] == -4) gateEdge = 0; // top
-            if (level[rowCount - 1][j] == -4) gateEdge = 1; // bottom
+    }
+
+    /**
+     * Draws the map with proper snow layering:
+     * 1. First draw snowy grass base across entire map
+     * 2. Then draw other elements (roads, trees, etc.) on top
+     */
+    private void drawSnowLayeredMap(Graphics g, int rowCount, int colCount, int gateEdge) {
+        // LAYER 1: Draw snowy grass base across the entire map
+        BufferedImage snowyGrassSprite = getSnowGrassSprite();
+        if (snowyGrassSprite != null) {
+            for (int i = 0; i < rowCount; i++) {
+                for (int j = 0; j < colCount; j++) {
+                    // Draw snowy grass everywhere as the base layer
+                    g.drawImage(snowyGrassSprite,
+                            j * GameDimensions.TILE_DISPLAY_SIZE,
+                            i * GameDimensions.TILE_DISPLAY_SIZE, null);
+                }
+            }
         }
 
+        // LAYER 2: Draw all non-grass elements on top of the snowy grass base
         for (int i = 0; i < rowCount; i++) {
             for (int j = 0; j < colCount; j++) {
                 int tileId = level[i][j];
-                if (tileId != 20 && tileId != 21 && tileId != 26) {
-                    if ((tileId == -3 && wallImage != null) || (tileId == -4 && gateImage != null)) {
-                        BufferedImage img = (tileId == -3) ? wallImage : gateImage;
-                        Graphics2D g2d = (Graphics2D) g.create();
-                        int x = j * GameDimensions.TILE_DISPLAY_SIZE;
-                        int y = i * GameDimensions.TILE_DISPLAY_SIZE;
-                        int ts = GameDimensions.TILE_DISPLAY_SIZE;
-                        if (gateEdge == 0) { // top
-                            g2d.drawImage(img, x, y, ts, ts, null);
-                        } else if (gateEdge == 1) { // bottom
-                            g2d.drawImage(img, x, y + ts, ts, -ts, null); // flip vertically
-                        } else if (gateEdge == 2) { // left
-                            g2d.rotate(Math.PI / 2, x + ts / 2, y + ts / 2);
-                            g2d.drawImage(img, x, y, ts, ts, null);
-                        } else if (gateEdge == 3) { // right
-                            g2d.rotate(Math.PI / 2, x + ts / 2, y + ts / 2);
-                            g2d.drawImage(img, x, y, ts, ts, null);
-                        } else {
-                            g2d.drawImage(img, x, y, ts, ts, null);
-                        }
-                        g2d.dispose();
-                    } else if (tileId == 5 && weatherManager != null) {
-                        int snowStage = tileManager.getGrassSnowStage(j, i);
-                        if (snowStage > 0) {
-                            BufferedImage snowyGrassSprite = tileManager.getSnowyGrassSprite(snowStage);
-                            if (snowyGrassSprite != null) {
-                                g.drawImage(snowyGrassSprite, j * GameDimensions.TILE_DISPLAY_SIZE, i * GameDimensions.TILE_DISPLAY_SIZE, null);
-                            } else {
-                                g.drawImage(tileManager.getSprite(tileId), j * GameDimensions.TILE_DISPLAY_SIZE, i * GameDimensions.TILE_DISPLAY_SIZE, null);
-                            }
-                        } else {
-                            g.drawImage(tileManager.getSprite(tileId), j * GameDimensions.TILE_DISPLAY_SIZE, i * GameDimensions.TILE_DISPLAY_SIZE, null);
-                        }
-                    } else {
-                        g.drawImage(tileManager.getSprite(tileId), j * GameDimensions.TILE_DISPLAY_SIZE, i * GameDimensions.TILE_DISPLAY_SIZE, null);
+
+                // Skip rendering certain tower tiles (they're handled elsewhere)
+                if (tileId == 20 || tileId == 21 || tileId == 26) {
+                    continue;
+                }
+
+                // Handle special border tiles (walls and gates)
+                if (tileId == -3 || tileId == -4) {
+                    drawBorderTile(g, tileId, j, i, gateEdge);
+                }
+                // Handle all normal tiles (new snow system automatically applies snow variants)
+                else {
+                    BufferedImage tileSprite = tileManager.getSprite(tileId);
+                    if (tileSprite != null) {
+                        g.drawImage(tileSprite,
+                                j * GameDimensions.TILE_DISPLAY_SIZE,
+                                i * GameDimensions.TILE_DISPLAY_SIZE, null);
                     }
                 }
             }
         }
+    }
+
+    /**
+     * Draws the map normally (without snow effects)
+     */
+    private void drawNormalMap(Graphics g, int rowCount, int colCount, int gateEdge) {
+        for (int i = 0; i < rowCount; i++) {
+            for (int j = 0; j < colCount; j++) {
+                int tileId = level[i][j];
+
+                // Skip rendering certain tower tiles (they're handled elsewhere)
+                if (tileId == 20 || tileId == 21 || tileId == 26) {
+                    continue;
+                }
+
+                // Handle special border tiles (walls and gates)
+                if (tileId == -3 || tileId == -4) {
+                    drawBorderTile(g, tileId, j, i, gateEdge);
+                }
+                // Handle all normal tiles (new snow system automatically applies snow variants)
+                else {
+                    BufferedImage tileSprite = tileManager.getSprite(tileId);
+                    if (tileSprite != null) {
+                        g.drawImage(tileSprite,
+                                j * GameDimensions.TILE_DISPLAY_SIZE,
+                                i * GameDimensions.TILE_DISPLAY_SIZE, null);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Gets the appropriate snowy grass sprite based on current snow state
+     */
+    private BufferedImage getSnowGrassSprite() {
+        if (tileManager == null) return null;
+
+        // Get the snowy grass sprite based on current snow transition state
+        // Use grass tile ID (5) to get the snow variant
+        return tileManager.getSprite(5); // This will automatically return snow variant if active
+    }
+
+    /**
+     * Draws border tiles (walls and gates) with proper rotation
+     */
+    private void drawBorderTile(Graphics g, int tileId, int j, int i, int gateEdge) {
+        BufferedImage img = null;
+
+        if (tileId == -3 && wallImage != null) {
+            img = wallImage;
+        } else if (tileId == -4 && gateImage != null) {
+            img = gateImage;
+        }
+
+        if (img == null) return;
+
+        Graphics2D g2d = (Graphics2D) g.create();
+        int x = j * GameDimensions.TILE_DISPLAY_SIZE;
+        int y = i * GameDimensions.TILE_DISPLAY_SIZE;
+        int ts = GameDimensions.TILE_DISPLAY_SIZE;
+
+        try {
+            switch (gateEdge) {
+                case 0: // top
+                    g2d.drawImage(img, x, y, ts, ts, null);
+                    break;
+                case 1: // bottom
+                    g2d.drawImage(img, x, y + ts, ts, -ts, null); // flip vertically
+                    break;
+                case 2: // left
+                    g2d.rotate(Math.PI / 2, x + ts / 2, y + ts / 2);
+                    g2d.drawImage(img, x, y, ts, ts, null);
+                    break;
+                case 3: // right
+                    g2d.rotate(Math.PI / 2, x + ts / 2, y + ts / 2);
+                    g2d.drawImage(img, x, y, ts, ts, null);
+                    break;
+                default:
+                    g2d.drawImage(img, x, y, ts, ts, null);
+                    break;
+            }
+        } finally {
+            g2d.dispose();
+        }
+    }
+
+    /**
+     * Detects which edge contains the gate for proper border rendering
+     */
+    private int detectGateEdge(int rowCount, int colCount) {
+        // Check edges for gate (-4)
+        for (int i = 0; i < rowCount; i++) {
+            if (level[i][0] == -4) return 2; // left
+            if (level[i][colCount - 1] == -4) return 3; // right
+        }
+        for (int j = 0; j < colCount; j++) {
+            if (level[0][j] == -4) return 0; // top
+            if (level[rowCount - 1][j] == -4) return 1; // bottom
+        }
+        return -1; // no gate found
     }
 
     public void update() {
@@ -447,15 +550,16 @@ public class Playing extends GameScene implements SceneMethods {
     private void updateGame() {
         long delta = (long)(16 * gameSpeedMultiplier);
         gameTimeMillis += delta;
+        float deltaTimeSeconds = delta / 1000.0f;
 
         waveManager.update();
         projectileManager.update();
         fireAnimationManager.update();
         ultiManager.update(gameTimeMillis);
-        weatherManager.update(delta / 1000.0f);
+        weatherManager.update(deltaTimeSeconds);
 
         if (tileManager != null && weatherManager != null) {
-            tileManager.updateSnowOnGrass(weatherManager.isSnowing());
+            tileManager.updateSnowTransition(deltaTimeSeconds, weatherManager.isSnowing());
         }
 
         // Check enemy status and handle wave completion
@@ -555,7 +659,7 @@ public class Playing extends GameScene implements SceneMethods {
         }
 
         // Display warrior placement message and tile indicators only when placing a warrior
-        if (pendingWarriorPlacement != null) { 
+        if (pendingWarriorPlacement != null) {
             drawWarriorPlacementMessage(g);
         }
     }
@@ -600,7 +704,7 @@ public class Playing extends GameScene implements SceneMethods {
 
         if (tileR >= 0 && tileR < level.length && tileC >= 0 && tileC < level[0].length) {
             // Check if the tile type is grass (ID 5)
-            boolean isGrass = level[tileR][tileC] == 5; 
+            boolean isGrass = level[tileR][tileC] == 5;
             if (!isGrass) return false;
 
             // Check if the tile is already occupied by a tower
@@ -611,7 +715,7 @@ public class Playing extends GameScene implements SceneMethods {
 
             // Check if the tile is already occupied by another warrior
             if (isWarriorAt(pixelX, pixelY)) return false;
-            
+
             return true; // It's a grass tile and not occupied
         }
         return false; // Out of bounds
@@ -715,6 +819,10 @@ public class Playing extends GameScene implements SceneMethods {
 
     public PlayingUI getPlayingUI() {
         return playingUI;
+    }
+
+    public TileManager getTileManager() {
+        return tileManager;
     }
 
     @Override
@@ -1396,15 +1504,15 @@ public class Playing extends GameScene implements SceneMethods {
         int indicatorSize = 24; // Size of the indicator
         spawnPointIndicator = new BufferedImage(indicatorSize, indicatorSize, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = spawnPointIndicator.createGraphics();
-        
+
         // Draw a yellow circle with a black border
         g.setColor(Color.YELLOW);
         g.fillOval(2, 2, indicatorSize - 4, indicatorSize - 4);
         g.setColor(Color.BLACK);
         g.setStroke(new BasicStroke(2));
         g.drawOval(2, 2, indicatorSize - 4, indicatorSize - 4);
-        
-        g.dispose(); 
+
+        g.dispose();
     }
 
 }

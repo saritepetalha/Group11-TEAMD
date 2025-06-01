@@ -245,9 +245,15 @@ public class PlayingUI {
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
+        // Check if we need to expand panel for snow transition info
+        boolean isSnowy = playing.getWeatherManager().isSnowing();
+        boolean hasSnowTransition = playing.getTileManager() != null &&
+                playing.getTileManager().getSnowState() !=
+                        managers.SnowTransitionManager.SnowState.NORMAL;
+
         // Weather info panel dimensions
         int panelWidth = 180;
-        int panelHeight = 60;
+        int panelHeight = isSnowy || hasSnowTransition ? 80 : 60; // Expanded height for snow info
 
         // Background panel
         g2d.setColor(new Color(0, 0, 0, 120));
@@ -282,10 +288,51 @@ public class PlayingUI {
             g2d.drawString(effectText, x + 8, y + 38);
         }
 
+        // Draw snow transition information if active
+        if (isSnowy || hasSnowTransition) {
+            drawSnowTransitionInfo(g2d, x, y, panelWidth);
+        }
+
         // Draw additional effect if applicable
         String secondEffect = getSecondaryWeatherEffect(playing.getWeatherManager().getCurrentWeatherType());
         if (!secondEffect.isEmpty()) {
-            g2d.drawString(secondEffect, x + 8, y + 50);
+            int effectY = isSnowy || hasSnowTransition ? y + 70 : y + 50;
+            g2d.drawString(secondEffect, x + 8, effectY);
+        }
+    }
+
+    /**
+     * Draws snow transition information
+     */
+    private void drawSnowTransitionInfo(Graphics2D g2d, int x, int y, int panelWidth) {
+        if (playing.getTileManager() == null) return;
+
+        String snowState = playing.getTileManager().getSnowStateDescription();
+        float progress = playing.getTileManager().getSnowTransitionProgress();
+
+        // Draw snow state text
+        g2d.setColor(new Color(200, 220, 255));
+        g2d.setFont(new Font("Arial", Font.PLAIN, 9));
+        g2d.drawString("Snow: " + snowState, x + 8, y + 52);
+
+        // Draw progress bar for transition
+        if (progress > 0.0f && progress < 1.0f) {
+            int barWidth = panelWidth - 16;
+            int barHeight = 3;
+            int barX = x + 8;
+            int barY = y + 56;
+
+            // Background
+            g2d.setColor(new Color(100, 100, 100, 150));
+            g2d.fillRect(barX, barY, barWidth, barHeight);
+
+            // Progress fill
+            g2d.setColor(new Color(255, 255, 255, 200));
+            g2d.fillRect(barX, barY, (int)(barWidth * progress), barHeight);
+
+            // Border
+            g2d.setColor(new Color(255, 255, 255, 100));
+            g2d.drawRect(barX, barY, barWidth, barHeight);
         }
     }
 
