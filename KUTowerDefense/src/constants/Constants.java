@@ -108,15 +108,7 @@ public class Constants {
         }
     }
 
-    public static class Direction {
-        public static final int LEFT = 0;
-        public static final int UP = 1;
-        public static final int RIGHT = 2;
-        public static final int DOWN = 3;
-    }
-
     public static class PathPoints{
-        // constants for overlay data
         public static final int NO_OVERLAY = 0;
         public static final int START_POINT = 1;
         public static final int END_POINT = 2;
@@ -176,38 +168,6 @@ public class Constants {
                     return 300;
             }
             return 0;
-        }
-
-        // armor or special resistances to be used for bonus
-        public static float getArrowResist(int enemyType) {
-            switch (enemyType) {
-                case GOBLIN:
-                    return 0.7f; // takes more arrow damage (weak)
-                case WARRIOR:
-                    return 0.3f; // takes less arrow damage (armor)
-            }
-            return 1.0f;
-        }
-
-        public static float getSpellResist(int enemyType) {
-            switch (enemyType) {
-                case GOBLIN:
-                    return 0.5f; // stronger against spells
-                case WARRIOR:
-                    return 1.0f; // weaker against spells
-            }
-            return 1.0f;
-        }
-    }
-
-    public static class Tiles {
-        public static final int GRASS_TILE = 1;
-        public static final int EMPTY_LOT = 2; // where tower can be built
-        public static final int PREBUILT_TOWER = 3;
-        public static final int DECORATIVE = 4;
-
-        public static boolean isRoadTile(int tile) {
-            return tile >= 0 && tile <= 14 && tile != 5;
         }
     }
 
