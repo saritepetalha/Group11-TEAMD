@@ -43,6 +43,10 @@ public class AssetsLoader {
     public BufferedImage lightningButtonNormal;
     public BufferedImage lightningButtonHover;
     public BufferedImage lightningButtonPressed;
+    public BufferedImage goldFactoryButtonNormal;
+    public BufferedImage goldFactoryButtonHover;
+    public BufferedImage goldFactoryButtonPressed;
+    public BufferedImage goldFactorySprite;
     public BufferedImage[] lightningFrames;
 
     // Private constructor
@@ -82,6 +86,7 @@ public class AssetsLoader {
         loadLoadGameMenuBackgroundImg();
         loadEarthquakeButtonImages();
         loadLightningButtonImages();
+        loadGoldFactoryButtonImages();
         loadLightningAssets();
 
     }
@@ -298,15 +303,22 @@ public class AssetsLoader {
     }
 
     private void loadEarthquakeButtonImages() {
-        earthquakeButtonImg = loadImage("/UI/earthquake_button.png");
-        earthquakeButtonHoverImg = loadImage("/UI/earthquake_button_hover.png");
-        earthquakeButtonPressedImg = loadImage("/UI/earthquake_button_pressed.png");
+        earthquakeButtonImg = loadImage("/UI/earthquakeButton.png");
+        earthquakeButtonHoverImg = earthquakeButtonImg;
+        earthquakeButtonPressedImg = loadImage("/UI/earthquakeButtonPressed.png");
     }
 
     private void loadLightningButtonImages() {
-        lightningButtonNormal = loadImage("/UI/lightning_button.png");
-        lightningButtonHover = loadImage("/UI/lightning_button_hover.png");
-        lightningButtonPressed = loadImage("/UI/lightning_button_pressed.png");
+        lightningButtonNormal = loadImage("/UI/lightningButton.png");
+        lightningButtonHover = lightningButtonNormal;
+        lightningButtonPressed = loadImage("/UI/lightningButtonPressed.png");
+    }
+
+    private void loadGoldFactoryButtonImages() {
+        goldFactoryButtonNormal = loadImage("/UI/goldBagFactoryButton.png");
+        goldFactoryButtonHover = goldFactoryButtonNormal;
+        goldFactoryButtonPressed = loadImage("/UI/goldBagFactoryButtonPressed.png");
+        goldFactorySprite = loadImage("/TowerAssets/goldBagFactory.png");
     }
 
     private void loadLightningAssets() {

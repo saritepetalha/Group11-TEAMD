@@ -7,6 +7,7 @@ public class GameDimensions {
         SMALL(32),
         MEDIUM(40);
 
+
         private final int size;
 
         ButtonSize(int size) {

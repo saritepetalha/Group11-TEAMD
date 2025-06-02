@@ -11,6 +11,7 @@ import java.awt.RadialGradientPaint;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Shape;
+import java.awt.BasicStroke;
 import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
@@ -53,6 +54,7 @@ public class PlayingUI {
     // ulti buttons
     private TheButton earthquakeButton;
     private TheButton lightningButton;
+    private TheButton goldFactoryButton;
 
     // option values (WILL BE CHANGED TO BE READ FROM FILE)
     private int soundVolume = 80;
@@ -70,6 +72,7 @@ public class PlayingUI {
 
 
     private int buttonSize = GameDimensions.ButtonSize.SMALL.getSize();
+    private int ultiButtonSize = GameDimensions.ButtonSize.MEDIUM.getSize();
 
     // Add scroll variables for music dropdown
     private int musicDropdownScrollOffset = 0;
@@ -109,6 +112,14 @@ public class PlayingUI {
                 buttonSize,
                 AssetsLoader.getInstance().buttonImages.get(1));
 
+        goldFactoryButton = new TheButton(
+                "Gold Factory",
+                startX - 3 * (buttonSize + buttonSpacing),
+                startY,
+                buttonSize,
+                buttonSize,
+                AssetsLoader.getInstance().goldFactoryButtonNormal);
+
         earthquakeButton = new TheButton(
                 "Earthquake",
                 startX - 2 * (buttonSize + buttonSpacing),
@@ -118,7 +129,7 @@ public class PlayingUI {
                 AssetsLoader.getInstance().earthquakeButtonImg);
 
         lightningButton = new TheButton("Lightning",
-                startX - 3 * (buttonSize + buttonSpacing), startY,
+                startX - 4 * (buttonSize + buttonSpacing), startY,
                 buttonSize, buttonSize,
                 AssetsLoader.getInstance().lightningButtonNormal
         );
@@ -153,27 +164,28 @@ public class PlayingUI {
     }
 
     public void draw(Graphics g) {
-        // draw left side UI (gold, health, shield)
         drawStatusBars(g);
-
-        // draw right side control buttons
-        drawControlButtons(g);
-
-        // draw wave indicator on the right
         drawWaveIndicator(g);
 
-        // Draw pause overlay if game is paused
-        if (playing.isGamePaused()) {
+        if (playing.isOptionsMenuOpen()) {
+            drawOptionsMenu(g);
+        } else {
+            drawControlButtons(g);
+        }
+
+        if (playing.isGamePaused() && !playing.isOptionsMenuOpen()) {
             drawPauseOverlay(g);
         }
 
-        // Draw options menu if it's open
-        if (playing.isOptionsMenuOpen()) {
-            drawOptionsMenu(g);
-        }
-
+        // Draw Lightning preview if targeting mode is active
         if (playing.getUltiManager().isWaitingForLightningTarget()) {
             drawLightningPreview((Graphics2D) g);
+        }
+
+        // Draw Gold Factory preview if selected (but not over menus)
+        if (playing.getUltiManager().isGoldFactorySelected() &&
+                !playing.isOptionsMenuOpen() && !playing.isGamePaused()) {
+            drawGoldFactoryPreview((Graphics2D) g);
         }
     }
 
@@ -472,16 +484,23 @@ public class PlayingUI {
                 AssetsLoader.getInstance().buttonHoverEffectImages.get(2),
                 AssetsLoader.getInstance().buttonPressedEffectImages.get(11));
 
+        drawControlButton(g2d, goldFactoryButton,
+                startX - 3 * (ultiButtonSize + buttonSpacing), startY,
+                ultiButtonSize, ultiButtonSize,
+                AssetsLoader.getInstance().goldFactoryButtonNormal,
+                AssetsLoader.getInstance().goldFactoryButtonHover,
+                AssetsLoader.getInstance().goldFactoryButtonPressed);
+
         drawControlButton(g2d, earthquakeButton,
-                startX - 2 * (buttonSize + buttonSpacing), startY,
-                buttonSize, buttonSize,
+                startX - 2 * (ultiButtonSize + buttonSpacing), startY,
+                ultiButtonSize,ultiButtonSize,
                 AssetsLoader.getInstance().earthquakeButtonImg,
                 AssetsLoader.getInstance().earthquakeButtonHoverImg,
                 AssetsLoader.getInstance().earthquakeButtonPressedImg);
 
         drawControlButton(g2d, lightningButton,
-                startX - 3 * (buttonSize + buttonSpacing), startY,
-                buttonSize, buttonSize,
+                startX - 4 * (ultiButtonSize + buttonSpacing), startY,
+                ultiButtonSize, ultiButtonSize,
                 AssetsLoader.getInstance().lightningButtonNormal,
                 AssetsLoader.getInstance().lightningButtonHover,
                 AssetsLoader.getInstance().lightningButtonPressed);
@@ -490,9 +509,6 @@ public class PlayingUI {
 
     private void drawControlButton(Graphics2D g2d, TheButton button, int x, int y, int width, int height,
                                    BufferedImage normalImg, BufferedImage hoverImg, BufferedImage pressedImg) {
-
-        g2d.setColor(new Color(157, 209, 153, 255));
-        g2d.fillRect(x, y, width, height);
 
         // Special handling for pause button when game is paused
         if (button == pauseButton && playing.isGamePaused()) {
@@ -514,22 +530,30 @@ public class PlayingUI {
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
         }
 
-        g2d.drawImage(normalImg, x, y, width, height, null);
-
         boolean isEarthquakeCooldown = (button == earthquakeButton && !playing.getUltiManager().canUseEarthquake());
         boolean isLightningCooldown = (button == lightningButton && !playing.getUltiManager().canUseLightning());
+        boolean isGoldFactoryCooldown = (button == goldFactoryButton && !playing.getUltiManager().canUseGoldFactory());
 
-        if (isEarthquakeCooldown || isLightningCooldown || button.isMousePressed()) {
+        // Draw the normal image first
+        g2d.drawImage(normalImg, x, y, width, height, null);
+
+        if (isEarthquakeCooldown || isLightningCooldown || isGoldFactoryCooldown || button.isMousePressed()) {
             g2d.drawImage(pressedImg, x, y, width, height, null);
         } else if (button.isMouseOver()) {
             long currentTime = System.currentTimeMillis();
             float alpha = (float) (0.5f + 0.5f * Math.sin(currentTime * 0.003));
-
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
             g2d.drawImage(hoverImg, x, y, width, height, null);
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
-        }
 
+            if (button == earthquakeButton || button == lightningButton || button == goldFactoryButton) {
+                g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha * 0.6f));
+                g2d.setColor(new Color(255, 255, 255, 100));
+                g2d.setStroke(new BasicStroke(3f));
+                g2d.drawRoundRect(x - 2, y - 2, width + 4, height + 4, 8, 8);
+                g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
+            }
+        }
     }
 
     /**
@@ -863,6 +887,94 @@ public class PlayingUI {
         g2d.drawOval(circleX, circleY, diameter, diameter);
     }
 
+    private void drawGoldFactoryPreview(Graphics2D g2d) {
+        // Snap to tile grid
+        int tileX = (mouseX / 64) * 64;
+        int tileY = (mouseY / 64) * 64;
+
+        // Check if tile is valid for placement
+        boolean isValidTile = false;
+        int[][] level = playing.getLevel();
+        int levelTileX = mouseX / 64;
+        int levelTileY = mouseY / 64;
+
+        if (levelTileY >= 0 && levelTileY < level.length &&
+                levelTileX >= 0 && levelTileX < level[0].length) {
+            isValidTile = (level[levelTileY][levelTileX] == 5); // Grass tile
+        }
+
+        // Enable anti-aliasing for smoother graphics
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        // Draw cute rounded background with soft colors
+        if (isValidTile) {
+            // Soft green with gradient effect
+            g2d.setColor(new Color(144, 238, 144, 80)); // Light green with transparency
+        } else {
+            // Soft red with gradient effect
+            g2d.setColor(new Color(255, 182, 193, 80)); // Light pink/red with transparency
+        }
+
+        // Draw rounded rectangle instead of harsh rectangle
+        g2d.fillRoundRect(tileX + 2, tileY + 2, 60, 60, 12, 12);
+
+        // Draw the factory sprite with transparency
+        try {
+            BufferedImage factorySprite = AssetsLoader.getInstance().goldFactorySprite;
+            if (factorySprite != null) {
+                // Draw the sprite with some transparency to show it's a preview
+                Composite originalComposite = g2d.getComposite();
+                g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.8f));
+                g2d.drawImage(factorySprite, tileX + 2, tileY + 2, 60, 60, null);
+                g2d.setComposite(originalComposite);
+            } else {
+                // Fallback: Draw a cute "G" with better styling
+                g2d.setColor(new Color(218, 165, 32, 180)); // Gold color
+                g2d.setFont(new Font("Arial", Font.BOLD, 20));
+                FontMetrics fm = g2d.getFontMetrics();
+                String text = "G";
+                int textX = tileX + 32 - fm.stringWidth(text) / 2;
+                int textY = tileY + 32 + fm.getAscent() / 2;
+                g2d.drawString(text, textX, textY);
+            }
+        } catch (Exception e) {
+            // Fallback with better styling
+            g2d.setColor(new Color(218, 165, 32, 180));
+            g2d.setFont(new Font("Arial", Font.BOLD, 20));
+            FontMetrics fm = g2d.getFontMetrics();
+            String text = "G";
+            int textX = tileX + 32 - fm.stringWidth(text) / 2;
+            int textY = tileY + 32 + fm.getAscent() / 2;
+            g2d.drawString(text, textX, textY);
+        }
+
+        // Draw cute border with rounded corners
+        if (isValidTile) {
+            g2d.setColor(new Color(34, 139, 34, 120)); // Forest green border
+        } else {
+            g2d.setColor(new Color(220, 20, 60, 120)); // Crimson border
+        }
+        g2d.setStroke(new BasicStroke(2f)); // Thicker, softer border
+        g2d.drawRoundRect(tileX + 2, tileY + 2, 60, 60, 12, 12);
+
+        // Add a subtle sparkle effect for valid placement
+        if (isValidTile) {
+            long time = System.currentTimeMillis();
+            float sparkleAlpha = (float)(0.3f + 0.2f * Math.sin(time * 0.005f));
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, sparkleAlpha));
+            g2d.setColor(new Color(255, 255, 255, 100));
+            // Draw small sparkles at corners
+            g2d.fillOval(tileX + 8, tileY + 8, 4, 4);
+            g2d.fillOval(tileX + 52, tileY + 8, 4, 4);
+            g2d.fillOval(tileX + 8, tileY + 52, 4, 4);
+            g2d.fillOval(tileX + 52, tileY + 52, 4, 4);
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
+        }
+
+        // Reset anti-aliasing
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+    }
+
     public void setGoldAmount(int goldAmount) {
         this.goldAmount = goldAmount;
     }
@@ -892,6 +1004,11 @@ public class PlayingUI {
         mainMenuButton.setMouseOver(false);
         saveButton.setMouseOver(false);
 
+        // Reset ultimate button hover states
+        earthquakeButton.setMouseOver(false);
+        lightningButton.setMouseOver(false);
+        goldFactoryButton.setMouseOver(false);
+
         // check which button is hovered
         if (isMouseOverButton(fastForwardButton, mouseX, mouseY)) {
             fastForwardButton.setMouseOver(true);
@@ -905,6 +1022,17 @@ public class PlayingUI {
             saveButton.setMouseOver(true);
         } else if (!musicDropdownOpen && isMouseOverButton(mainMenuButton, mouseX, mouseY)) {
             mainMenuButton.setMouseOver(true);
+        }
+
+        // Check ultimate buttons for hover
+        if (isMouseOverButton(earthquakeButton, mouseX, mouseY)) {
+            earthquakeButton.setMouseOver(true);
+        }
+        if (isMouseOverButton(lightningButton, mouseX, mouseY)) {
+            lightningButton.setMouseOver(true);
+        }
+        if (isMouseOverButton(goldFactoryButton, mouseX, mouseY)) {
+            goldFactoryButton.setMouseOver(true);
         }
     }
 
@@ -921,6 +1049,14 @@ public class PlayingUI {
                 !lightningButton.getBounds().contains(mouseX, mouseY)) {
 
             playing.getUltiManager().triggerLightningAt(mouseX, mouseY);
+            return;
+        }
+
+        if (playing.getUltiManager().isGoldFactorySelected() &&
+                !goldFactoryButton.getBounds().contains(mouseX, mouseY) &&
+                !playing.isOptionsMenuOpen() && !playing.isGamePaused()) {
+
+            // Don't handle placement here - let the Playing scene handle it
             return;
         }
 
@@ -1037,6 +1173,29 @@ public class PlayingUI {
                 }
             }
         }
+        if (goldFactoryButton.getBounds().contains(mouseX, mouseY)) {
+            // Handle gold factory button click
+            AudioManager.getInstance().playButtonClickSound();
+            toggleButtonState(goldFactoryButton);
+
+            // If already selected, deselect it
+            if (playing.getUltiManager().isGoldFactorySelected()) {
+                playing.getUltiManager().deselectGoldFactory();
+                return;
+            }
+
+            if (playing.getUltiManager().canUseGoldFactory()) {
+                if (playing.getPlayerManager().getGold() >= 100) { // goldFactoryCost
+                    playing.getUltiManager().selectGoldFactory();
+                } else {
+                    System.out.println("Not enough gold for Gold Factory!");
+                }
+            } else {
+                System.out.println("Gold Factory is on cooldown!");
+            }
+            return;
+        }
+
         if (earthquakeButton.getBounds().contains(mouseX, mouseY)) {
             if (playing.getUltiManager().canUseEarthquake()) {
                 AudioManager.getInstance().playButtonClickSound();
