@@ -4,9 +4,10 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.HashSet;
+
 import javax.imageio.ImageIO;
 
 /**
@@ -15,46 +16,82 @@ import javax.imageio.ImageIO;
  */
 public class ThumbnailCache {
     private static ThumbnailCache instance;
-    
+
     // In-memory cache: levelName -> BufferedImage
     private final Map<String, BufferedImage> memoryCache = new HashMap<>();
-    
+
     // Track which levels have been modified in this session
     private final Set<String> modifiedLevels = new HashSet<>();
-    
+
     // Cache directory path
     private static final String CACHE_DIR_NAME = "ThumbnailCache";
-    
+
     private ThumbnailCache() {
         // Private constructor for singleton
     }
-    
+
     public static ThumbnailCache getInstance() {
         if (instance == null) {
             instance = new ThumbnailCache();
         }
         return instance;
     }
-    
+
+    /**
+     * Finds the project root directory by looking for key indicators
+     */
+    private static File findProjectRoot() {
+        File currentDir = new File(System.getProperty("user.dir"));
+        File checkDir = currentDir;
+
+        // Look for project root indicators going up the directory tree
+        for (int i = 0; i < 5; i++) { // Limit search to 5 levels up
+            // Check for Maven project root indicators
+            if (new File(checkDir, "pom.xml").exists() ||
+                    new File(checkDir, "demo/pom.xml").exists() ||
+                    (new File(checkDir, "src/main/resources").exists() && new File(checkDir, "pom.xml").exists())) {
+                return checkDir;
+            }
+
+            // Check if we're inside a demo directory structure
+            if (checkDir.getName().equals("demo") && new File(checkDir, "pom.xml").exists()) {
+                return checkDir;
+            }
+
+            File parent = checkDir.getParentFile();
+            if (parent == null) break;
+            checkDir = parent;
+        }
+
+        // If no clear project root found, return current directory
+        return currentDir;
+    }
+
     /**
      * Gets the appropriate cache directory path based on project structure
      */
     private String getCacheDirectoryPath() {
-        if (isMavenProject()) {
-            return "demo/src/main/resources/" + CACHE_DIR_NAME;
+        File projectRoot = findProjectRoot();
+
+        // Check if we have a demo subdirectory structure
+        File demoDir = new File(projectRoot, "demo");
+        if (demoDir.exists() && new File(demoDir, "pom.xml").exists()) {
+            File defaultPath = new File(demoDir, "src/main/resources/" + CACHE_DIR_NAME);
+            try {
+                return defaultPath.getCanonicalPath();
+            } catch (Exception e) {
+                return defaultPath.getAbsolutePath();
+            }
         } else {
-            return "KUTowerDefense/resources/" + CACHE_DIR_NAME;
+            File defaultPath = new File(projectRoot, "src/main/resources/" + CACHE_DIR_NAME);
+            try {
+                return defaultPath.getCanonicalPath();
+            } catch (Exception e) {
+                return defaultPath.getAbsolutePath();
+            }
         }
     }
-    
-    /**
-     * Detects if we're running in a Maven project structure
-     */
-    private boolean isMavenProject() {
-        File pomFile = new File("demo/pom.xml");
-        return pomFile.exists();
-    }
-    
+
     /**
      * Gets a thumbnail from cache (memory first, then disk)
      * @param levelName The name of the level
@@ -78,11 +115,11 @@ public class ThumbnailCache {
             System.out.println("Thumbnail cache HIT (disk): " + levelName);
             return diskThumbnail;
         }
-        
+
         System.out.println("Thumbnail cache MISS: " + levelName);
         return null;
     }
-    
+
     /**
      * Stores a thumbnail in both memory and disk cache
      * @param levelName The name of the level
@@ -95,7 +132,7 @@ public class ThumbnailCache {
         modifiedLevels.remove(levelName);
         System.out.println("Thumbnail cached: " + levelName);
     }
-    
+
     /**
      * Invalidates cache for a specific level (when it's been modified)
      * @param levelName The name of the level that was modified
@@ -106,7 +143,7 @@ public class ThumbnailCache {
         deleteThumbnailFromDisk(levelName);
         System.out.println("Thumbnail cache invalidated: " + levelName);
     }
-    
+
     /**
      * Clears all cached thumbnails (both memory and disk)
      */
@@ -126,10 +163,10 @@ public class ThumbnailCache {
                 }
             }
         }
-        
+
         System.out.println("All thumbnail cache cleared");
     }
-    
+
     /**
      * Loads a thumbnail from disk cache
      */
@@ -137,11 +174,11 @@ public class ThumbnailCache {
         String cacheDir = getCacheDirectoryPath();
         String thumbnailPath = cacheDir + "/" + levelName + "_" + expectedHash + ".png";
         File thumbnailFile = new File(thumbnailPath);
-        
+
         if (!thumbnailFile.exists()) {
             return null;
         }
-        
+
         try {
             return ImageIO.read(thumbnailFile);
         } catch (IOException e) {
@@ -150,7 +187,7 @@ public class ThumbnailCache {
             return null;
         }
     }
-    
+
     /**
      * Saves a thumbnail to disk cache
      */
@@ -163,28 +200,28 @@ public class ThumbnailCache {
         }
 
         deleteThumbnailFromDisk(levelName);
-        
+
         String thumbnailPath = cacheDir + "/" + levelName + "_" + levelDataHash + ".png";
         File thumbnailFile = new File(thumbnailPath);
-        
+
         try {
             ImageIO.write(thumbnail, "png", thumbnailFile);
         } catch (IOException e) {
             System.err.println("Error saving thumbnail to disk: " + thumbnailPath + " - " + e.getMessage());
         }
     }
-    
+
     /**
      * Deletes thumbnail files for a specific level from disk
      */
     private void deleteThumbnailFromDisk(String levelName) {
         String cacheDir = getCacheDirectoryPath();
         File cacheDirFile = new File(cacheDir);
-        
+
         if (!cacheDirFile.exists()) {
             return;
         }
-        
+
         File[] files = cacheDirFile.listFiles();
         if (files != null) {
             for (File file : files) {
@@ -194,12 +231,12 @@ public class ThumbnailCache {
             }
         }
     }
-    
+
     /**
      * Gets cache statistics for debugging
      */
     public String getCacheStats() {
-        return String.format("Memory cache: %d items, Modified levels: %d", 
-                           memoryCache.size(), modifiedLevels.size());
+        return String.format("Memory cache: %d items, Modified levels: %d",
+                memoryCache.size(), modifiedLevels.size());
     }
-} 
+}

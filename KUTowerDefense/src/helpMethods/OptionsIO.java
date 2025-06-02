@@ -1,13 +1,17 @@
 package helpMethods;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import config.GameOptions;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
+import config.GameOptions;
 
 /**
  * Loads / saves {@link GameOptions} as JSON.
@@ -35,22 +39,57 @@ public final class OptionsIO {
     private OptionsIO() { }
 
     /**
-     * Detects if we're running in a Maven project structure
+     * Finds the project root directory by looking for key indicators
      */
-    private static boolean isMavenProject() {
-        // Check if we're in a Maven project by looking for pom.xml in the expected location
-        File pomFile = new File("demo/pom.xml");
-        return pomFile.exists();
+    private static File findProjectRoot() {
+        File currentDir = new File(System.getProperty("user.dir"));
+        File checkDir = currentDir;
+
+        // Look for project root indicators going up the directory tree
+        for (int i = 0; i < 5; i++) { // Limit search to 5 levels up
+            // Check for Maven project root indicators
+            if (new File(checkDir, "pom.xml").exists() ||
+                    new File(checkDir, "demo/pom.xml").exists() ||
+                    (new File(checkDir, "src/main/resources").exists() && new File(checkDir, "pom.xml").exists())) {
+                return checkDir;
+            }
+
+            // Check if we're inside a demo directory structure
+            if (checkDir.getName().equals("demo") && new File(checkDir, "pom.xml").exists()) {
+                return checkDir;
+            }
+
+            File parent = checkDir.getParentFile();
+            if (parent == null) break;
+            checkDir = parent;
+        }
+
+        // If no clear project root found, return current directory
+        return currentDir;
     }
 
     /**
      * Gets the appropriate options directory path based on project structure
      */
     private static String getOptionsDirectoryPath() {
-        if (isMavenProject()) {
-            return "demo/src/main/resources/Options";
+        File projectRoot = findProjectRoot();
+
+        // Check if we have a demo subdirectory structure
+        File demoDir = new File(projectRoot, "demo");
+        if (demoDir.exists() && new File(demoDir, "pom.xml").exists()) {
+            File defaultPath = new File(demoDir, "src/main/resources/Options");
+            try {
+                return defaultPath.getCanonicalPath();
+            } catch (Exception e) {
+                return defaultPath.getAbsolutePath();
+            }
         } else {
-            return "resources/Options";
+            File defaultPath = new File(projectRoot, "src/main/resources/Options");
+            try {
+                return defaultPath.getCanonicalPath();
+            } catch (Exception e) {
+                return defaultPath.getAbsolutePath();
+            }
         }
     }
 
@@ -59,7 +98,7 @@ public final class OptionsIO {
     // ---------------------------------------------------------------------
 
     /**
-     * Loads options from disk.  If the file doesn’t exist or is empty/corrupt, a new one is
+     * Loads options from disk.  If the file doesn't exist or is empty/corrupt, a new one is
      * created with {@link GameOptions#defaults()}.
      *
      * @return never {@code null}
@@ -139,7 +178,7 @@ public final class OptionsIO {
     }
 
     /**
-     * Quick helper if you want a “Reset to Defaults” button.
+     * Quick helper if you want a "Reset to Defaults" button.
      * Completely overwrites the existing JSON file.
      */
     public static void resetToDefaults() {
