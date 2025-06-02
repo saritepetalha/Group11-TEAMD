@@ -25,12 +25,12 @@ import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 
+import gamestate.EditLevelStrategy;
+import gamestate.LoadGameStrategy;
 import helpMethods.LoadSave;
 import helpMethods.ThumbnailCache;
 import main.Game;
 import managers.TileManager;
-import strategies.EditLevelStrategy;
-import strategies.LoadGameStrategy;
 
 public class LoadGameMenu extends LevelSelectionScreen {
     private TileManager tileManager;

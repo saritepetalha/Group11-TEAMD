@@ -1,4 +1,4 @@
-package strategies;
+package gamestate;
 
 import helpMethods.LoadSave;
 import main.Game;
