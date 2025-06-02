@@ -1,34 +1,38 @@
 package helpMethods;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import stats.GameStatsRecord;
-
-import java.io.*;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
+import stats.GameStatsRecord;
+
 public class GameStatsIO {
 
-    private static final String STATS_FOLDER_PATH = getStatsDirectoryPath();
+    private static final String STATS_FOLDER_PATH = getGameStatsDirectoryPath();
 
     /**
      * Detects if we're running in a Maven project structure
      */
     private static boolean isMavenProject() {
-        // Check if we're in a Maven project by looking for pom.xml in the expected location
-        File folder = new File("demo/pom.xml");
-        return folder.exists();
+        File pomFile = new File("pom.xml");
+        return pomFile.exists();
     }
 
     /**
-     * Gets the appropriate stats directory path based on project structure
+     * Gets the appropriate game stats directory path based on project structure
      */
-    private static String getStatsDirectoryPath() {
+    private static String getGameStatsDirectoryPath() {
         if (isMavenProject()) {
-            return "demo/src/main/resources/gameStats/";
+            return "src/main/resources/gameStats/";
         } else {
-            return "KUTowerDefense/resources/gameStats/";
+            return "resources/gameStats/";
         }
     }
 

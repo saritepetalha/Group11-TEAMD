@@ -1,14 +1,9 @@
 package scenes;
 
-import java.awt.AlphaComposite;
-import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Font;
-import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
-import java.awt.Composite;
 import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
@@ -22,7 +17,20 @@ import enemies.Enemy;
 import helpMethods.LoadSave;
 import helpMethods.OptionsIO;
 import main.Game;
-import managers.*;
+import managers.AudioManager;
+import managers.EnemyManager;
+import managers.FireAnimationManager;
+import managers.GameStateManager;
+import managers.GameStateMemento;
+import managers.GoldBagManager;
+import managers.PlayerManager;
+import managers.ProjectileManager;
+import managers.TileManager;
+import managers.TowerManager;
+import managers.TreeInteractionManager;
+import managers.UltiManager;
+import managers.WaveManager;
+import managers.WeatherManager;
 import objects.ArcherTower;
 import objects.ArtilleryTower;
 import objects.MageTower;
@@ -35,13 +43,6 @@ import ui_p.DeadTree;
 import ui_p.LiveTree;
 import ui_p.PlayingUI;
 import ui_p.TowerSelectionUI;
-import objects.Warrior;
-import java.awt.Toolkit;
-import java.awt.Image;
-import java.awt.Cursor;
-import java.awt.Point;
-import javax.swing.JPanel;
-import java.awt.RenderingHints;
 
 public class Playing extends GameScene implements SceneMethods {
     private int[][] level;
@@ -112,26 +113,6 @@ public class Playing extends GameScene implements SceneMethods {
 
     private WeatherManager weatherManager;
 
-    private Warrior pendingWarriorPlacement = null;
-
-    private JPanel gamePanel;
-
-    private BufferedImage spawnPointIndicator;
-
-    public Playing(Game game, JPanel gamePanel) {
-        super(game);
-        this.gamePanel = gamePanel;
-        this.tileManager = new TileManager();
-        this.gameOptions = loadOptionsOrDefault();
-        loadDefaultLevel();
-        loadBorderImages();
-        initializeManagers();
-        this.castleMaxHealth = calculateCastleMaxHealth();
-        this.castleCurrentHealth = castleMaxHealth;
-        this.gameStateManager = new GameStateManager();
-        loadSpawnPointIndicator();
-    }
-
     public Playing(Game game) {
         super(game);
         this.tileManager = new TileManager();
@@ -142,7 +123,6 @@ public class Playing extends GameScene implements SceneMethods {
         this.castleMaxHealth = calculateCastleMaxHealth();
         this.castleCurrentHealth = castleMaxHealth;
         this.gameStateManager = new GameStateManager();
-        loadSpawnPointIndicator();
     }
 
     public Playing(Game game, TileManager tileManager) {
@@ -155,7 +135,6 @@ public class Playing extends GameScene implements SceneMethods {
         this.castleMaxHealth = calculateCastleMaxHealth();
         this.castleCurrentHealth = castleMaxHealth;
         this.gameStateManager = new GameStateManager();
-        loadSpawnPointIndicator();
     }
 
     public Playing(Game game, TileManager tileManager, int[][] customLevel, int[][] customOverlay) {
@@ -173,7 +152,6 @@ public class Playing extends GameScene implements SceneMethods {
         this.castleMaxHealth = calculateCastleMaxHealth();
         this.castleCurrentHealth = castleMaxHealth;
         this.gameStateManager = new GameStateManager();
-        loadSpawnPointIndicator();
     }
 
     private GameOptions loadOptionsOrDefault() {
@@ -200,10 +178,6 @@ public class Playing extends GameScene implements SceneMethods {
         waveManager = new WaveManager(this, this.gameOptions);
         enemyManager = new EnemyManager(this, overlay, level, this.gameOptions);
         towerManager = new TowerManager(this);
-
-        // Set TowerManager reference in WeatherManager for lighting effects
-        weatherManager.setTowerManager(towerManager);
-
         playerManager = new PlayerManager(this.gameOptions);
         ultiManager = new UltiManager(this);
         this.selectedDeadTree = null;
@@ -217,6 +191,10 @@ public class Playing extends GameScene implements SceneMethods {
 
         goldBagManager = new GoldBagManager();
         towerSelectionUI = new TowerSelectionUI(this);
+
+        if (tileManager != null && level != null) {
+            tileManager.initializeGrassSnowStages(level);
+        }
 
         updateUIResources();
     }
@@ -248,7 +226,7 @@ public class Playing extends GameScene implements SceneMethods {
     }
 
     private void loadDefaultLevel() {
-        int[][] lvl = LoadSave.getLevelData("defaultlevel");
+        int[][] lvl = LoadSave.loadLevel("defaultlevel");
         if (lvl == null) {
             lvl = new int[9][16];
             System.out.println("Level not found, creating default level.");
@@ -315,12 +293,6 @@ public class Playing extends GameScene implements SceneMethods {
                 enemyManager.getEnemies().clear();
             }
             towerManager = new TowerManager(this);
-
-            // Update WeatherManager reference when tower manager is recreated
-            if (weatherManager != null) {
-                weatherManager.setTowerManager(towerManager);
-            }
-
             deadTrees = towerManager.findDeadTrees(level);
             liveTrees = towerManager.findLiveTrees(level);
 
@@ -375,172 +347,65 @@ public class Playing extends GameScene implements SceneMethods {
     }
 
     private void drawMap(Graphics g) {
-        // Fill background color
         g.setColor(new Color(134, 177, 63, 255));
         g.fillRect(0, 0, GameDimensions.GAME_WIDTH, GameDimensions.GAME_HEIGHT);
 
         int rowCount = level.length;
         int colCount = level[0].length;
 
-        // Check if we're in snow mode
-        boolean isSnowActive = tileManager != null && tileManager.getSnowState() !=
-                managers.SnowTransitionManager.SnowState.NORMAL;
-
-        // Detect which edge contains the gate (endpoint) for border rendering
-        int gateEdge = detectGateEdge(rowCount, colCount);
-
-        if (isSnowActive) {
-            drawSnowLayeredMap(g, rowCount, colCount, gateEdge);
-        } else {
-            drawNormalMap(g, rowCount, colCount, gateEdge);
-        }
-    }
-
-    /**
-     * Draws the map with proper snow layering:
-     * 1. First draw snowy grass base across entire map
-     * 2. Then draw other elements (roads, trees, etc.) on top
-     */
-    private void drawSnowLayeredMap(Graphics g, int rowCount, int colCount, int gateEdge) {
-        // LAYER 1: Draw snowy grass base across the entire map
-        BufferedImage snowyGrassSprite = getSnowGrassSprite();
-        if (snowyGrassSprite != null) {
-            for (int i = 0; i < rowCount; i++) {
-                for (int j = 0; j < colCount; j++) {
-                    // Draw snowy grass everywhere as the base layer
-                    g.drawImage(snowyGrassSprite,
-                            j * GameDimensions.TILE_DISPLAY_SIZE,
-                            i * GameDimensions.TILE_DISPLAY_SIZE, null);
-                }
-            }
-        }
-
-        // LAYER 2: Draw all non-grass elements on top of the snowy grass base
+        // Detect which edge contains the gate (endpoint)
+        int gateEdge = -1; // 0=top, 1=bottom, 2=left, 3=right
         for (int i = 0; i < rowCount; i++) {
-            for (int j = 0; j < colCount; j++) {
-                int tileId = level[i][j];
-
-                // Skip rendering certain tower tiles (they're handled elsewhere)
-                if (tileId == 20 || tileId == 21 || tileId == 26) {
-                    continue;
-                }
-
-                // Handle special border tiles (walls and gates)
-                if (tileId == -3 || tileId == -4) {
-                    drawBorderTile(g, tileId, j, i, gateEdge);
-                }
-                // Handle all normal tiles (new snow system automatically applies snow variants)
-                else {
-                    BufferedImage tileSprite = tileManager.getSprite(tileId);
-                    if (tileSprite != null) {
-                        g.drawImage(tileSprite,
-                                j * GameDimensions.TILE_DISPLAY_SIZE,
-                                i * GameDimensions.TILE_DISPLAY_SIZE, null);
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Draws the map normally (without snow effects)
-     */
-    private void drawNormalMap(Graphics g, int rowCount, int colCount, int gateEdge) {
-        for (int i = 0; i < rowCount; i++) {
-            for (int j = 0; j < colCount; j++) {
-                int tileId = level[i][j];
-
-                // Skip rendering certain tower tiles (they're handled elsewhere)
-                if (tileId == 20 || tileId == 21 || tileId == 26) {
-                    continue;
-                }
-
-                // Handle special border tiles (walls and gates)
-                if (tileId == -3 || tileId == -4) {
-                    drawBorderTile(g, tileId, j, i, gateEdge);
-                }
-                // Handle all normal tiles (new snow system automatically applies snow variants)
-                else {
-                    BufferedImage tileSprite = tileManager.getSprite(tileId);
-                    if (tileSprite != null) {
-                        g.drawImage(tileSprite,
-                                j * GameDimensions.TILE_DISPLAY_SIZE,
-                                i * GameDimensions.TILE_DISPLAY_SIZE, null);
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Gets the appropriate snowy grass sprite based on current snow state
-     */
-    private BufferedImage getSnowGrassSprite() {
-        if (tileManager == null) return null;
-
-        // Get the snowy grass sprite based on current snow transition state
-        // Use grass tile ID (5) to get the snow variant
-        return tileManager.getSprite(5); // This will automatically return snow variant if active
-    }
-
-    /**
-     * Draws border tiles (walls and gates) with proper rotation
-     */
-    private void drawBorderTile(Graphics g, int tileId, int j, int i, int gateEdge) {
-        BufferedImage img = null;
-
-        if (tileId == -3 && wallImage != null) {
-            img = wallImage;
-        } else if (tileId == -4 && gateImage != null) {
-            img = gateImage;
-        }
-
-        if (img == null) return;
-
-        Graphics2D g2d = (Graphics2D) g.create();
-        int x = j * GameDimensions.TILE_DISPLAY_SIZE;
-        int y = i * GameDimensions.TILE_DISPLAY_SIZE;
-        int ts = GameDimensions.TILE_DISPLAY_SIZE;
-
-        try {
-            switch (gateEdge) {
-                case 0: // top
-                    g2d.drawImage(img, x, y, ts, ts, null);
-                    break;
-                case 1: // bottom
-                    g2d.drawImage(img, x, y + ts, ts, -ts, null); // flip vertically
-                    break;
-                case 2: // left
-                    g2d.rotate(Math.PI / 2, x + ts / 2, y + ts / 2);
-                    g2d.drawImage(img, x, y, ts, ts, null);
-                    break;
-                case 3: // right
-                    g2d.rotate(Math.PI / 2, x + ts / 2, y + ts / 2);
-                    g2d.drawImage(img, x, y, ts, ts, null);
-                    break;
-                default:
-                    g2d.drawImage(img, x, y, ts, ts, null);
-                    break;
-            }
-        } finally {
-            g2d.dispose();
-        }
-    }
-
-    /**
-     * Detects which edge contains the gate for proper border rendering
-     */
-    private int detectGateEdge(int rowCount, int colCount) {
-        // Check edges for gate (-4)
-        for (int i = 0; i < rowCount; i++) {
-            if (level[i][0] == -4) return 2; // left
-            if (level[i][colCount - 1] == -4) return 3; // right
+            if (level[i][0] == -4) gateEdge = 2; // left
+            if (level[i][colCount - 1] == -4) gateEdge = 3; // right
         }
         for (int j = 0; j < colCount; j++) {
-            if (level[0][j] == -4) return 0; // top
-            if (level[rowCount - 1][j] == -4) return 1; // bottom
+            if (level[0][j] == -4) gateEdge = 0; // top
+            if (level[rowCount - 1][j] == -4) gateEdge = 1; // bottom
         }
-        return -1; // no gate found
+
+        for (int i = 0; i < rowCount; i++) {
+            for (int j = 0; j < colCount; j++) {
+                int tileId = level[i][j];
+                if (tileId != 20 && tileId != 21 && tileId != 26) {
+                    if ((tileId == -3 && wallImage != null) || (tileId == -4 && gateImage != null)) {
+                        BufferedImage img = (tileId == -3) ? wallImage : gateImage;
+                        Graphics2D g2d = (Graphics2D) g.create();
+                        int x = j * GameDimensions.TILE_DISPLAY_SIZE;
+                        int y = i * GameDimensions.TILE_DISPLAY_SIZE;
+                        int ts = GameDimensions.TILE_DISPLAY_SIZE;
+                        if (gateEdge == 0) { // top
+                            g2d.drawImage(img, x, y, ts, ts, null);
+                        } else if (gateEdge == 1) { // bottom
+                            g2d.drawImage(img, x, y + ts, ts, -ts, null); // flip vertically
+                        } else if (gateEdge == 2) { // left
+                            g2d.rotate(Math.PI / 2, x + ts / 2, y + ts / 2);
+                            g2d.drawImage(img, x, y, ts, ts, null);
+                        } else if (gateEdge == 3) { // right
+                            g2d.rotate(Math.PI / 2, x + ts / 2, y + ts / 2);
+                            g2d.drawImage(img, x, y, ts, ts, null);
+                        } else {
+                            g2d.drawImage(img, x, y, ts, ts, null);
+                        }
+                        g2d.dispose();
+                    } else if (tileId == 5 && weatherManager != null) {
+                        int snowStage = tileManager.getGrassSnowStage(j, i);
+                        if (snowStage > 0) {
+                            BufferedImage snowyGrassSprite = tileManager.getSnowyGrassSprite(snowStage);
+                            if (snowyGrassSprite != null) {
+                                g.drawImage(snowyGrassSprite, j * GameDimensions.TILE_DISPLAY_SIZE, i * GameDimensions.TILE_DISPLAY_SIZE, null);
+                            } else {
+                                g.drawImage(tileManager.getSprite(tileId), j * GameDimensions.TILE_DISPLAY_SIZE, i * GameDimensions.TILE_DISPLAY_SIZE, null);
+                            }
+                        } else {
+                            g.drawImage(tileManager.getSprite(tileId), j * GameDimensions.TILE_DISPLAY_SIZE, i * GameDimensions.TILE_DISPLAY_SIZE, null);
+                        }
+                    } else {
+                        g.drawImage(tileManager.getSprite(tileId), j * GameDimensions.TILE_DISPLAY_SIZE, i * GameDimensions.TILE_DISPLAY_SIZE, null);
+                    }
+                }
+            }
+        }
     }
 
     public void update() {
@@ -553,16 +418,15 @@ public class Playing extends GameScene implements SceneMethods {
     private void updateGame() {
         long delta = (long)(16 * gameSpeedMultiplier);
         gameTimeMillis += delta;
-        float deltaTimeSeconds = delta / 1000.0f;
 
         waveManager.update();
         projectileManager.update();
         fireAnimationManager.update();
         ultiManager.update(gameTimeMillis);
-        weatherManager.update(deltaTimeSeconds);
+        weatherManager.update(delta / 1000.0f);
 
         if (tileManager != null && weatherManager != null) {
-            tileManager.updateSnowTransition(deltaTimeSeconds, weatherManager.isSnowing());
+            tileManager.updateSnowOnGrass(weatherManager.isSnowing());
         }
 
         // Check enemy status and handle wave completion
@@ -629,8 +493,8 @@ public class Playing extends GameScene implements SceneMethods {
     @Override
     public void render(Graphics g) {
         ultiManager.applyShakeIfNeeded(g);
+
         drawMap(g);
-        ultiManager.draw(g);
         towerManager.draw(g);
         enemyManager.draw(g, gamePaused);
         drawTowerButtons(g);
@@ -638,96 +502,15 @@ public class Playing extends GameScene implements SceneMethods {
         projectileManager.draw(g);
         fireAnimationManager.draw(g);
         weatherManager.draw(g);
-      
-        // Draw tower selection UI (range indicators, buttons, etc.)
+        playingUI.draw(g);
+        goldBagManager.draw(g);
+        drawCastleHealthBar(g);
+        ultiManager.reverseShake(g);
+        ultiManager.draw(g);
+
         if (towerSelectionUI != null) {
             towerSelectionUI.draw(g);
         }
-
-        towerManager.drawLightEffects(g);
-
-        goldBagManager.draw(g);
-
-
-        // Draw Gold Factory preview if selected (in game world, before UI)
-        if (ultiManager.isGoldFactorySelected()) {
-            drawGoldFactoryPreview((Graphics2D) g);
-        }
-
-        if (!optionsMenuOpen) {
-            drawCastleHealthBar(g);
-        }
-      
-        ultiManager.reverseShake(g);
-
-        playingUI.draw(g);
-
-        // Draw warrior placement message if pending
-        if (pendingWarriorPlacement != null) {
-            drawWarriorPlacementMessage(g);
-        }
-
-        // Draw gold factory placement message if selected
-        if (ultiManager.isGoldFactorySelected()) {
-            drawGoldFactoryPlacementMessage(g);
-        }
-    }
-
-    private void drawWarriorPlacementMessage(Graphics g) {
-        String message = "Place the ";
-        if (pendingWarriorPlacement instanceof objects.WizardWarrior) {
-            message += "Wizard";
-        } else if (pendingWarriorPlacement instanceof objects.ArcherWarrior) {
-            message += "Archer";
-        } else {
-            message += "Warrior"; // Fallback
-        }
-
-        g.setColor(Color.BLACK);
-        g.setFont(new Font("Arial", Font.BOLD, 20));
-        int stringWidth = g.getFontMetrics().stringWidth(message);
-        int x = (GameDimensions.GAME_WIDTH - stringWidth) / 2;
-        int y = 30; // Adjust Y position as needed
-        g.drawString(message, x, y);
-
-        // Highlight valid placement tiles with an indicator image
-        if (pendingWarriorPlacement != null && spawnPointIndicator != null) {
-            for (int r = 0; r < level.length; r++) {
-                for (int c = 0; c < level[0].length; c++) {
-                    int tilePixelX = c * GameDimensions.TILE_DISPLAY_SIZE;
-                    int tilePixelY = r * GameDimensions.TILE_DISPLAY_SIZE;
-                    if (isValidTileForPlacement(tilePixelX, tilePixelY)) {
-                        // Draw the indicator centered on the tile
-                        int indicatorX = tilePixelX + (GameDimensions.TILE_DISPLAY_SIZE - spawnPointIndicator.getWidth()) / 2;
-                        int indicatorY = tilePixelY + (GameDimensions.TILE_DISPLAY_SIZE - spawnPointIndicator.getHeight()) / 2;
-                        g.drawImage(spawnPointIndicator, indicatorX, indicatorY, null);
-                    }
-                }
-            }
-        }
-    }
-
-    private boolean isValidTileForPlacement(int pixelX, int pixelY) {
-        int tileC = pixelX / GameDimensions.TILE_DISPLAY_SIZE;
-        int tileR = pixelY / GameDimensions.TILE_DISPLAY_SIZE;
-
-        if (tileR >= 0 && tileR < level.length && tileC >= 0 && tileC < level[0].length) {
-            // Check if the tile type is grass (ID 5)
-            boolean isGrass = level[tileR][tileC] == 5;
-            if (!isGrass) return false;
-
-            // Check if the tile is already occupied by a tower
-            // getTowerAt expects world coordinates, not necessarily snapped if it iterates through towers with their own precise x,y
-            // However, since we are checking a tile, converting tile's pixelX, pixelY to center for getTowerAt might be more robust if getTowerAt uses a radius check
-            // For simplicity, assuming getTowerAt can work with top-left tile coords if its bounds check is inclusive
-            if (getTowerAt(pixelX, pixelY) != null) return false;
-
-            // Check if the tile is already occupied by another warrior
-            if (isWarriorAt(pixelX, pixelY)) return false;
-
-            return true; // It's a grass tile and not occupied
-        }
-        return false; // Out of bounds
     }
 
     public void modifyTile(int x, int y, String tile) {
@@ -750,39 +533,6 @@ public class Playing extends GameScene implements SceneMethods {
         this.mouseX = x;
         this.mouseY = y;
 
-        // Handle gold factory placement if selected
-        if (ultiManager.isGoldFactorySelected()) {
-            boolean placed = ultiManager.tryPlaceGoldFactory(x, y);
-            if (!placed) {
-                // If placement failed, keep factory selected for another try
-                // User can click the button again to deselect if they want
-            }
-            return; // Exit early to prevent other interactions
-        }
-
-        // Handle warrior placement if a warrior is pending placement
-        if (pendingWarriorPlacement != null) {
-            // Snap click coordinates to the grid
-            int tileX = (x / GameDimensions.TILE_DISPLAY_SIZE) * GameDimensions.TILE_DISPLAY_SIZE;
-            int tileY = (y / GameDimensions.TILE_DISPLAY_SIZE) * GameDimensions.TILE_DISPLAY_SIZE;
-
-            // Check if the clicked position is a valid tile for placement
-            if (isValidTileForPlacement(tileX, tileY)) { // Use snapped coordinates for validation too
-                // Deduct gold for the warrior
-                this.playerManager.spendGold(pendingWarriorPlacement.getCost());
-                updateUIResources(); // Update gold display and other UI elements
-
-                // Place the warrior at the top-left of the tile, with a slight upward offset
-                int placementY = tileY - 8; // Adjust this offset as needed (e.g., 5-10 pixels up)
-                pendingWarriorPlacement.setX(tileX);
-                pendingWarriorPlacement.setY(placementY);
-                towerManager.getWarriors().add(pendingWarriorPlacement);
-                System.out.println("Warrior placed at tile coordinates: (" + tileX + ", " + placementY + ") for " + pendingWarriorPlacement.getCost() + " gold.");
-                pendingWarriorPlacement = null; // Clear pending placement
-            }
-            return; // Exit early to prevent other interactions
-        }
-
         // Handle tower selection UI clicks first - only return early if actually handled
         if (towerSelectionUI != null && towerSelectionUI.hasTowerSelected()) {
             boolean uiHandledClick = towerSelectionUI.mouseClicked(x, y);
@@ -790,7 +540,6 @@ public class Playing extends GameScene implements SceneMethods {
                 return; // UI button was clicked, don't process other interactions
             }
         }
-
         // Handle dead trees
         if (deadTrees != null) {
             treeInteractionManager.handleDeadTreeInteraction(mouseX, mouseY);
@@ -798,7 +547,6 @@ public class Playing extends GameScene implements SceneMethods {
         if (liveTrees != null) {
             treeInteractionManager.handleLiveTreeInteraction(mouseX, mouseY);
         }
-
         // Gold bag collection
         var collectedBag = goldBagManager.tryCollect(x, y);
         if (collectedBag != null) {
@@ -840,34 +588,16 @@ public class Playing extends GameScene implements SceneMethods {
         return playingUI;
     }
 
-    public TileManager getTileManager() {
-        return tileManager;
-    }
-
     @Override
     public void mouseMoved(int x, int y) {
-        // Only snap to grid if gold factory is selected (like map editing)
-        if (ultiManager.isGoldFactorySelected()) {
-            mouseX = (x / GameDimensions.TILE_DISPLAY_SIZE) * GameDimensions.TILE_DISPLAY_SIZE;
-            mouseY = (y / GameDimensions.TILE_DISPLAY_SIZE) * GameDimensions.TILE_DISPLAY_SIZE;
-        } else {
-            mouseX = x;
-            mouseY = y;
-        }
+        mouseX = (x / 64) * 64;
+        mouseY = (y / 64) * 64;
 
         playingUI.mouseMoved(x, y);
 
         if (towerSelectionUI != null) {
             towerSelectionUI.mouseMoved(x, y);
         }
-    }
-
-    private void highlightValidTiles() {
-        // Implement logic to highlight all valid tiles for warrior placement
-        // For now, let's assume all tiles are valid and highlight them
-        // This can be done by drawing a semi-transparent overlay on valid tiles
-        // Example: g.setColor(new Color(0, 255, 0, 100)); // Green with transparency
-        // g.fillRect(tileX, tileY, tileWidth, tileHeight);
     }
 
     @Override
@@ -1144,16 +874,11 @@ public class Playing extends GameScene implements SceneMethods {
         playingUI.mouseWheelMoved(e);
     }
 
-    public void shootEnemy(Object shooter, Enemy enemy) {
-        if (shooter instanceof Tower) {
-            Tower tower = (Tower) shooter;
-            projectileManager.newProjectile(tower, enemy);
-            tower.applyOnHitEffect(enemy, this);
-        } else if (shooter instanceof Warrior) {
-            Warrior warrior = (Warrior) shooter;
-            projectileManager.newProjectile(warrior, enemy);
-            // Warriors currently have no special on-hit effects
-        }
+    public void shootEnemy(Tower tower, Enemy enemy) {
+        projectileManager.newProjectile(tower, enemy);
+        // After a projectile is launched (or hits), apply any on-hit effects from the tower itself.
+        // This is particularly for direct effects like the Mage's slow, not projectile-specific effects.
+        tower.applyOnHitEffect(enemy, this);
     }
 
     public boolean isGamePaused() {
@@ -1499,173 +1224,6 @@ public class Playing extends GameScene implements SceneMethods {
 
     public WeatherManager getWeatherManager() {
         return weatherManager;
-    }
-
-    public void startWarriorPlacement(Warrior warrior) {
-        this.pendingWarriorPlacement = warrior;
-        // Close the tower menu
-        towerSelectionUI.setSelectedTower(null);
-        System.out.println("Warrior placement mode started for: " + warrior.getClass().getSimpleName());
-        // Additional logic to highlight valid tiles for placement can be added here
-    }
-
-    private boolean isWarriorAt(int x, int y) {
-        for (Warrior warrior : towerManager.getWarriors()) {
-            if (warrior.getX() == x && warrior.getY() == y) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private void loadSpawnPointIndicator() {
-        // Create a placeholder graphic directly
-        int indicatorSize = 24; // Size of the indicator
-        spawnPointIndicator = new BufferedImage(indicatorSize, indicatorSize, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g = spawnPointIndicator.createGraphics();
-
-        // Draw a yellow circle with a black border
-        g.setColor(Color.YELLOW);
-        g.fillOval(2, 2, indicatorSize - 4, indicatorSize - 4);
-        g.setColor(Color.BLACK);
-        g.setStroke(new BasicStroke(2));
-        g.drawOval(2, 2, indicatorSize - 4, indicatorSize - 4);
-
-        g.dispose();
-    }
-
-    private void drawGoldFactoryPreview(Graphics2D g) {
-        // Snap to tile grid
-        int tileX = (mouseX / 64) * 64;
-        int tileY = (mouseY / 64) * 64;
-
-        // Check if tile is valid for placement
-        boolean isValidTile = false;
-        int levelTileX = mouseX / 64;
-        int levelTileY = mouseY / 64;
-
-        if (levelTileY >= 0 && levelTileY < level.length &&
-                levelTileX >= 0 && levelTileX < level[0].length) {
-            isValidTile = (level[levelTileY][levelTileX] == 5); // Grass tile
-        }
-
-        // Enable anti-aliasing for smoother graphics
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-        // Draw cute rounded background with soft colors
-        if (isValidTile) {
-            // Soft green with gradient effect
-            g.setColor(new Color(144, 238, 144, 80)); // Light green with transparency
-        } else {
-            // Soft red with gradient effect
-            g.setColor(new Color(255, 182, 193, 80)); // Light pink/red with transparency
-        }
-
-        // Draw rounded rectangle instead of harsh rectangle
-        g.fillRoundRect(tileX + 2, tileY + 2, 60, 60, 12, 12);
-
-        // Draw the factory sprite with transparency
-        try {
-            BufferedImage factorySprite = ui_p.AssetsLoader.getInstance().goldFactorySprite;
-            if (factorySprite != null) {
-                // Draw the sprite with some transparency to show it's a preview
-                Composite originalComposite = g.getComposite();
-                g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.8f));
-                g.drawImage(factorySprite, tileX + 2, tileY + 2, 60, 60, null);
-                g.setComposite(originalComposite);
-            } else {
-                // Fallback: Draw a cute "G" with better styling
-                g.setColor(new Color(218, 165, 32, 180)); // Gold color
-                g.setFont(new Font("Arial", Font.BOLD, 20));
-                FontMetrics fm = g.getFontMetrics();
-                String text = "G";
-                int textX = tileX + 32 - fm.stringWidth(text) / 2;
-                int textY = tileY + 32 + fm.getAscent() / 2;
-                g.drawString(text, textX, textY);
-            }
-        } catch (Exception e) {
-            // Fallback with better styling
-            g.setColor(new Color(218, 165, 32, 180));
-            g.setFont(new Font("Arial", Font.BOLD, 20));
-            FontMetrics fm = g.getFontMetrics();
-            String text = "G";
-            int textX = tileX + 32 - fm.stringWidth(text) / 2;
-            int textY = tileY + 32 + fm.getAscent() / 2;
-            g.drawString(text, textX, textY);
-        }
-
-        // Draw cute border with rounded corners
-        if (isValidTile) {
-            g.setColor(new Color(34, 139, 34, 120)); // Forest green border
-        } else {
-            g.setColor(new Color(220, 20, 60, 120)); // Crimson border
-        }
-        g.setStroke(new BasicStroke(2f)); // Thicker, softer border
-        g.drawRoundRect(tileX + 2, tileY + 2, 60, 60, 12, 12);
-
-        // Add a subtle sparkle effect for valid placement
-        if (isValidTile) {
-            long time = System.currentTimeMillis();
-            float sparkleAlpha = (float)(0.3f + 0.2f * Math.sin(time * 0.005f));
-            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, sparkleAlpha));
-            g.setColor(new Color(255, 255, 255, 100));
-            // Draw small sparkles at corners
-            g.fillOval(tileX + 8, tileY + 8, 4, 4);
-            g.fillOval(tileX + 52, tileY + 8, 4, 4);
-            g.fillOval(tileX + 8, tileY + 52, 4, 4);
-            g.fillOval(tileX + 52, tileY + 52, 4, 4);
-            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
-        }
-
-        // Reset anti-aliasing
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-    }
-
-    private void drawGoldFactoryPlacementMessage(Graphics g) {
-        String message = "✨ Click to place Gold Factory | Click button again to cancel ✨";
-
-        g.setColor(new Color(255, 215, 0)); // Gold color for text
-        g.setFont(new Font("Arial", Font.BOLD, 18));
-        int stringWidth = g.getFontMetrics().stringWidth(message);
-        int x = (GameDimensions.GAME_WIDTH - stringWidth) / 2;
-        int y = 30; // Adjust Y position as needed
-
-        // Draw text background for better readability
-        Graphics2D g2d = (Graphics2D) g;
-        g2d.setColor(new Color(0, 0, 0, 100)); // Semi-transparent black
-        g2d.fillRoundRect(x - 10, y - 20, stringWidth + 20, 30, 10, 10);
-
-        g.setColor(new Color(255, 215, 0)); // Gold color for text
-        g.drawString(message, x, y);
-
-        // Enable anti-aliasing for smoother graphics
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-        // Highlight valid placement tiles (grass tiles) with cute styling
-        for (int r = 0; r < level.length; r++) {
-            for (int c = 0; c < level[0].length; c++) {
-                if (level[r][c] == 5) { // Grass tile
-                    int tilePixelX = c * GameDimensions.TILE_DISPLAY_SIZE;
-                    int tilePixelY = r * GameDimensions.TILE_DISPLAY_SIZE;
-
-                    // Draw a soft green rounded background
-                    g2d.setColor(new Color(144, 238, 144, 40)); // Light green with transparency
-                    g2d.fillRoundRect(tilePixelX + 4, tilePixelY + 4,
-                            GameDimensions.TILE_DISPLAY_SIZE - 8,
-                            GameDimensions.TILE_DISPLAY_SIZE - 8, 8, 8);
-
-                    // Draw a soft green border
-                    g2d.setColor(new Color(34, 139, 34, 80)); // Forest green border
-                    g2d.setStroke(new BasicStroke(1.5f));
-                    g2d.drawRoundRect(tilePixelX + 4, tilePixelY + 4,
-                            GameDimensions.TILE_DISPLAY_SIZE - 8,
-                            GameDimensions.TILE_DISPLAY_SIZE - 8, 8, 8);
-                }
-            }
-        }
-
-        // Reset anti-aliasing
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
     }
 
 }

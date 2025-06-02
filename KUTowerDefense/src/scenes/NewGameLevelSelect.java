@@ -4,7 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
@@ -26,24 +25,23 @@ import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 
 import gamestate.EditLevelStrategy;
-import gamestate.LoadGameStrategy;
+import gamestate.NewGameStrategy;
 import helpMethods.LoadSave;
 import helpMethods.ThumbnailCache;
 import main.Game;
 import managers.TileManager;
 
-public class LoadGameMenu extends LevelSelectionScreen {
-    private TileManager tileManager;
-    private LoadGameStrategy loadGameStrategy;
-    private EditLevelStrategy editLevelStrategy;
-    private Font medodicaFontSmallBold;
+public class NewGameLevelSelect extends LevelSelectionScreen {
 
-    public LoadGameMenu(Game game) {
+    private NewGameStrategy newGameStrategy;
+    private EditLevelStrategy editLevelStrategy;
+    private TileManager tileManager;
+
+    public NewGameLevelSelect(Game game) {
         super(game);
-        this.tileManager = game.getTileManager();
-        this.loadGameStrategy = new LoadGameStrategy();
+        this.newGameStrategy = new NewGameStrategy();
         this.editLevelStrategy = new EditLevelStrategy();
-        this.medodicaFontSmallBold = medodicaFontSmall.deriveFont(Font.BOLD);
+        this.tileManager = game.getTileManager();
 
         // Initialize the display
         displayLevels();
@@ -51,28 +49,22 @@ public class LoadGameMenu extends LevelSelectionScreen {
 
     @Override
     protected ArrayList<String> getLevelsToDisplay() {
-        return LoadSave.getLevelsWithSaveStates();
+        return LoadSave.getAllAvailableLevels();
     }
 
     @Override
     protected String getScreenTitle() {
-        return "Load Saved Game";
+        return "Select Level - New Game";
     }
 
     @Override
     protected void onLevelSelected(String levelName) {
-        int[][] levelData = LoadSave.loadLevel(levelName);
-        if (levelData != null) {
-            showPlayEditDialog(levelName, levelData);
-        }
+        // Show options: Play or Edit
+        showLevelOptionsDialog(levelName);
     }
 
     @Override
     protected JPanel createMainContentPanel() {
-        if (filteredLevels.isEmpty()) {
-            return createNoSavesPanel();
-        }
-
         JPanel contentPanel = new JPanel();
         contentPanel.setOpaque(false);
         contentPanel.setLayout(new GridBagLayout());
@@ -103,6 +95,17 @@ public class LoadGameMenu extends LevelSelectionScreen {
             }
         }
 
+        // Add "Create New Level" button
+        if (currentPage == 0) { // Only show on first page
+            JPanel createNewPanel = createNewLevelPanel();
+
+            gbc.gridx = col;
+            gbc.gridy = row;
+            gbc.anchor = GridBagConstraints.CENTER;
+
+            contentPanel.add(createNewPanel, gbc);
+        }
+
         JScrollPane scrollPane = new JScrollPane(contentPanel);
         scrollPane.setOpaque(false);
         scrollPane.getViewport().setOpaque(false);
@@ -117,30 +120,6 @@ public class LoadGameMenu extends LevelSelectionScreen {
         return wrapper;
     }
 
-    private JPanel createNoSavesPanel() {
-        JPanel noSavesPanel = new JPanel();
-        noSavesPanel.setOpaque(false);
-        noSavesPanel.setLayout(new BorderLayout());
-
-        JLabel noSavesLabel = new JLabel("No saved games found", SwingConstants.CENTER);
-        noSavesLabel.setFont(medodicaFontMedium.deriveFont(Font.BOLD, 20f));
-        noSavesLabel.setForeground(Color.WHITE);
-
-        JLabel instructionLabel = new JLabel("Play some levels first to create save states", SwingConstants.CENTER);
-        instructionLabel.setFont(medodicaFontSmall);
-        instructionLabel.setForeground(Color.LIGHT_GRAY);
-
-        JPanel textPanel = new JPanel();
-        textPanel.setOpaque(false);
-        textPanel.setLayout(new BorderLayout());
-        textPanel.add(noSavesLabel, BorderLayout.CENTER);
-        textPanel.add(instructionLabel, BorderLayout.SOUTH);
-
-        noSavesPanel.add(textPanel, BorderLayout.CENTER);
-
-        return noSavesPanel;
-    }
-
     private JPanel createLevelPanel(String levelName) {
         JPanel levelPanel = new JPanel();
         levelPanel.setLayout(new BorderLayout());
@@ -152,7 +131,14 @@ public class LoadGameMenu extends LevelSelectionScreen {
         BufferedImage thumbnail = null;
         int[][] levelData = LoadSave.loadLevel(levelName);
         if (levelData != null) {
-            thumbnail = generateThumbnailWithCache(levelName, levelData);
+            int levelDataHash = java.util.Arrays.deepHashCode(levelData);
+            thumbnail = ThumbnailCache.getInstance().getCachedThumbnail(levelName, levelDataHash);
+
+            // If not cached, generate thumbnail (similar to LoadGameMenu)
+            if (thumbnail == null) {
+                thumbnail = generateThumbnail(levelData);
+                ThumbnailCache.getInstance().cacheThumbnail(levelName, thumbnail, levelDataHash);
+            }
         }
 
         JLabel imageLabel = new JLabel();
@@ -170,39 +156,29 @@ public class LoadGameMenu extends LevelSelectionScreen {
         nameLabel.setFont(medodicaFontSmall);
         nameLabel.setForeground(Color.WHITE);
 
-        // Save indicator
-        JLabel saveLabel = new JLabel("💾 Saved Game", SwingConstants.CENTER);
-        saveLabel.setFont(medodicaFontSmall.deriveFont(Font.ITALIC));
-        saveLabel.setForeground(Color.GREEN);
-
         // Buttons panel
         JPanel buttonsPanel = new JPanel(new FlowLayout());
         buttonsPanel.setOpaque(false);
 
-        JButton loadButton = new JButton("Load");
+        JButton playButton = new JButton("Play");
         JButton editButton = new JButton("Edit");
 
-        loadButton.setFont(mvBoliFontBold);
+        playButton.setFont(mvBoliFontBold);
         editButton.setFont(mvBoliFontBold);
 
         // Style buttons
-        styleButton(loadButton, new Color(70, 130, 200));
+        styleButton(playButton, new Color(70, 130, 200));
         styleButton(editButton, new Color(200, 130, 70));
 
         // Add action listeners
-        loadButton.addActionListener(e -> loadGameStrategy.loadLevel(levelName, game));
+        playButton.addActionListener(e -> newGameStrategy.loadLevel(levelName, game));
         editButton.addActionListener(e -> editLevelStrategy.loadLevel(levelName, game));
 
-        buttonsPanel.add(loadButton);
+        buttonsPanel.add(playButton);
         buttonsPanel.add(editButton);
 
-        JPanel infoPanel = new JPanel(new BorderLayout());
-        infoPanel.setOpaque(false);
-        infoPanel.add(nameLabel, BorderLayout.NORTH);
-        infoPanel.add(saveLabel, BorderLayout.CENTER);
-
         levelPanel.add(imageLabel, BorderLayout.CENTER);
-        levelPanel.add(infoPanel, BorderLayout.NORTH);
+        levelPanel.add(nameLabel, BorderLayout.NORTH);
         levelPanel.add(buttonsPanel, BorderLayout.SOUTH);
 
         // Add hover effect
@@ -221,6 +197,46 @@ public class LoadGameMenu extends LevelSelectionScreen {
         return levelPanel;
     }
 
+    private JPanel createNewLevelPanel() {
+        JPanel newLevelPanel = new JPanel();
+        newLevelPanel.setLayout(new BorderLayout());
+        newLevelPanel.setPreferredSize(new Dimension(PREVIEW_WIDTH + 40, PREVIEW_HEIGHT + 80));
+        newLevelPanel.setOpaque(false);
+        newLevelPanel.setBorder(BorderFactory.createLineBorder(Color.GREEN, 2));
+
+        // Plus icon or text
+        JLabel createLabel = new JLabel("+ Create New Level", SwingConstants.CENTER);
+        createLabel.setFont(medodicaFontMedium);
+        createLabel.setForeground(Color.GREEN);
+
+        JButton createButton = new JButton("Create");
+        createButton.setFont(mvBoliFontBold);
+        styleButton(createButton, new Color(70, 200, 70));
+
+        createButton.addActionListener(e -> {
+            // Open map editor with a blank level
+            game.changeGameState(main.GameStates.EDIT);
+        });
+
+        newLevelPanel.add(createLabel, BorderLayout.CENTER);
+        newLevelPanel.add(createButton, BorderLayout.SOUTH);
+
+        // Add hover effect
+        newLevelPanel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                newLevelPanel.setBorder(BorderFactory.createLineBorder(Color.CYAN, 2));
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                newLevelPanel.setBorder(BorderFactory.createLineBorder(Color.GREEN, 2));
+            }
+        });
+
+        return newLevelPanel;
+    }
+
     private void styleButton(JButton button, Color backgroundColor) {
         button.setBackground(backgroundColor);
         button.setForeground(Color.WHITE);
@@ -228,6 +244,43 @@ public class LoadGameMenu extends LevelSelectionScreen {
         button.setBorderPainted(false);
         button.setOpaque(true);
         button.setPreferredSize(new Dimension(60, 25));
+    }
+
+    private void showLevelOptionsDialog(String levelName) {
+        Object[] options = {"Play", "Edit", "Cancel"};
+        UIManager.put("OptionPane.messageFont", mvBoliFontBold);
+        UIManager.put("OptionPane.buttonFont", mvBoliFontBold);
+
+        int choice = JOptionPane.showOptionDialog(
+                this,
+                "Choose action for level: " + levelName,
+                "Level Options",
+                JOptionPane.YES_NO_CANCEL_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                options,
+                options[0]
+        );
+
+        switch (choice) {
+            case JOptionPane.YES_OPTION: // Play
+                newGameStrategy.loadLevel(levelName, game);
+                break;
+            case JOptionPane.NO_OPTION: // Edit
+                editLevelStrategy.loadLevel(levelName, game);
+                break;
+            case JOptionPane.CANCEL_OPTION:
+            default:
+                // Do nothing
+                break;
+        }
+    }
+
+    /**
+     * Refresh the level list (call this when returning from editor)
+     */
+    public void refreshLevels() {
+        displayLevels();
     }
 
     private BufferedImage generateThumbnail(int[][] levelData) {
@@ -239,7 +292,7 @@ public class LoadGameMenu extends LevelSelectionScreen {
             g2d.setColor(Color.DARK_GRAY);
             g2d.fillRect(0, 0, PREVIEW_WIDTH, PREVIEW_HEIGHT);
             g2d.setColor(Color.WHITE);
-            g2d.setFont(medodicaFontSmallBold != null ? medodicaFontSmallBold : mvBoliFontBold);
+            g2d.setFont(medodicaFontSmall != null ? medodicaFontSmall : mvBoliFontBold);
             String noDataText = "No Data";
             FontMetrics fm = g2d.getFontMetrics();
             g2d.drawString(noDataText, (PREVIEW_WIDTH - fm.stringWidth(noDataText)) / 2, PREVIEW_HEIGHT / 2 + fm.getAscent() / 2);
@@ -254,7 +307,7 @@ public class LoadGameMenu extends LevelSelectionScreen {
             g2d.setColor(Color.DARK_GRAY);
             g2d.fillRect(0, 0, PREVIEW_WIDTH, PREVIEW_HEIGHT);
             g2d.setColor(Color.WHITE);
-            g2d.setFont(medodicaFontSmallBold != null ? medodicaFontSmallBold : mvBoliFontBold);
+            g2d.setFont(medodicaFontSmall != null ? medodicaFontSmall : mvBoliFontBold);
             String errorText = "Invalid Map";
             FontMetrics fm = g2d.getFontMetrics();
             g2d.drawString(errorText, (PREVIEW_WIDTH - fm.stringWidth(errorText)) / 2, PREVIEW_HEIGHT / 2 + fm.getAscent() / 2);
@@ -305,52 +358,5 @@ public class LoadGameMenu extends LevelSelectionScreen {
         }
         g2d.dispose();
         return thumbnail;
-    }
-
-    private BufferedImage generateThumbnailWithCache(String levelName, int[][] levelData) {
-        // Calculate hash of level data for cache validation
-        int levelDataHash = java.util.Arrays.deepHashCode(levelData);
-
-        // Try to get from cache first
-        ThumbnailCache cache = ThumbnailCache.getInstance();
-        BufferedImage cachedThumbnail = cache.getCachedThumbnail(levelName, levelDataHash);
-
-        if (cachedThumbnail != null) {
-            return cachedThumbnail;
-        }
-
-        // Cache miss - generate new thumbnail
-        BufferedImage newThumbnail = generateThumbnail(levelData);
-
-        // Cache the generated thumbnail
-        cache.cacheThumbnail(levelName, newThumbnail, levelDataHash);
-
-        return newThumbnail;
-    }
-
-    private void showPlayEditDialog(String levelName, int[][] levelData) {
-        Object[] options = {"Load", "Edit", "Cancel"};
-        UIManager.put("OptionPane.messageFont", mvBoliFontBold);
-        UIManager.put("OptionPane.buttonFont", mvBoliFontBold);
-
-        int choice = JOptionPane.showOptionDialog(this,
-                "Map: " + levelName,
-                "Load Saved Game",
-                JOptionPane.YES_NO_CANCEL_OPTION,
-                JOptionPane.QUESTION_MESSAGE,
-                null, options, options[0]);
-
-        if (choice == JOptionPane.YES_OPTION) { // Load
-            loadGameStrategy.loadLevel(levelName, game);
-        } else if (choice == JOptionPane.NO_OPTION) { // Edit
-            editLevelStrategy.loadLevel(levelName, game);
-        }
-    }
-
-    /**
-     * Refreshes the level list - called when returning to this screen
-     */
-    public void refreshLevels() {
-        displayLevels();
     }
 }

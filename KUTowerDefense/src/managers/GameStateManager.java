@@ -19,8 +19,8 @@ public class GameStateManager {
      * Detects if we're running in a Maven project structure
      */
     private static boolean isMavenProject() {
-        // Check if we're in a Maven project by looking for pom.xml in the expected location
-        File pomFile = new File("demo/pom.xml");
+        // Check if we're in a Maven project by looking for pom.xml in the current directory
+        File pomFile = new File("pom.xml");
         return pomFile.exists();
     }
 
@@ -29,7 +29,7 @@ public class GameStateManager {
      */
     private static String getSavesDirectoryPath() {
         if (isMavenProject()) {
-            return "demo/src/main/resources/Saves";
+            return "src/main/resources/Saves";
         } else {
             return "resources/Saves";
         }
