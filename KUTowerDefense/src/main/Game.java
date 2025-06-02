@@ -12,16 +12,7 @@ import javax.swing.JFrame;
 import managers.AudioManager;
 import managers.GameStatsManager;
 import managers.TileManager;
-import scenes.GameOverScene;
-import scenes.Intro;
-import scenes.LoadGameMenu;
-import scenes.Loaded;
-import scenes.MapEditing;
-import scenes.Menu;
-import scenes.NewGameLevelSelect;
-import scenes.Options;
-import scenes.Playing;
-import scenes.StatisticsScene;
+import scenes.*;
 
 public class Game extends JFrame implements Runnable{
 
@@ -41,7 +32,6 @@ public class Game extends JFrame implements Runnable{
 	private MapEditing mapEditing;
 	private Loaded loaded;
 	private LoadGameMenu loadGameMenu;
-	private NewGameLevelSelect newGameLevelSelect;
 	private GameOverScene gameOverScene;
 	private StatisticsScene statisticsScene;
 	private TileManager tileManager;
@@ -76,8 +66,8 @@ public class Game extends JFrame implements Runnable{
 
 		AudioManager audioManager = AudioManager.getInstance();
 		boolean isMenuRelatedToggle = (
-				(previousState == GameStates.MENU && (newState == GameStates.OPTIONS || newState == GameStates.EDIT || newState == GameStates.LOAD_GAME || newState == GameStates.NEW_GAME_LEVEL_SELECT)) ||
-						((previousState == GameStates.OPTIONS || previousState == GameStates.EDIT || previousState == GameStates.LOAD_GAME || previousState == GameStates.NEW_GAME_LEVEL_SELECT) && newState == GameStates.MENU)
+				(previousState == GameStates.MENU && (newState == GameStates.OPTIONS || newState == GameStates.EDIT || newState == GameStates.LOAD_GAME)) ||
+						((previousState == GameStates.OPTIONS || previousState == GameStates.EDIT || previousState == GameStates.LOAD_GAME) && newState == GameStates.MENU)
 		);
 
 		// Reload game options in Playing when returning from Options to Menu
@@ -102,9 +92,6 @@ public class Game extends JFrame implements Runnable{
 					audioManager.playRandomGameMusic();
 					break;
 				case LOAD_GAME:
-					audioManager.playMusic("lonelyhood");
-					break;
-				case NEW_GAME_LEVEL_SELECT:
 					audioManager.playMusic("lonelyhood");
 					break;
 				case INTRO:
@@ -134,7 +121,7 @@ public class Game extends JFrame implements Runnable{
 
 		if (newState == GameStates.LOAD_GAME) {
 			if (loadGameMenu != null) {
-				loadGameMenu.refreshLevels();
+				loadGameMenu.refreshMapPreviews();
 			}
 		}
 
@@ -161,7 +148,6 @@ public class Game extends JFrame implements Runnable{
 		mapEditing = new MapEditing(this, this);
 		loaded = new Loaded(this);
 		loadGameMenu = new LoadGameMenu(this);
-		newGameLevelSelect = new NewGameLevelSelect(this);
 		gameOverScene = new GameOverScene(this);
 		statisticsScene = new StatisticsScene(this);
 		tileManager = new TileManager();
@@ -267,8 +253,6 @@ public class Game extends JFrame implements Runnable{
 	public MapEditing getMapEditing() { return mapEditing; }
 
 	public LoadGameMenu getLoadGameMenu() { return loadGameMenu; }
-
-	public NewGameLevelSelect getNewGameLevelSelect() { return newGameLevelSelect; }
 
 	public TileManager getTileManager() { return tileManager; }
 

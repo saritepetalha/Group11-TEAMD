@@ -1,9 +1,8 @@
 package scenes;
 
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Graphics;
+import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 
 import constants.GameDimensions;
 import main.Game;
@@ -106,7 +105,7 @@ public class Menu extends GameScene implements SceneMethods {
     public void mouseClicked(int x, int y) {
         if (playButton.getBounds().contains(x, y)) {
             playButtonClickSound();
-            game.changeGameState(GameStates.NEW_GAME_LEVEL_SELECT);
+            game.changeGameState(GameStates.PLAYING);
         } else if (loadGameButton.getBounds().contains(x, y)) {
             playButtonClickSound();
             game.changeGameState(GameStates.LOAD_GAME);

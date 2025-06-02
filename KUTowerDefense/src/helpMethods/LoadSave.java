@@ -1,26 +1,17 @@
 package helpMethods;
 
-import java.awt.Graphics2D;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.Writer;
-import java.util.ArrayList;
-
 import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.Map;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonSyntaxException;
+import com.google.gson.*;
+import com.google.gson.stream.JsonReader;
+import objects.Warrior;
+import objects.WizardWarrior;
+import helpMethods.ThumbnailCache;
 
 public class LoadSave {
 
@@ -98,8 +89,8 @@ public class LoadSave {
      * Detects if we're running in a Maven project structure
      */
     private static boolean isMavenProject() {
-        // Check if we're in a Maven project by looking for pom.xml in the current directory
-        File pomFile = new File("pom.xml");
+        // Check if we're in a Maven project by looking for pom.xml in the expected location
+        File pomFile = new File("demo/pom.xml");
         return pomFile.exists();
     }
 
@@ -108,7 +99,7 @@ public class LoadSave {
      */
     private static String getLevelsDirectoryPath() {
         if (isMavenProject()) {
-            return "src/main/resources/Levels";
+            return "demo/src/main/resources/Levels";
         } else {
             return "KUTowerDefense/resources/Levels";
         }
@@ -119,7 +110,7 @@ public class LoadSave {
      */
     private static String getLevelOverlaysDirectoryPath() {
         if (isMavenProject()) {
-            return "src/main/resources/LevelOverlays";
+            return "demo/src/main/resources/LevelOverlays";
         } else {
             return "KUTowerDefense/resources/LevelOverlays";
         }
@@ -154,23 +145,22 @@ public class LoadSave {
     }
 
     //This funcion gets the created level's data from Levels folder under resources
-    // DEPRECATED: Use loadLevel() instead which tries filesystem first, then classpath
-    // public static int[][] getLevelData(String fileName) {
-    //     InputStream is = LoadSave.class.getResourceAsStream("/Levels/" + fileName + ".json");
-    //     if (is == null) {
-    //         System.err.println("Level file not found: /Levels/" + fileName + ".json");
-    //         return null;
-    //     }
-    //
-    //     try (Reader reader = new InputStreamReader(is)) {
-    //         JsonObject root = GSON.fromJson(reader, JsonObject.class);
-    //         JsonArray tilesJson = root.getAsJsonArray("tiles");
-    //         return GSON.fromJson(tilesJson, int[][].class);
-    //     } catch (IOException e) {
-    //         e.printStackTrace();
-    //         return null;
-    //     }
-    // }
+    public static int[][] getLevelData(String fileName) {
+        InputStream is = LoadSave.class.getResourceAsStream("/Levels/" + fileName + ".json");
+        if (is == null) {
+            System.err.println("Level file not found: /Levels/" + fileName + ".json");
+            return null;
+        }
+
+        try (Reader reader = new InputStreamReader(is)) {
+            JsonObject root = GSON.fromJson(reader, JsonObject.class);
+            JsonArray tilesJson = root.getAsJsonArray("tiles");
+            return GSON.fromJson(tilesJson, int[][].class);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 
 
     public static void saveLevel(String fileName, int[][] tiles) {
@@ -192,9 +182,9 @@ public class LoadSave {
             // Create the directory if it doesn't exist
             System.out.println("Levels folder not found, creating: " + levelsFolder.getAbsolutePath());
             levelsFolder.mkdirs();
+            return levelNames;
         }
 
-        // First, try to load from filesystem
         File[] files = levelsFolder.listFiles();
         if (files != null) {
             System.out.println("Number of files found: " + files.length);
@@ -210,121 +200,7 @@ public class LoadSave {
             System.out.println("Could not get file list!");
         }
 
-        // If no levels found in filesystem, try to find built-in levels from classpath
-        if (levelNames.isEmpty()) {
-            System.out.println("No levels found in filesystem, checking for built-in levels...");
-
-            // Try to find some common default levels
-            String[] defaultLevels = {"defaultlevel", "defaultleveltest1", "full_map", "documentMap"};
-
-            for (String levelName : defaultLevels) {
-                if (LoadSave.class.getResourceAsStream("/Levels/" + levelName + ".json") != null) {
-                    levelNames.add(levelName);
-                    System.out.println("Built-in level found: " + levelName);
-                }
-            }
-
-            // If we found built-in levels, copy them to the filesystem for future use
-            if (!levelNames.isEmpty()) {
-                System.out.println("Copying built-in levels to filesystem...");
-                for (String levelName : levelNames) {
-                    copyBuiltInLevelToFilesystem(levelName);
-                }
-            }
-        }
-
         return levelNames;
-    }
-
-    /**
-     * Copies a built-in level from classpath to filesystem
-     */
-    private static void copyBuiltInLevelToFilesystem(String levelName) {
-        try {
-            int[][] levelData = getLevelDataFromClasspath(levelName);
-            if (levelData != null) {
-                createLevel(levelName, levelData);
-                System.out.println("Copied built-in level to filesystem: " + levelName);
-            }
-        } catch (Exception e) {
-            System.err.println("Failed to copy built-in level " + levelName + ": " + e.getMessage());
-        }
-    }
-
-    /**
-     * Helper method to load level data from classpath only
-     */
-    private static int[][] getLevelDataFromClasspath(String fileName) {
-        InputStream is = LoadSave.class.getResourceAsStream("/Levels/" + fileName + ".json");
-        if (is == null) {
-            return null;
-        }
-
-        try (Reader reader = new InputStreamReader(is)) {
-            JsonObject root = GSON.fromJson(reader, JsonObject.class);
-            JsonArray tilesJson = root.getAsJsonArray("tiles");
-            return GSON.fromJson(tilesJson, int[][].class);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    /**
-     * Gets levels that have saved game states
-     * @return ArrayList of level names that have corresponding save files
-     */
-    public static ArrayList<String> getLevelsWithSaveStates() {
-        ArrayList<String> allLevels = getSavedLevels();
-        ArrayList<String> levelsWithSaves = new ArrayList<>();
-
-        String savesPath = getSavesDirectoryPath();
-        File savesFolder = new File(savesPath);
-
-        if (!savesFolder.exists()) {
-            System.out.println("Saves folder not found: " + savesFolder.getAbsolutePath());
-            return levelsWithSaves;
-        }
-
-        for (String levelName : allLevels) {
-            File saveFile = new File(savesPath, levelName + ".json");
-            if (saveFile.exists()) {
-                levelsWithSaves.add(levelName);
-                System.out.println("Level with save state found: " + levelName);
-            }
-        }
-
-        return levelsWithSaves;
-    }
-
-    /**
-     * Gets all available levels (for new game selection)
-     * @return ArrayList of all level names
-     */
-    public static ArrayList<String> getAllAvailableLevels() {
-        return getSavedLevels();
-    }
-
-    /**
-     * Checks if a level has a saved game state
-     * @param levelName The name of the level to check
-     * @return true if a save file exists for this level
-     */
-    public static boolean hasGameSave(String levelName) {
-        String savesPath = getSavesDirectoryPath();
-        File saveFile = new File(savesPath, levelName + ".json");
-        return saveFile.exists();
-    }
-
-    /**
-     * Gets the appropriate saves directory path based on project structure
-     */
-    private static String getSavesDirectoryPath() {
-        if (isMavenProject()) {
-            return "src/main/resources/Saves";
-        } else {
-            return "resources/Saves";
-        }
     }
 
     public static int[][] loadLevel(String levelName) {
@@ -585,6 +461,108 @@ public class LoadSave {
         }
 
         return frames;
+    }
+
+    public static BufferedImage getWarriorImage(Warrior warrior) {
+        String path = "/Warriors/" + (warrior instanceof WizardWarrior ? "wizard.png" : "archer.png");
+        return getImageFromPath(path);
+    }
+
+    public static BufferedImage[] getWarriorAnimation(Warrior warrior) {
+        BufferedImage spriteSheet = getWarriorImage(warrior);
+        int frameCount = warrior instanceof WizardWarrior ? 7 : 14;
+        int frameWidth = spriteSheet.getWidth() / frameCount;
+        int frameHeight = spriteSheet.getHeight();
+        BufferedImage[] frames = new BufferedImage[frameCount];
+        for (int i = 0; i < frameCount; i++) {
+            frames[i] = spriteSheet.getSubimage(i * frameWidth, 0, frameWidth, frameHeight);
+        }
+        return frames;
+    }
+
+    /**
+     * Loads snow tilesets and extracts individual tiles
+     * @param mediumSnowTiles Map to store medium snow tiles
+     * @param fullSnowTiles Map to store full snow tiles
+     * @param spriteCache Map to cache sprites for quick access
+     * @return true if loading was successful, false otherwise
+     */
+    public static boolean loadSnowTilesets(Map<Integer, BufferedImage> mediumSnowTiles,
+                                           Map<Integer, BufferedImage> fullSnowTiles,
+                                           Map<String, BufferedImage> spriteCache) {
+        try {
+            boolean success = true;
+
+            BufferedImage mediumSnowAtlas = getImageFromPath("/Tiles/midSnow.png");
+            if (mediumSnowAtlas != null) {
+                extractSnowTilesFromAtlas(mediumSnowAtlas, mediumSnowTiles, spriteCache, "medium");
+                System.out.println("Medium snow tileset loaded successfully");
+            } else {
+                System.err.println("Failed to load medium snow tileset (midSnow.png)");
+                success = false;
+            }
+
+            BufferedImage fullSnowAtlas = getImageFromPath("/Tiles/fullSnow.png");
+            if (fullSnowAtlas != null) {
+                extractSnowTilesFromAtlas(fullSnowAtlas, fullSnowTiles, spriteCache, "full");
+                System.out.println("Full snow tileset loaded successfully");
+            } else {
+                System.err.println("Failed to load full snow tileset (fullSnow.png)");
+                success = false;
+            }
+
+            return success;
+
+        } catch (Exception e) {
+            System.err.println("Error loading snow tilesets: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * Extracts individual tiles from a snow atlas and caches them
+     * @param atlas The snow tileset atlas
+     * @param tileMap Map to store extracted tiles
+     * @param spriteCache Map to cache sprites for quick access
+     * @param type Type identifier ("medium" or "full")
+     */
+    public static void extractSnowTilesFromAtlas(BufferedImage atlas,
+                                                 Map<Integer, BufferedImage> tileMap,
+                                                 Map<String, BufferedImage> spriteCache,
+                                                 String type) {
+        if (atlas == null) return;
+
+        final int TILESET_COLUMNS = 4;
+        final int TILESET_ROWS = 5;
+        final int TILE_SIZE = 128; // Source tileset tile size
+
+        int tileId = 0;
+        for (int row = 0; row < TILESET_ROWS; row++) {
+            for (int col = 0; col < TILESET_COLUMNS; col++) {
+                try {
+                    BufferedImage tile = atlas.getSubimage(
+                            col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE
+                    );
+
+                    // Resize to game tile size and cache
+                    BufferedImage resizedTile = resizeImage(tile,
+                            constants.GameDimensions.TILE_DISPLAY_SIZE,
+                            constants.GameDimensions.TILE_DISPLAY_SIZE);
+
+                    tileMap.put(tileId, resizedTile);
+
+                    // Cache the sprite for quick access
+                    String cacheKey = type + "_" + tileId;
+                    spriteCache.put(cacheKey, resizedTile);
+
+                    tileId++;
+                } catch (Exception e) {
+                    System.err.println("Error extracting snow tile at row " + row + ", col " + col + ": " + e.getMessage());
+                }
+            }
+        }
+        System.out.println("Extracted " + tileId + " tiles from " + type + " snow atlas");
     }
 
 }

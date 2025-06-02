@@ -1,13 +1,13 @@
 package ui_p;
 
+import helpMethods.LoadSave;
+
+import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-
-import javax.imageio.ImageIO;
-
-import helpMethods.LoadSave;
 
 public class AssetsLoader {
     // Singleton instance
@@ -49,9 +49,6 @@ public class AssetsLoader {
     public BufferedImage goldFactorySprite;
     public BufferedImage[] lightningFrames;
 
-    // Save button image
-    public BufferedImage saveButtonImg;
-
     // Private constructor
     private AssetsLoader() {
         loadAll();
@@ -91,7 +88,7 @@ public class AssetsLoader {
         loadLightningButtonImages();
         loadGoldFactoryButtonImages();
         loadLightningAssets();
-        loadSaveButtonImage();
+
     }
 
     private void loadButtonImageFile() {
@@ -339,8 +336,5 @@ public class AssetsLoader {
             e.printStackTrace();
         }
     }
-
-    private void loadSaveButtonImage() {
-        saveButtonImg = loadImage("/UI/Save_Button_For_In_Game_Options.png");
-    }
 }
+
