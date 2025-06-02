@@ -16,22 +16,57 @@ public class GameStateManager {
     private final Gson gson;
 
     /**
-     * Detects if we're running in a Maven project structure
+     * Finds the project root directory by looking for key indicators
      */
-    private static boolean isMavenProject() {
-        // Check if we're in a Maven project by looking for pom.xml in the expected location
-        File pomFile = new File("demo/pom.xml");
-        return pomFile.exists();
+    private static File findProjectRoot() {
+        File currentDir = new File(System.getProperty("user.dir"));
+        File checkDir = currentDir;
+
+        // Look for project root indicators going up the directory tree
+        for (int i = 0; i < 5; i++) { // Limit search to 5 levels up
+            // Check for Maven project root indicators
+            if (new File(checkDir, "pom.xml").exists() ||
+                    new File(checkDir, "demo/pom.xml").exists() ||
+                    (new File(checkDir, "src/main/resources").exists() && new File(checkDir, "pom.xml").exists())) {
+                return checkDir;
+            }
+
+            // Check if we're inside a demo directory structure
+            if (checkDir.getName().equals("demo") && new File(checkDir, "pom.xml").exists()) {
+                return checkDir;
+            }
+
+            File parent = checkDir.getParentFile();
+            if (parent == null) break;
+            checkDir = parent;
+        }
+
+        // If no clear project root found, return current directory
+        return currentDir;
     }
 
     /**
      * Gets the appropriate saves directory path based on project structure
      */
     private static String getSavesDirectoryPath() {
-        if (isMavenProject()) {
-            return "demo/src/main/resources/Saves";
+        File projectRoot = findProjectRoot();
+
+        // Check if we have a demo subdirectory structure
+        File demoDir = new File(projectRoot, "demo");
+        if (demoDir.exists() && new File(demoDir, "pom.xml").exists()) {
+            File defaultPath = new File(demoDir, "src/main/resources/Saves");
+            try {
+                return defaultPath.getCanonicalPath();
+            } catch (Exception e) {
+                return defaultPath.getAbsolutePath();
+            }
         } else {
-            return "resources/Saves";
+            File defaultPath = new File(projectRoot, "src/main/resources/Saves");
+            try {
+                return defaultPath.getCanonicalPath();
+            } catch (Exception e) {
+                return defaultPath.getAbsolutePath();
+            }
         }
     }
 

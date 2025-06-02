@@ -12,7 +12,16 @@ import javax.swing.JFrame;
 import managers.AudioManager;
 import managers.GameStatsManager;
 import managers.TileManager;
-import scenes.*;
+import scenes.GameOverScene;
+import scenes.Intro;
+import scenes.LevelSelectionScene;
+import scenes.LoadGameMenu;
+import scenes.Loaded;
+import scenes.MapEditing;
+import scenes.Menu;
+import scenes.Options;
+import scenes.Playing;
+import scenes.StatisticsScene;
 
 public class Game extends JFrame implements Runnable{
 
@@ -32,6 +41,7 @@ public class Game extends JFrame implements Runnable{
 	private MapEditing mapEditing;
 	private Loaded loaded;
 	private LoadGameMenu loadGameMenu;
+	private LevelSelectionScene newGameLevelSelection;
 	private GameOverScene gameOverScene;
 	private StatisticsScene statisticsScene;
 	private TileManager tileManager;
@@ -39,6 +49,17 @@ public class Game extends JFrame implements Runnable{
 
 
 	public Game() {
+		System.out.println("Game Starting...");
+
+		// Quick resource test for IntelliJ debugging
+		java.net.URL resourceTest = Game.class.getResource("/UI/Save_Button_For_In_Game_Options.png");
+		if (resourceTest != null) {
+			System.out.println("✅ Save button resource found at: " + resourceTest);
+		} else {
+			System.err.println("❌ Save button resource NOT found!");
+			System.err.println("   This indicates a classpath/resource issue in IntelliJ");
+		}
+
 		this.tileManager = new TileManager();
 
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -90,6 +111,12 @@ public class Game extends JFrame implements Runnable{
 						playing.resetGameState();
 					}
 					audioManager.playRandomGameMusic();
+					break;
+				case NEW_GAME_LEVEL_SELECT:
+					audioManager.playMusic("lonelyhood");
+					if (newGameLevelSelection != null) {
+						newGameLevelSelection.refreshLevelList();
+					}
 					break;
 				case LOAD_GAME:
 					audioManager.playMusic("lonelyhood");
@@ -148,6 +175,7 @@ public class Game extends JFrame implements Runnable{
 		mapEditing = new MapEditing(this, this);
 		loaded = new Loaded(this);
 		loadGameMenu = new LoadGameMenu(this);
+		newGameLevelSelection = new LevelSelectionScene(this, new levelselection.AllLevelsStrategy());
 		gameOverScene = new GameOverScene(this);
 		statisticsScene = new StatisticsScene(this);
 		tileManager = new TileManager();
@@ -169,6 +197,7 @@ public class Game extends JFrame implements Runnable{
 			case OPTIONS:
 			case EDIT:
 			case LOAD_GAME:
+			case NEW_GAME_LEVEL_SELECT:
 				break;
 			case PLAYING:
 				if (playing != null) playing.update();
@@ -253,6 +282,8 @@ public class Game extends JFrame implements Runnable{
 	public MapEditing getMapEditing() { return mapEditing; }
 
 	public LoadGameMenu getLoadGameMenu() { return loadGameMenu; }
+
+	public LevelSelectionScene getNewGameLevelSelection() { return newGameLevelSelection; }
 
 	public TileManager getTileManager() { return tileManager; }
 
