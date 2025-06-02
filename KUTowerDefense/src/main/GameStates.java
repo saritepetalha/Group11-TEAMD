@@ -8,7 +8,6 @@ public enum GameStates {
     OPTIONS,
     LOADED,
     LOAD_GAME,
-    NEW_GAME_LEVEL_SELECT,
     QUIT,
     GAME_OVER,
     STATISTICS;

@@ -1,17 +1,13 @@
 package helpMethods;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import config.GameOptions;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-
-import config.GameOptions;
+import java.nio.file.*;
 
 /**
  * Loads / saves {@link GameOptions} as JSON.
@@ -42,7 +38,8 @@ public final class OptionsIO {
      * Detects if we're running in a Maven project structure
      */
     private static boolean isMavenProject() {
-        File pomFile = new File("pom.xml");
+        // Check if we're in a Maven project by looking for pom.xml in the expected location
+        File pomFile = new File("demo/pom.xml");
         return pomFile.exists();
     }
 
@@ -51,7 +48,7 @@ public final class OptionsIO {
      */
     private static String getOptionsDirectoryPath() {
         if (isMavenProject()) {
-            return "src/main/resources/Options";
+            return "demo/src/main/resources/Options";
         } else {
             return "resources/Options";
         }
@@ -62,7 +59,7 @@ public final class OptionsIO {
     // ---------------------------------------------------------------------
 
     /**
-     * Loads options from disk.  If the file doesn't exist or is empty/corrupt, a new one is
+     * Loads options from disk.  If the file doesn’t exist or is empty/corrupt, a new one is
      * created with {@link GameOptions#defaults()}.
      *
      * @return never {@code null}
@@ -142,7 +139,7 @@ public final class OptionsIO {
     }
 
     /**
-     * Quick helper if you want a "Reset to Defaults" button.
+     * Quick helper if you want a “Reset to Defaults” button.
      * Completely overwrites the existing JSON file.
      */
     public static void resetToDefaults() {
