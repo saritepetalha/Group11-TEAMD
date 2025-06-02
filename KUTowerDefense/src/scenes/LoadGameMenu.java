@@ -25,7 +25,6 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 
@@ -33,6 +32,7 @@ import constants.GameDimensions;
 import helpMethods.FontLoader;
 import helpMethods.LoadSave;
 import helpMethods.ThumbnailCache;
+import levelselection.SavedLevelsOnlyStrategy;
 import main.Game;
 import main.GameStates;
 import managers.TileManager;
@@ -44,6 +44,7 @@ public class LoadGameMenu extends JPanel { // Changed to JPanel
     private TileManager tileManager;
     private BufferedImage backgroundImg;
     private TheButton backButton; // Changed to TheButton
+    private SavedLevelsOnlyStrategy levelStrategy;
 
     private static final int PREVIEW_WIDTH = 192;
     private static final int PREVIEW_HEIGHT = 108;
@@ -80,6 +81,7 @@ public class LoadGameMenu extends JPanel { // Changed to JPanel
         this.game = game;
         this.tileManager = game.getTileManager();
         this.backgroundImg = AssetsLoader.getInstance().loadGameMenuBackgroundImg;
+        this.levelStrategy = new SavedLevelsOnlyStrategy();
         this.medodicaFontSmall = FontLoader.loadMedodicaFont(14f);
         this.medodicaFontSmallBold = FontLoader.loadMedodicaFont(14f).deriveFont(Font.BOLD);
         this.medodicaFontMedium = FontLoader.loadMedodicaFont(16f);
@@ -100,8 +102,8 @@ public class LoadGameMenu extends JPanel { // Changed to JPanel
         System.out.println("Refreshing map previews...");
         System.out.println("Cache stats before refresh: " + ThumbnailCache.getInstance().getCacheStats());
 
-        // Reload saved levels
-        allSavedLevels = LoadSave.getSavedLevels();
+        // Reload saved levels using strategy
+        allSavedLevels = levelStrategy.getLevelsToShow();
         totalPages = (int) Math.ceil((double) allSavedLevels.size() / PREVIEWS_PER_PAGE);
 
         // Reset to first page if current page is out of bounds
@@ -126,8 +128,8 @@ public class LoadGameMenu extends JPanel { // Changed to JPanel
     }
 
     private void initUI() {
-        // Load saved levels and calculate pagination
-        allSavedLevels = LoadSave.getSavedLevels();
+        // Load saved levels using strategy and calculate pagination
+        allSavedLevels = levelStrategy.getLevelsToShow();
         totalPages = Math.max(1, (int) Math.ceil((double) allSavedLevels.size() / PREVIEWS_PER_PAGE));
         currentPage = 0;
 
@@ -163,7 +165,7 @@ public class LoadGameMenu extends JPanel { // Changed to JPanel
     }
 
     private void createNoLevelsPanel() {
-        JLabel noLevelsLabel = new JLabel("No saved levels found. Create a map in Edit Mode!");
+        JLabel noLevelsLabel = new JLabel("No saved games found. Start a new game first!");
         noLevelsLabel.setFont(medodicaFontMedium);
         noLevelsLabel.setForeground(Color.WHITE);
         noLevelsLabel.setHorizontalAlignment(SwingConstants.CENTER);

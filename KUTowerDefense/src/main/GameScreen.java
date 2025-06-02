@@ -1,8 +1,9 @@
 package main;
 
-import java.awt.Graphics;
-import java.awt.Dimension;
 import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.Graphics;
+
 import javax.swing.JPanel;
 
 import constants.GameDimensions;
@@ -47,6 +48,7 @@ public class GameScreen extends JPanel {
 		if (GameStates.gameState == GameStates.MENU ||
 				GameStates.gameState == GameStates.INTRO ||
 				GameStates.gameState == GameStates.LOAD_GAME ||
+				GameStates.gameState == GameStates.NEW_GAME_LEVEL_SELECT ||
 				GameStates.gameState == GameStates.OPTIONS) {
 			size = new Dimension(GameDimensions.MAIN_MENU_SCREEN_WIDTH, GameDimensions.MAIN_MENU_SCREEN_HEIGHT);
 		} else if (GameStates.gameState == GameStates.EDIT){
@@ -68,7 +70,9 @@ public class GameScreen extends JPanel {
 	@Override
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
-		if (GameStates.gameState != GameStates.OPTIONS && GameStates.gameState != GameStates.LOAD_GAME) {
+		if (GameStates.gameState != GameStates.OPTIONS &&
+				GameStates.gameState != GameStates.LOAD_GAME &&
+				GameStates.gameState != GameStates.NEW_GAME_LEVEL_SELECT) {
 			game.getRender().render(g);
 		}
 	}
@@ -79,6 +83,9 @@ public class GameScreen extends JPanel {
 		}
 		if (oldState == GameStates.LOAD_GAME && game.getLoadGameMenu() instanceof LoadGameMenu) {
 			// No specific cleanup needed for LoadGameMenu panel removal by default
+		}
+		if (oldState == GameStates.NEW_GAME_LEVEL_SELECT) {
+			// No specific cleanup needed for LevelSelectionScene panel removal by default
 		}
 
 		this.removeAll();
@@ -94,6 +101,12 @@ public class GameScreen extends JPanel {
 				this.add(game.getLoadGameMenu(), BorderLayout.CENTER);
 			} else {
 				System.err.println("Error: LoadGameMenu is not a JPanel or is null!");
+			}
+		} else if (newState == GameStates.NEW_GAME_LEVEL_SELECT) {
+			if (game.getNewGameLevelSelection() instanceof JPanel) {
+				this.add(game.getNewGameLevelSelection(), BorderLayout.CENTER);
+			} else {
+				System.err.println("Error: NewGameLevelSelection is not a JPanel or is null!");
 			}
 		}
 
