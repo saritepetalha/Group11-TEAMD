@@ -12,7 +12,15 @@ import javax.swing.JFrame;
 import managers.AudioManager;
 import managers.GameStatsManager;
 import managers.TileManager;
-import scenes.*;
+import scenes.GameOverScene;
+import scenes.Intro;
+import scenes.LoadGameMenu;
+import scenes.Loaded;
+import scenes.MapEditing;
+import scenes.Menu;
+import scenes.Options;
+import scenes.Playing;
+import scenes.StatisticsScene;
 
 public class Game extends JFrame implements Runnable{
 
@@ -39,6 +47,17 @@ public class Game extends JFrame implements Runnable{
 
 
 	public Game() {
+		System.out.println("Game Starting...");
+
+		// Quick resource test for IntelliJ debugging
+		java.net.URL resourceTest = Game.class.getResource("/UI/Save_Button_For_In_Game_Options.png");
+		if (resourceTest != null) {
+			System.out.println("✅ Save button resource found at: " + resourceTest);
+		} else {
+			System.err.println("❌ Save button resource NOT found!");
+			System.err.println("   This indicates a classpath/resource issue in IntelliJ");
+		}
+
 		this.tileManager = new TileManager();
 
 		setDefaultCloseOperation(EXIT_ON_CLOSE);

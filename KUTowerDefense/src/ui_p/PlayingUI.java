@@ -1,6 +1,7 @@
 package ui_p;
 
 import java.awt.AlphaComposite;
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Composite;
 import java.awt.Font;
@@ -11,7 +12,6 @@ import java.awt.RadialGradientPaint;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Shape;
-import java.awt.BasicStroke;
 import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
@@ -147,7 +147,7 @@ public class PlayingUI {
                 GameDimensions.GAME_HEIGHT / 2 - AssetsLoader.getInstance().optionsMenuImg.getHeight() / 3,
                 buttonSize,
                 buttonSize,
-                AssetsLoader.getInstance().buttonImages.get(1));
+                AssetsLoader.getInstance().saveButtonImg);
 
         // Initialize main menu button
         mainMenuButton = new TheButton("Main Menu",
@@ -838,15 +838,29 @@ public class PlayingUI {
         saveButton.setWidth(saveLoadWidth);
         saveButton.setHeight(saveLoadHeight);
 
-        g2d.setColor(new Color(60, 60, 60));
-        g2d.fillRoundRect(saveButton.getX(), saveLoadY, saveLoadWidth, saveLoadHeight, 5, 5);
-        g2d.setColor(Color.WHITE);
-        g2d.drawString("Save Game", saveButton.getX() + 5, saveLoadY + 20);
-        if (saveButton.isMouseOver()) {
-            g2d.setColor(new Color(100, 100, 255));
+        // Draw the save button image
+        BufferedImage saveButtonImage = AssetsLoader.getInstance().saveButtonImg;
+        if (saveButtonImage != null) {
+            // Draw the save button image
+            g2d.drawImage(saveButtonImage, saveButton.getX(), saveLoadY, saveLoadWidth, saveLoadHeight, null);
+
+            // Add hover effect if mouse is over the button
+            if (saveButton.isMouseOver()) {
+                g2d.setColor(new Color(255, 255, 255, 50)); // Light white overlay for hover effect
+                g2d.fillRoundRect(saveButton.getX(), saveLoadY, saveLoadWidth, saveLoadHeight, 5, 5);
+            }
+        } else {
+            // Fallback if image is not available
+            g2d.setColor(new Color(60, 60, 60));
             g2d.fillRoundRect(saveButton.getX(), saveLoadY, saveLoadWidth, saveLoadHeight, 5, 5);
             g2d.setColor(Color.WHITE);
             g2d.drawString("Save Game", saveButton.getX() + 5, saveLoadY + 20);
+            if (saveButton.isMouseOver()) {
+                g2d.setColor(new Color(100, 100, 255));
+                g2d.fillRoundRect(saveButton.getX(), saveLoadY, saveLoadWidth, saveLoadHeight, 5, 5);
+                g2d.setColor(Color.WHITE);
+                g2d.drawString("Save Game", saveButton.getX() + 5, saveLoadY + 20);
+            }
         }
     }
 

@@ -1,13 +1,13 @@
 package ui_p;
 
-import helpMethods.LoadSave;
-
-import javax.imageio.ImageIO;
-import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+
+import javax.imageio.ImageIO;
+
+import helpMethods.LoadSave;
 
 public class AssetsLoader {
     // Singleton instance
@@ -49,6 +49,9 @@ public class AssetsLoader {
     public BufferedImage goldFactorySprite;
     public BufferedImage[] lightningFrames;
 
+    // Save button image
+    public BufferedImage saveButtonImg;
+
     // Private constructor
     private AssetsLoader() {
         loadAll();
@@ -88,7 +91,7 @@ public class AssetsLoader {
         loadLightningButtonImages();
         loadGoldFactoryButtonImages();
         loadLightningAssets();
-
+        loadSaveButtonImage();
     }
 
     private void loadButtonImageFile() {
@@ -176,12 +179,17 @@ public class AssetsLoader {
 
     private BufferedImage loadImage(String path) {
         BufferedImage img = null;
+        System.out.println("🔍 Attempting to load image: " + path);
         try (InputStream is = LoadSave.class.getResourceAsStream(path)) {
-            if (is != null)
+            if (is != null) {
                 img = ImageIO.read(is);
-            else
-                System.err.println("Image not found: " + path);
+                System.out.println("✅ Successfully loaded image: " + path);
+            } else {
+                System.err.println("❌ Image not found (InputStream is null): " + path);
+                System.err.println("   Check if the file exists in src/main/resources" + path);
+            }
         } catch (IOException e) {
+            System.err.println("❌ IOException loading image: " + path);
             e.printStackTrace();
         }
         return img;
@@ -334,6 +342,28 @@ public class AssetsLoader {
         } catch (Exception e) {
             System.err.println("⚠️ Lightning frames could not be loaded: " + e.getMessage());
             e.printStackTrace();
+        }
+    }
+
+    private void loadSaveButtonImage() {
+        System.out.println("🔍 Loading save button image...");
+        saveButtonImg = loadImage("/UI/Save_Button_For_In_Game_Options.png");
+        if (saveButtonImg != null) {
+            System.out.println("✅ Save button image loaded successfully: " + saveButtonImg.getWidth() + "x" + saveButtonImg.getHeight());
+        } else {
+            System.err.println("❌ Failed to load save button image!");
+            // Try to list what's available in the UI directory
+            try {
+                System.out.println("🔍 Checking available UI resources...");
+                java.net.URL resourceUrl = LoadSave.class.getResource("/UI/");
+                if (resourceUrl != null) {
+                    System.out.println("UI directory found at: " + resourceUrl);
+                } else {
+                    System.err.println("UI directory not found in resources!");
+                }
+            } catch (Exception e) {
+                System.err.println("Error checking UI resources: " + e.getMessage());
+            }
         }
     }
 }

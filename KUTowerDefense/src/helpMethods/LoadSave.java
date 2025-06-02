@@ -1,17 +1,30 @@
 package helpMethods;
 
-import javax.imageio.ImageIO;
-import java.awt.*;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
-import java.io.*;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Map;
 
-import com.google.gson.*;
-import com.google.gson.stream.JsonReader;
+import javax.imageio.ImageIO;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
+
 import objects.Warrior;
 import objects.WizardWarrior;
-import helpMethods.ThumbnailCache;
 
 public class LoadSave {
 
@@ -86,34 +99,81 @@ public class LoadSave {
 
 
     /**
-     * Detects if we're running in a Maven project structure
+     * Checks if the current project is a Maven project
      */
     private static boolean isMavenProject() {
-        // Check if we're in a Maven project by looking for pom.xml in the expected location
-        File pomFile = new File("demo/pom.xml");
-        return pomFile.exists();
+        // Check if we're in a Maven project by looking for pom.xml in the current directory
+        String currentDir = System.getProperty("user.dir");
+        System.out.println("🔍 Current working directory: " + currentDir);
+
+        File pomFile = new File("pom.xml");
+        System.out.println("🔍 Checking for pom.xml at: " + pomFile.getAbsolutePath() + " - exists: " + pomFile.exists());
+
+        // Also check if we're in a subdirectory and pom.xml is one level up
+        File parentPomFile = new File("../pom.xml");
+        System.out.println("🔍 Checking for ../pom.xml at: " + parentPomFile.getAbsolutePath() + " - exists: " + parentPomFile.exists());
+
+        // Check if we have src/main/resources structure (strong indicator of Maven)
+        File srcMainResources = new File("src/main/resources");
+        System.out.println("🔍 Checking for src/main/resources at: " + srcMainResources.getAbsolutePath() + " - exists: " + srcMainResources.exists());
+
+        boolean isMaven = pomFile.exists() || srcMainResources.exists();
+        System.out.println("🔍 Detected as Maven project: " + isMaven);
+
+        return isMaven;
     }
 
     /**
      * Gets the appropriate levels directory path based on project structure
      */
     private static String getLevelsDirectoryPath() {
-        if (isMavenProject()) {
-            return "demo/src/main/resources/Levels";
-        } else {
-            return "KUTowerDefense/resources/Levels";
+        // Try multiple possible paths in order of preference
+        String[] possiblePaths = {
+                "src/main/resources/Levels",           // Standard Maven structure from project root
+                "demo/src/main/resources/Levels",     // If running from parent directory
+                "main/resources/Levels",              // If running from src directory
+                "resources/Levels",                   // If running from src/main directory
+                "KUTowerDefense/resources/Levels"     // Legacy structure
+        };
+
+        System.out.println("🔍 Trying to find levels directory...");
+
+        for (String path : possiblePaths) {
+            File dir = new File(path);
+            System.out.println("🔍 Checking path: " + dir.getAbsolutePath() + " - exists: " + dir.exists());
+            if (dir.exists() && dir.isDirectory()) {
+                System.out.println("✅ Found levels directory at: " + path);
+                return path;
+            }
         }
+
+        // If none found, default to Maven structure
+        System.out.println("⚠️ No existing levels directory found, defaulting to Maven structure");
+        return "src/main/resources/Levels";
     }
 
     /**
      * Gets the appropriate level overlays directory path based on project structure
      */
     private static String getLevelOverlaysDirectoryPath() {
-        if (isMavenProject()) {
-            return "demo/src/main/resources/LevelOverlays";
-        } else {
-            return "KUTowerDefense/resources/LevelOverlays";
+        // Try multiple possible paths in order of preference
+        String[] possiblePaths = {
+                "src/main/resources/LevelOverlays",           // Standard Maven structure from project root
+                "demo/src/main/resources/LevelOverlays",     // If running from parent directory
+                "main/resources/LevelOverlays",              // If running from src directory
+                "resources/LevelOverlays",                   // If running from src/main directory
+                "KUTowerDefense/resources/LevelOverlays"     // Legacy structure
+        };
+
+        for (String path : possiblePaths) {
+            File dir = new File(path);
+            if (dir.exists() && dir.isDirectory()) {
+                return path;
+            }
         }
+
+        // If none found, default to Maven structure
+        return "src/main/resources/LevelOverlays";
     }
 
     //This function saves the game to a json file as a 2d array with key: tiles
@@ -176,29 +236,45 @@ public class LoadSave {
         String levelsPath = getLevelsDirectoryPath();
         File levelsFolder = new File(levelsPath);
 
-        System.out.println("Checking levels path: " + levelsFolder.getAbsolutePath() + " - exists: " + levelsFolder.exists());
+        System.out.println("🔍 === LEVEL LOADING DEBUG ===");
+        System.out.println("🔍 Using levels path: " + levelsPath);
+        System.out.println("🔍 Checking levels path: " + levelsFolder.getAbsolutePath() + " - exists: " + levelsFolder.exists());
 
         if (!levelsFolder.exists()) {
-            // Create the directory if it doesn't exist
-            System.out.println("Levels folder not found, creating: " + levelsFolder.getAbsolutePath());
-            levelsFolder.mkdirs();
-            return levelNames;
+            // Also try the alternative structure in case we're running from a different directory
+            String alternatePath = levelsFolder.exists() ? levelsPath : "KUTowerDefense/resources/Levels";
+            File alternateFolder = new File(alternatePath);
+            System.out.println("🔍 Primary folder not found, trying alternate: " + alternateFolder.getAbsolutePath() + " - exists: " + alternateFolder.exists());
+
+            if (alternateFolder.exists()) {
+                levelsFolder = alternateFolder;
+                levelsPath = alternatePath;
+                System.out.println("✅ Using alternate path: " + levelsPath);
+            } else {
+                // Create the directory if it doesn't exist
+                System.out.println("⚠️ Levels folder not found, creating: " + levelsFolder.getAbsolutePath());
+                levelsFolder.mkdirs();
+                return levelNames;
+            }
         }
 
         File[] files = levelsFolder.listFiles();
         if (files != null) {
-            System.out.println("Number of files found: " + files.length);
+            System.out.println("🔍 Number of files found: " + files.length);
             for (File file : files) {
-                System.out.println("File: " + file.getName());
+                System.out.println("🔍 File: " + file.getName() + " (isFile: " + file.isFile() + ", isJson: " + file.getName().endsWith(".json") + ")");
                 if (file.isFile() && file.getName().endsWith(".json")) {
                     String levelName = file.getName().replace(".json", "");
                     levelNames.add(levelName);
-                    System.out.println("Level added: " + levelName);
+                    System.out.println("✅ Level added: " + levelName);
                 }
             }
         } else {
-            System.out.println("Could not get file list!");
+            System.err.println("❌ Could not get file list!");
         }
+
+        System.out.println("🔍 Total levels found: " + levelNames.size());
+        System.out.println("🔍 === END LEVEL LOADING DEBUG ===");
 
         return levelNames;
     }
