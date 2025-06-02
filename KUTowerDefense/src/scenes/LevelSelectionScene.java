@@ -49,8 +49,8 @@ public class LevelSelectionScene extends JPanel {
     private static final int PREVIEW_WIDTH = 192;
     private static final int PREVIEW_HEIGHT = 108;
     private static final int PREVIEW_MARGIN = 15;
-    private static final int PREVIEWS_PER_ROW = 3;
-    private static final int PREVIEWS_PER_PAGE = 6; // 3 columns x 2 rows
+    private static final int PREVIEWS_PER_ROW = 2;
+    private static final int PREVIEWS_PER_PAGE = 4; // 2 columns x 2 rows
     private static final int HEADER_HEIGHT = 100;
     private static final int FOOTER_HEIGHT = 80;
 
@@ -77,7 +77,7 @@ public class LevelSelectionScene extends JPanel {
         this.game = game;
         this.strategy = strategy;
         this.tileManager = game.getTileManager();
-        this.backgroundImg = AssetsLoader.getInstance().menuBackgroundImg;
+        this.backgroundImg = AssetsLoader.getInstance().loadGameMenuBackgroundImg;
 
         // Load fonts
         this.medodicaFontSmall = FontLoader.loadMedodicaFont(14f);
@@ -248,6 +248,8 @@ public class LevelSelectionScene extends JPanel {
         previewButton.setIcon(new ImageIcon(thumbnail));
         previewButton.setPreferredSize(new Dimension(PREVIEW_WIDTH, PREVIEW_HEIGHT));
         previewButton.setToolTipText("Play " + levelName);
+        previewButton.setBackground(new Color(0, 0, 0, 0)); // Transparent background
+        previewButton.setBorder(null); // Remove any border
 
         // Add click handler for playing the level
         previewButton.addActionListener(e -> playLevel(levelName, levelData));
@@ -550,16 +552,21 @@ public class LevelSelectionScene extends JPanel {
     private void playLevel(String levelName, int[][] levelData) {
         System.out.println("Playing level: " + levelName);
 
-        // Check if this is a load game scenario (strategy-dependent)
-        if (strategy instanceof levelselection.SavedLevelsOnlyStrategy) {
-            // Load the saved game state
-            game.changeGameState(GameStates.LOAD_GAME);
-            // The existing LoadGameMenu will handle loading the saved state
-        } else {
-            // Start a new game with this level
-            int[][] overlayData = LoadSave.loadOverlay(levelName);
-            game.startPlayingWithLevel(levelData, overlayData, levelName);
+        // Load overlay data
+        int[][] overlayData = LoadSave.loadOverlay(levelName);
+        if (overlayData == null) {
+            // Create default overlay if none exists
+            overlayData = new int[levelData.length][levelData[0].length];
+            // Set default start/end points if the level is big enough
+            if (levelData.length > 4 && levelData[0].length > 15) {
+                overlayData[4][0] = 1; // Start point
+                overlayData[4][15] = 2; // End point
+            }
         }
+
+        // Start the game with the level
+        game.startPlayingWithLevel(levelData, overlayData, levelName);
+        game.changeGameState(GameStates.PLAYING);
     }
 
     private void editLevel(String levelName, int[][] levelData) {
@@ -598,6 +605,7 @@ public class LevelSelectionScene extends JPanel {
             setContentAreaFilled(false);
             setFocusPainted(false);
             setBorderPainted(false);
+            setBackground(new Color(0, 0, 0, 0)); // Transparent background
         }
 
         @Override
@@ -605,27 +613,14 @@ public class LevelSelectionScene extends JPanel {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-            if (getModel().isArmed()) {
-                g2.setColor(getBackground().darker());
-            } else if (getModel().isRollover()) {
-                g2.setColor(getBackground().brighter());
-            } else {
-                g2.setColor(getBackground());
-            }
-
-            g2.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, cornerRadius, cornerRadius);
-            g2.dispose();
-
+            // Don't paint any background - just paint the icon
             super.paintComponent(g);
+            g2.dispose();
         }
 
         @Override
         protected void paintBorder(Graphics g) {
-            Graphics2D g2 = (Graphics2D) g.create();
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(getForeground());
-            g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, cornerRadius, cornerRadius);
-            g2.dispose();
+            // Don't paint any border
         }
 
         @Override
