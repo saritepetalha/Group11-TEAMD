@@ -580,6 +580,10 @@ public class Playing extends GameScene implements SceneMethods {
         return towerManager;
     }
 
+    public TileManager getTileManager() {
+        return tileManager;
+    }
+
     public EnemyManager getEnemyManager() {
         return enemyManager;
     }
@@ -879,6 +883,12 @@ public class Playing extends GameScene implements SceneMethods {
         // After a projectile is launched (or hits), apply any on-hit effects from the tower itself.
         // This is particularly for direct effects like the Mage's slow, not projectile-specific effects.
         tower.applyOnHitEffect(enemy, this);
+    }
+
+    public void shootEnemy(objects.Warrior warrior, Enemy enemy) {
+        projectileManager.newProjectile(warrior, enemy);
+        // Apply any on-hit effects from the warrior
+        warrior.applyOnHitEffect(enemy, this);
     }
 
     public boolean isGamePaused() {
@@ -1224,6 +1234,24 @@ public class Playing extends GameScene implements SceneMethods {
 
     public WeatherManager getWeatherManager() {
         return weatherManager;
+    }
+
+    public void startWarriorPlacement(objects.Warrior warrior) {
+        // Add the warrior to the tower manager's warrior list
+        if (towerManager != null && warrior != null) {
+            towerManager.getWarriors().add(warrior);
+
+            // Deduct the cost from player
+            if (playerManager.getGold() >= warrior.getCost()) {
+                playerManager.spendGold(warrior.getCost());
+                updateUIResources();
+                System.out.println("Warrior placed! Cost: " + warrior.getCost());
+            } else {
+                // Remove warrior if not enough gold (safety check)
+                towerManager.getWarriors().remove(warrior);
+                System.out.println("Not enough gold to place warrior!");
+            }
+        }
     }
 
 }

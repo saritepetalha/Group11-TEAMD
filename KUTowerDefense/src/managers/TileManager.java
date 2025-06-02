@@ -28,6 +28,9 @@ public class TileManager {
     // New snow transition manager
     private SnowTransitionManager snowTransitionManager;
 
+    // Add grass snow stage tracking
+    private Map<String, Integer> grassSnowStages = new HashMap<>();
+
     public TileManager() {
         loadAtlas();
         createTiles();
@@ -185,6 +188,61 @@ public class TileManager {
      */
     public String getSnowStateDescription() {
         return snowTransitionManager != null ? snowTransitionManager.getStateDescription() : "No Snow";
+    }
+
+    /**
+     * Initialize grass snow stages for a level
+     */
+    public void initializeGrassSnowStages(int[][] level) {
+        grassSnowStages.clear();
+        if (level == null) return;
+
+        for (int i = 0; i < level.length; i++) {
+            for (int j = 0; j < level[i].length; j++) {
+                if (level[i][j] == 5) { // Grass tile ID
+                    String key = j + "," + i;
+                    grassSnowStages.put(key, 0); // Initialize with no snow
+                }
+            }
+        }
+    }
+
+    /**
+     * Get the snow stage for a specific grass tile
+     */
+    public int getGrassSnowStage(int x, int y) {
+        String key = x + "," + y;
+        return grassSnowStages.getOrDefault(key, 0);
+    }
+
+    /**
+     * Get a snowy grass sprite based on snow stage
+     */
+    public BufferedImage getSnowyGrassSprite(int snowStage) {
+        if (snowTransitionManager != null) {
+            // Get the base grass sprite (ID 5)
+            BufferedImage baseGrass = getOriginalSprite(5);
+            return snowTransitionManager.getSnowSprite(5, baseGrass);
+        }
+        return null;
+    }
+
+    /**
+     * Update snow on grass tiles based on weather
+     */
+    public void updateSnowOnGrass(boolean isSnowing) {
+        if (snowTransitionManager != null) {
+            // Update the main snow transition with a small delta time
+            updateSnowTransition(0.016f, isSnowing);
+
+            // Update individual grass tile snow stages based on transition progress
+            float progress = getSnowTransitionProgress();
+            int targetStage = isSnowing ? (int)(progress * 3) : (int)((1.0f - progress) * 3);
+
+            for (String key : grassSnowStages.keySet()) {
+                grassSnowStages.put(key, Math.max(0, Math.min(3, targetStage)));
+            }
+        }
     }
 
     private BufferedImage rotateImage(BufferedImage original, double degrees) {
