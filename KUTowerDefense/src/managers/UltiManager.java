@@ -3,12 +3,14 @@ package managers;
 import enemies.Enemy;
 import helpMethods.LoadSave;
 import main.Game;
+import objects.GoldFactory;
 import scenes.Playing;
 import ui_p.AssetsLoader;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
@@ -33,8 +35,16 @@ public class UltiManager {
     private final int lightningDamage = 80;
     private final int lightningRadius = 100;
 
+    private long lastGoldFactoryUsedGameTime = -999999;
+    private final long goldFactoryCooldownMillis = 30000; // 30 seconds
+    private final int goldFactoryCost = 100;
+
     private boolean waitingForLightningTarget = false;
+    private boolean goldFactorySelected = false;
+    private long goldFactorySelectedTime = 0; // Time when factory was selected
+    private final long placementDelayMillis = 300; // 300ms delay before placement is allowed
     private final List<LightningStrike> activeStrikes = new ArrayList<>();
+    private final List<GoldFactory> goldFactories = new ArrayList<>();
 
 
     public UltiManager(Playing playing) {
@@ -183,6 +193,16 @@ public class UltiManager {
         for (LightningStrike strike : activeStrikes) {
             strike.update(gameTime);
         }
+
+        // Update gold factories
+        Iterator<GoldFactory> factoryIterator = goldFactories.iterator();
+        while (factoryIterator.hasNext()) {
+            GoldFactory factory = factoryIterator.next();
+            factory.update();
+            if (factory.isDestroyed()) {
+                factoryIterator.remove();
+            }
+        }
     }
 
     public void draw(Graphics g) {
@@ -190,13 +210,88 @@ public class UltiManager {
         for (LightningStrike strike : activeStrikes) {
             strike.draw(g2d);
         }
+
+        // Draw gold factories
+        for (GoldFactory factory : goldFactories) {
+            factory.draw(g);
+        }
     }
 
     public boolean isLightningPlaying() {
         return !activeStrikes.isEmpty();
     }
 
+    public boolean canUseGoldFactory() {
+        long currentGameTime = playing.getGameTime();
+        return currentGameTime - lastGoldFactoryUsedGameTime >= goldFactoryCooldownMillis;
+    }
 
+    public void selectGoldFactory() {
+        if (canUseGoldFactory() && playing.getPlayerManager().getGold() >= goldFactoryCost) {
+            goldFactorySelected = true;
+            goldFactorySelectedTime = System.currentTimeMillis();
+        }
+    }
+
+    public void deselectGoldFactory() {
+        goldFactorySelected = false;
+    }
+
+    public boolean isGoldFactorySelected() {
+        return goldFactorySelected;
+    }
+
+    public boolean tryPlaceGoldFactory(int mouseX, int mouseY) {
+        if (!goldFactorySelected) return false;
+        if (!canUseGoldFactory()) return false;
+        if (playing.getPlayerManager().getGold() < goldFactoryCost) return false;
+
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - goldFactorySelectedTime < placementDelayMillis) {
+            System.out.println("Gold Factory placement delay not met!");
+            return false;
+        }
+
+        // Convert mouse coordinates to tile coordinates
+        int tileX = (mouseX / 64) * 64;
+        int tileY = (mouseY / 64) * 64;
+
+        // Check if the tile is valid for placement (grass tile)
+        int[][] level = playing.getLevel();
+        int levelTileX = mouseX / 64;
+        int levelTileY = mouseY / 64;
+
+        if (levelTileY >= 0 && levelTileY < level.length &&
+                levelTileX >= 0 && levelTileX < level[0].length) {
+
+            // Check if it's a grass tile (ID 5)
+            if (level[levelTileY][levelTileX] != 5) {
+                System.out.println("Gold Factory can only be placed on grass tiles!");
+                return false;
+            }
+
+            // Check if there's already a factory at this location
+            for (GoldFactory factory : goldFactories) {
+                if (factory.getTileX() == tileX && factory.getTileY() == tileY) {
+                    System.out.println("There's already a Gold Factory at this location!");
+                    return false;
+                }
+            }
+
+            // Place the factory
+            playing.getPlayerManager().spendGold(goldFactoryCost);
+            playing.updateUIResources();
+            lastGoldFactoryUsedGameTime = playing.getGameTime();
+            goldFactorySelected = false; // Deselect after placing
+
+            GoldFactory factory = new GoldFactory(tileX, tileY, playing.getGoldBagManager());
+            goldFactories.add(factory);
+            AudioManager.getInstance().playSound("coin_drop");
+            return true;
+        }
+
+        return false;
+    }
 
     private class LightningStrike {
         int x, y;
