@@ -48,15 +48,38 @@ public abstract class Enemy {
     private float synergyGoblinSpeed = 0f;
     public static BufferedImage thunderIcon = null;
 
+    // Constants for sprite centering offsets, adjust if drawing logic in EnemyManager changes
+    private static final int SMALL_SPRITE_CENTER_OFFSET_X = 10;
+    private static final int SMALL_SPRITE_CENTER_OFFSET_Y = 10;
+    private static final int MEDIUM_BARREL_SPRITE_CENTER_OFFSET_X = 15;
+    private static final int MEDIUM_BARREL_SPRITE_CENTER_OFFSET_Y = 15;
+    private static final int MEDIUM_DEFAULT_SPRITE_CENTER_OFFSET_X = 25;
+    private static final int MEDIUM_DEFAULT_SPRITE_CENTER_OFFSET_Y = 25;
+    private static final int LARGE_TROLL_SPRITE_CENTER_OFFSET_X = 40;
+    private static final int LARGE_TROLL_SPRITE_CENTER_OFFSET_Y = 40;
+    private static final int LARGE_DEFAULT_SPRITE_CENTER_OFFSET_X = 50;
+    private static final int LARGE_DEFAULT_SPRITE_CENTER_OFFSET_Y = 50;
+
     public void setAlive(boolean alive) {
         this.alive = alive;
     }
 
     // Enemy size category
     public enum Size {
-        SMALL,  // goblin, tnt
-        MEDIUM, // warrior, barrel
-        LARGE   // troll
+        SMALL(32, 32),
+        MEDIUM(48, 48),
+        LARGE(64, 64);
+
+        private final int width;
+        private final int height;
+
+        Size(int width, int height) {
+            this.width = width;
+            this.height = height;
+        }
+
+        public int getWidth() { return width; }
+        public int getHeight() { return height; }
     }
 
     private Size size;
@@ -73,10 +96,14 @@ public abstract class Enemy {
         this.size = size;
         this.maxFrameCount = maxFrameCount;
 
-        // set boundary based on size
-        setBoundaryForSize(size);
+        // Initialize boundary directly using Size enum properties
+        this.boundary = new Rectangle(
+            (int)this.x - this.size.getWidth() / 2,
+            (int)this.y - this.size.getHeight() / 2,
+            this.size.getWidth(),
+            this.size.getHeight()
+        );
 
-        // initialize health based on enemy type
         initializeHealth();
         maxHealth = health;
     }
@@ -176,23 +203,6 @@ public abstract class Enemy {
         }
     }
 
-    private void setBoundaryForSize(Size size) {
-        switch (size) {
-            case SMALL:
-                boundary = new Rectangle((int)x - 16, (int)y - 16, 32, 32);
-                break;
-            case MEDIUM:
-                boundary = new Rectangle((int)x - 24, (int)y - 24, 48, 48);
-                break;
-            case LARGE:
-                boundary = new Rectangle((int)x - 32, (int)y - 32, 64, 64);
-                break;
-            default:
-                boundary = new Rectangle((int)x - 16, (int)y - 16, 32, 32);
-                break;
-        }
-    }
-
     protected void initializeHealth() {
         health = Constants.Enemies.getStartHealth(enemyType);
     }
@@ -201,30 +211,26 @@ public abstract class Enemy {
         float effSpeed = getEffectiveSpeed();
         this.x += xSpeed * effSpeed;
         this.y += ySpeed * effSpeed;
+        
         // Update direction based on movement
-        float totalSpeed = (float) Math.sqrt((xSpeed * effSpeed) * (xSpeed * effSpeed) + (ySpeed * effSpeed) * (ySpeed * effSpeed));
-        if (totalSpeed > 0) {
-            this.dirX = xSpeed / (float)Math.sqrt(xSpeed * xSpeed + ySpeed * ySpeed);
-            this.dirY = ySpeed / (float)Math.sqrt(xSpeed * xSpeed + ySpeed * ySpeed);
+        if (xSpeed != 0 || ySpeed != 0) { // Avoid division by zero if no movement
+            float totalComponentSpeed = (float) Math.sqrt(xSpeed * xSpeed + ySpeed * ySpeed);
+            if (totalComponentSpeed > 0) { // Ensure totalComponentSpeed is not zero
+                this.dirX = xSpeed / totalComponentSpeed;
+                this.dirY = ySpeed / totalComponentSpeed;
+            }
+        } else {
+             // If no movement, keep previous direction or set to a default (e.g., 0,0)
+            // For now, we'll assume dirX and dirY remain as they were
         }
         updateBoundary();
     }
 
     private void updateBoundary() {
-        switch (size) {
-            case SMALL:
-                boundary.x = (int)x - 16;
-                boundary.y = (int)y - 16;
-                break;
-            case MEDIUM:
-                boundary.x = (int)x - 24;
-                boundary.y = (int)y - 24;
-                break;
-            case LARGE:
-                boundary.x = (int)x - 32;
-                boundary.y = (int)y - 32;
-                break;
-        }
+        // Boundary width and height are fixed by the size enum and set in constructor.
+        // Here, we only need to update the x, y position of the boundary.
+        boundary.x = (int)this.x - this.size.getWidth() / 2;
+        boundary.y = (int)this.y - this.size.getHeight() / 2;
     }
 
     public void updateAnimationTick() {
@@ -305,14 +311,25 @@ public abstract class Enemy {
 
 
     private void playDeathSound() {
-        if (enemyType == Constants.Enemies.TROLL) {
-            AudioManager.getInstance().playTrollDeathSound();
-        } else if (enemyType == Constants.Enemies.GOBLIN ||
-                enemyType == Constants.Enemies.TNT ||
-                enemyType == Constants.Enemies.BARREL) {
-            AudioManager.getInstance().playRandomGoblinDeathSound();
-        } else if (enemyType == Constants.Enemies.WARRIOR) {
-            AudioManager.getInstance().playWarriorDeathSound();
+        EnemyType type = getEnemyTypeEnum();
+        if (type == null) return; // Should not happen if enemyType is always valid
+
+        switch (type) {
+            case TROLL:
+                AudioManager.getInstance().playTrollDeathSound();
+                break;
+            case GOBLIN:
+            case TNT:
+            case BARREL:
+                AudioManager.getInstance().playRandomGoblinDeathSound();
+                break;
+            case WARRIOR:
+                AudioManager.getInstance().playWarriorDeathSound();
+                break;
+            default:
+                // Optional: Log a warning or play a default sound for unhandled types
+                System.out.println("Warning: No specific death sound for enemy type: " + type);
+                break;
         }
     }
 
@@ -363,18 +380,18 @@ public abstract class Enemy {
         // can be modified
         switch (size) {
             case SMALL:
-                return x - 10;
+                return x - SMALL_SPRITE_CENTER_OFFSET_X;
             case MEDIUM:
                 if (enemyType == Constants.Enemies.BARREL) {
-                    return x - 15;
+                    return x - MEDIUM_BARREL_SPRITE_CENTER_OFFSET_X;
                 } else {
-                    return x - 25;
+                    return x - MEDIUM_DEFAULT_SPRITE_CENTER_OFFSET_X;
                 }
             case LARGE:
                 if (enemyType == Constants.Enemies.TROLL) {
-                    return x - 40;
+                    return x - LARGE_TROLL_SPRITE_CENTER_OFFSET_X;
                 } else {
-                    return x - 50;
+                    return x - LARGE_DEFAULT_SPRITE_CENTER_OFFSET_X;
                 }
             default:
                 return x;
@@ -390,18 +407,18 @@ public abstract class Enemy {
         // can be modified
         switch (size) {
             case SMALL:
-                return y - 10;
+                return y - SMALL_SPRITE_CENTER_OFFSET_Y;
             case MEDIUM:
                 if (enemyType == Constants.Enemies.BARREL) {
-                    return y - 15;
+                    return y - MEDIUM_BARREL_SPRITE_CENTER_OFFSET_Y;
                 } else {
-                    return y - 25;
+                    return y - MEDIUM_DEFAULT_SPRITE_CENTER_OFFSET_Y;
                 }
             case LARGE:
                 if (enemyType == Constants.Enemies.TROLL) {
-                    return y - 40;
+                    return y - LARGE_TROLL_SPRITE_CENTER_OFFSET_Y;
                 } else {
-                    return y - 50;
+                    return y - LARGE_DEFAULT_SPRITE_CENTER_OFFSET_Y;
                 }
             default:
                 return y;
@@ -420,29 +437,11 @@ public abstract class Enemy {
     }
 
     public int getWidth() {
-        switch (size) {
-            case SMALL:
-                return 32;
-            case MEDIUM:
-                return 48;
-            case LARGE:
-                return 64;
-            default:
-                return 32;
-        }
+        return size.getWidth();
     }
 
     public int getHeight() {
-        switch (size) {
-            case SMALL:
-                return 32;
-            case MEDIUM:
-                return 48;
-            case LARGE:
-                return 64;
-            default:
-                return 32;
-        }
+        return size.getHeight();
     }
 
     public void applySlow(float slowFactor, int durationTicks) {

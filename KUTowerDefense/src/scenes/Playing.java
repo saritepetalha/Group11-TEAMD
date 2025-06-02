@@ -638,6 +638,11 @@ public class Playing extends GameScene implements SceneMethods {
         projectileManager.draw(g);
         fireAnimationManager.draw(g);
         weatherManager.draw(g);
+      
+        // Draw tower selection UI (range indicators, buttons, etc.)
+        if (towerSelectionUI != null) {
+            towerSelectionUI.draw(g);
+        }
 
         towerManager.drawLightEffects(g);
 
@@ -649,16 +654,13 @@ public class Playing extends GameScene implements SceneMethods {
             drawGoldFactoryPreview((Graphics2D) g);
         }
 
-        // Reverse shake effect before drawing UI
+        if (!optionsMenuOpen) {
+            drawCastleHealthBar(g);
+        }
+      
         ultiManager.reverseShake(g);
 
-        // Draw tower selection UI (range indicators, buttons, etc.)
-        if (towerSelectionUI != null) {
-            towerSelectionUI.draw(g);
-        }
-
         playingUI.draw(g);
-        drawCastleHealthBar(g);
 
         // Draw warrior placement message if pending
         if (pendingWarriorPlacement != null) {
