@@ -1,20 +1,27 @@
 package scenes;
 
+import java.awt.AlphaComposite;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Composite;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Stroke;
+import java.awt.Window;
+import java.awt.image.BufferedImage;
+
+import static constants.Constants.PathPoints.END_POINT;
+import static constants.Constants.PathPoints.NO_OVERLAY;
+import static constants.Constants.PathPoints.START_POINT;
 import constants.GameDimensions;
-import static constants.Constants.PathPoints.*;
-import helpMethods.LoadSave;
 import helpMethods.LevelBuilder;
+import helpMethods.LoadSave;
 import main.Game;
 import managers.TileManager;
 import objects.Tile;
 import objects.Tower;
 import ui_p.AssetsLoader;
 import ui_p.EditTiles;
-
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import javax.imageio.ImageIO;
-import java.io.IOException;
 
 
 // a class to edit map. map editor part on the main screen.
@@ -72,8 +79,8 @@ public class MapEditing extends GameScene implements SceneMethods{
     }
 
     private void loadDefaultLevel() {
-        int[][] lvl = LoadSave.getLevelData("defaultleveltest1");
-        //THIS LINE IS JUST TO SEE WHETHER THE BACKEND OF THE getLevelData function works or not
+        int[][] lvl = LoadSave.loadLevel("defaultleveltest1");
+        //THIS LINE IS JUST TO SEE WHETHER THE BACKEND OF THE loadLevel function works or not
         //IT WORKS!!!
         System.out.println(java.util.Arrays.deepToString(lvl));
     }

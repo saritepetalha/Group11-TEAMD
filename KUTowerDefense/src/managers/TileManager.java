@@ -1,13 +1,14 @@
 package managers;
-import constants.GameDimensions;
-import objects.Tile;
-
-import java.awt.*;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+
+import constants.GameDimensions;
 import helpMethods.LoadSave;
+import objects.Tile;
 import ui_p.AssetsLoader;
 
 public class TileManager {
@@ -119,7 +120,7 @@ public class TileManager {
             BufferedImage wallImg = LoadSave.getImageFromPath("/Borders/wall.png");
             if (wallImg != null) {
                 // Determine wall orientation based on position
-                int[][] levelData = LoadSave.getLevelData("defaultleveltest1");
+                int[][] levelData = LoadSave.loadLevel("defaultleveltest1");
                 if (levelData != null) {
                     // Find the wall's position in the level data
                     for (int i = 0; i < levelData.length; i++) {
