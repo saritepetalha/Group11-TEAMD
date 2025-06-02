@@ -71,7 +71,8 @@ public class PlayingUI {
     private String[] musicOptions;
 
 
-    private int buttonSize = GameDimensions.ButtonSize.MEDIUM.getSize();
+    private int buttonSize = GameDimensions.ButtonSize.SMALL.getSize();
+    private int ultiButtonSize = GameDimensions.ButtonSize.MEDIUM.getSize();
 
     // Add scroll variables for music dropdown
     private int musicDropdownScrollOffset = 0;
@@ -484,22 +485,22 @@ public class PlayingUI {
                 AssetsLoader.getInstance().buttonPressedEffectImages.get(11));
 
         drawControlButton(g2d, goldFactoryButton,
-                startX - 3 * (buttonSize + buttonSpacing), startY,
-                buttonSize, buttonSize,
+                startX - 3 * (ultiButtonSize + buttonSpacing), startY,
+                ultiButtonSize, ultiButtonSize,
                 AssetsLoader.getInstance().goldFactoryButtonNormal,
                 AssetsLoader.getInstance().goldFactoryButtonHover,
                 AssetsLoader.getInstance().goldFactoryButtonPressed);
 
         drawControlButton(g2d, earthquakeButton,
-                startX - 2 * (buttonSize + buttonSpacing), startY,
-                buttonSize, buttonSize,
+                startX - 2 * (ultiButtonSize + buttonSpacing), startY,
+                ultiButtonSize,ultiButtonSize,
                 AssetsLoader.getInstance().earthquakeButtonImg,
                 AssetsLoader.getInstance().earthquakeButtonHoverImg,
                 AssetsLoader.getInstance().earthquakeButtonPressedImg);
 
         drawControlButton(g2d, lightningButton,
-                startX - 4 * (buttonSize + buttonSpacing), startY,
-                buttonSize, buttonSize,
+                startX - 4 * (ultiButtonSize + buttonSpacing), startY,
+                ultiButtonSize, ultiButtonSize,
                 AssetsLoader.getInstance().lightningButtonNormal,
                 AssetsLoader.getInstance().lightningButtonHover,
                 AssetsLoader.getInstance().lightningButtonPressed);
@@ -529,23 +530,30 @@ public class PlayingUI {
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
         }
 
-        g2d.drawImage(normalImg, x, y, width, height, null);
-
         boolean isEarthquakeCooldown = (button == earthquakeButton && !playing.getUltiManager().canUseEarthquake());
         boolean isLightningCooldown = (button == lightningButton && !playing.getUltiManager().canUseLightning());
         boolean isGoldFactoryCooldown = (button == goldFactoryButton && !playing.getUltiManager().canUseGoldFactory());
+
+        // Draw the normal image first
+        g2d.drawImage(normalImg, x, y, width, height, null);
 
         if (isEarthquakeCooldown || isLightningCooldown || isGoldFactoryCooldown || button.isMousePressed()) {
             g2d.drawImage(pressedImg, x, y, width, height, null);
         } else if (button.isMouseOver()) {
             long currentTime = System.currentTimeMillis();
             float alpha = (float) (0.5f + 0.5f * Math.sin(currentTime * 0.003));
-
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
             g2d.drawImage(hoverImg, x, y, width, height, null);
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
-        }
 
+            if (button == earthquakeButton || button == lightningButton || button == goldFactoryButton) {
+                g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha * 0.6f));
+                g2d.setColor(new Color(255, 255, 255, 100));
+                g2d.setStroke(new BasicStroke(3f));
+                g2d.drawRoundRect(x - 2, y - 2, width + 4, height + 4, 8, 8);
+                g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
+            }
+        }
     }
 
     /**
@@ -996,6 +1004,11 @@ public class PlayingUI {
         mainMenuButton.setMouseOver(false);
         saveButton.setMouseOver(false);
 
+        // Reset ultimate button hover states
+        earthquakeButton.setMouseOver(false);
+        lightningButton.setMouseOver(false);
+        goldFactoryButton.setMouseOver(false);
+
         // check which button is hovered
         if (isMouseOverButton(fastForwardButton, mouseX, mouseY)) {
             fastForwardButton.setMouseOver(true);
@@ -1009,6 +1022,17 @@ public class PlayingUI {
             saveButton.setMouseOver(true);
         } else if (!musicDropdownOpen && isMouseOverButton(mainMenuButton, mouseX, mouseY)) {
             mainMenuButton.setMouseOver(true);
+        }
+
+        // Check ultimate buttons for hover
+        if (isMouseOverButton(earthquakeButton, mouseX, mouseY)) {
+            earthquakeButton.setMouseOver(true);
+        }
+        if (isMouseOverButton(lightningButton, mouseX, mouseY)) {
+            lightningButton.setMouseOver(true);
+        }
+        if (isMouseOverButton(goldFactoryButton, mouseX, mouseY)) {
+            goldFactoryButton.setMouseOver(true);
         }
     }
 

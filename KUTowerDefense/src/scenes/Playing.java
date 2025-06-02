@@ -4,9 +4,11 @@ import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.awt.Composite;
 import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
@@ -39,6 +41,7 @@ import java.awt.Image;
 import java.awt.Cursor;
 import java.awt.Point;
 import javax.swing.JPanel;
+import java.awt.RenderingHints;
 
 public class Playing extends GameScene implements SceneMethods {
     private int[][] level;
@@ -626,8 +629,8 @@ public class Playing extends GameScene implements SceneMethods {
     @Override
     public void render(Graphics g) {
         ultiManager.applyShakeIfNeeded(g);
-
         drawMap(g);
+        ultiManager.draw(g);
         towerManager.draw(g);
         enemyManager.draw(g, gamePaused);
         drawTowerButtons(g);
@@ -636,9 +639,18 @@ public class Playing extends GameScene implements SceneMethods {
         fireAnimationManager.draw(g);
         weatherManager.draw(g);
 
-        // Draw light effects AFTER weather manager (including night overlay)
-        // This ensures lights appear on top of the night filter
         towerManager.drawLightEffects(g);
+
+        goldBagManager.draw(g);
+
+
+        // Draw Gold Factory preview if selected (in game world, before UI)
+        if (ultiManager.isGoldFactorySelected()) {
+            drawGoldFactoryPreview((Graphics2D) g);
+        }
+
+        // Reverse shake effect before drawing UI
+        ultiManager.reverseShake(g);
 
         // Draw tower selection UI (range indicators, buttons, etc.)
         if (towerSelectionUI != null) {
@@ -646,18 +658,16 @@ public class Playing extends GameScene implements SceneMethods {
         }
 
         playingUI.draw(g);
-        goldBagManager.draw(g);
         drawCastleHealthBar(g);
-        ultiManager.reverseShake(g);
-        ultiManager.draw(g);
 
-        if (towerSelectionUI != null) {
-            towerSelectionUI.draw(g);
-        }
-
-        // Display warrior placement message and tile indicators only when placing a warrior
+        // Draw warrior placement message if pending
         if (pendingWarriorPlacement != null) {
             drawWarriorPlacementMessage(g);
+        }
+
+        // Draw gold factory placement message if selected
+        if (ultiManager.isGoldFactorySelected()) {
+            drawGoldFactoryPlacementMessage(g);
         }
     }
 
@@ -737,6 +747,16 @@ public class Playing extends GameScene implements SceneMethods {
     public void mouseClicked(int x, int y) {
         this.mouseX = x;
         this.mouseY = y;
+
+        // Handle gold factory placement if selected
+        if (ultiManager.isGoldFactorySelected()) {
+            boolean placed = ultiManager.tryPlaceGoldFactory(x, y);
+            if (!placed) {
+                // If placement failed, keep factory selected for another try
+                // User can click the button again to deselect if they want
+            }
+            return; // Exit early to prevent other interactions
+        }
 
         // Handle warrior placement if a warrior is pending placement
         if (pendingWarriorPlacement != null) {
@@ -824,20 +844,20 @@ public class Playing extends GameScene implements SceneMethods {
 
     @Override
     public void mouseMoved(int x, int y) {
-        mouseX = (x / GameDimensions.TILE_DISPLAY_SIZE) * GameDimensions.TILE_DISPLAY_SIZE;
-        mouseY = (y / GameDimensions.TILE_DISPLAY_SIZE) * GameDimensions.TILE_DISPLAY_SIZE;
+        // Only snap to grid if gold factory is selected (like map editing)
+        if (ultiManager.isGoldFactorySelected()) {
+            mouseX = (x / GameDimensions.TILE_DISPLAY_SIZE) * GameDimensions.TILE_DISPLAY_SIZE;
+            mouseY = (y / GameDimensions.TILE_DISPLAY_SIZE) * GameDimensions.TILE_DISPLAY_SIZE;
+        } else {
+            mouseX = x;
+            mouseY = y;
+        }
 
         playingUI.mouseMoved(x, y);
 
         if (towerSelectionUI != null) {
             towerSelectionUI.mouseMoved(x, y);
         }
-
-        // Highlight tiles when in warrior placement mode
-        // This logic will now be handled within the render loop by drawWarriorPlacementMessage or a dedicated drawHighlight method
-        // if (pendingWarriorPlacement != null) {
-        //    // highlightValidTiles(); // We might not need a separate call if drawing happens in render
-        // }
     }
 
     private void highlightValidTiles() {
@@ -1510,6 +1530,140 @@ public class Playing extends GameScene implements SceneMethods {
         g.drawOval(2, 2, indicatorSize - 4, indicatorSize - 4);
 
         g.dispose();
+    }
+
+    private void drawGoldFactoryPreview(Graphics2D g) {
+        // Snap to tile grid
+        int tileX = (mouseX / 64) * 64;
+        int tileY = (mouseY / 64) * 64;
+
+        // Check if tile is valid for placement
+        boolean isValidTile = false;
+        int levelTileX = mouseX / 64;
+        int levelTileY = mouseY / 64;
+
+        if (levelTileY >= 0 && levelTileY < level.length &&
+                levelTileX >= 0 && levelTileX < level[0].length) {
+            isValidTile = (level[levelTileY][levelTileX] == 5); // Grass tile
+        }
+
+        // Enable anti-aliasing for smoother graphics
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        // Draw cute rounded background with soft colors
+        if (isValidTile) {
+            // Soft green with gradient effect
+            g.setColor(new Color(144, 238, 144, 80)); // Light green with transparency
+        } else {
+            // Soft red with gradient effect
+            g.setColor(new Color(255, 182, 193, 80)); // Light pink/red with transparency
+        }
+
+        // Draw rounded rectangle instead of harsh rectangle
+        g.fillRoundRect(tileX + 2, tileY + 2, 60, 60, 12, 12);
+
+        // Draw the factory sprite with transparency
+        try {
+            BufferedImage factorySprite = ui_p.AssetsLoader.getInstance().goldFactorySprite;
+            if (factorySprite != null) {
+                // Draw the sprite with some transparency to show it's a preview
+                Composite originalComposite = g.getComposite();
+                g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.8f));
+                g.drawImage(factorySprite, tileX + 2, tileY + 2, 60, 60, null);
+                g.setComposite(originalComposite);
+            } else {
+                // Fallback: Draw a cute "G" with better styling
+                g.setColor(new Color(218, 165, 32, 180)); // Gold color
+                g.setFont(new Font("Arial", Font.BOLD, 20));
+                FontMetrics fm = g.getFontMetrics();
+                String text = "G";
+                int textX = tileX + 32 - fm.stringWidth(text) / 2;
+                int textY = tileY + 32 + fm.getAscent() / 2;
+                g.drawString(text, textX, textY);
+            }
+        } catch (Exception e) {
+            // Fallback with better styling
+            g.setColor(new Color(218, 165, 32, 180));
+            g.setFont(new Font("Arial", Font.BOLD, 20));
+            FontMetrics fm = g.getFontMetrics();
+            String text = "G";
+            int textX = tileX + 32 - fm.stringWidth(text) / 2;
+            int textY = tileY + 32 + fm.getAscent() / 2;
+            g.drawString(text, textX, textY);
+        }
+
+        // Draw cute border with rounded corners
+        if (isValidTile) {
+            g.setColor(new Color(34, 139, 34, 120)); // Forest green border
+        } else {
+            g.setColor(new Color(220, 20, 60, 120)); // Crimson border
+        }
+        g.setStroke(new BasicStroke(2f)); // Thicker, softer border
+        g.drawRoundRect(tileX + 2, tileY + 2, 60, 60, 12, 12);
+
+        // Add a subtle sparkle effect for valid placement
+        if (isValidTile) {
+            long time = System.currentTimeMillis();
+            float sparkleAlpha = (float)(0.3f + 0.2f * Math.sin(time * 0.005f));
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, sparkleAlpha));
+            g.setColor(new Color(255, 255, 255, 100));
+            // Draw small sparkles at corners
+            g.fillOval(tileX + 8, tileY + 8, 4, 4);
+            g.fillOval(tileX + 52, tileY + 8, 4, 4);
+            g.fillOval(tileX + 8, tileY + 52, 4, 4);
+            g.fillOval(tileX + 52, tileY + 52, 4, 4);
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
+        }
+
+        // Reset anti-aliasing
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+    }
+
+    private void drawGoldFactoryPlacementMessage(Graphics g) {
+        String message = "✨ Click to place Gold Factory | Click button again to cancel ✨";
+
+        g.setColor(new Color(255, 215, 0)); // Gold color for text
+        g.setFont(new Font("Arial", Font.BOLD, 18));
+        int stringWidth = g.getFontMetrics().stringWidth(message);
+        int x = (GameDimensions.GAME_WIDTH - stringWidth) / 2;
+        int y = 30; // Adjust Y position as needed
+
+        // Draw text background for better readability
+        Graphics2D g2d = (Graphics2D) g;
+        g2d.setColor(new Color(0, 0, 0, 100)); // Semi-transparent black
+        g2d.fillRoundRect(x - 10, y - 20, stringWidth + 20, 30, 10, 10);
+
+        g.setColor(new Color(255, 215, 0)); // Gold color for text
+        g.drawString(message, x, y);
+
+        // Enable anti-aliasing for smoother graphics
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        // Highlight valid placement tiles (grass tiles) with cute styling
+        for (int r = 0; r < level.length; r++) {
+            for (int c = 0; c < level[0].length; c++) {
+                if (level[r][c] == 5) { // Grass tile
+                    int tilePixelX = c * GameDimensions.TILE_DISPLAY_SIZE;
+                    int tilePixelY = r * GameDimensions.TILE_DISPLAY_SIZE;
+
+                    // Draw a soft green rounded background
+                    g2d.setColor(new Color(144, 238, 144, 40)); // Light green with transparency
+                    g2d.fillRoundRect(tilePixelX + 4, tilePixelY + 4,
+                            GameDimensions.TILE_DISPLAY_SIZE - 8,
+                            GameDimensions.TILE_DISPLAY_SIZE - 8, 8, 8);
+
+                    // Draw a soft green border
+                    g2d.setColor(new Color(34, 139, 34, 80)); // Forest green border
+                    g2d.setStroke(new BasicStroke(1.5f));
+                    g2d.drawRoundRect(tilePixelX + 4, tilePixelY + 4,
+                            GameDimensions.TILE_DISPLAY_SIZE - 8,
+                            GameDimensions.TILE_DISPLAY_SIZE - 8, 8, 8);
+                }
+            }
+        }
+
+        // Reset anti-aliasing
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
     }
 
 }

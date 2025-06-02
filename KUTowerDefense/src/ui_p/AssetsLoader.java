@@ -304,13 +304,13 @@ public class AssetsLoader {
 
     private void loadEarthquakeButtonImages() {
         earthquakeButtonImg = loadImage("/UI/earthquakeButton.png");
-        earthquakeButtonHoverImg = loadImage("/UI/earthquake_button_hover.png");
+        earthquakeButtonHoverImg = earthquakeButtonImg;
         earthquakeButtonPressedImg = loadImage("/UI/earthquakeButtonPressed.png");
     }
 
     private void loadLightningButtonImages() {
         lightningButtonNormal = loadImage("/UI/lightningButton.png");
-        lightningButtonHover = loadImage("/UI/lightning_button_hover.png");
+        lightningButtonHover = lightningButtonNormal;
         lightningButtonPressed = loadImage("/UI/lightningButtonPressed.png");
     }
 
