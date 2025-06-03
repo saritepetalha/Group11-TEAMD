@@ -37,6 +37,7 @@ public class AssetsLoader {
     public BufferedImage menuBackgroundImg;
     public BufferedImage teamLogoImg;
     public BufferedImage loadGameMenuBackgroundImg;
+    public BufferedImage selectMapBackgroundImg;
     public BufferedImage earthquakeButtonImg;
     public BufferedImage earthquakeButtonHoverImg;
     public BufferedImage earthquakeButtonPressedImg;
@@ -48,9 +49,9 @@ public class AssetsLoader {
     public BufferedImage goldFactoryButtonPressed;
     public BufferedImage goldFactorySprite;
     public BufferedImage[] lightningFrames;
-
-    // Save button image
     public BufferedImage saveButtonImg;
+    public java.awt.Cursor customHandCursor;
+    public java.awt.Cursor customNormalCursor;
 
     // Private constructor
     private AssetsLoader() {
@@ -87,11 +88,14 @@ public class AssetsLoader {
         loadMenuBackgroundImage();
         loadLogoImages();
         loadLoadGameMenuBackgroundImg();
+        loadSelectMapBackgroundImg();
         loadEarthquakeButtonImages();
         loadLightningButtonImages();
         loadGoldFactoryButtonImages();
         loadLightningAssets();
         loadSaveButtonImage();
+        loadHandCursor();
+        loadNormalCursor();
     }
 
     private void loadButtonImageFile() {
@@ -296,6 +300,15 @@ public class AssetsLoader {
         }
     }
 
+    private void loadSelectMapBackgroundImg() {
+        try (InputStream is = LoadSave.class.getResourceAsStream("/UI/SelectMapUI.png.png")) {
+            selectMapBackgroundImg = ImageIO.read(is);
+        } catch (IOException e) {
+            System.err.println("Error loading SelectMapUI.png.png: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
     private void loadMusicButtonImages() {
         try (InputStream is = LoadSave.class.getResourceAsStream("/UI/RegularMusic.png")) {
             regularMusicImg = ImageIO.read(is);
@@ -364,6 +377,46 @@ public class AssetsLoader {
             } catch (Exception e) {
                 System.err.println("Error checking UI resources: " + e.getMessage());
             }
+        }
+    }
+
+    private void loadHandCursor() {
+        try {
+            BufferedImage handCursorImage = ImageIO.read(LoadSave.class.getResourceAsStream("/UI/handCursor.png"));
+
+            int cursorSize = 32;
+            java.awt.Image scaledImage = handCursorImage.getScaledInstance(cursorSize, cursorSize, java.awt.Image.SCALE_SMOOTH);
+
+            customHandCursor = java.awt.Toolkit.getDefaultToolkit().createCustomCursor(
+                    scaledImage, new java.awt.Point(cursorSize/2, cursorSize/2), "HandCursor");
+        } catch (IOException e) {
+            System.err.println("Error loading handCursor.png: " + e.getMessage());
+            e.printStackTrace();
+            customHandCursor = new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR);
+        }
+    }
+
+    private void loadNormalCursor() {
+        try {
+            BufferedImage originalImg = ImageIO.read(LoadSave.class.getResourceAsStream("/UI/01.png"));
+
+            int newWidth = originalImg.getWidth() / 2;
+            int newHeight = originalImg.getHeight() / 2;
+
+            BufferedImage resizedImg = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_ARGB);
+            java.awt.Graphics2D g2d = resizedImg.createGraphics();
+            g2d.setRenderingHint(java.awt.RenderingHints.KEY_INTERPOLATION, java.awt.RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            g2d.drawImage(originalImg, 0, 0, newWidth, newHeight, null);
+            g2d.dispose();
+
+            customNormalCursor = java.awt.Toolkit.getDefaultToolkit().createCustomCursor(
+                    resizedImg,
+                    new java.awt.Point(newWidth/2, newHeight/2),
+                    "CustomNormalCursor");
+        } catch (IOException e) {
+            System.err.println("Error loading normal cursor from /UI/01.png: " + e.getMessage());
+            e.printStackTrace();
+            customNormalCursor = java.awt.Cursor.getDefaultCursor();
         }
     }
 }
