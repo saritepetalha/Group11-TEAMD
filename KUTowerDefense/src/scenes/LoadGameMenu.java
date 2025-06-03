@@ -2,6 +2,7 @@ package scenes;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -11,6 +12,7 @@ import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.event.MouseAdapter;
@@ -20,15 +22,18 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
 import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JWindow;
 import javax.swing.SwingConstants;
-import javax.swing.UIManager;
 
 import constants.GameDimensions;
+import helpMethods.BorderImageRotationGenerator;
 import helpMethods.FontLoader;
 import helpMethods.LoadSave;
 import helpMethods.ThumbnailCache;
@@ -36,52 +41,55 @@ import levelselection.SavedLevelsOnlyStrategy;
 import main.Game;
 import main.GameStates;
 import managers.TileManager;
+import managers.GameStateManager;
+import managers.GameStateMemento;
 import ui_p.AssetsLoader;
 import ui_p.TheButton;
 
-public class LoadGameMenu extends JPanel { // Changed to JPanel
+import java.io.File;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+
+public class LoadGameMenu extends JPanel {
     private Game game;
     private TileManager tileManager;
     private BufferedImage backgroundImg;
-    private TheButton backButton; // Changed to TheButton
+    private TheButton backButton;
     private SavedLevelsOnlyStrategy levelStrategy;
-
+    private GameStateManager gameStateManager;
     private static final int PREVIEW_WIDTH = 192;
     private static final int PREVIEW_HEIGHT = 108;
     private static final int PREVIEW_MARGIN = 10;
     private static final int PREVIEWS_PER_ROW = 2;
-    private static final int PREVIEWS_PER_PAGE = 4; // 2 columns x 2 rows - reduced to show pagination
-    private static final int HEADER_HEIGHT = 80; // Reserve space for title/header
-    private static final int FOOTER_HEIGHT = 80; // Reserve space for back button and pagination
-
+    private static final int PREVIEWS_PER_PAGE = 4;
+    private static final int HEADER_HEIGHT = 80;
     private Font medodicaFontSmall;
     private Font medodicaFontSmallBold;
     private Font medodicaFontMedium;
     private Font mvBoliFontBold;
-
-    // Colors for pagination buttons
     private final Color PAGE_BUTTON_BG_COLOR = new Color(70, 130, 200);
     private final Color PAGE_BUTTON_HOVER_COLOR = new Color(90, 150, 220);
     private final Color PAGE_BUTTON_DISABLED_COLOR = new Color(120, 120, 120);
     private final Color PAGE_INDICATOR_BG_COLOR = new Color(40, 40, 40, 180);
     private final Color PAGE_INDICATOR_TEXT_COLOR = new Color(255, 255, 255);
-
-    // Store the main content panel for refreshing
     private JPanel mainContentPanel;
-
-    // Pagination variables
     private int currentPage = 0;
     private int totalPages = 0;
     private ArrayList<String> allSavedLevels = new ArrayList<>();
     private JButton prevPageButton;
     private JButton nextPageButton;
     private JPanel pageIndicatorPanel;
+    private JWindow currentTooltipWindow;
+    private javax.swing.Timer tooltipTimer;
 
     public LoadGameMenu(Game game) {
         this.game = game;
         this.tileManager = game.getTileManager();
         this.backgroundImg = AssetsLoader.getInstance().loadGameMenuBackgroundImg;
         this.levelStrategy = new SavedLevelsOnlyStrategy();
+        this.gameStateManager = new GameStateManager();
         this.medodicaFontSmall = FontLoader.loadMedodicaFont(14f);
         this.medodicaFontSmallBold = FontLoader.loadMedodicaFont(14f).deriveFont(Font.BOLD);
         this.medodicaFontMedium = FontLoader.loadMedodicaFont(16f);
@@ -119,9 +127,6 @@ public class LoadGameMenu extends JPanel { // Changed to JPanel
         // Recreate the UI content
         createMainContent();
 
-        // Update pagination controls to reflect any changes in total pages
-        updatePaginationControls();
-
         // Refresh the display
         revalidate();
         repaint();
@@ -151,12 +156,13 @@ public class LoadGameMenu extends JPanel { // Changed to JPanel
         mainContentPanel = new JPanel(new BorderLayout());
         mainContentPanel.setOpaque(false);
 
+        /*
         // Debug: Print saved levels and their content
         System.out.println("=== DEBUG: createMainContent() ===");
         System.out.println("Found " + allSavedLevels.size() + " saved levels, " + totalPages + " pages");
         System.out.println("Current page: " + (currentPage + 1) + "/" + totalPages);
         System.out.println("Thumbnail cache stats: " + ThumbnailCache.getInstance().getCacheStats());
-        System.out.println("=== END DEBUG ===");
+        System.out.println("=== END DEBUG ===");*/
 
         if (allSavedLevels.isEmpty()) {
             createNoLevelsPanel();
@@ -181,13 +187,11 @@ public class LoadGameMenu extends JPanel { // Changed to JPanel
     }
 
     private void createCurrentPageGrid() {
-        // Calculate which levels to show on current page
         int startIndex = currentPage * PREVIEWS_PER_PAGE;
         int endIndex = Math.min(startIndex + PREVIEWS_PER_PAGE, allSavedLevels.size());
 
         System.out.println("Creating page " + (currentPage + 1) + " with levels " + startIndex + " to " + (endIndex - 1));
 
-        // Create a panel that will hold the map previews for current page
         JPanel previewsContainer = new JPanel(new GridBagLayout());
         previewsContainer.setOpaque(false);
 
@@ -207,7 +211,8 @@ public class LoadGameMenu extends JPanel { // Changed to JPanel
                 RoundedButton previewButton = new RoundedButton("");
                 previewButton.setIcon(new ImageIcon(thumbnail));
                 previewButton.setFont(medodicaFontSmall);
-                previewButton.setToolTipText("Load " + levelName);
+                previewButton.setToolTipText(null);
+                addCustomTooltipBehavior(previewButton, levelName);
                 previewButton.setPreferredSize(new Dimension(PREVIEW_WIDTH, PREVIEW_HEIGHT));
 
                 JPanel buttonPanel = new JPanel(new BorderLayout());
@@ -222,15 +227,27 @@ public class LoadGameMenu extends JPanel { // Changed to JPanel
                 buttonPanel.add(previewButton, BorderLayout.CENTER);
                 buttonPanel.add(nameLabel, BorderLayout.SOUTH);
 
-                previewButton.addActionListener(e -> showPlayEditDialog(levelName, levelData));
+                previewButton.addActionListener(e -> {
+                    // Hide any visible tooltip before starting the game
+                    hideCustomTooltip();
 
-                // Set grid position
+                    int[][] overlay = LoadSave.loadOverlay(levelName);
+                    if (overlay == null) {
+                        overlay = new int[levelData.length][levelData[0].length];
+                        if (levelData.length > 4 && levelData[0].length > 15) {
+                            overlay[4][0] = 1;
+                            overlay[4][15] = 2;
+                        }
+                    }
+                    game.startPlayingWithLevel(levelData, overlay, levelName);
+                    game.changeGameState(GameStates.PLAYING);
+                });
+
                 gbc.gridx = currentCol;
                 gbc.gridy = currentRow;
 
                 previewsContainer.add(buttonPanel, gbc);
 
-                // Move to next position
                 currentCol++;
                 if (currentCol >= PREVIEWS_PER_ROW) {
                     currentCol = 0;
@@ -249,7 +266,6 @@ public class LoadGameMenu extends JPanel { // Changed to JPanel
     }
 
     private void createNavigationButtons() {
-        // Create bottom panel for navigation and back button
         JPanel bottomPanel = new JPanel(new BorderLayout());
         bottomPanel.setOpaque(false);
         bottomPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 35, 5));
@@ -339,6 +355,8 @@ public class LoadGameMenu extends JPanel { // Changed to JPanel
 
             @Override
             public void mouseClicked(MouseEvent e) {
+                // Hide any visible tooltip before returning to menu
+                hideCustomTooltip();
                 game.changeGameState(GameStates.MENU);
             }
         });
@@ -352,18 +370,12 @@ public class LoadGameMenu extends JPanel { // Changed to JPanel
                 super.paintComponent(g);
                 Graphics2D g2d = (Graphics2D) g;
                 g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-                // Draw solid rounded background
                 g2d.setColor(PAGE_INDICATOR_BG_COLOR);
                 g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 12, 12);
-
-                // Draw border
                 g2d.setColor(new Color(80, 80, 80));
                 g2d.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 12, 12);
-
-                // Draw text
                 g2d.setColor(PAGE_INDICATOR_TEXT_COLOR);
-                g2d.setFont(new Font("MV Boli", Font.BOLD, 12)); // MV Boli font to match
+                g2d.setFont(new Font("MV Boli", Font.BOLD, 12));
                 String text = "Page " + (currentPage + 1) + " of " + totalPages;
                 FontMetrics fm = g2d.getFontMetrics();
                 int x = (getWidth() - fm.stringWidth(text)) / 2;
@@ -372,19 +384,19 @@ public class LoadGameMenu extends JPanel { // Changed to JPanel
             }
         };
         indicator.setOpaque(false);
-        indicator.setPreferredSize(new Dimension(100, 28)); // Smaller to match buttons
+        indicator.setPreferredSize(new Dimension(100, 28));
         return indicator;
     }
 
     private void stylePageButton(JButton button) {
-        button.setFont(new Font("Arial", Font.BOLD, 16)); // Larger Arial font for arrows
+        button.setFont(new Font("Arial", Font.BOLD, 16));
         button.setBackground(PAGE_BUTTON_BG_COLOR);
         button.setForeground(Color.WHITE);
         button.setFocusPainted(false);
-        button.setPreferredSize(new Dimension(40, 28)); // Smaller width for arrow buttons
+        button.setPreferredSize(new Dimension(40, 28));
         button.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(40, 80, 140), 1),
-                BorderFactory.createEmptyBorder(6, 8, 6, 8) // Reduced padding
+                BorderFactory.createEmptyBorder(6, 8, 6, 8)
         ));
 
         button.addMouseListener(new MouseAdapter() {
@@ -415,11 +427,9 @@ public class LoadGameMenu extends JPanel { // Changed to JPanel
             nextPageButton.setVisible(true);
             pageIndicatorPanel.setVisible(true);
 
-            // Update button states
             prevPageButton.setEnabled(currentPage > 0);
             nextPageButton.setEnabled(currentPage < totalPages - 1);
 
-            // Update button colors based on enabled state
             if (!prevPageButton.isEnabled()) {
                 prevPageButton.setBackground(PAGE_BUTTON_DISABLED_COLOR);
             } else {
@@ -432,22 +442,17 @@ public class LoadGameMenu extends JPanel { // Changed to JPanel
                 nextPageButton.setBackground(PAGE_BUTTON_BG_COLOR);
             }
 
-            // Repaint the page indicator to update the text
             pageIndicatorPanel.repaint();
         }
     }
 
     private void refreshCurrentPage() {
-        // Remove current content
         if (mainContentPanel != null) {
             remove(mainContentPanel);
         }
 
-        // Recreate content for current page
         createMainContent();
         updatePaginationControls();
-
-        // Refresh display
         revalidate();
         repaint();
     }
@@ -491,6 +496,9 @@ public class LoadGameMenu extends JPanel { // Changed to JPanel
         float tileRenderWidth = (float) PREVIEW_WIDTH / numCols;
         float tileRenderHeight = (float) PREVIEW_HEIGHT / numRows;
 
+        // Detect gate edge for proper border rotation
+        int gateEdge = BorderImageRotationGenerator.getInstance().detectGateEdge(levelData);
+
         // Step 1: Fill the entire thumbnail with grass tiles
         int grassTileId = 5; // ID for grass tile
         BufferedImage grassSprite = tileManager.getSprite(grassTileId);
@@ -518,7 +526,26 @@ public class LoadGameMenu extends JPanel { // Changed to JPanel
                     continue;
                 }
 
-                BufferedImage tileSprite = tileManager.getSprite(tileId);
+                BufferedImage tileSprite = null;
+
+                if (tileId == -3) {
+                    tileSprite = BorderImageRotationGenerator.getInstance().getRotatedBorderImage(true, gateEdge);
+                    // Fallback
+                    if (tileSprite == null) {
+                        tileSprite = tileManager.getSprite(tileId);
+                    }
+                } else if (tileId == -4) { // Gate
+                    tileSprite = BorderImageRotationGenerator.getInstance().getRotatedBorderImage(false, gateEdge);
+
+                    // Fallback
+                    if (tileSprite == null) {
+                        tileSprite = tileManager.getSprite(tileId);
+                    }
+                } else {
+                    // Regular tile
+                    tileSprite = tileManager.getSprite(tileId);
+                }
+
                 if (tileSprite != null) {
                     g2d.drawImage(tileSprite, (int) (c * tileRenderWidth), (int) (r * tileRenderHeight),
                             (int) Math.ceil(tileRenderWidth), (int) Math.ceil(tileRenderHeight), null);
@@ -560,46 +587,305 @@ public class LoadGameMenu extends JPanel { // Changed to JPanel
         return newThumbnail;
     }
 
-    private void showPlayEditDialog(String levelName, int[][] levelData) {
-        Object[] options = {"Play", "Edit", "Cancel"};
-        UIManager.put("OptionPane.messageFont", mvBoliFontBold);
-        UIManager.put("OptionPane.buttonFont", mvBoliFontBold);
+    /**
+     * Adds custom tooltip behavior with fixed positioning and cute fonts
+     */
+    private void addCustomTooltipBehavior(RoundedButton button, String levelName) {
+        button.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                // Delay showing tooltip slightly for better UX
+                if (tooltipTimer != null) {
+                    tooltipTimer.stop();
+                }
 
-        int choice = JOptionPane.showOptionDialog(this.game,
-                "Map: " + levelName,
-                "Load Option",
-                JOptionPane.YES_NO_CANCEL_OPTION,
-                JOptionPane.QUESTION_MESSAGE,
-                null, options, options[0]);
+                tooltipTimer = new javax.swing.Timer(500, evt -> {
+                    showCustomTooltip(button, levelName);
+                });
+                tooltipTimer.setRepeats(false);
+                tooltipTimer.start();
+            }
 
-        if (choice == JOptionPane.YES_OPTION) { // Play
-            int[][] overlay = LoadSave.loadOverlay(levelName);
-            if (overlay == null) {
-                overlay = new int[levelData.length][levelData[0].length];
-                if (levelData.length > 4 && levelData[0].length > 15) { // Default start/end
-                    overlay[4][0] = 1;
-                    overlay[4][15] = 2;
+            @Override
+            public void mouseExited(MouseEvent e) {
+                hideCustomTooltip();
+                if (tooltipTimer != null) {
+                    tooltipTimer.stop();
                 }
             }
-            game.startPlayingWithLevel(levelData, overlay, levelName);
-            game.changeGameState(GameStates.PLAYING);
-        } else if (choice == JOptionPane.NO_OPTION) { // Edit
-            game.getMapEditing().setLevel(levelData);
-            int[][] overlayForEdit = LoadSave.loadOverlay(levelName);
-            if (overlayForEdit == null) {
-                overlayForEdit = new int[levelData.length][levelData[0].length];
-            }
-            game.getMapEditing().setOverlayData(overlayForEdit);
-            game.getMapEditing().setCurrentLevelName(levelName);
-            game.changeGameState(GameStates.EDIT);
+        });
+    }
+
+    /**
+     * Shows a custom positioned tooltip with cute styling
+     */
+    private void showCustomTooltip(RoundedButton button, String levelName) {
+        hideCustomTooltip(); // Hide any existing tooltip first
+
+        try {
+            // Create tooltip content
+            JPanel tooltipPanel = createTooltipPanel(levelName);
+
+            // Calculate centered position relative to button
+            Point buttonLocation = button.getLocationOnScreen();
+            int tooltipX = buttonLocation.x + (button.getWidth() / 2) - 90; // Center horizontally (tooltip width ~180)
+            int tooltipY = buttonLocation.y - 120; // Position above button
+
+            // Ensure tooltip stays on screen
+            java.awt.Dimension screenSize = java.awt.Toolkit.getDefaultToolkit().getScreenSize();
+            if (tooltipX < 0) tooltipX = 10;
+            if (tooltipX + 180 > screenSize.width) tooltipX = screenSize.width - 190;
+            if (tooltipY < 0) tooltipY = buttonLocation.y + button.getHeight() + 10; // Show below if no space above
+
+            // Create transparent window for tooltip
+            currentTooltipWindow = new JWindow();
+            currentTooltipWindow.setBackground(new Color(0, 0, 0, 0)); // Fully transparent
+            currentTooltipWindow.setAlwaysOnTop(true);
+            currentTooltipWindow.setFocusable(false);
+            currentTooltipWindow.add(tooltipPanel);
+            currentTooltipWindow.pack();
+            currentTooltipWindow.setLocation(tooltipX, tooltipY);
+            currentTooltipWindow.setVisible(true);
+
+        } catch (Exception e) {
+            System.err.println("Error showing custom tooltip: " + e.getMessage());
         }
+    }
+
+    /**
+     * Hides the current custom tooltip
+     */
+    private void hideCustomTooltip() {
+        if (tooltipTimer != null) {
+            tooltipTimer.stop();
+            tooltipTimer = null;
+        }
+
+        if (currentTooltipWindow != null) {
+            currentTooltipWindow.setVisible(false);
+            currentTooltipWindow.dispose();
+            currentTooltipWindow = null;
+        }
+    }
+
+    /**
+     * Creates a beautifully styled tooltip panel with cute fonts
+     */
+    private JPanel createTooltipPanel(String levelName) {
+        try {
+            // Load the game state
+            GameStateMemento saveData = gameStateManager.loadGameState(levelName);
+
+            JPanel panel = new JPanel() {
+                @Override
+                protected void paintComponent(Graphics g) {
+                    Graphics2D g2d = (Graphics2D) g;
+                    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                    // Clear the entire background to transparent first
+                    g2d.setComposite(java.awt.AlphaComposite.Clear);
+                    g2d.fillRect(0, 0, getWidth(), getHeight());
+                    g2d.setComposite(java.awt.AlphaComposite.SrcOver);
+
+                    // Draw rounded background with gradient
+                    Color startColor = new Color(255, 248, 220, 245); // Slightly more opaque
+                    Color endColor = new Color(255, 240, 200, 245);   // Slightly more opaque
+                    java.awt.GradientPaint gradient = new java.awt.GradientPaint(
+                            0, 0, startColor, 0, getHeight(), endColor);
+                    g2d.setPaint(gradient);
+                    g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
+
+                    // Draw cute border
+                    g2d.setColor(new Color(180, 140, 100, 220)); // Slightly more opaque brown border
+                    g2d.setStroke(new java.awt.BasicStroke(2));
+                    g2d.drawRoundRect(1, 1, getWidth()-2, getHeight()-2, 15, 15);
+                }
+            };
+
+            panel.setLayout(new BorderLayout());
+            panel.setPreferredSize(new Dimension(180, 140));
+            panel.setOpaque(false);
+            panel.setBorder(null);
+            panel.setBackground(new Color(0, 0, 0, 0));
+
+            JPanel contentPanel = new JPanel();
+            contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+            contentPanel.setOpaque(false);
+            contentPanel.setBorder(BorderFactory.createEmptyBorder(10, 12, 10, 12));
+            contentPanel.setBackground(new Color(0, 0, 0, 0));
+
+            Font titleFont = new Font(Font.SANS_SERIF, Font.BOLD, 14);
+            Font infoFont = new Font(Font.SANS_SERIF, Font.PLAIN, 11);
+            Font timeFont = new Font(Font.SANS_SERIF, Font.ITALIC, 10);
+
+            if (saveData == null) {
+                JLabel errorLabel = new JLabel("No save data found");
+                errorLabel.setFont(infoFont);
+                errorLabel.setForeground(new Color(180, 100, 100));
+                errorLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+                errorLabel.setOpaque(false);
+                contentPanel.add(errorLabel);
+                panel.add(contentPanel, BorderLayout.CENTER);
+                return panel;
+            }
+
+            JLabel titleLabel = new JLabel(levelName);
+            titleLabel.setFont(titleFont);
+            titleLabel.setForeground(new Color(101, 67, 33));
+            titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            titleLabel.setOpaque(false);
+            contentPanel.add(titleLabel);
+
+            contentPanel.add(Box.createRigidArea(new Dimension(0, 6)));
+
+            JLabel healthLabel = new JLabel("❤️ Health: " + saveData.getHealth() +
+                    (saveData.getGameOptions() != null ? "/" + saveData.getGameOptions().getStartingPlayerHP() : ""));
+            healthLabel.setFont(infoFont);
+            healthLabel.setForeground(new Color(220, 20, 60));
+            healthLabel.setOpaque(false);
+            contentPanel.add(healthLabel);
+
+
+            JLabel shieldLabel = new JLabel("🛡️ Shield: " + saveData.getShield() +
+                    (saveData.getGameOptions() != null ? "/" + saveData.getGameOptions().getStartingShield() : ""));
+            shieldLabel.setFont(infoFont);
+            shieldLabel.setForeground(new Color(30, 144, 255));
+            shieldLabel.setOpaque(false);
+            contentPanel.add(shieldLabel);
+
+
+            JLabel goldLabel = new JLabel("💰 Gold: " + saveData.getGold());
+            goldLabel.setFont(infoFont);
+            goldLabel.setForeground(new Color(255, 165, 0));
+            goldLabel.setOpaque(false);
+            contentPanel.add(goldLabel);
+
+            String waveText = "🌊 Wave: " + (saveData.getWaveIndex() + 1);
+            if (saveData.getGroupIndex() > 0) {
+                waveText += " (Group " + (saveData.getGroupIndex() + 1) + ")";
+            }
+            JLabel waveLabel = new JLabel(waveText);
+            waveLabel.setFont(infoFont);
+            waveLabel.setForeground(new Color(0, 128, 128));
+            waveLabel.setOpaque(false);
+            contentPanel.add(waveLabel);
+
+            contentPanel.add(Box.createRigidArea(new Dimension(0, 4)));
+
+            String timeAgo = getFileTimeAgo(levelName);
+            JLabel timeLabel = new JLabel("⏰ Saved: " + timeAgo);
+            timeLabel.setFont(timeFont);
+            timeLabel.setForeground(new Color(128, 128, 128));
+            timeLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            timeLabel.setOpaque(false);
+            contentPanel.add(timeLabel);
+
+            panel.add(contentPanel, BorderLayout.CENTER);
+            return panel;
+
+        } catch (Exception e) {
+            System.err.println("Error creating tooltip panel for " + levelName + ": " + e.getMessage());
+
+            JPanel fallbackPanel = new JPanel();
+            fallbackPanel.setOpaque(false);
+            fallbackPanel.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
+            fallbackPanel.setBackground(new Color(255, 255, 220));
+            JLabel label = new JLabel("Load " + levelName);
+            label.setOpaque(false);
+            fallbackPanel.add(label);
+            return fallbackPanel;
+        }
+    }
+
+    /**
+     * Gets the relative time when the save file was last modified
+     * @param levelName The name of the level
+     * @return Formatted relative time string
+     */
+    private String getFileTimeAgo(String levelName) {
+        try {
+            // Find the saves directory (using same logic as GameStateManager)
+            File projectRoot = findProjectRoot();
+            File demoDir = new File(projectRoot, "demo");
+            File savesDir;
+            if (demoDir.exists() && new File(demoDir, "pom.xml").exists()) {
+                savesDir = new File(demoDir, "src/main/resources/Saves");
+            } else {
+                savesDir = new File(projectRoot, "src/main/resources/Saves");
+            }
+
+            File saveFile = new File(savesDir, levelName + ".json");
+
+            if (!saveFile.exists()) {
+                return "Unknown";
+            }
+
+            long lastModified = saveFile.lastModified();
+            LocalDateTime fileTime = LocalDateTime.ofInstant(
+                    java.time.Instant.ofEpochMilli(lastModified),
+                    ZoneId.systemDefault()
+            );
+            LocalDateTime now = LocalDateTime.now();
+
+            // Calculate time difference
+            long minutes = ChronoUnit.MINUTES.between(fileTime, now);
+            long hours = ChronoUnit.HOURS.between(fileTime, now);
+            long days = ChronoUnit.DAYS.between(fileTime, now);
+
+            if (minutes < 1) {
+                return "Just now";
+            } else if (minutes < 60) {
+                return minutes + " minute" + (minutes == 1 ? "" : "s") + " ago";
+            } else if (hours < 24) {
+                return hours + " hour" + (hours == 1 ? "" : "s") + " ago";
+            } else if (days < 7) {
+                return days + " day" + (days == 1 ? "" : "s") + " ago";
+            } else {
+                // For older saves, show the actual date
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM d, yyyy");
+                return fileTime.format(formatter);
+            }
+
+        } catch (Exception e) {
+            System.err.println("Error getting file time for " + levelName + ": " + e.getMessage());
+            return "Unknown";
+        }
+    }
+
+    /**
+     * Finds the project root directory by looking for key indicators
+     */
+    private File findProjectRoot() {
+        File currentDir = new File(System.getProperty("user.dir"));
+        File checkDir = currentDir;
+
+        // Look for project root indicators going up the directory tree
+        for (int i = 0; i < 5; i++) { // Limit search to 5 levels up
+            // Check for Maven project root indicators
+            if (new File(checkDir, "pom.xml").exists() ||
+                    new File(checkDir, "demo/pom.xml").exists() ||
+                    (new File(checkDir, "src/main/resources").exists() && new File(checkDir, "pom.xml").exists())) {
+                return checkDir;
+            }
+
+            // Check if we're inside a demo directory structure
+            if (checkDir.getName().equals("demo") && new File(checkDir, "pom.xml").exists()) {
+                return checkDir;
+            }
+
+            File parent = checkDir.getParentFile();
+            if (parent == null) break;
+            checkDir = parent;
+        }
+
+        // If no clear project root found, return current directory
+        return currentDir;
     }
 
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         if (backgroundImg != null) {
-            // Scale background to fit 640x500 (or panel size)
             g.drawImage(backgroundImg, 0, 0, getWidth(), getHeight(), this);
         } else {
             g.setColor(Color.BLACK); // Fallback
@@ -607,17 +893,16 @@ public class LoadGameMenu extends JPanel { // Changed to JPanel
         }
     }
 
-    // Custom JButton for rounded corners
     private static class RoundedButton extends JButton {
         private int cornerRadius = 15;
         private Shape shape;
 
         public RoundedButton(String text) {
             super(text);
-            setContentAreaFilled(false); // We'll paint our own background
-            setBorderPainted(false);     // No standard border
-            setFocusPainted(false);      // No focus border
-            setForeground(Color.WHITE);  // Default text color
+            setContentAreaFilled(false);
+            setBorderPainted(false);
+            setFocusPainted(false);
+            setForeground(Color.WHITE);
         }
 
         @Override
@@ -625,10 +910,9 @@ public class LoadGameMenu extends JPanel { // Changed to JPanel
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-            // Paint background (rounded rectangle)
-            if (getModel().isArmed()) { // Pressed
+            if (getModel().isArmed()) {
                 g2.setColor(Color.DARK_GRAY.darker());
-            } else if (getModel().isRollover()) { // Hover
+            } else if (getModel().isRollover()) {
                 g2.setColor(Color.GRAY.brighter());
             } else {
                 g2.setColor(Color.GRAY);
@@ -640,12 +924,12 @@ public class LoadGameMenu extends JPanel { // Changed to JPanel
             g2.dispose();
         }
 
-        // paint a rounded border
+
         @Override
         protected void paintBorder(Graphics g) {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(Color.BLACK); // Border color
+            g2.setColor(Color.BLACK);
             g2.draw(new RoundRectangle2D.Float(0, 0, getWidth() - 1, getHeight() - 1, cornerRadius, cornerRadius));
             g2.dispose();
         }
@@ -658,5 +942,19 @@ public class LoadGameMenu extends JPanel { // Changed to JPanel
             return shape.contains(x, y);
         }
 
+    }
+
+    /**
+     * Cleanup method to be called when the LoadGameMenu is no longer active
+     * This ensures all tooltips and timers are properly disposed
+     */
+    public void cleanup() {
+        hideCustomTooltip();
+
+        // Additional cleanup if needed
+        if (tooltipTimer != null) {
+            tooltipTimer.stop();
+            tooltipTimer = null;
+        }
     }
 }
