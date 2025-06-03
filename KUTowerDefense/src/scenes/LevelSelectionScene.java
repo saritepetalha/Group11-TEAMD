@@ -24,7 +24,6 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
 
 import constants.GameDimensions;
@@ -43,46 +42,45 @@ public class LevelSelectionScene extends JPanel {
     private TileManager tileManager;
     private BufferedImage backgroundImg;
     private TheButton backButton;
-    private TheButton editLevelButton;
     private LevelSelectionStrategy strategy;
 
     private static final int PREVIEW_WIDTH = 192;
     private static final int PREVIEW_HEIGHT = 108;
     private static final int PREVIEW_MARGIN = 15;
     private static final int PREVIEWS_PER_ROW = 2;
-    private static final int PREVIEWS_PER_PAGE = 4; // 2 columns x 2 rows
-    private static final int HEADER_HEIGHT = 100;
+    private static final int PREVIEWS_PER_PAGE = 4;
+    private static final int HEADER_HEIGHT = 80;
     private static final int FOOTER_HEIGHT = 80;
 
     private Font medodicaFontSmall;
+    private Font medodicaFontSmallBold;
     private Font medodicaFontMedium;
-    private Font medodicaFontLarge;
+    private Font mvBoliFontBold;
 
-    // Pagination variables
     private int currentPage = 0;
     private int totalPages = 0;
     private ArrayList<String> availableLevels = new ArrayList<>();
     private JButton prevPageButton;
     private JButton nextPageButton;
     private JPanel mainContentPanel;
+    private JPanel pageIndicatorPanel;
 
-    // Colors
     private final Color PAGE_BUTTON_BG_COLOR = new Color(70, 130, 200);
     private final Color PAGE_BUTTON_HOVER_COLOR = new Color(90, 150, 220);
     private final Color PAGE_BUTTON_DISABLED_COLOR = new Color(120, 120, 120);
-    private final Color TITLE_COLOR = new Color(255, 255, 255);
-    private final Color DESCRIPTION_COLOR = new Color(200, 200, 200);
+    private final Color PAGE_INDICATOR_BG_COLOR = new Color(40, 40, 40, 180);
+    private final Color PAGE_INDICATOR_TEXT_COLOR = new Color(255, 255, 255);
 
     public LevelSelectionScene(Game game, LevelSelectionStrategy strategy) {
         this.game = game;
         this.strategy = strategy;
         this.tileManager = game.getTileManager();
-        this.backgroundImg = AssetsLoader.getInstance().loadGameMenuBackgroundImg;
+        this.backgroundImg = AssetsLoader.getInstance().selectMapBackgroundImg;
 
-        // Load fonts
         this.medodicaFontSmall = FontLoader.loadMedodicaFont(14f);
-        this.medodicaFontMedium = FontLoader.loadMedodicaFont(18f);
-        this.medodicaFontLarge = FontLoader.loadMedodicaFont(24f);
+        this.medodicaFontSmallBold = FontLoader.loadMedodicaFont(14f).deriveFont(Font.BOLD);
+        this.medodicaFontMedium = FontLoader.loadMedodicaFont(16f);
+        this.mvBoliFontBold = new Font("MV Boli", Font.BOLD, 14);
 
         setPreferredSize(new Dimension(GameDimensions.MAIN_MENU_SCREEN_WIDTH, GameDimensions.MAIN_MENU_SCREEN_HEIGHT));
         setLayout(new BorderLayout());
@@ -94,20 +92,15 @@ public class LevelSelectionScene extends JPanel {
         availableLevels = strategy.getLevelsToShow();
         totalPages = Math.max(1, (int) Math.ceil((double) availableLevels.size() / PREVIEWS_PER_PAGE));
 
-        // Reset to first page if current page is out of bounds
         if (currentPage >= totalPages) {
             currentPage = Math.max(0, totalPages - 1);
         }
 
-        // Remove the current main content
         if (mainContentPanel != null) {
             remove(mainContentPanel);
         }
 
-        // Recreate the UI content
         createMainContent();
-
-        // Refresh the display
         revalidate();
         repaint();
     }
@@ -126,10 +119,6 @@ public class LevelSelectionScene extends JPanel {
         mainContentPanel = new JPanel(new BorderLayout());
         mainContentPanel.setOpaque(false);
 
-        // Create header with title and description
-        JPanel headerPanel = createHeaderPanel();
-        mainContentPanel.add(headerPanel, BorderLayout.NORTH);
-
         if (availableLevels.isEmpty()) {
             createNoLevelsPanel();
         } else {
@@ -137,33 +126,6 @@ public class LevelSelectionScene extends JPanel {
         }
 
         add(mainContentPanel, BorderLayout.CENTER);
-    }
-
-    private JPanel createHeaderPanel() {
-        JPanel headerPanel = new JPanel(new GridBagLayout());
-        headerPanel.setOpaque(false);
-        headerPanel.setPreferredSize(new Dimension(GameDimensions.MAIN_MENU_SCREEN_WIDTH, HEADER_HEIGHT));
-
-        GridBagConstraints gbc = new GridBagConstraints();
-
-        // Title
-        JLabel titleLabel = new JLabel(strategy.getSelectionTitle(), SwingConstants.CENTER);
-        titleLabel.setFont(medodicaFontLarge.deriveFont(Font.BOLD));
-        titleLabel.setForeground(TITLE_COLOR);
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.insets = new Insets(20, 0, 5, 0);
-        headerPanel.add(titleLabel, gbc);
-
-        // Description
-        JLabel descLabel = new JLabel(strategy.getSelectionDescription(), SwingConstants.CENTER);
-        descLabel.setFont(medodicaFontMedium);
-        descLabel.setForeground(DESCRIPTION_COLOR);
-        gbc.gridy = 1;
-        gbc.insets = new Insets(0, 0, 20, 0);
-        headerPanel.add(descLabel, gbc);
-
-        return headerPanel;
     }
 
     private void createNoLevelsPanel() {
@@ -184,11 +146,9 @@ public class LevelSelectionScene extends JPanel {
     }
 
     private void createCurrentPageGrid() {
-        // Calculate which levels to show on current page
         int startIndex = currentPage * PREVIEWS_PER_PAGE;
         int endIndex = Math.min(startIndex + PREVIEWS_PER_PAGE, availableLevels.size());
 
-        // Create a panel that will hold the map previews for current page
         JPanel previewsContainer = new JPanel(new GridBagLayout());
         previewsContainer.setOpaque(false);
 
@@ -207,13 +167,11 @@ public class LevelSelectionScene extends JPanel {
                 BufferedImage thumbnail = generateThumbnailWithCache(levelName, levelData);
                 JPanel levelPanel = createLevelPanel(levelName, thumbnail, levelData);
 
-                // Set grid position
                 gbc.gridx = currentCol;
                 gbc.gridy = currentRow;
 
                 previewsContainer.add(levelPanel, gbc);
 
-                // Move to next position
                 currentCol++;
                 if (currentCol >= PREVIEWS_PER_ROW) {
                     currentCol = 0;
@@ -222,102 +180,172 @@ public class LevelSelectionScene extends JPanel {
             }
         }
 
-        // Wrap the previews in a scrollable panel if needed
-        JScrollPane scrollPane = new JScrollPane(previewsContainer);
-        scrollPane.setOpaque(false);
-        scrollPane.getViewport().setOpaque(false);
-        scrollPane.setBorder(BorderFactory.createEmptyBorder());
-        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        // Add top margin to prevent content from going into header area
+        JPanel contentWrapper = new JPanel(new BorderLayout());
+        contentWrapper.setOpaque(false);
+        contentWrapper.setBorder(BorderFactory.createEmptyBorder(HEADER_HEIGHT, 0, 0, 0));
+        contentWrapper.add(previewsContainer, BorderLayout.CENTER);
 
-        mainContentPanel.add(scrollPane, BorderLayout.CENTER);
-
-        // Add pagination controls if needed
-        if (totalPages > 1) {
-            createPaginationPanel();
-        }
+        mainContentPanel.add(contentWrapper, BorderLayout.CENTER);
     }
 
     private JPanel createLevelPanel(String levelName, BufferedImage thumbnail, int[][] levelData) {
         JPanel levelPanel = new JPanel(new BorderLayout());
         levelPanel.setOpaque(false);
-        levelPanel.setPreferredSize(new Dimension(PREVIEW_WIDTH, PREVIEW_HEIGHT + 60));
+        levelPanel.setPreferredSize(new Dimension(PREVIEW_WIDTH, PREVIEW_HEIGHT + 35));
 
-        // Create the main preview button
         RoundedButton previewButton = new RoundedButton("");
         previewButton.setIcon(new ImageIcon(thumbnail));
+        previewButton.setFont(medodicaFontSmall);
         previewButton.setPreferredSize(new Dimension(PREVIEW_WIDTH, PREVIEW_HEIGHT));
-        previewButton.setToolTipText("Play " + levelName);
-        previewButton.setBackground(new Color(0, 0, 0, 0)); // Transparent background
-        previewButton.setBorder(null); // Remove any border
+        previewButton.setCursor(AssetsLoader.getInstance().customHandCursor);
 
-        // Add click handler for playing the level
         previewButton.addActionListener(e -> playLevel(levelName, levelData));
 
-        // Create button panel for edit/play actions
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
-        buttonPanel.setOpaque(false);
+        int buttonSize = 28;
+        int spacing = 8;
+        int totalButtonWidth = buttonSize * 2 + spacing;
+        int totalButtonHeight = buttonSize + 10;
 
-        // Edit button (always show for level editing)
-        JButton editButton = new JButton("Edit");
-        editButton.setFont(medodicaFontSmall);
-        editButton.setPreferredSize(new Dimension(60, 25));
-        editButton.addActionListener(e -> editLevel(levelName, levelData));
-        styleSmallButton(editButton, new Color(200, 120, 50));
+        JPanel buttonPanel = new JPanel() {
+            private TheButton playButton;
+            private TheButton editButton;
+            private String hoverText = "";
+            private int hoveredButtonX = 0;
+            private int hoveredButtonY = 0;
 
-        // Play button
-        JButton playButton = new JButton("Play");
-        playButton.setFont(medodicaFontSmall);
-        playButton.setPreferredSize(new Dimension(60, 25));
-        playButton.addActionListener(e -> playLevel(levelName, levelData));
-        styleSmallButton(playButton, new Color(50, 150, 50));
+            {
+                setOpaque(false);
+                setPreferredSize(new Dimension(totalButtonWidth, totalButtonHeight));
 
-        buttonPanel.add(playButton);
-        buttonPanel.add(editButton);
+                playButton = new TheButton("", 0, 5, buttonSize, buttonSize,
+                        AssetsLoader.getInstance().buttonImages.get(4));
 
-        // Level name label
-        JLabel nameLabel = new JLabel(levelName, SwingConstants.CENTER);
-        nameLabel.setFont(medodicaFontSmall.deriveFont(Font.BOLD));
-        nameLabel.setForeground(Color.WHITE);
-        nameLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
+                editButton = new TheButton("", buttonSize + spacing, 5, buttonSize, buttonSize,
+                        AssetsLoader.getInstance().buttonImages.get(1));
+
+                addMouseListener(new MouseAdapter() {
+                    @Override
+                    public void mouseClicked(MouseEvent e) {
+                        if (playButton.getBounds().contains(e.getPoint())) {
+                            playLevel(levelName, levelData);
+                        } else if (editButton.getBounds().contains(e.getPoint())) {
+                            editLevel(levelName, levelData);
+                        }
+                    }
+
+                    @Override
+                    public void mousePressed(MouseEvent e) {
+                        if (playButton.getBounds().contains(e.getPoint())) {
+                            playButton.setMousePressed(true);
+                        } else if (editButton.getBounds().contains(e.getPoint())) {
+                            editButton.setMousePressed(true);
+                        }
+                        repaint();
+                    }
+
+                    @Override
+                    public void mouseReleased(MouseEvent e) {
+                        playButton.setMousePressed(false);
+                        editButton.setMousePressed(false);
+                        repaint();
+                    }
+
+                    @Override
+                    public void mouseExited(MouseEvent e) {
+                        setCursor(AssetsLoader.getInstance().customNormalCursor);
+                        hoverText = "";
+                        repaint();
+                    }
+                });
+
+                addMouseMotionListener(new MouseAdapter() {
+                    @Override
+                    public void mouseMoved(MouseEvent e) {
+                        boolean playHover = playButton.getBounds().contains(e.getPoint());
+                        boolean editHover = editButton.getBounds().contains(e.getPoint());
+
+                        // Set cursor based on button hover
+                        if (playHover || editHover) {
+                            setCursor(AssetsLoader.getInstance().customHandCursor);
+                        } else {
+                            setCursor(AssetsLoader.getInstance().customNormalCursor);
+                        }
+
+                        // Set hover text and position
+                        if (playHover) {
+                            hoverText = "Play";
+                            hoveredButtonX = playButton.getX() + playButton.getWidth() / 2;
+                            hoveredButtonY = playButton.getY() - 5;
+                        } else if (editHover) {
+                            hoverText = "Edit";
+                            hoveredButtonX = editButton.getX() + editButton.getWidth() / 2;
+                            hoveredButtonY = editButton.getY() - 5;
+                        } else {
+                            hoverText = "";
+                        }
+
+                        repaint();
+                    }
+                });
+            }
+
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+
+                playButton.setMouseOver(false);
+                editButton.setMouseOver(false);
+
+                playButton.draw(g);
+                editButton.draw(g);
+
+                if (!hoverText.isEmpty()) {
+                    Graphics2D g2d = (Graphics2D) g;
+                    g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+                    g2d.setFont(medodicaFontSmall.deriveFont(Font.BOLD, 14f));
+                    FontMetrics fm = g2d.getFontMetrics();
+                    int textWidth = fm.stringWidth(hoverText);
+                    int textHeight = fm.getHeight();
+                    int textX = hoveredButtonX - textWidth / 2;
+                    int textY = hoveredButtonY - 5;
+                    textX = Math.max(2, Math.min(textX, getWidth() - textWidth - 2));
+                    textY = Math.max(textHeight - 2, textY);
+                    g2d.setColor(new Color(0, 0, 0, 150));
+                    g2d.fillRoundRect(textX - 6, textY - textHeight + 2, textWidth + 12, textHeight + 4, 8, 8);
+                    g2d.setColor(new Color(255, 255, 255, 80));
+                    g2d.drawRoundRect(textX - 6, textY - textHeight + 2, textWidth + 12, textHeight + 4, 8, 8);
+                    g2d.setColor(Color.WHITE);
+                    g2d.drawString(hoverText, textX, textY);
+                }
+            }
+        };
+
+        JPanel buttonWrapper = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        buttonWrapper.setOpaque(false);
+        buttonWrapper.add(buttonPanel);
 
         levelPanel.add(previewButton, BorderLayout.CENTER);
-        levelPanel.add(nameLabel, BorderLayout.SOUTH);
-        levelPanel.add(buttonPanel, BorderLayout.PAGE_END);
+        levelPanel.add(buttonWrapper, BorderLayout.PAGE_END);
 
         return levelPanel;
     }
 
-    private void styleSmallButton(JButton button, Color bgColor) {
-        button.setBackground(bgColor);
-        button.setForeground(Color.WHITE);
-        button.setFocusPainted(false);
-        button.setBorderPainted(false);
-        button.setOpaque(true);
+    private void createNavigationButtons() {
+        JPanel bottomPanel = new JPanel(new BorderLayout());
+        bottomPanel.setOpaque(false);
+        bottomPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 35, 5));
 
-        button.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                button.setBackground(bgColor.brighter());
-            }
+        JPanel backButtonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 60, -5));
+        backButtonPanel.setOpaque(false);
+        backButton = new TheButton("Back", 0, 0, 160, 35);
+        backButtonPanel.add(createTheButtonWrapper(backButton));
 
-            @Override
-            public void mouseExited(MouseEvent e) {
-                button.setBackground(bgColor);
-            }
-        });
-    }
-
-    private void createPaginationPanel() {
-        JPanel paginationPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        JPanel paginationPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
         paginationPanel.setOpaque(false);
 
-        prevPageButton = new JButton("◀ Previous");
-        nextPageButton = new JButton("Next ▶");
-
+        prevPageButton = new JButton("←");
         stylePageButton(prevPageButton);
-        stylePageButton(nextPageButton);
-
         prevPageButton.addActionListener(e -> {
             if (currentPage > 0) {
                 currentPage--;
@@ -325,6 +353,10 @@ public class LevelSelectionScene extends JPanel {
             }
         });
 
+        pageIndicatorPanel = createSolidPageIndicator();
+
+        nextPageButton = new JButton("→");
+        stylePageButton(nextPageButton);
         nextPageButton.addActionListener(e -> {
             if (currentPage < totalPages - 1) {
                 currentPage++;
@@ -332,37 +364,117 @@ public class LevelSelectionScene extends JPanel {
             }
         });
 
-        // Page indicator
-        JLabel pageIndicator = new JLabel((currentPage + 1) + " / " + totalPages);
-        pageIndicator.setFont(medodicaFontMedium);
-        pageIndicator.setForeground(Color.WHITE);
-        pageIndicator.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 20));
-
         paginationPanel.add(prevPageButton);
-        paginationPanel.add(pageIndicator);
+        paginationPanel.add(pageIndicatorPanel);
         paginationPanel.add(nextPageButton);
 
-        mainContentPanel.add(paginationPanel, BorderLayout.SOUTH);
+        bottomPanel.add(backButtonPanel, BorderLayout.WEST);
+        bottomPanel.add(paginationPanel, BorderLayout.CENTER);
+
+        add(bottomPanel, BorderLayout.SOUTH);
+
+        updatePaginationControls();
+    }
+
+    private JPanel createTheButtonWrapper(TheButton button) {
+        JPanel wrapper = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                int offsetX = 10;
+                int offsetY = 6;
+                TheButton drawButton = new TheButton(button.getText(), offsetX, offsetY, button.getWidth(), button.getHeight());
+                drawButton.setMouseOver(button.isMouseOver());
+                drawButton.setMousePressed(button.isMousePressed());
+                drawButton.drawStyled(g);
+            }
+
+            @Override
+            public Dimension getPreferredSize() {
+                return new Dimension(button.getWidth() + 20, button.getHeight() + 12);
+            }
+        };
+        wrapper.setOpaque(false);
+        wrapper.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                button.setMouseOver(true);
+                wrapper.repaint();
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                button.setMouseOver(false);
+                wrapper.repaint();
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                button.setMousePressed(true);
+                wrapper.repaint();
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                button.setMousePressed(false);
+                wrapper.repaint();
+            }
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                game.changeGameState(GameStates.MENU);
+            }
+        });
+        return wrapper;
+    }
+
+    private JPanel createSolidPageIndicator() {
+        JPanel indicator = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                g2d.setColor(PAGE_INDICATOR_BG_COLOR);
+                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 12, 12);
+
+                g2d.setColor(new Color(80, 80, 80));
+                g2d.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 12, 12);
+
+
+                g2d.setColor(PAGE_INDICATOR_TEXT_COLOR);
+                g2d.setFont(mvBoliFontBold);
+                String text = "Page " + (currentPage + 1) + " of " + totalPages;
+                FontMetrics fm = g2d.getFontMetrics();
+                int x = (getWidth() - fm.stringWidth(text)) / 2;
+                int y = (getHeight() + fm.getAscent()) / 2 - 2;
+                g2d.drawString(text, x, y);
+            }
+        };
+        indicator.setOpaque(false);
+        indicator.setPreferredSize(new Dimension(100, 28));
+        return indicator;
     }
 
     private void stylePageButton(JButton button) {
-        button.setFont(medodicaFontSmall);
+        button.setFont(new Font("Arial", Font.BOLD, 16));
         button.setBackground(PAGE_BUTTON_BG_COLOR);
         button.setForeground(Color.WHITE);
         button.setFocusPainted(false);
-        button.setBorderPainted(false);
-        button.setPreferredSize(new Dimension(100, 35));
+        button.setPreferredSize(new Dimension(40, 28));
+        button.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(40, 80, 140), 1),
+                BorderFactory.createEmptyBorder(6, 8, 6, 8)
+        ));
 
         button.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent e) {
+            public void mouseEntered(MouseEvent evt) {
                 if (button.isEnabled()) {
                     button.setBackground(PAGE_BUTTON_HOVER_COLOR);
                 }
             }
 
-            @Override
-            public void mouseExited(MouseEvent e) {
+            public void mouseExited(MouseEvent evt) {
                 if (button.isEnabled()) {
                     button.setBackground(PAGE_BUTTON_BG_COLOR);
                 } else {
@@ -372,83 +484,43 @@ public class LevelSelectionScene extends JPanel {
         });
     }
 
+    private void updatePaginationControls() {
+        if (totalPages <= 1 && availableLevels.size() <= 4) {
+            prevPageButton.setVisible(false);
+            nextPageButton.setVisible(false);
+            pageIndicatorPanel.setVisible(false);
+        } else {
+            prevPageButton.setVisible(true);
+            nextPageButton.setVisible(true);
+            pageIndicatorPanel.setVisible(true);
+            prevPageButton.setEnabled(currentPage > 0);
+            nextPageButton.setEnabled(currentPage < totalPages - 1);
+
+            if (!prevPageButton.isEnabled()) {
+                prevPageButton.setBackground(PAGE_BUTTON_DISABLED_COLOR);
+            } else {
+                prevPageButton.setBackground(PAGE_BUTTON_BG_COLOR);
+            }
+
+            if (!nextPageButton.isEnabled()) {
+                nextPageButton.setBackground(PAGE_BUTTON_DISABLED_COLOR);
+            } else {
+                nextPageButton.setBackground(PAGE_BUTTON_BG_COLOR);
+            }
+
+            pageIndicatorPanel.repaint();
+        }
+    }
+
     private void refreshCurrentPage() {
-        // Remove the current main content
         if (mainContentPanel != null) {
             remove(mainContentPanel);
         }
 
-        // Recreate the UI content
         createMainContent();
-
-        // Refresh the display
+        updatePaginationControls();
         revalidate();
         repaint();
-    }
-
-    private void createNavigationButtons() {
-        JPanel navigationPanel = new JPanel(new BorderLayout());
-        navigationPanel.setOpaque(false);
-        navigationPanel.setPreferredSize(new Dimension(GameDimensions.MAIN_MENU_SCREEN_WIDTH, FOOTER_HEIGHT));
-
-        // Back button
-        int buttonWidth = 120;
-        int buttonHeight = 40;
-        backButton = new TheButton("Back", 20, 20, buttonWidth, buttonHeight);
-
-        JPanel backWrapper = createTheButtonWrapper(backButton);
-        navigationPanel.add(backWrapper, BorderLayout.WEST);
-
-        add(navigationPanel, BorderLayout.SOUTH);
-    }
-
-    private JPanel createTheButtonWrapper(TheButton button) {
-        return new JPanel() {
-            @Override
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                button.drawStyled(g);
-            }
-
-            @Override
-            public Dimension getPreferredSize() {
-                return new Dimension(button.getWidth() + 40, button.getHeight() + 40);
-            }
-
-            {
-                addMouseListener(new MouseAdapter() {
-                    @Override
-                    public void mouseEntered(MouseEvent e) {
-                        button.setMouseOver(true);
-                        repaint();
-                    }
-
-                    @Override
-                    public void mouseExited(MouseEvent e) {
-                        button.setMouseOver(false);
-                        repaint();
-                    }
-
-                    @Override
-                    public void mousePressed(MouseEvent e) {
-                        button.setMousePressed(true);
-                        repaint();
-                    }
-
-                    @Override
-                    public void mouseReleased(MouseEvent e) {
-                        button.resetBooleans();
-                        repaint();
-                    }
-
-                    @Override
-                    public void mouseClicked(MouseEvent e) {
-                        game.changeGameState(GameStates.MENU);
-                    }
-                });
-                setOpaque(false);
-            }
-        };
     }
 
     private BufferedImage generateThumbnailWithCache(String levelName, int[][] levelData) {
@@ -476,7 +548,6 @@ public class LevelSelectionScene extends JPanel {
         BufferedImage thumbnail = new BufferedImage(PREVIEW_WIDTH, PREVIEW_HEIGHT, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2d = thumbnail.createGraphics();
 
-        // Handle cases where levelData might be problematic for rendering
         if (levelData == null || levelData.length == 0 || levelData[0].length == 0) {
             g2d.setColor(Color.DARK_GRAY);
             g2d.fillRect(0, 0, PREVIEW_WIDTH, PREVIEW_HEIGHT);
@@ -552,19 +623,15 @@ public class LevelSelectionScene extends JPanel {
     private void playLevel(String levelName, int[][] levelData) {
         System.out.println("Playing level: " + levelName);
 
-        // Load overlay data
         int[][] overlayData = LoadSave.loadOverlay(levelName);
         if (overlayData == null) {
-            // Create default overlay if none exists
             overlayData = new int[levelData.length][levelData[0].length];
-            // Set default start/end points if the level is big enough
             if (levelData.length > 4 && levelData[0].length > 15) {
                 overlayData[4][0] = 1; // Start point
                 overlayData[4][15] = 2; // End point
             }
         }
 
-        // Start the game with the level
         game.startPlayingWithLevel(levelData, overlayData, levelName);
         game.changeGameState(GameStates.PLAYING);
     }
@@ -574,7 +641,6 @@ public class LevelSelectionScene extends JPanel {
         game.getMapEditing().setLevel(levelData);
         game.getMapEditing().setCurrentLevelName(levelName);
 
-        // Load overlay data for editing
         int[][] overlayData = LoadSave.loadOverlay(levelName);
         if (overlayData == null) {
             overlayData = new int[levelData.length][levelData[0].length];
@@ -588,24 +654,24 @@ public class LevelSelectionScene extends JPanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
 
-        // Draw background
         if (backgroundImg != null) {
-            g.drawImage(backgroundImg, 0, 0, getWidth(), getHeight(), null);
+            g.drawImage(backgroundImg, 0, 0, getWidth(), getHeight(), this);
+        } else {
+            g.setColor(Color.BLACK); // Fallback
+            g.fillRect(0, 0, getWidth(), getHeight());
         }
     }
 
-    // Rounded button class for thumbnails
     private static class RoundedButton extends JButton {
-        private int cornerRadius = 10;
+        private int cornerRadius = 15;
         private Shape shape;
 
         public RoundedButton(String text) {
             super(text);
-            setOpaque(false);
             setContentAreaFilled(false);
-            setFocusPainted(false);
             setBorderPainted(false);
-            setBackground(new Color(0, 0, 0, 0)); // Transparent background
+            setFocusPainted(false);
+            setForeground(Color.WHITE);
         }
 
         @Override
@@ -613,20 +679,33 @@ public class LevelSelectionScene extends JPanel {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-            // Don't paint any background - just paint the icon
-            super.paintComponent(g);
+            if (getModel().isArmed()) {
+                g2.setColor(Color.DARK_GRAY.darker());
+            } else if (getModel().isRollover()) {
+                g2.setColor(Color.GRAY.brighter());
+            } else {
+                g2.setColor(Color.GRAY);
+            }
+            g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), cornerRadius, cornerRadius));
+
+            super.paintComponent(g2);
+
             g2.dispose();
         }
 
         @Override
         protected void paintBorder(Graphics g) {
-            // Don't paint any border
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(Color.BLACK);
+            g2.draw(new RoundRectangle2D.Float(0, 0, getWidth() - 1, getHeight() - 1, cornerRadius, cornerRadius));
+            g2.dispose();
         }
 
         @Override
         public boolean contains(int x, int y) {
             if (shape == null || !shape.getBounds().equals(getBounds())) {
-                shape = new RoundRectangle2D.Float(0, 0, getWidth() - 1, getHeight() - 1, cornerRadius, cornerRadius);
+                shape = new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), cornerRadius, cornerRadius);
             }
             return shape.contains(x, y);
         }
