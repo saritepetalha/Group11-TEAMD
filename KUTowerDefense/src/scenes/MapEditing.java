@@ -2,6 +2,8 @@ package scenes;
 
 import constants.GameDimensions;
 import static constants.Constants.PathPoints.*;
+
+import helpMethods.BorderImageRotationGenerator;
 import helpMethods.LoadSave;
 import helpMethods.LevelBuilder;
 import main.Game;
@@ -13,9 +15,6 @@ import ui_p.EditTiles;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import javax.imageio.ImageIO;
-import java.io.IOException;
-
 
 // a class to edit map. map editor part on the main screen.
 
@@ -35,9 +34,6 @@ public class MapEditing extends GameScene implements SceneMethods{
 
     private Tower selectedTower;
 
-    private BufferedImage wallImage;
-    private BufferedImage gateImage;
-
     public MapEditing(Game game, Window owner) {
         super(game);
         this.owner = owner;
@@ -47,18 +43,6 @@ public class MapEditing extends GameScene implements SceneMethods{
         editTiles = new EditTiles(GameDimensions.GAME_WIDTH,0,4*GameDimensions.ButtonSize.MEDIUM.getSize(), GameDimensions.GAME_HEIGHT,this, game, owner);
         createDefaultLevel();
         loadDefaultLevel();
-        loadBorderImages();
-    }
-
-    private void loadBorderImages() {
-        try {
-            wallImage = LoadSave.getImageFromPath("/Borders/wall.png");
-            gateImage = LoadSave.getImageFromPath("/Borders/gate.png");
-            System.out.println("Border images loaded successfully");
-        } catch (Exception e) {
-            System.err.println("Error loading border images: " + e.getMessage());
-            e.printStackTrace();
-        }
     }
 
     private void createDefaultLevel() {
@@ -82,64 +66,28 @@ public class MapEditing extends GameScene implements SceneMethods{
         g.setColor(new Color(134,177,63,255));
         g.fillRect(0, 0, GameDimensions.GAME_WIDTH, GameDimensions.GAME_HEIGHT);
 
-        int rowCount = level.length;
-        int colCount = level[0].length;
-
-        // Detect which edge contains the gate (endpoint)
-        int gateEdge = -1; // 0=top, 1=bottom, 2=left, 3=right
-        for (int i = 0; i < rowCount; i++) {
-            if (level[i][0] == -4) gateEdge = 2; // left
-            if (level[i][colCount - 1] == -4) gateEdge = 3; // right
-        }
-        for (int j = 0; j < colCount; j++) {
-            if (level[0][j] == -4) gateEdge = 0; // top
-            if (level[rowCount - 1][j] == -4) gateEdge = 1; // bottom
-        }
+        int gateEdge = BorderImageRotationGenerator.getInstance().detectGateEdge(level);
 
         for (int i = 0; i < level.length; i++) {
             for (int j = 0; j < level[i].length; j++) {
                 int tileId = level[i][j];
 
-                if (tileId == -3 && wallImage != null) { // Wall
-                    BufferedImage img = wallImage;
-                    Graphics2D g2d = (Graphics2D) g.create();
-                    int x = j * GameDimensions.TILE_DISPLAY_SIZE;
-                    int y = i * GameDimensions.TILE_DISPLAY_SIZE;
-                    int ts = GameDimensions.TILE_DISPLAY_SIZE;
-                    if (gateEdge == 0) { // top
-                        g2d.drawImage(img, x, y, ts, ts, null);
-                    } else if (gateEdge == 1) { // bottom
-                        g2d.drawImage(img, x, y + ts, ts, -ts, null); // flip vertically
-                    } else if (gateEdge == 2) { // left
-                        g2d.rotate(-Math.PI / 2, x + ts / 2, y + ts / 2);
-                        g2d.drawImage(img, x, y, ts, ts, null);
-                    } else if (gateEdge == 3) { // right
-                        g2d.rotate(Math.PI / 2, x + ts / 2, y + ts / 2);
-                        g2d.drawImage(img, x, y, ts, ts, null);
-                    } else {
-                        g2d.drawImage(img, x, y, ts, ts, null);
+                if (tileId == -3) {
+                    BufferedImage img = BorderImageRotationGenerator.getInstance().getRotatedBorderImage(true, gateEdge);
+                    if (img != null) {
+                        int x = j * GameDimensions.TILE_DISPLAY_SIZE;
+                        int y = i * GameDimensions.TILE_DISPLAY_SIZE;
+                        int ts = GameDimensions.TILE_DISPLAY_SIZE;
+                        g.drawImage(img, x, y, ts, ts, null);
                     }
-                    g2d.dispose();
-                } else if (tileId == -4 && gateImage != null) { // Gate
-                    BufferedImage img = gateImage;
-                    Graphics2D g2d = (Graphics2D) g.create();
-                    int x = j * GameDimensions.TILE_DISPLAY_SIZE;
-                    int y = i * GameDimensions.TILE_DISPLAY_SIZE;
-                    int ts = GameDimensions.TILE_DISPLAY_SIZE;
-                    if (gateEdge == 0) { // top
-                        g2d.drawImage(img, x, y, ts, ts, null);
-                    } else if (gateEdge == 1) { // bottom
-                        g2d.drawImage(img, x, y + ts, ts, -ts, null); // flip vertically
-                    } else if (gateEdge == 2) { // left
-                        g2d.rotate(-Math.PI / 2, x + ts / 2, y + ts / 2);
-                        g2d.drawImage(img, x, y, ts, ts, null);
-                    } else if (gateEdge == 3) { // right
-                        g2d.rotate(Math.PI / 2, x + ts / 2, y + ts / 2);
-                        g2d.drawImage(img, x, y, ts, ts, null);
-                    } else {
-                        g2d.drawImage(img, x, y, ts, ts, null);
+                } else if (tileId == -4) {
+                    BufferedImage img = BorderImageRotationGenerator.getInstance().getRotatedBorderImage(false, gateEdge);
+                    if (img != null) {
+                        int x = j * GameDimensions.TILE_DISPLAY_SIZE;
+                        int y = i * GameDimensions.TILE_DISPLAY_SIZE;
+                        int ts = GameDimensions.TILE_DISPLAY_SIZE;
+                        g.drawImage(img, x, y, ts, ts, null);
                     }
-                    g2d.dispose();
                 } else {
                     g.drawImage(tileManager.getSprite(tileId), j * GameDimensions.TILE_DISPLAY_SIZE, i * GameDimensions.TILE_DISPLAY_SIZE, null);
                 }
@@ -153,37 +101,6 @@ public class MapEditing extends GameScene implements SceneMethods{
         }
 
         drawMapGrid(g);
-    }
-
-    private BufferedImage getTransformedBorderImage(BufferedImage img, int i, int j, int rowCount, int colCount) {
-        if (i == 0 && j == 0) return rotateImage(img, -90);
-        if (i == 0 && j == colCount - 1) return rotateImage(img, 90);
-        if (i == rowCount - 1 && j == 0) return rotateImage(img, 90);
-        if (i == rowCount - 1 && j == colCount - 1) return rotateImage(img, -90);
-
-        if (i == 0) return img; // üst
-        if (i == rowCount - 1) return rotateImage(img, 180);
-        if (j == 0) return rotateImage(img, -90);
-        if (j == colCount - 1) return rotateImage(img, 90);
-
-        return img;
-    }
-
-    private BufferedImage rotateImage(BufferedImage original, double degrees) {
-        double rads = Math.toRadians(degrees);
-        double sin = Math.abs(Math.sin(rads));
-        double cos = Math.abs(Math.cos(rads));
-        int w = original.getWidth();
-        int h = original.getHeight();
-        int newWidth = (int) Math.floor(w * cos + h * sin);
-        int newHeight = (int) Math.floor(h * cos + w * sin);
-        BufferedImage rotated = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g2d = rotated.createGraphics();
-        g2d.translate((newWidth - w) / 2, (newHeight - h) / 2);
-        g2d.rotate(rads, w / 2, h / 2);
-        g2d.drawImage(original, 0, 0, null);
-        g2d.dispose();
-        return rotated;
     }
 
     private void drawMapGrid(Graphics g) {
@@ -990,20 +907,5 @@ public class MapEditing extends GameScene implements SceneMethods{
         System.out.println("Walls and gate added successfully");
     }
 
-    private boolean isCorner(int i, int j, int rowCount, int colCount) {
-        return (i == 0 || i == rowCount - 1) && (j == 0 || j == colCount - 1);
-    }
-
-    private int getCornerStraightRotation(int i, int j, int[][] level) {
-        boolean right = (j + 1 < level[0].length) && (level[i][j + 1] == -3);
-        boolean left = (j - 1 >= 0) && (level[i][j - 1] == -3);
-        boolean up = (i - 1 >= 0) && (level[i - 1][j] == -3);
-        boolean down = (i + 1 < level.length) && (level[i + 1][j] == -3);
-        if (right) return 0;
-        if (down) return 90;
-        if (left) return 180;
-        if (up) return 270;
-        return 0;
-    }
 
 }

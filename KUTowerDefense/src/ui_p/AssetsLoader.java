@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import javax.imageio.ImageIO;
 
 import helpMethods.LoadSave;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 
 public class AssetsLoader {
     // Singleton instance

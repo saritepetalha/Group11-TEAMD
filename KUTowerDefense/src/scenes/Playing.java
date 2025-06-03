@@ -19,6 +19,7 @@ import config.GameOptions;
 import constants.Constants;
 import constants.GameDimensions;
 import enemies.Enemy;
+import helpMethods.BorderImageRotationGenerator;
 import helpMethods.LoadSave;
 import helpMethods.OptionsIO;
 import main.Game;
@@ -36,10 +37,6 @@ import ui_p.LiveTree;
 import ui_p.PlayingUI;
 import ui_p.TowerSelectionUI;
 import objects.Warrior;
-import java.awt.Toolkit;
-import java.awt.Image;
-import java.awt.Cursor;
-import java.awt.Point;
 import javax.swing.JPanel;
 import java.awt.RenderingHints;
 
@@ -91,10 +88,6 @@ public class Playing extends GameScene implements SceneMethods {
     // Add field to store upgrade button bounds
     private Rectangle upgradeButtonBounds = null;
 
-    // Border images
-    private BufferedImage wallImage;
-    private BufferedImage gateImage;
-
     private int castleMaxHealth;
     private int castleCurrentHealth;
     private static final int CASTLE_HEALTH_BAR_WIDTH = 100;
@@ -124,7 +117,6 @@ public class Playing extends GameScene implements SceneMethods {
         this.tileManager = new TileManager();
         this.gameOptions = loadOptionsOrDefault();
         loadDefaultLevel();
-        loadBorderImages();
         initializeManagers();
         this.castleMaxHealth = calculateCastleMaxHealth();
         this.castleCurrentHealth = castleMaxHealth;
@@ -137,7 +129,6 @@ public class Playing extends GameScene implements SceneMethods {
         this.tileManager = new TileManager();
         this.gameOptions = loadOptionsOrDefault();
         loadDefaultLevel();
-        loadBorderImages();
         initializeManagers();
         this.castleMaxHealth = calculateCastleMaxHealth();
         this.castleCurrentHealth = castleMaxHealth;
@@ -150,7 +141,6 @@ public class Playing extends GameScene implements SceneMethods {
         this.tileManager = tileManager;
         this.gameOptions = loadOptionsOrDefault();
         loadDefaultLevel();
-        loadBorderImages();
         initializeManagers();
         this.castleMaxHealth = calculateCastleMaxHealth();
         this.castleCurrentHealth = castleMaxHealth;
@@ -168,7 +158,6 @@ public class Playing extends GameScene implements SceneMethods {
         this.originalOverlayData = deepCopy2DArray(customOverlay);
 
         this.gameOptions = loadOptionsOrDefault();
-        loadBorderImages();
         initializeManagers();
         this.castleMaxHealth = calculateCastleMaxHealth();
         this.castleCurrentHealth = castleMaxHealth;
@@ -219,16 +208,6 @@ public class Playing extends GameScene implements SceneMethods {
         towerSelectionUI = new TowerSelectionUI(this);
 
         updateUIResources();
-    }
-
-    private void loadBorderImages() {
-        wallImage = LoadSave.getImageFromPath("/Borders/wall.png");
-        gateImage = LoadSave.getImageFromPath("/Borders/gate.png");
-        if (wallImage != null && gateImage != null) {
-            System.out.println("Border images loaded successfully in Playing mode");
-        } else {
-            System.err.println("Error loading border images in Playing mode");
-        }
     }
 
     public void updateUIResources() {
@@ -387,7 +366,7 @@ public class Playing extends GameScene implements SceneMethods {
                 managers.SnowTransitionManager.SnowState.NORMAL;
 
         // Detect which edge contains the gate (endpoint) for border rendering
-        int gateEdge = detectGateEdge(rowCount, colCount);
+        int gateEdge = BorderImageRotationGenerator.getInstance().detectGateEdge(level);
 
         if (isSnowActive) {
             drawSnowLayeredMap(g, rowCount, colCount, gateEdge);
@@ -484,63 +463,22 @@ public class Playing extends GameScene implements SceneMethods {
     }
 
     /**
-     * Draws border tiles (walls and gates) with proper rotation
+     * Draws border tiles (walls and gates) with proper rotation using centralized AssetsLoader
      */
     private void drawBorderTile(Graphics g, int tileId, int j, int i, int gateEdge) {
         BufferedImage img = null;
-
-        if (tileId == -3 && wallImage != null) {
-            img = wallImage;
-        } else if (tileId == -4 && gateImage != null) {
-            img = gateImage;
+        if (tileId == -3) { // Wall
+            img = BorderImageRotationGenerator.getInstance().getRotatedBorderImage(true, gateEdge);
+        } else if (tileId == -4) { // Gate
+            img = BorderImageRotationGenerator.getInstance().getRotatedBorderImage(false, gateEdge);
         }
 
-        if (img == null) return;
-
-        Graphics2D g2d = (Graphics2D) g.create();
-        int x = j * GameDimensions.TILE_DISPLAY_SIZE;
-        int y = i * GameDimensions.TILE_DISPLAY_SIZE;
-        int ts = GameDimensions.TILE_DISPLAY_SIZE;
-
-        try {
-            switch (gateEdge) {
-                case 0: // top
-                    g2d.drawImage(img, x, y, ts, ts, null);
-                    break;
-                case 1: // bottom
-                    g2d.drawImage(img, x, y + ts, ts, -ts, null); // flip vertically
-                    break;
-                case 2: // left
-                    g2d.rotate(Math.PI / 2, x + ts / 2, y + ts / 2);
-                    g2d.drawImage(img, x, y, ts, ts, null);
-                    break;
-                case 3: // right
-                    g2d.rotate(Math.PI / 2, x + ts / 2, y + ts / 2);
-                    g2d.drawImage(img, x, y, ts, ts, null);
-                    break;
-                default:
-                    g2d.drawImage(img, x, y, ts, ts, null);
-                    break;
-            }
-        } finally {
-            g2d.dispose();
+        if (img != null) {
+            int x = j * GameDimensions.TILE_DISPLAY_SIZE;
+            int y = i * GameDimensions.TILE_DISPLAY_SIZE;
+            int ts = GameDimensions.TILE_DISPLAY_SIZE;
+            g.drawImage(img, x, y, ts, ts, null);
         }
-    }
-
-    /**
-     * Detects which edge contains the gate for proper border rendering
-     */
-    private int detectGateEdge(int rowCount, int colCount) {
-        // Check edges for gate (-4)
-        for (int i = 0; i < rowCount; i++) {
-            if (level[i][0] == -4) return 2; // left
-            if (level[i][colCount - 1] == -4) return 3; // right
-        }
-        for (int j = 0; j < colCount; j++) {
-            if (level[0][j] == -4) return 0; // top
-            if (level[rowCount - 1][j] == -4) return 1; // bottom
-        }
-        return -1; // no gate found
     }
 
     public void update() {
@@ -1594,22 +1532,20 @@ public class Playing extends GameScene implements SceneMethods {
             g.drawString(text, textX, textY);
         }
 
-        // Draw cute border with rounded corners
         if (isValidTile) {
-            g.setColor(new Color(34, 139, 34, 120)); // Forest green border
+            g.setColor(new Color(34, 139, 34, 120));
         } else {
-            g.setColor(new Color(220, 20, 60, 120)); // Crimson border
+            g.setColor(new Color(220, 20, 60, 120));
         }
-        g.setStroke(new BasicStroke(2f)); // Thicker, softer border
+        g.setStroke(new BasicStroke(2f));
         g.drawRoundRect(tileX + 2, tileY + 2, 60, 60, 12, 12);
 
-        // Add a subtle sparkle effect for valid placement
+
         if (isValidTile) {
             long time = System.currentTimeMillis();
             float sparkleAlpha = (float)(0.3f + 0.2f * Math.sin(time * 0.005f));
             g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, sparkleAlpha));
             g.setColor(new Color(255, 255, 255, 100));
-            // Draw small sparkles at corners
             g.fillOval(tileX + 8, tileY + 8, 4, 4);
             g.fillOval(tileX + 52, tileY + 8, 4, 4);
             g.fillOval(tileX + 8, tileY + 52, 4, 4);
@@ -1617,45 +1553,39 @@ public class Playing extends GameScene implements SceneMethods {
             g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
         }
 
-        // Reset anti-aliasing
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
     }
 
     private void drawGoldFactoryPlacementMessage(Graphics g) {
         String message = "✨ Click to place Gold Factory | Click button again to cancel ✨";
 
-        g.setColor(new Color(255, 215, 0)); // Gold color for text
+        g.setColor(new Color(255, 215, 0));
         g.setFont(new Font("Arial", Font.BOLD, 18));
         int stringWidth = g.getFontMetrics().stringWidth(message);
         int x = (GameDimensions.GAME_WIDTH - stringWidth) / 2;
         int y = 30; // Adjust Y position as needed
 
-        // Draw text background for better readability
         Graphics2D g2d = (Graphics2D) g;
-        g2d.setColor(new Color(0, 0, 0, 100)); // Semi-transparent black
+        g2d.setColor(new Color(0, 0, 0, 100));
         g2d.fillRoundRect(x - 10, y - 20, stringWidth + 20, 30, 10, 10);
 
-        g.setColor(new Color(255, 215, 0)); // Gold color for text
+        g.setColor(new Color(255, 215, 0));
         g.drawString(message, x, y);
 
-        // Enable anti-aliasing for smoother graphics
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        // Highlight valid placement tiles (grass tiles) with cute styling
         for (int r = 0; r < level.length; r++) {
             for (int c = 0; c < level[0].length; c++) {
                 if (level[r][c] == 5) { // Grass tile
                     int tilePixelX = c * GameDimensions.TILE_DISPLAY_SIZE;
                     int tilePixelY = r * GameDimensions.TILE_DISPLAY_SIZE;
 
-                    // Draw a soft green rounded background
-                    g2d.setColor(new Color(144, 238, 144, 40)); // Light green with transparency
+                    g2d.setColor(new Color(144, 238, 144, 40));
                     g2d.fillRoundRect(tilePixelX + 4, tilePixelY + 4,
                             GameDimensions.TILE_DISPLAY_SIZE - 8,
                             GameDimensions.TILE_DISPLAY_SIZE - 8, 8, 8);
 
-                    // Draw a soft green border
-                    g2d.setColor(new Color(34, 139, 34, 80)); // Forest green border
+                    g2d.setColor(new Color(34, 139, 34, 80));
                     g2d.setStroke(new BasicStroke(1.5f));
                     g2d.drawRoundRect(tilePixelX + 4, tilePixelY + 4,
                             GameDimensions.TILE_DISPLAY_SIZE - 8,
@@ -1664,7 +1594,6 @@ public class Playing extends GameScene implements SceneMethods {
             }
         }
 
-        // Reset anti-aliasing
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
     }
 
