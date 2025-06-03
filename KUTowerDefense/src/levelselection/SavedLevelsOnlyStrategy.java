@@ -45,12 +45,13 @@ public class SavedLevelsOnlyStrategy implements LevelSelectionStrategy {
             // Get the saves directory path using the same method as GameStateManager
             File projectRoot = findProjectRoot();
 
+            // Check if we have a demo subdirectory structure
             File demoDir = new File(projectRoot, "demo");
             File savesDir;
             if (demoDir.exists() && new File(demoDir, "pom.xml").exists()) {
-                savesDir = new File(demoDir, "src/main/resources/Saves");
+                savesDir = new File(demoDir, "resources/Saves");
             } else {
-                savesDir = new File(projectRoot, "src/main/resources/Saves");
+                savesDir = new File(projectRoot, "resources/Saves");
             }
 
             File saveFile = new File(savesDir, levelName + ".json");
@@ -72,8 +73,7 @@ public class SavedLevelsOnlyStrategy implements LevelSelectionStrategy {
         for (int i = 0; i < 5; i++) { // Limit search to 5 levels up
             // Check for Maven project root indicators
             if (new File(checkDir, "pom.xml").exists() ||
-                    new File(checkDir, "demo/pom.xml").exists() ||
-                    (new File(checkDir, "src/main/resources").exists() && new File(checkDir, "pom.xml").exists())) {
+                    new File(checkDir, "demo/pom.xml").exists()) {
                 return checkDir;
             }
 
