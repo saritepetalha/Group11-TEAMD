@@ -119,6 +119,9 @@ public class LoadGameMenu extends JPanel { // Changed to JPanel
         // Recreate the UI content
         createMainContent();
 
+        // Update pagination controls to reflect any changes in total pages
+        updatePaginationControls();
+
         // Refresh the display
         revalidate();
         repaint();

@@ -48,8 +48,7 @@ public class ThumbnailCache {
         for (int i = 0; i < 5; i++) { // Limit search to 5 levels up
             // Check for Maven project root indicators
             if (new File(checkDir, "pom.xml").exists() ||
-                    new File(checkDir, "demo/pom.xml").exists() ||
-                    (new File(checkDir, "src/main/resources").exists() && new File(checkDir, "pom.xml").exists())) {
+                    new File(checkDir, "demo/pom.xml").exists()) {
                 return checkDir;
             }
 
@@ -76,14 +75,14 @@ public class ThumbnailCache {
         // Check if we have a demo subdirectory structure
         File demoDir = new File(projectRoot, "demo");
         if (demoDir.exists() && new File(demoDir, "pom.xml").exists()) {
-            File defaultPath = new File(demoDir, "src/main/resources/" + CACHE_DIR_NAME);
+            File defaultPath = new File(demoDir, "resources/" + CACHE_DIR_NAME);
             try {
                 return defaultPath.getCanonicalPath();
             } catch (Exception e) {
                 return defaultPath.getAbsolutePath();
             }
         } else {
-            File defaultPath = new File(projectRoot, "src/main/resources/" + CACHE_DIR_NAME);
+            File defaultPath = new File(projectRoot, "resources/" + CACHE_DIR_NAME);
             try {
                 return defaultPath.getCanonicalPath();
             } catch (Exception e) {
