@@ -1419,4 +1419,11 @@ public class PlayingUI {
         }
     }
 
+    /**
+     * Sets the current difficulty for display in the options menu
+     * @param difficulty The difficulty level ("Easy", "Normal", "Hard", or "Custom")
+     */
+    public void setCurrentDifficulty(String difficulty) {
+        this.currentDifficulty = difficulty;
+    }
 }
