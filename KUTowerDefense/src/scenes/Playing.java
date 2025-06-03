@@ -638,7 +638,7 @@ public class Playing extends GameScene implements SceneMethods {
         projectileManager.draw(g);
         fireAnimationManager.draw(g);
         weatherManager.draw(g);
-      
+
         // Draw tower selection UI (range indicators, buttons, etc.)
         if (towerSelectionUI != null) {
             towerSelectionUI.draw(g);
@@ -657,7 +657,7 @@ public class Playing extends GameScene implements SceneMethods {
         if (!optionsMenuOpen) {
             drawCastleHealthBar(g);
         }
-      
+
         ultiManager.reverseShake(g);
 
         playingUI.draw(g);

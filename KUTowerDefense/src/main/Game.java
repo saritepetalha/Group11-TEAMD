@@ -87,8 +87,8 @@ public class Game extends JFrame implements Runnable{
 
 		AudioManager audioManager = AudioManager.getInstance();
 		boolean isMenuRelatedToggle = (
-				(previousState == GameStates.MENU && (newState == GameStates.OPTIONS || newState == GameStates.EDIT || newState == GameStates.LOAD_GAME)) ||
-						((previousState == GameStates.OPTIONS || previousState == GameStates.EDIT || previousState == GameStates.LOAD_GAME) && newState == GameStates.MENU)
+				(previousState == GameStates.MENU && (newState == GameStates.OPTIONS || newState == GameStates.EDIT || newState == GameStates.LOAD_GAME || newState == GameStates.NEW_GAME_LEVEL_SELECT)) ||
+						((previousState == GameStates.OPTIONS || previousState == GameStates.EDIT || previousState == GameStates.LOAD_GAME || previousState == GameStates.NEW_GAME_LEVEL_SELECT) && newState == GameStates.MENU)
 		);
 
 		// Reload game options in Playing when returning from Options to Menu
@@ -113,7 +113,6 @@ public class Game extends JFrame implements Runnable{
 					audioManager.playRandomGameMusic();
 					break;
 				case NEW_GAME_LEVEL_SELECT:
-					audioManager.playMusic("lonelyhood");
 					if (newGameLevelSelection != null) {
 						newGameLevelSelection.refreshLevelList();
 					}
@@ -330,6 +329,38 @@ public class Game extends JFrame implements Runnable{
 		this.playing = new Playing(this, tileManager, levelData, overlayData);
 		this.playing.setCurrentMapName(mapName);
 		this.playing.loadGameState();
+	}
+
+	public void startPlayingWithDifficulty(int[][] levelData, int[][] overlayData, String mapName, String difficulty) {
+		// Load the appropriate difficulty configuration
+		config.GameOptions gameOptions = null;
+		try {
+			if ("Easy".equals(difficulty)) {
+				gameOptions = helpMethods.OptionsIO.load("easy");
+			} else if ("Normal".equals(difficulty)) {
+				gameOptions = helpMethods.OptionsIO.load("normal");
+			} else if ("Hard".equals(difficulty)) {
+				gameOptions = helpMethods.OptionsIO.load("hard");
+			} else if ("Custom".equals(difficulty)) {
+				// Use current options.json (custom settings from main menu)
+				gameOptions = helpMethods.OptionsIO.load();
+			}
+
+			if (gameOptions != null) {
+				// Save the difficulty options to options.json so Playing can use them
+				helpMethods.OptionsIO.save(gameOptions);
+			}
+		} catch (Exception e) {
+			System.err.println("Error loading difficulty configuration: " + e.getMessage());
+			// Fallback to default if loading fails
+		}
+
+		this.playing = new Playing(this, tileManager, levelData, overlayData);
+		this.playing.setCurrentMapName(mapName);
+		// Store the difficulty for later use by PlayingUI
+		if (this.playing.getPlayingUI() != null) {
+			this.playing.getPlayingUI().setCurrentDifficulty(difficulty);
+		}
 	}
 
 	public void resetGameWithSameLevel() {

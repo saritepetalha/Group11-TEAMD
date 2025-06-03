@@ -1,7 +1,10 @@
 package scenes;
 
+import java.awt.AlphaComposite;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Composite;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -64,6 +67,14 @@ public class LevelSelectionScene extends JPanel {
     private JButton nextPageButton;
     private JPanel mainContentPanel;
     private JPanel pageIndicatorPanel;
+    private JPanel bottomPanel;
+
+    // Difficulty Selection Overlay
+    private boolean difficultyOverlayVisible = false;
+    private String selectedLevelName;
+    private int[][] selectedLevelData;
+    private int[][] selectedOverlayData;
+    private JPanel difficultyOverlay;
 
     private final Color PAGE_BUTTON_BG_COLOR = new Color(70, 130, 200);
     private final Color PAGE_BUTTON_HOVER_COLOR = new Color(90, 150, 220);
@@ -200,7 +211,7 @@ public class LevelSelectionScene extends JPanel {
         previewButton.setPreferredSize(new Dimension(PREVIEW_WIDTH, PREVIEW_HEIGHT));
         previewButton.setCursor(AssetsLoader.getInstance().customHandCursor);
 
-        previewButton.addActionListener(e -> playLevel(levelName, levelData));
+        previewButton.addActionListener(e -> showDifficultyOverlay(levelName, levelData));
 
         int buttonSize = 28;
         int spacing = 8;
@@ -228,7 +239,7 @@ public class LevelSelectionScene extends JPanel {
                     @Override
                     public void mouseClicked(MouseEvent e) {
                         if (playButton.getBounds().contains(e.getPoint())) {
-                            playLevel(levelName, levelData);
+                            showDifficultyOverlay(levelName, levelData);
                         } else if (editButton.getBounds().contains(e.getPoint())) {
                             editLevel(levelName, levelData);
                         }
@@ -332,7 +343,7 @@ public class LevelSelectionScene extends JPanel {
     }
 
     private void createNavigationButtons() {
-        JPanel bottomPanel = new JPanel(new BorderLayout());
+        bottomPanel = new JPanel(new BorderLayout());
         bottomPanel.setOpaque(false);
         bottomPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 35, 5));
 
@@ -620,6 +631,299 @@ public class LevelSelectionScene extends JPanel {
         return thumbnail;
     }
 
+    private void showDifficultyOverlay(String levelName, int[][] levelData) {
+        this.selectedLevelName = levelName;
+        this.selectedLevelData = levelData;
+
+        // Prepare overlay data
+        int[][] overlayData = LoadSave.loadOverlay(levelName);
+        if (overlayData == null) {
+            overlayData = new int[levelData.length][levelData[0].length];
+            if (levelData.length > 4 && levelData[0].length > 15) {
+                overlayData[4][0] = 1; // Start point
+                overlayData[4][15] = 2; // End point
+            }
+        }
+        this.selectedOverlayData = overlayData;
+
+        // Hide main content and bottom panel
+        if (mainContentPanel != null) {
+            mainContentPanel.setVisible(false);
+        }
+        if (this.bottomPanel != null) {
+            this.bottomPanel.setVisible(false);
+        }
+
+        createDifficultyOverlay();
+        difficultyOverlayVisible = true;
+        difficultyOverlay.setVisible(true);
+
+        setComponentZOrder(difficultyOverlay, 0);
+        revalidate();
+        repaint();
+    }
+
+    private void createDifficultyOverlay() {
+        if (difficultyOverlay != null) {
+            remove(difficultyOverlay);
+        }
+
+        difficultyOverlay = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setColor(new Color(0, 0, 0, 150));
+                g2d.fillRect(0, 0, getWidth(), getHeight());
+            }
+        };
+        difficultyOverlay.setLayout(new GridBagLayout());
+        difficultyOverlay.setOpaque(false);
+
+        difficultyOverlay.setBounds(0, 0,
+                GameDimensions.MAIN_MENU_SCREEN_WIDTH,
+                GameDimensions.MAIN_MENU_SCREEN_HEIGHT);
+
+        difficultyOverlay.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                // If the event was consumed by a child component (like difficultyPanel or its buttons),
+                // it means the click was handled by that child. In that case, we do nothing here.
+                if (e.isConsumed()) {
+                    return;
+                }
+                // If the event was not consumed, it implies the click was on the
+                // background of difficultyOverlay itself (the semi-transparent area).
+                hideDifficultyOverlay();
+            }
+        });
+
+        JPanel difficultyPanel = new JPanel(new GridBagLayout());
+        difficultyPanel.setBackground(new Color(40, 40, 40, 240));
+        difficultyPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(100, 100, 100), 3),
+                BorderFactory.createEmptyBorder(20, 20, 20, 20)
+        ));
+        difficultyPanel.setPreferredSize(new Dimension(280, 420));
+        difficultyPanel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                e.consume();
+            }
+        });
+
+        GridBagConstraints gbc = new GridBagConstraints();
+
+        JLabel titleLabel = new JLabel("Select Difficulty");
+        titleLabel.setFont(medodicaFontMedium.deriveFont(Font.BOLD, 18f));
+        titleLabel.setForeground(Color.WHITE);
+        titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
+
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 1;
+        gbc.insets = new Insets(0, 0, 15, 0);
+        gbc.anchor = GridBagConstraints.CENTER;
+        difficultyPanel.add(titleLabel, gbc);
+
+        BufferedImage easyImg = LoadSave.getImageFromPath("/UI/Easy.png");
+        BufferedImage normalImg = LoadSave.getImageFromPath("/UI/Normal.png");
+        BufferedImage hardImg = LoadSave.getImageFromPath("/UI/Hard.png");
+        BufferedImage customImg = LoadSave.getImageFromPath("/UI/Custom.png");
+
+        int buttonPanelWidth = 220;
+        int buttonPanelHeight = 60;
+        int spacing = 8;
+
+        JPanel easyPanel = createImageDifficultyButton(easyImg, "Easy", buttonPanelWidth, buttonPanelHeight);
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.insets = new Insets(spacing, 0, spacing, 0);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        difficultyPanel.add(easyPanel, gbc);
+
+        JPanel normalPanel = createImageDifficultyButton(normalImg, "Normal", buttonPanelWidth, buttonPanelHeight);
+        gbc.gridy = 2;
+        difficultyPanel.add(normalPanel, gbc);
+
+        JPanel hardPanel = createImageDifficultyButton(hardImg, "Hard", buttonPanelWidth, buttonPanelHeight);
+        gbc.gridy = 3;
+        difficultyPanel.add(hardPanel, gbc);
+
+        JPanel customPanel = createImageDifficultyButton(customImg, "Custom", buttonPanelWidth, buttonPanelHeight);
+        gbc.gridy = 4;
+        difficultyPanel.add(customPanel, gbc);
+
+        JLabel closeHintLabel = new JLabel("Click outside this panel to close");
+        closeHintLabel.setFont(medodicaFontSmall.deriveFont(14f));
+        closeHintLabel.setForeground(new Color(200, 200, 200));
+        closeHintLabel.setHorizontalAlignment(SwingConstants.CENTER);
+
+        gbc.gridy = 5;
+        gbc.insets = new Insets(15, 0, 0, 0);
+        difficultyPanel.add(closeHintLabel, gbc);
+
+        GridBagConstraints overlayGbc = new GridBagConstraints();
+        overlayGbc.anchor = GridBagConstraints.CENTER;
+        difficultyOverlay.add(difficultyPanel, overlayGbc);
+
+        add(difficultyOverlay);
+    }
+
+    private JPanel createImageDifficultyButton(BufferedImage buttonImage, String difficulty, int panelWidth, int panelHeight) {
+        JPanel panel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+
+                boolean isHovered = Boolean.TRUE.equals(getClientProperty("isHovered"));
+                boolean isPressed = Boolean.TRUE.equals(getClientProperty("isPressed"));
+
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                int targetIconHeight = panelHeight - 16;
+                int iconX, iconY, scaledIconWidth, scaledIconHeight;
+
+                if (buttonImage != null) {
+                    int originalIconWidth = buttonImage.getWidth();
+                    int originalIconHeight = buttonImage.getHeight();
+                    double aspectRatio = (double) originalIconWidth / originalIconHeight;
+
+                    scaledIconHeight = targetIconHeight;
+                    scaledIconWidth = (int) (scaledIconHeight * aspectRatio);
+
+                    if (scaledIconWidth > panelWidth - 16) {
+                        scaledIconWidth = panelWidth - 16;
+                        scaledIconHeight = (int) (scaledIconWidth / aspectRatio);
+                    }
+
+                    iconX = (panelWidth - scaledIconWidth) / 2;
+                    iconY = (panelHeight - scaledIconHeight) / 2;
+                    Composite originalComposite = g2d.getComposite();
+
+                    if (isPressed) {
+                        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
+                        g2d.setColor(new Color(0,0,0,50));
+                        g2d.fillRoundRect(0, 0, panelWidth, panelHeight, 8,8);
+                        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.9f));
+                        g2d.drawImage(buttonImage, iconX + 1, iconY + 1, scaledIconWidth - 2, scaledIconHeight - 2, null);
+                    } else if (isHovered) {
+                        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.2f));
+                        g2d.setColor(Color.WHITE);
+                        g2d.fillRoundRect(0, 0, panelWidth, panelHeight, 12, 12);
+                        g2d.setComposite(originalComposite);
+                        g2d.drawImage(buttonImage, iconX, iconY, scaledIconWidth, scaledIconHeight, null);
+                    } else {
+                        g2d.drawImage(buttonImage, iconX, iconY, scaledIconWidth, scaledIconHeight, null);
+                    }
+                    g2d.setComposite(originalComposite);
+
+                } else {
+                    g.setColor(new Color(80, 80, 80));
+                    g.fillRoundRect(2, 2, panelWidth - 4, panelHeight - 4, 8, 8);
+                    g.setColor(Color.WHITE);
+                    g.setFont(medodicaFontSmall.deriveFont(Font.BOLD, 14f));
+                    FontMetrics fm = g.getFontMetrics();
+                    String text = difficulty.toUpperCase();
+                    int textWidth = fm.stringWidth(text);
+                    int textX = (panelWidth - textWidth) / 2;
+                    int textY = (panelHeight + fm.getAscent()) / 2 - fm.getDescent()/2;
+                    g.drawString(text, textX, textY);
+
+                    g.setColor(new Color(120,120,120));
+                    ((Graphics2D) g).setStroke(new java.awt.BasicStroke(1));
+                    g.drawRoundRect(2, 2, panelWidth - 5, panelHeight - 5, 8, 8);
+                }
+            }
+
+            @Override
+            public Dimension getPreferredSize() {
+                return new Dimension(panelWidth, panelHeight);
+            }
+
+            @Override
+            public Dimension getMinimumSize() {
+                return new Dimension(panelWidth, panelHeight);
+            }
+
+            @Override
+            public Dimension getMaximumSize() {
+                return new Dimension(panelWidth, panelHeight);
+            }
+        };
+
+        panel.setOpaque(false);
+        panel.setPreferredSize(new Dimension(panelWidth, panelHeight));
+        panel.setMinimumSize(new Dimension(panelWidth, panelHeight));
+        panel.setMaximumSize(new Dimension(panelWidth, panelHeight));
+        panel.setCursor(AssetsLoader.getInstance().customHandCursor);
+
+
+        panel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                panel.putClientProperty("isHovered", true);
+                panel.setCursor(AssetsLoader.getInstance().customHandCursor);
+                panel.repaint();
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                panel.putClientProperty("isHovered", false);
+                panel.putClientProperty("isPressed", false);
+                panel.setCursor(AssetsLoader.getInstance().customNormalCursor);
+                panel.repaint();
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                panel.putClientProperty("isPressed", true);
+                panel.repaint();
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                panel.putClientProperty("isPressed", false);
+                panel.repaint();
+            }
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                selectDifficultyAndPlay(difficulty);
+            }
+        });
+
+        return panel;
+    }
+
+    private void selectDifficultyAndPlay(String difficulty) {
+        hideDifficultyOverlay();
+
+        game.startPlayingWithDifficulty(selectedLevelData, selectedOverlayData, selectedLevelName, difficulty);
+        game.changeGameState(GameStates.PLAYING);
+    }
+
+    private void hideDifficultyOverlay() {
+        if (difficultyOverlay != null) {
+            difficultyOverlay.setVisible(false);
+            remove(difficultyOverlay);
+            difficultyOverlay = null;
+        }
+        difficultyOverlayVisible = false;
+
+        if (mainContentPanel != null) {
+            mainContentPanel.setVisible(true);
+        }
+        if (this.bottomPanel != null) {
+            this.bottomPanel.setVisible(true);
+        }
+
+        revalidate();
+        repaint();
+    }
+
     private void playLevel(String levelName, int[][] levelData) {
         System.out.println("Playing level: " + levelName);
 
@@ -632,7 +936,7 @@ public class LevelSelectionScene extends JPanel {
             }
         }
 
-        game.startPlayingWithLevel(levelData, overlayData, levelName);
+        game.startPlayingWithDifficulty(levelData, overlayData, levelName, "Normal");
         game.changeGameState(GameStates.PLAYING);
     }
 
@@ -657,7 +961,7 @@ public class LevelSelectionScene extends JPanel {
         if (backgroundImg != null) {
             g.drawImage(backgroundImg, 0, 0, getWidth(), getHeight(), this);
         } else {
-            g.setColor(Color.BLACK); // Fallback
+            g.setColor(Color.BLACK);
             g.fillRect(0, 0, getWidth(), getHeight());
         }
     }
