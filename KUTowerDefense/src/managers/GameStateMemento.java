@@ -1,17 +1,26 @@
 package managers;
 
 import java.util.List;
+
 import config.GameOptions;
 
 public class GameStateMemento {
     private int gold;
     private int health;
     private int shield;
+    private int totalGoldEarned;
     private int waveIndex;
     private int groupIndex;
     private List<TowerState> towerStates;
     private List<EnemyState> enemyStates;
     private GameOptions gameOptions;
+
+    // Round checkpoint values
+    private int roundStartGold;
+    private int roundStartHealth;
+    private int roundStartShield;
+    private int roundStartTotalGoldEarned;
+    private boolean checkpointExists;
 
     /** Gson needs this no-args constructor */
     public GameStateMemento() {
@@ -21,6 +30,7 @@ public class GameStateMemento {
     public GameStateMemento(int gold,
                             int health,
                             int shield,
+                            int totalGoldEarned,
                             int waveIndex,
                             int groupIndex,
                             List<TowerState> towerStates,
@@ -29,11 +39,43 @@ public class GameStateMemento {
         this.gold = gold;
         this.health = health;
         this.shield = shield;
+        this.totalGoldEarned = totalGoldEarned;
         this.waveIndex = waveIndex;
         this.groupIndex = groupIndex;
         this.towerStates = towerStates;
         this.enemyStates = enemyStates;
         this.gameOptions = gameOptions;
+    }
+
+    // New constructor that includes checkpoint values
+    public GameStateMemento(int gold,
+                            int health,
+                            int shield,
+                            int totalGoldEarned,
+                            int waveIndex,
+                            int groupIndex,
+                            List<TowerState> towerStates,
+                            List<EnemyState> enemyStates,
+                            GameOptions gameOptions,
+                            int roundStartGold,
+                            int roundStartHealth,
+                            int roundStartShield,
+                            int roundStartTotalGoldEarned,
+                            boolean checkpointExists) {
+        this.gold = gold;
+        this.health = health;
+        this.shield = shield;
+        this.totalGoldEarned = totalGoldEarned;
+        this.waveIndex = waveIndex;
+        this.groupIndex = groupIndex;
+        this.towerStates = towerStates;
+        this.enemyStates = enemyStates;
+        this.gameOptions = gameOptions;
+        this.roundStartGold = roundStartGold;
+        this.roundStartHealth = roundStartHealth;
+        this.roundStartShield = roundStartShield;
+        this.roundStartTotalGoldEarned = roundStartTotalGoldEarned;
+        this.checkpointExists = checkpointExists;
     }
 
     public int getGold() {
@@ -46,6 +88,10 @@ public class GameStateMemento {
 
     public int getShield() {
         return shield;
+    }
+
+    public int getTotalGoldEarned() {
+        return totalGoldEarned;
     }
 
     public int getWaveIndex() {
@@ -67,6 +113,13 @@ public class GameStateMemento {
     public GameOptions getGameOptions() {
         return gameOptions;
     }
+
+    // Checkpoint getters
+    public int getRoundStartGold() { return roundStartGold; }
+    public int getRoundStartHealth() { return roundStartHealth; }
+    public int getRoundStartShield() { return roundStartShield; }
+    public int getRoundStartTotalGoldEarned() { return roundStartTotalGoldEarned; }
+    public boolean hasCheckpoint() { return checkpointExists; }
 
     public static class TowerState {
         private int x;

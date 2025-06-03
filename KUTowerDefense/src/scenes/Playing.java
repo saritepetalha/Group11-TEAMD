@@ -3,17 +3,20 @@ package scenes;
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Composite;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
-import java.awt.Composite;
+import java.awt.RenderingHints;
 import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import javax.swing.JPanel;
 
 import config.GameOptions;
 import constants.Constants;
@@ -22,7 +25,20 @@ import enemies.Enemy;
 import helpMethods.LoadSave;
 import helpMethods.OptionsIO;
 import main.Game;
-import managers.*;
+import managers.AudioManager;
+import managers.EnemyManager;
+import managers.FireAnimationManager;
+import managers.GameStateManager;
+import managers.GameStateMemento;
+import managers.GoldBagManager;
+import managers.PlayerManager;
+import managers.ProjectileManager;
+import managers.TileManager;
+import managers.TowerManager;
+import managers.TreeInteractionManager;
+import managers.UltiManager;
+import managers.WaveManager;
+import managers.WeatherManager;
 import objects.ArcherTower;
 import objects.ArtilleryTower;
 import objects.MageTower;
@@ -30,18 +46,12 @@ import objects.Tower;
 import objects.UpgradedArcherTower;
 import objects.UpgradedArtilleryTower;
 import objects.UpgradedMageTower;
+import objects.Warrior;
 import stats.GameStatsRecord;
 import ui_p.DeadTree;
 import ui_p.LiveTree;
 import ui_p.PlayingUI;
 import ui_p.TowerSelectionUI;
-import objects.Warrior;
-import java.awt.Toolkit;
-import java.awt.Image;
-import java.awt.Cursor;
-import java.awt.Point;
-import javax.swing.JPanel;
-import java.awt.RenderingHints;
 
 public class Playing extends GameScene implements SceneMethods {
     private int[][] level;
@@ -638,7 +648,7 @@ public class Playing extends GameScene implements SceneMethods {
         projectileManager.draw(g);
         fireAnimationManager.draw(g);
         weatherManager.draw(g);
-      
+
         // Draw tower selection UI (range indicators, buttons, etc.)
         if (towerSelectionUI != null) {
             towerSelectionUI.draw(g);
@@ -657,7 +667,7 @@ public class Playing extends GameScene implements SceneMethods {
         if (!optionsMenuOpen) {
             drawCastleHealthBar(g);
         }
-      
+
         ultiManager.reverseShake(g);
 
         playingUI.draw(g);
@@ -1272,6 +1282,12 @@ public class Playing extends GameScene implements SceneMethods {
         // 9. Update UI to reflect the reset state
         updateUIResources();
 
+        // 10. Create initial checkpoint for the current state
+        if (playerManager != null) {
+            playerManager.createCheckpoint();
+            System.out.println("Initial checkpoint created during game reset");
+        }
+
         // Warm-up render on first reset to prevent initial flash
         if (isFirstReset) {
             System.out.println("Performing first-time render warm-up for Playing scene...");
@@ -1375,8 +1391,24 @@ public class Playing extends GameScene implements SceneMethods {
         totalDamage += damage;
     }
 
+    /**
+     * Creates a checkpoint of the current player state.
+     * Called by WaveManager when a new wave begins.
+     */
+    public void createPlayerCheckpoint() {
+        if (playerManager != null) {
+            playerManager.createCheckpoint();
+            System.out.println("Checkpoint created for wave " + (waveManager.getWaveIndex() + 1));
+        }
+    }
+
     // Save game state
     public void saveGameState() {
+        // Create checkpoint if it doesn't exist yet
+        if (!playerManager.hasCheckpoint()) {
+            playerManager.createCheckpoint();
+        }
+
         // Create lists to store tower states
         List<GameStateMemento.TowerState> towerStates = new ArrayList<>();
 
@@ -1390,16 +1422,22 @@ public class Playing extends GameScene implements SceneMethods {
             ));
         }
 
-        // Create memento with all game state including GameOptions, but without enemy states
+        // Create memento with all game state including totalGoldEarned and checkpoint values
         GameStateMemento memento = new GameStateMemento(
                 playerManager.getGold(),
                 playerManager.getHealth(),
                 playerManager.getShield(),
+                playerManager.getTotalGoldEarned(), // Now included in the main save data
                 waveManager.getWaveIndex(),
                 waveManager.getCurrentGroupIndex(),
                 towerStates,
                 new ArrayList<>(), // Empty list for enemy states
-                gameOptions
+                gameOptions,
+                playerManager.getRoundStartGold(),
+                playerManager.getRoundStartHealth(),
+                playerManager.getRoundStartShield(),
+                playerManager.getRoundStartTotalGoldEarned(),
+                playerManager.hasCheckpoint()
         );
 
         // Save the memento using the current map name
@@ -1417,10 +1455,35 @@ public class Playing extends GameScene implements SceneMethods {
         // Restore game options first
         this.gameOptions = memento.getGameOptions();
 
-        // Restore player state
-        playerManager.setGold(memento.getGold());
-        playerManager.setHealth(memento.getHealth());
-        playerManager.setShield(memento.getShield());
+        // Restore checkpoint values if they exist
+        if (memento.hasCheckpoint()) {
+            playerManager.setCheckpoint(
+                    memento.getRoundStartGold(),
+                    memento.getRoundStartHealth(),
+                    memento.getRoundStartShield(),
+                    memento.getRoundStartTotalGoldEarned()
+            );
+
+            // Restore player state to checkpoint values (round start state)
+            playerManager.restoreFromCheckpoint();
+            System.out.println("Loaded game with checkpoint - restored to round start values");
+        } else {
+            // Fallback: restore saved player state directly
+            playerManager.setGold(memento.getGold());
+            playerManager.setHealth(memento.getHealth());
+            playerManager.setShield(memento.getShield());
+
+            // Handle totalGoldEarned for both old and new save files
+            int totalGoldEarned = memento.getTotalGoldEarned();
+            if (totalGoldEarned <= 0) {
+                // This is likely an old save file without totalGoldEarned
+                // Use the current gold as a reasonable fallback
+                totalGoldEarned = memento.getGold();
+                System.out.println("Old save file detected - using current gold (" + totalGoldEarned + ") as totalGoldEarned");
+            }
+            playerManager.setTotalGoldEarned(totalGoldEarned);
+            System.out.println("Loaded game without checkpoint - restored saved values directly");
+        }
 
         // Restore wave state
         waveManager.setWaveIndex(memento.getWaveIndex());
@@ -1466,6 +1529,14 @@ public class Playing extends GameScene implements SceneMethods {
 
         // Update UI with restored player state
         updateUIResources();
+
+        System.out.println("Game state loaded successfully for map: " + currentMapName);
+        System.out.println("  Player - Gold: " + playerManager.getGold() +
+                ", Health: " + playerManager.getHealth() +
+                ", Shield: " + playerManager.getShield() +
+                ", TotalGoldEarned: " + playerManager.getTotalGoldEarned());
+        System.out.println("  Wave: " + (waveManager.getWaveIndex() + 1) +
+                ", Group: " + (waveManager.getCurrentGroupIndex() + 1));
     }
 
     public void setCurrentMapName(String mapName) {

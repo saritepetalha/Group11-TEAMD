@@ -130,6 +130,10 @@ public class WaveManager {
     private void prepareNextWave() {
         if (waveIndex < waves.size()) {
             groupIndex = 0;
+
+            // Create checkpoint for player state at the beginning of each wave
+            playing.createPlayerCheckpoint();
+
             prepareNextGroup();
             waitingForNextWave = false;
             System.out.println("Preparing Wave: " + (waveIndex + 1));
