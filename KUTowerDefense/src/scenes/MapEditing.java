@@ -34,6 +34,13 @@ public class MapEditing extends GameScene implements SceneMethods{
 
     private Tower selectedTower;
 
+    // Popup message fields
+    private String popupMessage = "";
+    private int popupX = 0;
+    private int popupY = 0;
+    private long popupStartTime = 0;
+    private static final long POPUP_DURATION = 2000; // 2 seconds in milliseconds
+
     public MapEditing(Game game, Window owner) {
         super(game);
         this.owner = owner;
@@ -133,24 +140,6 @@ public class MapEditing extends GameScene implements SceneMethods{
         g2d.setStroke(originalStroke);
     }
 
-    // Helper method to draw silhouette of an image
-    private void drawSilhouette(Graphics g, BufferedImage image, int x, int y, int width, int height) {
-        Graphics2D g2d = (Graphics2D) g.create();
-
-        // Create silhouette effect
-        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.6f));
-
-        // Draw a semi-transparent blue silhouette
-        g2d.setColor(new Color(100, 100, 255, 150));
-        g2d.fillRect(x, y, width, height);
-
-        // Draw the image with a blue tint
-        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.4f));
-        g2d.drawImage(image, x, y, width, height, null);
-
-        g2d.dispose();
-    }
-
     // helper method to draw overlay images with transparency
     private void drawOverlayImage(Graphics g, BufferedImage image, int tileX, int tileY) {
         Graphics2D g2d = (Graphics2D) g;
@@ -177,6 +166,7 @@ public class MapEditing extends GameScene implements SceneMethods{
         drawMap(g);
         editTiles.draw(g);
         drawSelectedTile(g);
+        drawPopupMessage(g);
     }
 
     private void drawSelectedTile(Graphics g) {
@@ -305,6 +295,9 @@ public class MapEditing extends GameScene implements SceneMethods{
     }
 
     public void modifyTile(int x, int y) {
+        int originalX = x; // Store original coordinates for popup
+        int originalY = y;
+
         x /= 64;
         y /= 64;
 
@@ -315,6 +308,7 @@ public class MapEditing extends GameScene implements SceneMethods{
         // for start/end points, check if we're on a road tile
         if (selectedTile.getId() == -1) { // Start point
             if (!isRoadTile(level[y][x])) {
+                showPopupMessage("Start point must be placed on a road!", originalX, originalY);
                 System.out.println("Start point must be placed on a road!");
                 return;
             }
@@ -334,6 +328,7 @@ public class MapEditing extends GameScene implements SceneMethods{
 
         } else if (selectedTile.getId() == -2) { // End point
             if (!isRoadTile(level[y][x])) {
+                showPopupMessage("End point must be placed on a road!", originalX, originalY);
                 System.out.println("End point must be placed on a road!");
                 return;
             }
@@ -603,6 +598,11 @@ public class MapEditing extends GameScene implements SceneMethods{
      */
     private void changeTile(int x, int y) {
         if (selectedTile != null) {
+            // Prevent dragging for pathpoints (start and end points)
+            if (selectedTile.getId() == -1 || selectedTile.getId() == -2) {
+                return; // No dragging allowed for pathpoints
+            }
+
             int tileX = x / GameDimensions.TILE_DISPLAY_SIZE;
             int tileY = y / GameDimensions.TILE_DISPLAY_SIZE;
 
@@ -907,5 +907,133 @@ public class MapEditing extends GameScene implements SceneMethods{
         System.out.println("Walls and gate added successfully");
     }
 
+    private void drawPopupMessage(Graphics g) {
+        if (!popupMessage.isEmpty()) {
+            long currentTime = System.currentTimeMillis();
+            long elapsedTime = currentTime - popupStartTime;
+
+            if (elapsedTime > POPUP_DURATION) {
+                popupMessage = "";
+            } else {
+                Graphics2D g2d = (Graphics2D) g;
+
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+
+                Font originalFont = g2d.getFont();
+                Font popupFont = new Font(originalFont.getName(), Font.BOLD, 12);
+                g2d.setFont(popupFont);
+
+                FontMetrics fm = g2d.getFontMetrics();
+
+                int maxTextWidth = 160;
+                int padding = 12;
+                int iconSize = 14;
+                int iconPadding = 6;
+
+                java.util.List<String> lines = new java.util.ArrayList<>();
+
+                // Hardcode specific line breaks for end point message
+                if (popupMessage.equals("End point must be placed on a road!")) {
+                    lines.add("End point must be");
+                    lines.add("placed on a road!");
+                } else if (popupMessage.equals("Start point must be placed on a road!")) {
+                    lines.add("Start point must be");
+                    lines.add("placed on a road!");
+                } else {
+                    String[] words = popupMessage.split(" ");
+                    String currentLine = "";
+
+                    for (String word : words) {
+                        String testLine = currentLine.isEmpty() ? word : currentLine + " " + word;
+                        if (fm.stringWidth(testLine) <= maxTextWidth) {
+                            currentLine = testLine;
+                        } else {
+                            if (!currentLine.isEmpty()) {
+                                lines.add(currentLine);
+                            }
+                            currentLine = word;
+                        }
+                    }
+                    if (!currentLine.isEmpty()) {
+                        lines.add(currentLine);
+                    }
+                }
+
+                int textHeight = fm.getHeight();
+                int totalTextHeight = lines.size() * textHeight;
+                int maxLineWidth = 0;
+                for (String line : lines) {
+                    maxLineWidth = Math.max(maxLineWidth, fm.stringWidth(line));
+                }
+
+                int textAreaWidth = maxLineWidth + iconSize + iconPadding;
+                int boxWidth = textAreaWidth + 2 * padding;
+                int boxHeight = Math.max(totalTextHeight, iconSize) + 2 * padding;
+
+                int x = Math.min(popupX, GameDimensions.GAME_WIDTH - boxWidth);
+                int y = Math.max(popupY - boxHeight, 0);
+
+                float fadeAlpha = 1.0f;
+                if (elapsedTime > POPUP_DURATION - 500) {
+                    fadeAlpha = (POPUP_DURATION - elapsedTime) / 500.0f;
+                }
+
+                int shadowOffset = 2;
+                g2d.setColor(new Color(0, 0, 0, (int)(30 * fadeAlpha)));
+                g2d.fillRoundRect(x + shadowOffset, y + shadowOffset, boxWidth, boxHeight, 8, 8);
+
+                Color backgroundColor = new Color(245, 240, 220, (int)(180 * fadeAlpha));
+                g2d.setColor(backgroundColor);
+                g2d.fillRoundRect(x, y, boxWidth, boxHeight, 8, 8);
+
+                Color innerHighlight = new Color(255, 250, 235, (int)(60 * fadeAlpha));
+                g2d.setColor(innerHighlight);
+                g2d.fillRoundRect(x + 1, y + 1, boxWidth - 2, boxHeight/4, 6, 6);
+
+                Color borderColor = new Color(139, 125, 82, (int)(160 * fadeAlpha));
+                g2d.setColor(borderColor);
+                g2d.setStroke(new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                g2d.drawRoundRect(x, y, boxWidth, boxHeight, 8, 8);
+                int iconX = x + padding;
+                int iconY = y + padding + (boxHeight - 2 * padding - iconSize) / 2;
+                g2d.setColor(new Color(255, 99, 71, (int)(160 * fadeAlpha)));
+                g2d.fillOval(iconX, iconY, iconSize, iconSize);
+                g2d.setColor(new Color(255, 255, 255, (int)(255 * fadeAlpha)));
+                Font iconFont = new Font(originalFont.getName(), Font.BOLD, 10);
+                g2d.setFont(iconFont);
+                FontMetrics iconFm = g2d.getFontMetrics();
+
+                String exclamation = "!";
+                int exclamationX = iconX + (iconSize - iconFm.stringWidth(exclamation)) / 2;
+                int exclamationY = iconY + (iconSize + iconFm.getAscent()) / 2 - 1;
+                g2d.drawString(exclamation, exclamationX, exclamationY);
+                g2d.setFont(popupFont);
+
+                Color textColor = new Color(76, 63, 47, (int)(255 * fadeAlpha));
+                g2d.setColor(textColor);
+
+                int textStartX = x + padding + iconSize + iconPadding;
+                int textStartY = y + padding + fm.getAscent();
+                for (int i = 0; i < lines.size(); i++) {
+                    String line = lines.get(i);
+                    int lineY = textStartY + (i * textHeight);
+                    g2d.drawString(line, textStartX, lineY);
+                }
+
+                g2d.setFont(originalFont);
+
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
+                g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_DEFAULT);
+            }
+        }
+    }
+
+    private void showPopupMessage(String message, int x, int y) {
+        this.popupMessage = message;
+        this.popupX = x;
+        this.popupY = y;
+        this.popupStartTime = System.currentTimeMillis();
+    }
 
 }
