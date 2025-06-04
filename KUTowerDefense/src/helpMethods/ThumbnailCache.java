@@ -126,6 +126,18 @@ public class ThumbnailCache {
     }
 
     /**
+     * Removes a thumbnail from cache completely (both memory and disk)
+     * This is typically used when a level/save is deleted
+     * @param levelName The name of the level to remove from cache
+     */
+    public void removeThumbnail(String levelName) {
+        memoryCache.remove(levelName);
+        modifiedLevels.remove(levelName);
+        deleteThumbnailFromDisk(levelName);
+        System.out.println("Thumbnail removed from cache: " + levelName);
+    }
+
+    /**
      * Clears all cached thumbnails (both memory and disk)
      */
     public void clearAllCache() {

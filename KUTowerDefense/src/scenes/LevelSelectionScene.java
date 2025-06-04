@@ -19,12 +19,15 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.util.ArrayList;
 
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
@@ -221,12 +224,13 @@ public class LevelSelectionScene extends JPanel {
 
         int buttonSize = 28;
         int spacing = 8;
-        int totalButtonWidth = buttonSize * 2 + spacing;
+        int totalButtonWidth = buttonSize * 3 + spacing * 2;
         int totalButtonHeight = buttonSize + 10;
 
         JPanel buttonPanel = new JPanel() {
             private TheButton playButton;
             private TheButton editButton;
+            private TheButton trashButton;
             private String hoverText = "";
             private int hoveredButtonX = 0;
             private int hoveredButtonY = 0;
@@ -241,6 +245,9 @@ public class LevelSelectionScene extends JPanel {
                 editButton = new TheButton("", buttonSize + spacing, 5, buttonSize, buttonSize,
                         AssetsLoader.getInstance().buttonImages.get(1));
 
+                trashButton = new TheButton("", (buttonSize + spacing) * 2, 5, buttonSize, buttonSize,
+                        AssetsLoader.getInstance().buttonImages.get(3));
+
                 addMouseListener(new MouseAdapter() {
                     @Override
                     public void mouseClicked(MouseEvent e) {
@@ -248,6 +255,95 @@ public class LevelSelectionScene extends JPanel {
                             showDifficultyOverlay(levelName, levelData);
                         } else if (editButton.getBounds().contains(e.getPoint())) {
                             editLevel(levelName, levelData);
+                        } else if (trashButton.getBounds().contains(e.getPoint())) {
+                            Font originalFont = javax.swing.UIManager.getFont("OptionPane.messageFont");
+                            Font originalButtonFont = javax.swing.UIManager.getFont("OptionPane.buttonFont");
+                            javax.swing.UIManager.put("OptionPane.messageFont", mvBoliFontBold);
+                            javax.swing.UIManager.put("OptionPane.buttonFont", mvBoliFontBold);
+
+                            // Create custom rounded buttons with proper functionality
+                            final JOptionPane optionPane = new JOptionPane(
+                                    "Are you sure you want to delete the level '" + levelName + "'?\nThis action cannot be undone.",
+                                    JOptionPane.WARNING_MESSAGE,
+                                    JOptionPane.YES_NO_OPTION,
+                                    null,
+                                    new Object[]{}, // Empty options - we'll add custom buttons
+                                    null
+                            );
+
+                            // custom yes button
+                            JButton yesButton = new JButton("Yes") {
+                                @Override
+                                protected void paintComponent(Graphics g) {
+                                    Graphics2D g2d = (Graphics2D) g.create();
+                                    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                                    Color bgColor = getModel().isRollover() ? new Color(46, 155, 46) : new Color(34, 139, 34);
+                                    g2d.setColor(bgColor);
+                                    g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
+
+                                    g2d.setColor(getForeground());
+                                    g2d.setFont(getFont());
+                                    FontMetrics fm = g2d.getFontMetrics();
+                                    int x = (getWidth() - fm.stringWidth(getText())) / 2;
+                                    int y = (getHeight() + fm.getAscent()) / 2 - 2;
+                                    g2d.drawString(getText(), x, y);
+
+                                    g2d.dispose();
+                                }
+                            };
+                            yesButton.setForeground(Color.WHITE);
+                            yesButton.setFont(mvBoliFontBold);
+                            yesButton.setFocusPainted(false);
+                            yesButton.setBorderPainted(false);
+                            yesButton.setContentAreaFilled(false);
+                            yesButton.setPreferredSize(new Dimension(70, 30));
+
+                            // custom no button
+                            JButton noButton = new JButton("No") {
+                                @Override
+                                protected void paintComponent(Graphics g) {
+                                    Graphics2D g2d = (Graphics2D) g.create();
+                                    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                                    Color bgColor = getModel().isRollover() ? new Color(240, 30, 70) : new Color(220, 20, 60);
+                                    g2d.setColor(bgColor);
+                                    g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
+
+                                    g2d.setColor(getForeground());
+                                    g2d.setFont(getFont());
+                                    FontMetrics fm = g2d.getFontMetrics();
+                                    int x = (getWidth() - fm.stringWidth(getText())) / 2;
+                                    int y = (getHeight() + fm.getAscent()) / 2 - 2;
+                                    g2d.drawString(getText(), x, y);
+
+                                    g2d.dispose();
+                                }
+                            };
+                            noButton.setForeground(Color.WHITE);
+                            noButton.setFont(mvBoliFontBold);
+                            noButton.setFocusPainted(false);
+                            noButton.setBorderPainted(false);
+                            noButton.setContentAreaFilled(false);
+                            noButton.setPreferredSize(new Dimension(70, 30));
+
+                            yesButton.addActionListener(evt -> optionPane.setValue(JOptionPane.YES_OPTION));
+                            noButton.addActionListener(evt -> optionPane.setValue(JOptionPane.NO_OPTION));
+
+                            optionPane.setOptions(new Object[]{yesButton, noButton});
+                            optionPane.setInitialValue(noButton); // Default to No
+
+                            JDialog dialog = optionPane.createDialog(LevelSelectionScene.this, "Delete Level");
+                            dialog.setVisible(true);
+
+                            Object result = optionPane.getValue();
+
+                            javax.swing.UIManager.put("OptionPane.messageFont", originalFont);
+                            javax.swing.UIManager.put("OptionPane.buttonFont", originalButtonFont);
+
+                            if (result != null && result.equals(JOptionPane.YES_OPTION)) {
+                                deleteLevel(levelName);
+                            }
                         }
                     }
 
@@ -257,6 +353,8 @@ public class LevelSelectionScene extends JPanel {
                             playButton.setMousePressed(true);
                         } else if (editButton.getBounds().contains(e.getPoint())) {
                             editButton.setMousePressed(true);
+                        } else if (trashButton.getBounds().contains(e.getPoint())) {
+                            trashButton.setMousePressed(true);
                         }
                         repaint();
                     }
@@ -265,6 +363,7 @@ public class LevelSelectionScene extends JPanel {
                     public void mouseReleased(MouseEvent e) {
                         playButton.setMousePressed(false);
                         editButton.setMousePressed(false);
+                        trashButton.setMousePressed(false);
                         repaint();
                     }
 
@@ -281,9 +380,10 @@ public class LevelSelectionScene extends JPanel {
                     public void mouseMoved(MouseEvent e) {
                         boolean playHover = playButton.getBounds().contains(e.getPoint());
                         boolean editHover = editButton.getBounds().contains(e.getPoint());
+                        boolean trashHover = trashButton.getBounds().contains(e.getPoint());
 
                         // Set cursor based on button hover
-                        if (playHover || editHover) {
+                        if (playHover || editHover || trashHover) {
                             setCursor(AssetsLoader.getInstance().customHandCursor);
                         } else {
                             setCursor(AssetsLoader.getInstance().customNormalCursor);
@@ -298,6 +398,10 @@ public class LevelSelectionScene extends JPanel {
                             hoverText = "Edit";
                             hoveredButtonX = editButton.getX() + editButton.getWidth() / 2;
                             hoveredButtonY = editButton.getY() - 5;
+                        } else if (trashHover) {
+                            hoverText = "Delete";
+                            hoveredButtonX = trashButton.getX() + trashButton.getWidth() / 2;
+                            hoveredButtonY = trashButton.getY() - 5;
                         } else {
                             hoverText = "";
                         }
@@ -313,9 +417,11 @@ public class LevelSelectionScene extends JPanel {
 
                 playButton.setMouseOver(false);
                 editButton.setMouseOver(false);
+                trashButton.setMouseOver(false);
 
                 playButton.draw(g);
                 editButton.draw(g);
+                trashButton.draw(g);
 
                 if (!hoverText.isEmpty()) {
                     Graphics2D g2d = (Graphics2D) g;
@@ -756,10 +862,10 @@ public class LevelSelectionScene extends JPanel {
         gbc.anchor = GridBagConstraints.CENTER;
         difficultyPanel.add(titleLabel, gbc);
 
-        BufferedImage easyImg = AssetsLoader.getInstance().difficultyEasyImg;
-        BufferedImage normalImg = AssetsLoader.getInstance().difficultyNormalImg;
-        BufferedImage hardImg = AssetsLoader.getInstance().difficultyHardImg;
-        BufferedImage customImg = AssetsLoader.getInstance().difficultyCustomImg;
+        BufferedImage easyImg = LoadSave.getImageFromPath("/UI/Easy.png");
+        BufferedImage normalImg = LoadSave.getImageFromPath("/UI/Normal.png");
+        BufferedImage hardImg = LoadSave.getImageFromPath("/UI/Hard.png");
+        BufferedImage customImg = LoadSave.getImageFromPath("/UI/Custom.png");
 
         int buttonPanelWidth = 220;
         int buttonPanelHeight = 60;
@@ -1042,6 +1148,107 @@ public class LevelSelectionScene extends JPanel {
                 shape = new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), cornerRadius, cornerRadius);
             }
             return shape.contains(x, y);
+        }
+    }
+
+    /**
+     * Deletes a level file and refreshes the UI
+     * @param levelName The name of the level to delete
+     */
+    private void deleteLevel(String levelName) {
+        try {
+            // Delete the level file (.json)
+            boolean levelDeleted = deleteLevelFile(levelName);
+
+            if (levelDeleted) {
+                // Remove from cache
+                ThumbnailCache.getInstance().removeThumbnail(levelName);
+
+                // Refresh the UI
+                refreshLevelList();
+
+                System.out.println("Successfully deleted level: " + levelName);
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        "Failed to delete the level '" + levelName + "'.",
+                        "Delete Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception e) {
+            System.err.println("Error deleting level " + levelName + ": " + e.getMessage());
+            JOptionPane.showMessageDialog(this,
+                    "An error occurred while deleting the level: " + e.getMessage(),
+                    "Delete Error",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /**
+     * Deletes a level file from the levels directory
+     * @param levelName The name of the level to delete (without .json extension)
+     * @return true if deletion was successful, false otherwise
+     */
+    private boolean deleteLevelFile(String levelName) {
+        try {
+            // Try multiple possible paths in order of preference (same as LoadSave)
+            String[] possiblePaths = {
+                    "src/main/resources/Levels",           // Standard Maven structure from project root
+                    "demo/src/main/resources/Levels",     // If running from parent directory
+                    "main/resources/Levels",              // If running from src directory
+                    "resources/Levels",                   // If running from src/main directory
+                    "KUTowerDefense/resources/Levels"     // Legacy structure
+            };
+
+            File levelFile = null;
+            for (String path : possiblePaths) {
+                File levelsDir = new File(path);
+                if (levelsDir.exists() && levelsDir.isDirectory()) {
+                    File testFile = new File(levelsDir, levelName + ".json");
+                    if (testFile.exists()) {
+                        levelFile = testFile;
+                        break;
+                    }
+                }
+            }
+
+            if (levelFile != null && levelFile.exists()) {
+                boolean deleted = levelFile.delete();
+                if (deleted) {
+                    System.out.println("Level file deleted: " + levelFile.getAbsolutePath());
+
+                    // Also try to delete overlay file if it exists
+                    String[] overlayPaths = {
+                            "src/main/resources/LevelOverlays",
+                            "demo/src/main/resources/LevelOverlays",
+                            "main/resources/LevelOverlays",
+                            "resources/LevelOverlays",
+                            "KUTowerDefense/resources/LevelOverlays"
+                    };
+
+                    for (String path : overlayPaths) {
+                        File overlaysDir = new File(path);
+                        if (overlaysDir.exists() && overlaysDir.isDirectory()) {
+                            File overlayFile = new File(overlaysDir, levelName + "_overlay.json");
+                            if (overlayFile.exists()) {
+                                overlayFile.delete();
+                                System.out.println("Overlay file deleted: " + overlayFile.getAbsolutePath());
+                                break;
+                            }
+                        }
+                    }
+
+                    return true;
+                } else {
+                    System.err.println("Failed to delete level file: " + levelFile.getAbsolutePath());
+                    return false;
+                }
+            } else {
+                System.err.println("Level file not found: " + levelName + ".json");
+                return false;
+            }
+        } catch (Exception e) {
+            System.err.println("Error deleting level file " + levelName + ": " + e.getMessage());
+            return false;
         }
     }
 }

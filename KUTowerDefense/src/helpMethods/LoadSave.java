@@ -229,6 +229,22 @@ public class LoadSave {
         ThumbnailCache.getInstance().invalidateLevel(fileName);
     }
 
+    /**
+     * Deletes a saved game file from the saves directory
+     * @param levelName The name of the saved game to delete (without .json extension)
+     * @return true if deletion was successful, false otherwise
+     */
+    public static boolean deleteSavedGame(String levelName) {
+        try {
+            managers.GameStateManager gameStateManager = new managers.GameStateManager();
+            gameStateManager.deleteSaveFile(levelName);
+            return true;
+        } catch (Exception e) {
+            System.err.println("Error deleting saved game " + levelName + ": " + e.getMessage());
+            return false;
+        }
+    }
+
     public static ArrayList<String> getSavedLevels() {
         ArrayList<String> levelNames = new ArrayList<>();
 
