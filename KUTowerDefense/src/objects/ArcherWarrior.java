@@ -9,16 +9,27 @@ public class ArcherWarrior extends Warrior {
         super(x, y);
         setDefaultProperties();
     }
+    
+    public ArcherWarrior(int spawnX, int spawnY, int targetX, int targetY) {
+        super(spawnX, spawnY, targetX, targetY);
+        setDefaultProperties();
+    }
 
     public ArcherWarrior(int x, int y, TargetingStrategy targetingStrategy) {
-        super(x, y, targetingStrategy);
+        super(x, y, x, y, targetingStrategy); // No movement, start at position with targeting strategy
+        setDefaultProperties();
+    }
+    
+    public ArcherWarrior(int spawnX, int spawnY, int targetX, int targetY, TargetingStrategy targetingStrategy) {
+        super(spawnX, spawnY, targetX, targetY, targetingStrategy);
         setDefaultProperties();
     }
 
     @Override
     protected void initializeAnimationParameters() {
-        this.maxFrameCount = 14; // Archer has 14 frames
-        this.animationSpeed = 10; // Adjust as needed
+        this.runFrameCount = 8; // Run animation has 8 frames
+        this.attackFrameCount = 6; // Attack animation has 6 frames
+        this.animationSpeed = 8; // Animation speed
     }
 
     private void setDefaultProperties() {

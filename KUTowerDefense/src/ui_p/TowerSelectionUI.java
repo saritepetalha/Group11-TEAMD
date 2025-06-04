@@ -766,11 +766,23 @@ public class TowerSelectionUI {
                 towerForSpawningCheck = ((objects.LightDecorator) selectedTower).decoratedTower;
             }
 
-            // Check the type of the (potentially unwrapped) tower
+            // Get the tower's spawn position (center of the tower)
+            int spawnX = selectedTower.getX() + selectedTower.getWidth() / 2 - 32; // Center and offset for warrior size
+            int spawnY = selectedTower.getY() + selectedTower.getHeight() / 2 - 32;
+
+            // Check the type of the (potentially unwrapped) tower and create warrior for spawning
             if (towerForSpawningCheck instanceof objects.MageTower) {
-                warriorToSpawn = new WizardWarrior(selectedTower.getX(), selectedTower.getY());
+                // Create wizard warrior at spawn position, target will be set during placement
+                warriorToSpawn = new WizardWarrior(spawnX, spawnY, spawnX, spawnY); // Same position initially
+                // Store spawn position for later use
+                warriorToSpawn.setX(spawnX);
+                warriorToSpawn.setY(spawnY);
             } else if (towerForSpawningCheck instanceof objects.ArcherTower) {
-                warriorToSpawn = new ArcherWarrior(selectedTower.getX(), selectedTower.getY());
+                // Create archer warrior at spawn position, target will be set during placement
+                warriorToSpawn = new ArcherWarrior(spawnX, spawnY, spawnX, spawnY); // Same position initially
+                // Store spawn position for later use  
+                warriorToSpawn.setX(spawnX);
+                warriorToSpawn.setY(spawnY);
             }
 
             if (warriorToSpawn != null) {

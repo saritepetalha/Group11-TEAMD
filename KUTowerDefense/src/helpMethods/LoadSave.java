@@ -555,21 +555,88 @@ public class LoadSave {
         return frames;
     }
 
+    /**
+     * Get warrior run animation frames
+     * Archer: 800x100 with 8 frames (100x100 each, horizontal)
+     * Wizard: 1848x190 with 8 frames (231x190 each, horizontal)
+     */
+    public static BufferedImage[] getWarriorRunAnimation(Warrior warrior) {
+        String path = "/Warriors/" + (warrior instanceof WizardWarrior ? "wizard_run.png" : "archer_run.png");
+        BufferedImage spriteSheet = getImageFromPath(path);
+        
+        if (spriteSheet == null) {
+            return null;
+        }
+        
+        final int frameCount = 8; // All new run sprites have 8 frames
+        BufferedImage[] frames = new BufferedImage[frameCount];
+        
+        if (warrior instanceof WizardWarrior) {
+            // Wizard: 1848x190 total, 8 frames = 231x190 each (horizontal layout)
+            int frameWidth = 231;
+            int frameHeight = 190;
+            for (int i = 0; i < frameCount; i++) {
+                frames[i] = spriteSheet.getSubimage(i * frameWidth, 0, frameWidth, frameHeight);
+            }
+        } else {
+            // Archer: 800x100 total, 8 frames = 100x100 each (horizontal layout)
+            int frameWidth = 100;
+            int frameHeight = 100;
+            for (int i = 0; i < frameCount; i++) {
+                frames[i] = spriteSheet.getSubimage(i * frameWidth, 0, frameWidth, frameHeight);
+            }
+        }
+        
+        return frames;
+    }
+    
+    /**
+     * Get warrior attack animation frames
+     * Archer: 600x100 with 6 frames (100x100 each, horizontal)
+     * Wizard: 1848x190 with 8 frames (231x190 each, horizontal)
+     */
+    public static BufferedImage[] getWarriorAttackAnimation(Warrior warrior) {
+        String path = "/Warriors/" + (warrior instanceof WizardWarrior ? "wizard_attack.png" : "archer_attack.png");
+        BufferedImage spriteSheet = getImageFromPath(path);
+        
+        if (spriteSheet == null) {
+            return null;
+        }
+        
+        BufferedImage[] frames;
+        
+        if (warrior instanceof WizardWarrior) {
+            // Wizard: 1848x190 total, 8 frames = 231x190 each (horizontal layout)
+            final int frameCount = 8;
+            frames = new BufferedImage[frameCount];
+            int frameWidth = 231;
+            int frameHeight = 190;
+            for (int i = 0; i < frameCount; i++) {
+                frames[i] = spriteSheet.getSubimage(i * frameWidth, 0, frameWidth, frameHeight);
+            }
+        } else {
+            // Archer: 600x100 total, 6 frames = 100x100 each (horizontal layout)
+            final int frameCount = 6;
+            frames = new BufferedImage[frameCount];
+            int frameWidth = 100;
+            int frameHeight = 100;
+            for (int i = 0; i < frameCount; i++) {
+                frames[i] = spriteSheet.getSubimage(i * frameWidth, 0, frameWidth, frameHeight);
+            }
+        }
+        
+        return frames;
+    }
+
+    // Keep old method for backward compatibility, but use attack animation
     public static BufferedImage getWarriorImage(Warrior warrior) {
-        String path = "/Warriors/" + (warrior instanceof WizardWarrior ? "wizard.png" : "archer.png");
+        String path = "/Warriors/" + (warrior instanceof WizardWarrior ? "wizard_attack.png" : "archer_attack.png");
         return getImageFromPath(path);
     }
 
+    // Keep old method for backward compatibility, but use attack animation
     public static BufferedImage[] getWarriorAnimation(Warrior warrior) {
-        BufferedImage spriteSheet = getWarriorImage(warrior);
-        int frameCount = warrior instanceof WizardWarrior ? 7 : 14;
-        int frameWidth = spriteSheet.getWidth() / frameCount;
-        int frameHeight = spriteSheet.getHeight();
-        BufferedImage[] frames = new BufferedImage[frameCount];
-        for (int i = 0; i < frameCount; i++) {
-            frames[i] = spriteSheet.getSubimage(i * frameWidth, 0, frameWidth, frameHeight);
-        }
-        return frames;
+        return getWarriorAttackAnimation(warrior);
     }
 
     /**

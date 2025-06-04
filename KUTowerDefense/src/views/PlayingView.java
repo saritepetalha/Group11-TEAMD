@@ -308,6 +308,11 @@ public class PlayingView implements Observer {
         if (model.getUltiManager() != null && model.getUltiManager().isGoldFactorySelected()) {
             drawGoldFactoryPreview((Graphics2D) g);
         }
+        
+        // Draw Warrior placement preview if warrior is pending (in game world, before UI)
+        if (model.getPendingWarriorPlacement() != null) {
+            drawWarriorPlacementPreview((Graphics2D) g);
+        }
 
         // Draw castle health bar
         if (!model.isOptionsMenuOpen()) {
@@ -330,46 +335,105 @@ public class PlayingView implements Observer {
         }
     }
     
-    private void drawWarriorPlacementMessage(Graphics g) {
+    private void drawWarriorPlacementPreview(Graphics2D g) {
         Warrior pendingWarrior = model.getPendingWarriorPlacement();
         if (pendingWarrior == null) return;
         
-        String message = "Place the ";
-        if (pendingWarrior instanceof objects.WizardWarrior) {
-            message += "Wizard";
-        } else if (pendingWarrior instanceof objects.ArcherWarrior) {
-            message += "Archer";
+        // Snap to tile grid
+        int tileX = (mouseX / GameDimensions.TILE_DISPLAY_SIZE) * GameDimensions.TILE_DISPLAY_SIZE;
+        int tileY = (mouseY / GameDimensions.TILE_DISPLAY_SIZE) * GameDimensions.TILE_DISPLAY_SIZE;
+
+        // Check if tile is valid for placement
+        boolean isValidTile = isValidTileForWarriorPlacement(mouseX, mouseY);
+
+        // Enable anti-aliasing
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        // Draw background
+        if (isValidTile) {
+            g.setColor(new Color(144, 238, 144, 80)); // Light green
         } else {
-            message += "Warrior";
+            g.setColor(new Color(255, 182, 193, 80)); // Light red
         }
 
-        g.setColor(Color.BLACK);
-        g.setFont(new Font("Arial", Font.BOLD, 20));
-        int stringWidth = g.getFontMetrics().stringWidth(message);
-        int x = (GameDimensions.GAME_WIDTH - stringWidth) / 2;
-        int y = 30;
-        g.drawString(message, x, y);
+        g.fillRoundRect(tileX + 2, tileY + 2, 60, 60, 12, 12);
 
-        // Highlight valid placement tiles
-        if (spawnPointIndicator != null) {
-            int[][] level = model.getLevel();
-            if (level != null) {
-                for (int r = 0; r < level.length; r++) {
-                    for (int c = 0; c < level[0].length; c++) {
-                        int tilePixelX = c * GameDimensions.TILE_DISPLAY_SIZE;
-                        int tilePixelY = r * GameDimensions.TILE_DISPLAY_SIZE;
-                        if (isValidTileForPlacement(tilePixelX, tilePixelY)) {
-                            int indicatorX = tilePixelX + (GameDimensions.TILE_DISPLAY_SIZE - spawnPointIndicator.getWidth()) / 2;
-                            int indicatorY = tilePixelY + (GameDimensions.TILE_DISPLAY_SIZE - spawnPointIndicator.getHeight()) / 2;
-                            g.drawImage(spawnPointIndicator, indicatorX, indicatorY, null);
-                        }
-                    }
+        // Draw the warrior sprite
+        try {
+            BufferedImage warriorSprite = getWarriorSprite(pendingWarrior);
+            if (warriorSprite != null) {
+                Composite originalComposite = g.getComposite();
+                g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.8f));
+                
+                // Determine sprite dimensions and scaling based on warrior type
+                int drawWidth, drawHeight;
+                int drawX, drawY;
+                
+                if (pendingWarrior instanceof objects.WizardWarrior) {
+                    // Wizard sprites - match the exact drawing size from TowerManager
+                    drawWidth = 92;  
+                    drawHeight = 76; 
+                    drawX = tileX + (64 - drawWidth) / 2;
+                    drawY = tileY + (64 - drawHeight) + 4; 
+                } else {
+                    drawWidth = 84;  
+                    drawHeight = 84; 
+                    drawX = tileX + (64 - drawWidth) / 2;
+                    drawY = tileY + (64 - drawHeight) + 12; 
                 }
+                
+                g.drawImage(warriorSprite, drawX, drawY, drawWidth, drawHeight, null);
+                g.setComposite(originalComposite);
+            } else {
+                // Fallback - draw warrior initial
+                g.setColor(new Color(100, 149, 237, 180)); // Cornflower blue
+                g.setFont(new Font("Arial", Font.BOLD, 20));
+                FontMetrics fm = g.getFontMetrics();
+                String text = getWarriorInitial(pendingWarrior);
+                int textX = tileX + 32 - fm.stringWidth(text) / 2;
+                int textY = tileY + 32 + fm.getAscent() / 2;
+                g.drawString(text, textX, textY);
             }
+        } catch (Exception e) {
+            // Fallback
+            g.setColor(new Color(100, 149, 237, 180));
+            g.setFont(new Font("Arial", Font.BOLD, 20));
+            FontMetrics fm = g.getFontMetrics();
+            String text = getWarriorInitial(pendingWarrior);
+            int textX = tileX + 32 - fm.stringWidth(text) / 2;
+            int textY = tileY + 32 + fm.getAscent() / 2;
+            g.drawString(text, textX, textY);
         }
+
+        // Draw border
+        if (isValidTile) {
+            g.setColor(new Color(34, 139, 34, 120)); // Forest green
+        } else {
+            g.setColor(new Color(220, 20, 60, 120)); // Crimson
+        }
+        g.setStroke(new BasicStroke(2f));
+        g.drawRoundRect(tileX + 2, tileY + 2, 60, 60, 12, 12);
+
+        // Add sparkle effect for valid placement
+        if (isValidTile) {
+            long time = System.currentTimeMillis();
+            float sparkleAlpha = (float)(0.3f + 0.2f * Math.sin(time * 0.005f));
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, sparkleAlpha));
+            g.setColor(new Color(255, 255, 255, 100));
+            g.fillOval(tileX + 8, tileY + 8, 4, 4);
+            g.fillOval(tileX + 52, tileY + 8, 4, 4);
+            g.fillOval(tileX + 8, tileY + 52, 4, 4);
+            g.fillOval(tileX + 52, tileY + 52, 4, 4);
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
+        }
+
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
     }
     
-    private boolean isValidTileForPlacement(int pixelX, int pixelY) {
+    /**
+     * Helper method to check if a tile is valid for warrior placement
+     */
+    private boolean isValidTileForWarriorPlacement(int pixelX, int pixelY) {
         int[][] level = model.getLevel();
         if (level == null) return false;
         
@@ -381,11 +445,120 @@ public class PlayingView implements Observer {
             boolean isGrass = level[tileR][tileC] == 5;
             if (!isGrass) return false;
 
-            // Check for existing towers/warriors would need controller logic
-            // For now, just check grass
+            // Check if the tile is already occupied by a tower
+            if (model.getTowerManager() != null) {
+                for (Tower tower : model.getTowerManager().getTowers()) {
+                    if (tower.isClicked(pixelX, pixelY)) {
+                        return false;
+                    }
+                }
+            }
+
+            // Check if the tile is already occupied by another warrior
+            if (model.getTowerManager() != null) {
+                int tileX = (pixelX / GameDimensions.TILE_DISPLAY_SIZE) * GameDimensions.TILE_DISPLAY_SIZE;
+                int tileY = (pixelY / GameDimensions.TILE_DISPLAY_SIZE) * GameDimensions.TILE_DISPLAY_SIZE;
+                
+                for (Warrior warrior : model.getTowerManager().getWarriors()) {
+                    if (warrior.getX() == tileX && warrior.getY() == tileY - 8) { // Account for warrior offset
+                        return false;
+                    }
+                }
+            }
+
             return true;
         }
         return false;
+    }
+    
+    /**
+     * Helper method to get warrior sprite based on warrior type
+     */
+    private BufferedImage getWarriorSprite(Warrior warrior) {
+        // Get the first frame of the attack animation for preview
+        BufferedImage[] attackFrames = helpMethods.LoadSave.getWarriorAttackAnimation(warrior);
+        if (attackFrames != null && attackFrames.length > 0) {
+            return attackFrames[0]; // Return first frame for preview
+        }
+        return null;
+    }
+    
+    /**
+     * Helper method to get warrior initial for fallback display
+     */
+    private String getWarriorInitial(Warrior warrior) {
+        if (warrior instanceof objects.ArcherWarrior) {
+            return "A";
+        } else if (warrior instanceof objects.WizardWarrior) {
+            return "W";
+        }
+        return "?";
+    }
+    
+    private void drawWarriorPlacementMessage(Graphics g) {
+        Warrior pendingWarrior = model.getPendingWarriorPlacement();
+        if (pendingWarrior == null) return;
+        
+        String warriorType = getWarriorTypeName(pendingWarrior);
+        String message = "⚔️ Click to place " + warriorType + " Warrior ($" + pendingWarrior.getCost() + ") | Right-click to cancel ⚔️";
+
+        g.setColor(new Color(100, 149, 237)); // Cornflower blue
+        g.setFont(new Font("Arial", Font.BOLD, 18));
+        int stringWidth = g.getFontMetrics().stringWidth(message);
+        int x = (GameDimensions.GAME_WIDTH - stringWidth) / 2;
+        int y = 30;
+
+        Graphics2D g2d = (Graphics2D) g;
+        // Message background
+        g2d.setColor(new Color(0, 0, 0, 100));
+        g2d.fillRoundRect(x - 10, y - 20, stringWidth + 20, 30, 10, 10);
+
+        g.setColor(new Color(100, 149, 237));
+        g.drawString(message, x, y);
+
+        // Draw blue squares on all valid placement tiles
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        int[][] level = model.getLevel();
+        if (level != null) {
+            for (int r = 0; r < level.length; r++) {
+                for (int c = 0; c < level[0].length; c++) {
+                    if (level[r][c] == 5) { // Grass tile
+                        int tilePixelX = c * GameDimensions.TILE_DISPLAY_SIZE;
+                        int tilePixelY = r * GameDimensions.TILE_DISPLAY_SIZE;
+                        
+                        // Check if this specific tile is valid (no towers/warriors)
+                        if (isValidTileForWarriorPlacement(tilePixelX, tilePixelY)) {
+                            // Blue highlight for valid tiles
+                            g2d.setColor(new Color(100, 149, 237, 40)); // Light blue
+                            g2d.fillRoundRect(tilePixelX + 4, tilePixelY + 4,
+                                    GameDimensions.TILE_DISPLAY_SIZE - 8,
+                                    GameDimensions.TILE_DISPLAY_SIZE - 8, 8, 8);
+
+                            g2d.setColor(new Color(65, 105, 225, 80)); // Royal blue border
+                            g2d.setStroke(new BasicStroke(1.5f));
+                            g2d.drawRoundRect(tilePixelX + 4, tilePixelY + 4,
+                                    GameDimensions.TILE_DISPLAY_SIZE - 8,
+                                    GameDimensions.TILE_DISPLAY_SIZE - 8, 8, 8);
+                        }
+                    }
+                }
+            }
+        }
+
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+    }
+    
+    /**
+     * Helper method to get warrior type name for display
+     */
+    private String getWarriorTypeName(Warrior warrior) {
+        if (warrior instanceof objects.ArcherWarrior) {
+            return "Archer";
+        } else if (warrior instanceof objects.WizardWarrior) {
+            return "Wizard";
+        }
+        return "Unknown";
     }
     
     private void drawCastleHealthBar(Graphics g) {

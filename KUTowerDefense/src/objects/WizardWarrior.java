@@ -9,16 +9,27 @@ public class WizardWarrior extends Warrior {
         super(x, y);
         setDefaultProperties();
     }
+    
+    public WizardWarrior(int spawnX, int spawnY, int targetX, int targetY) {
+        super(spawnX, spawnY, targetX, targetY);
+        setDefaultProperties();
+    }
 
     public WizardWarrior(int x, int y, TargetingStrategy targetingStrategy) {
-        super(x, y, targetingStrategy);
+        super(x, y, x, y, targetingStrategy); // No movement, start at position with targeting strategy
+        setDefaultProperties();
+    }
+    
+    public WizardWarrior(int spawnX, int spawnY, int targetX, int targetY, TargetingStrategy targetingStrategy) {
+        super(spawnX, spawnY, targetX, targetY, targetingStrategy);
         setDefaultProperties();
     }
 
     @Override
     protected void initializeAnimationParameters() {
-        this.maxFrameCount = 7; // Wizard has 7 frames
-        this.animationSpeed = 12; // Adjust as needed
+        this.runFrameCount = 8; // Run animation has 8 frames
+        this.attackFrameCount = 8; // Attack animation has 8 frames
+        this.animationSpeed = 10; // Slightly slower animation for wizard
     }
 
     private void setDefaultProperties() {

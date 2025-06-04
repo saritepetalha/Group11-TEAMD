@@ -494,13 +494,33 @@ public class TowerManager {
 
     public void updateWarriors(float speedMultiplier) {
         for (Warrior warrior : warriors) {
-            warrior.update(speedMultiplier); // Handles cooldown
-            warrior.updateAnimationTick(); // Update animation frame
-            if (!warrior.isCooldownOver()) {
-                continue;
+            warrior.update(speedMultiplier); // Handles cooldown and movement
+            
+            // Only allow attacking if warrior has reached destination
+            if (!warrior.hasReachedDestination()) {
+                continue; // Skip attacking logic for running warriors
             }
-            // Attack logic for warriors
-            attackEnemyIfInRange(warrior);
+            
+            // Check if there are enemies in range
+            boolean hasEnemiesInRange = false;
+            for (Enemy enemy : playing.getEnemyManager().getEnemies()) {
+                if (enemy.isAlive() && isEnemyInRange(warrior, enemy)) {
+                    hasEnemiesInRange = true;
+                    break;
+                }
+            }
+            
+            // Update warrior state based on enemy presence
+            if (hasEnemiesInRange) {
+                warrior.setAttackingState();
+                
+                // Only attack if cooldown is over
+                if (warrior.isCooldownOver()) {
+                    attackEnemyIfInRange(warrior);
+                }
+            } else {
+                warrior.setIdleState();
+            }
         }
     }
 
@@ -563,10 +583,26 @@ public class TowerManager {
                     if (sprite != null) {
                         int x = warrior.getX();
                         int y = warrior.getY();
-                        // Adjust drawing position to center the warrior on the tile if necessary
-                        // Assuming warrior images are similar in size to tower images (64x64 or need scaling)
-                        // For now, direct drawing at x,y. May need to adjust x,y if sprite is not tile-centered.
-                        g.drawImage(sprite, x, y, 64, 64, null);
+                        
+                        // Determine sprite dimensions and scaling based on warrior type
+                        int drawWidth, drawHeight;
+                        if (warrior instanceof WizardWarrior) {
+                            // Wizard sprites are 231x190, scale down but make them larger than before
+                            drawWidth = 92;  // Increased from 80
+                            drawHeight = 76; // Increased from 65
+                            // Center horizontally and position closer to bottom
+                            x += (64 - drawWidth) / 2;
+                            y += (64 - drawHeight) + 12; // Moved 8 pixels closer to bottom
+                        } else {
+                            // Archer sprites are 100x100, make them larger 
+                            drawWidth = 84;  // Increased from 64  
+                            drawHeight = 84; // Increased from 64
+                            // Center horizontally and position closer to bottom
+                            x += (64 - drawWidth) / 2;
+                            y += (64 - drawHeight) + 20; // Moved 6 pixels closer to bottom
+                        }
+                        
+                        g.drawImage(sprite, x, y, drawWidth, drawHeight, null);
                     }
                 }
             }
