@@ -266,9 +266,9 @@ public class Playing extends GameScene implements SceneMethods {
     }
     
     public void shootEnemy(Object shooter, enemies.Enemy enemy) {
-        // Delegate to controller's adapter for now
-        if (controller.getModel().getProjectileManager() != null) {
-            controller.getModel().getProjectileManager().newProjectile(shooter, enemy);
+        // Use the abstracted method instead of direct manager access
+        if (controller != null) {
+            controller.createProjectile(shooter, enemy);
         }
     }
     
@@ -282,7 +282,11 @@ public class Playing extends GameScene implements SceneMethods {
     }
     
     public void setCurrentDifficulty(String difficulty) {
-        controller.getModel().setCurrentDifficulty(difficulty);
+        if (controller != null) {
+            controller.getModel().setCurrentDifficulty(difficulty);
+            // Reload the difficulty configuration to apply the new settings
+            controller.reloadDifficultyConfiguration();
+        }
     }
     
     public config.GameOptions getGameOptions() {
@@ -311,26 +315,23 @@ public class Playing extends GameScene implements SceneMethods {
         }
     }
     
-    // Game state save/load - delegate to model
+    // Game state save/load - delegate to controller
     public void saveGameState() {
-        // In MVC, this functionality would be handled by the model or controller
-        // For now, we'll leave this as a placeholder for backward compatibility
-        // TODO: Implement proper save functionality in the MVC architecture
-        System.out.println("SaveGameState called - MVC implementation needed");
+        if (controller != null) {
+            controller.saveGameState("autosave");
+        }
     }
     
     public void loadGameState() {
-        // In MVC, this functionality would be handled by the model or controller
-        // For now, we'll leave this as a placeholder for backward compatibility
-        // TODO: Implement proper load functionality in the MVC architecture
-        System.out.println("LoadGameState called - MVC implementation needed");
+        if (controller != null) {
+            controller.loadGameState("autosave");
+        }
     }
     
     public void resetGameState() {
-        // In MVC, this functionality would be handled by the model or controller
-        // For now, we'll leave this as a placeholder for backward compatibility
-        // TODO: Implement proper reset functionality in the MVC architecture
-        System.out.println("ResetGameState called - MVC implementation needed");
+        if (controller != null) {
+            controller.resetGameState();
+        }
     }
     
     // Tile modification - delegate to controller/model

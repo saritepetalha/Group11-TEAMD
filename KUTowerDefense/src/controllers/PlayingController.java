@@ -406,6 +406,166 @@ public class PlayingController implements Observer {
         model.reloadGameOptions();
     }
     
+    /**
+     * Reload difficulty configuration and reinitialize managers
+     * This should be called when the difficulty is changed
+     */
+    public void reloadDifficultyConfiguration() {
+        // Reload the GameOptions from disk (which should have the new difficulty settings)
+        model.reloadGameOptions();
+        
+        // Reinitialize managers with the new options
+        reinitializeManagersWithNewOptions();
+        
+        System.out.println("Difficulty configuration reloaded and managers updated");
+        System.out.println("Current GameOptions: Gold=" + model.getGameOptions().getStartingGold() + 
+                         ", Health=" + model.getGameOptions().getStartingPlayerHP() + 
+                         ", Shield=" + model.getGameOptions().getStartingShield());
+    }
+    
+    /**
+     * Reinitialize managers with updated GameOptions
+     */
+    private void reinitializeManagersWithNewOptions() {
+        PlayingAdapter adapter = new PlayingAdapter();
+        
+        WeatherManager weatherManager = new WeatherManager();
+        ProjectileManager projectileManager = new ProjectileManager(adapter);
+        TreeInteractionManager treeInteractionManager = new TreeInteractionManager(adapter);
+        FireAnimationManager fireAnimationManager = new FireAnimationManager();
+        
+        // Create managers with UPDATED GameOptions
+        WaveManager waveManager = new WaveManager(adapter, model.getGameOptions());
+        EnemyManager enemyManager = new EnemyManager(adapter, model.getOverlay(), model.getLevel(), model.getGameOptions());
+        PlayerManager playerManager = new PlayerManager(model.getGameOptions());
+        
+        TowerManager towerManager = new TowerManager(adapter);
+        UltiManager ultiManager = new UltiManager(adapter);
+        GoldBagManager goldBagManager = new GoldBagManager();
+        
+        // Set TowerManager reference in WeatherManager for lighting effects
+        weatherManager.setTowerManager(towerManager);
+        
+        // Inject all managers into the model
+        model.initializeManagers(waveManager, towerManager, playerManager, projectileManager,
+                               enemyManager, ultiManager, weatherManager, fireAnimationManager,
+                               goldBagManager, treeInteractionManager);
+        
+        // Apply starting values from the new GameOptions
+        applyDifficultyStartingValues();
+    }
+    
+    /**
+     * Apply starting values from GameOptions after difficulty change
+     */
+    private void applyDifficultyStartingValues() {
+        if (model.getPlayerManager() != null && model.getGameOptions() != null) {
+            // Set starting gold from difficulty options
+            model.getPlayerManager().setGold(model.getGameOptions().getStartingGold());
+            
+            // Reset health and shield to difficulty values  
+            int newMaxHealth = model.getGameOptions().getStartingPlayerHP();
+            int newShield = model.getGameOptions().getStartingShield();
+            
+            model.getPlayerManager().setHealth(newMaxHealth);
+            model.getPlayerManager().setShield(newShield);
+            
+            System.out.println("Applied difficulty starting values: Gold=" + model.getGameOptions().getStartingGold() + 
+                             ", Health=" + newMaxHealth + ", Shield=" + newShield);
+        }
+    }
+    
+    // ================ GAME STATE MANAGEMENT ================
+    
+    /**
+     * Save the current game state
+     * @param filename The filename to save to (without extension)
+     * @return true if save was successful, false otherwise
+     */
+    public boolean saveGameState(String filename) {
+        if (filename == null || filename.trim().isEmpty()) {
+            filename = "quicksave";
+        }
+        
+        boolean success = model.saveGameState(filename);
+        if (success) {
+            System.out.println("Game saved successfully as: " + filename);
+        } else {
+            System.err.println("Failed to save game: " + filename);
+        }
+        return success;
+    }
+    
+    /**
+     * Load a game state from file
+     * @param filename The filename to load from (without extension)
+     * @return true if load was successful, false otherwise
+     */
+    public boolean loadGameState(String filename) {
+        if (filename == null || filename.trim().isEmpty()) {
+            filename = "quicksave";
+        }
+        
+        boolean success = model.loadGameState(filename);
+        if (success) {
+            System.out.println("Game loaded successfully from: " + filename);
+            // Refresh the view after loading
+            view.update(model, "gameStateLoaded");
+        } else {
+            System.err.println("Failed to load game: " + filename);
+        }
+        return success;
+    }
+    
+    /**
+     * Reset the game to initial state
+     */
+    public void resetGameState() {
+        model.resetGameState();
+        System.out.println("Game state reset to initial conditions");
+    }
+    
+    /**
+     * Quick save functionality - saves to default filename
+     */
+    public boolean quickSave() {
+        return saveGameState("quicksave");
+    }
+    
+    /**
+     * Quick load functionality - loads from default filename
+     */
+    public boolean quickLoad() {
+        return loadGameState("quicksave");
+    }
+    
+    // ================ PROJECTILE ABSTRACTION ================
+    
+    /**
+     * Handle projectile creation - abstracted from direct manager access
+     * @param shooter The shooter (Tower or Warrior)
+     * @param target The target enemy
+     */
+    public void createProjectile(Object shooter, Enemy target) {
+        model.createProjectile(shooter, target);
+    }
+    
+    /**
+     * Get active projectile count
+     * @return Number of active projectiles
+     */
+    public int getActiveProjectileCount() {
+        return model.getActiveProjectileCount();
+    }
+    
+    /**
+     * Check if there are active projectiles
+     * @return true if projectiles are active
+     */
+    public boolean hasActiveProjectiles() {
+        return model.hasActiveProjectiles();
+    }
+    
     @Override
     public void update(Observable o, Object arg) {
         // Handle model state changes
@@ -546,14 +706,8 @@ public class PlayingController implements Observer {
         
         @Override
         public void shootEnemy(Object shooter, Enemy enemy) {
-            if (model.getProjectileManager() != null) {
-                model.getProjectileManager().newProjectile(shooter, enemy);
-            }
-            // Handle tower effects
-            if (shooter instanceof Tower) {
-                Tower tower = (Tower) shooter;
-                // tower.applyOnHitEffect(enemy, this); // Would need adapter for this
-            }
+            // Use the abstracted method instead of direct manager access
+            createProjectile(shooter, enemy);
         }
         
         // Override additional methods that might be called by managers
