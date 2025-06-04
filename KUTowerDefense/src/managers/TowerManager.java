@@ -95,6 +95,12 @@ public class TowerManager {
             return; // Tower is on cooldown
         }
 
+        // Check if tower can attack during night (needs light or it's daytime)
+        boolean isNight = playing.getWeatherManager() != null && playing.getWeatherManager().isNight();
+        if (isNight && !(tower instanceof LightDecorator)) {
+            return; // Tower cannot attack at night without light upgrade
+        }
+
         // Collect all enemies in range
         List<Enemy> enemiesInRange = new ArrayList<>();
         for (Enemy enemy : playing.getEnemyManager().getEnemies()) {
@@ -287,6 +293,9 @@ public class TowerManager {
                 }
 
                 BufferedImage spriteToDraw = null;
+                
+                // Check if this tower has light upgrade
+                boolean hasLightUpgrade = tower instanceof LightDecorator;
 
                 // Determine the tower instance whose state (type, upgraded status) we need to check.
                 // This is the tower directly under a LightDecorator, or the tower itself if no LightDecorator.
@@ -323,11 +332,33 @@ public class TowerManager {
                         useEffectiveUpgradedSprite = true;
                     }
 
-                    spriteToDraw = useEffectiveUpgradedSprite ? nightUpTowerImages[typeIdx] : nightTowerImages[typeIdx];
+                    // Only use light-equipped sprites if tower has light upgrade
+                    if (hasLightUpgrade) {
+                        spriteToDraw = useEffectiveUpgradedSprite ? nightUpTowerImages[typeIdx] : nightTowerImages[typeIdx];
+                    } else {
+                        // Towers without light should use basic day sprites or be dimmed/not visible
+                        // For now, we'll use a dimmed version of day sprites to show they're inactive
+                        if (fundamentalTypeProvider instanceof objects.ArcherTower) {
+                            spriteToDraw = towerImages[0];
+                        } else if (fundamentalTypeProvider instanceof objects.ArtilleryTower) {
+                            spriteToDraw = towerImages[1];
+                        } else if (fundamentalTypeProvider instanceof objects.MageTower) {
+                            spriteToDraw = towerImages[2];
+                        }
+                    }
                 }
 
                 if (spriteToDraw != null) {
-                    g.drawImage(spriteToDraw, tower.getX(), tower.getY(), 64, 64, null);
+                    if (hasLightUpgrade) {
+                        // Draw light-equipped towers normally
+                        g.drawImage(spriteToDraw, tower.getX(), tower.getY(), 64, 64, null);
+                    } else {
+                        // Draw non-light towers dimmed to show they're inactive
+                        Graphics2D g2dDim = (Graphics2D) g.create();
+                        g2dDim.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f)); // 50% opacity
+                        g2dDim.drawImage(spriteToDraw, tower.getX(), tower.getY(), 64, 64, null);
+                        g2dDim.dispose();
+                    }
                 }
 
                 // After drawing the tower's night sprite, draw its light effect if it's a LightDecorator

@@ -114,23 +114,23 @@ public class PlayingUI {
 
         goldFactoryButton = new TheButton(
                 "Gold Factory",
-                startX - 3 * (buttonSize + buttonSpacing),
+                startX - 3 * (ultiButtonSize + buttonSpacing),
                 startY,
-                buttonSize,
-                buttonSize,
+                ultiButtonSize,
+                ultiButtonSize,
                 AssetsLoader.getInstance().goldFactoryButtonNormal);
 
         earthquakeButton = new TheButton(
                 "Earthquake",
-                startX - 2 * (buttonSize + buttonSpacing),
+                startX - 2 * (ultiButtonSize + buttonSpacing),
                 startY,
-                buttonSize,
-                buttonSize,
+                ultiButtonSize,
+                ultiButtonSize,
                 AssetsLoader.getInstance().earthquakeButtonImg);
 
         lightningButton = new TheButton("Lightning",
-                startX - 4 * (buttonSize + buttonSpacing), startY,
-                buttonSize, buttonSize,
+                startX - 4 * (ultiButtonSize + buttonSpacing), startY,
+                ultiButtonSize, ultiButtonSize,
                 AssetsLoader.getInstance().lightningButtonNormal
         );
 
@@ -1214,9 +1214,15 @@ public class PlayingUI {
 
         if (earthquakeButton.getBounds().contains(mouseX, mouseY)) {
             if (playing.getUltiManager().canUseEarthquake()) {
-                AudioManager.getInstance().playButtonClickSound();
-                toggleButtonState(earthquakeButton);
-                playing.getUltiManager().triggerEarthquake();
+                if (playing.getPlayerManager().getGold() >= 50) { // earthquakeCost
+                    AudioManager.getInstance().playButtonClickSound();
+                    toggleButtonState(earthquakeButton);
+                    playing.getUltiManager().triggerEarthquake();
+                } else {
+                    System.out.println("Not enough gold for Earthquake!");
+                }
+            } else {
+                System.out.println("Earthquake is on cooldown!");
             }
             return;
         }
@@ -1224,9 +1230,14 @@ public class PlayingUI {
         if (lightningButton.getBounds().contains(mouseX, mouseY)) {
             if (playing.getUltiManager().isWaitingForLightningTarget()) {
                 playing.getUltiManager().setWaitingForLightningTarget(false);
-            } else if (playing.getUltiManager().canUseLightning() &&
-                    playing.getPlayerManager().getGold() >= 75) {
-                playing.getUltiManager().setWaitingForLightningTarget(true);
+            } else if (playing.getUltiManager().canUseLightning()) {
+                if (playing.getPlayerManager().getGold() >= 75) {
+                    playing.getUltiManager().setWaitingForLightningTarget(true);
+                } else {
+                    System.out.println("Not enough gold for Lightning Strike!");
+                }
+            } else {
+                System.out.println("Lightning Strike is on cooldown!");
             }
             return;
         }

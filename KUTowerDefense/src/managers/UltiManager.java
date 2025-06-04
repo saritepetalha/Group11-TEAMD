@@ -162,8 +162,17 @@ public class UltiManager {
     }
 
     public void triggerLightningAt(int x, int y) {
-        if (!canUseLightning()) return;
-        if (playing.getPlayerManager().getGold() < lightningCost) return;
+        if (!canUseLightning()) {
+            System.out.println("Lightning Strike is on cooldown!");
+            waitingForLightningTarget = false;
+            return;
+        }
+        
+        if (playing.getPlayerManager().getGold() < lightningCost) {
+            System.out.println("Not enough gold for Lightning Strike!");
+            waitingForLightningTarget = false; // Exit targeting mode
+            return;
+        }
 
         playing.getPlayerManager().spendGold(lightningCost);
         playing.updateUIResources();
