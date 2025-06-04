@@ -366,10 +366,8 @@ public class Game extends JFrame implements Runnable{
 
 		this.playing = new Playing(this, tileManager, levelData, overlayData);
 		this.playing.setCurrentMapName(mapName);
-		// Store the difficulty for later use by PlayingUI
-		if (this.playing.getPlayingUI() != null) {
-			this.playing.getPlayingUI().setCurrentDifficulty(difficulty);
-		}
+		// Set the difficulty in the Playing scene (this will also update PlayingUI)
+		this.playing.setCurrentDifficulty(difficulty);
 	}
 
 	public void resetGameWithSameLevel() {

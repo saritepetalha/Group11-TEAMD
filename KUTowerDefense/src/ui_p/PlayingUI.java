@@ -665,6 +665,8 @@ public class PlayingUI {
             g2d.drawImage(AssetsLoader.getInstance().difficultyEasyImg, controlX, difficultyY, difficultyWidth, difficultyHeight, null);
         } else if (currentDifficulty.equals("Hard") && AssetsLoader.getInstance().difficultyHardImg != null) {
             g2d.drawImage(AssetsLoader.getInstance().difficultyHardImg, controlX, difficultyY, difficultyWidth, difficultyHeight, null);
+        } else if (currentDifficulty.equals("Custom") && AssetsLoader.getInstance().difficultyCustomImg != null) {
+            g2d.drawImage(AssetsLoader.getInstance().difficultyCustomImg, controlX, difficultyY, difficultyWidth, difficultyHeight, null);
         } else {
             // fallback if images are not available
             g2d.setColor(new Color(80, 80, 200));
@@ -1426,4 +1428,5 @@ public class PlayingUI {
     public void setCurrentDifficulty(String difficulty) {
         this.currentDifficulty = difficulty;
     }
+
 }

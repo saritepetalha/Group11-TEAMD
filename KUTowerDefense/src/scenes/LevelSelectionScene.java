@@ -756,10 +756,10 @@ public class LevelSelectionScene extends JPanel {
         gbc.anchor = GridBagConstraints.CENTER;
         difficultyPanel.add(titleLabel, gbc);
 
-        BufferedImage easyImg = LoadSave.getImageFromPath("/UI/Easy.png");
-        BufferedImage normalImg = LoadSave.getImageFromPath("/UI/Normal.png");
-        BufferedImage hardImg = LoadSave.getImageFromPath("/UI/Hard.png");
-        BufferedImage customImg = LoadSave.getImageFromPath("/UI/Custom.png");
+        BufferedImage easyImg = AssetsLoader.getInstance().difficultyEasyImg;
+        BufferedImage normalImg = AssetsLoader.getInstance().difficultyNormalImg;
+        BufferedImage hardImg = AssetsLoader.getInstance().difficultyHardImg;
+        BufferedImage customImg = AssetsLoader.getInstance().difficultyCustomImg;
 
         int buttonPanelWidth = 220;
         int buttonPanelHeight = 60;

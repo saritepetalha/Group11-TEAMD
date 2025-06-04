@@ -43,6 +43,7 @@ import main.GameStates;
 import managers.TileManager;
 import managers.GameStateManager;
 import managers.GameStateMemento;
+import config.GameOptions;
 import ui_p.AssetsLoader;
 import ui_p.TheButton;
 
@@ -228,9 +229,10 @@ public class LoadGameMenu extends JPanel {
                 buttonPanel.add(nameLabel, BorderLayout.SOUTH);
 
                 previewButton.addActionListener(e -> {
-                    // Hide any visible tooltip before starting the game
+                    // Hide any visible tooltip before loading game
                     hideCustomTooltip();
 
+                    // Prepare overlay data
                     int[][] overlay = LoadSave.loadOverlay(levelName);
                     if (overlay == null) {
                         overlay = new int[levelData.length][levelData[0].length];
@@ -239,7 +241,18 @@ public class LoadGameMenu extends JPanel {
                             overlay[4][15] = 2;
                         }
                     }
-                    game.startPlayingWithLevel(levelData, overlay, levelName);
+
+                    // Load saved game state to get the difficulty
+                    GameStateMemento saveData = gameStateManager.loadGameState(levelName);
+                    String difficulty = "Normal"; // Default fallback
+
+                    // Get difficulty directly from saved game state
+                    if (saveData != null) {
+                        difficulty = saveData.getDifficulty();
+                    }
+
+                    // Directly start the game with the saved difficulty
+                    game.startPlayingWithDifficulty(levelData, overlay, levelName, difficulty);
                     game.changeGameState(GameStates.PLAYING);
                 });
 
@@ -769,6 +782,20 @@ public class LoadGameMenu extends JPanel {
             waveLabel.setForeground(new Color(0, 128, 128));
             waveLabel.setOpaque(false);
             contentPanel.add(waveLabel);
+
+            // Add difficulty information
+            String difficultyText = "⚔️ Difficulty: ";
+            if (saveData != null) {
+                difficultyText += saveData.getDifficulty();
+            } else {
+                difficultyText += "Unknown";
+            }
+
+            JLabel difficultyLabel = new JLabel(difficultyText);
+            difficultyLabel.setFont(infoFont);
+            difficultyLabel.setForeground(new Color(128, 0, 128));
+            difficultyLabel.setOpaque(false);
+            contentPanel.add(difficultyLabel);
 
             contentPanel.add(Box.createRigidArea(new Dimension(0, 4)));
 
