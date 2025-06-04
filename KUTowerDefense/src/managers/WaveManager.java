@@ -38,6 +38,7 @@ public class WaveManager {
     private boolean waitingForNextGroup = false;
     private boolean waitingForNextEnemy = false;
     private boolean waveTimerActive = false; // Tracks if the inter-wave timer is running
+    private boolean pendingWaveFinish = false; // New flag to track if we're waiting for enemies to clear
 
     public WaveManager(Playing playing, GameOptions options) {
         this.playing = playing;
@@ -165,7 +166,8 @@ public class WaveManager {
 
             } else {
                 System.out.println("Wave " + (waveIndex+1) + " finished.");
-                startInterWaveTimer();
+                // Instead of starting the inter-wave timer immediately, set a flag to wait for all enemies to be gone
+                pendingWaveFinish = true;
             }
         }
     }
@@ -180,6 +182,16 @@ public class WaveManager {
     public void update(){
         // Get the current game speed multiplier from Playing
         float gameSpeedMultiplier = playing.getGameSpeedMultiplier();
+
+        // If we're waiting for all enemies to be gone before starting the inter-wave timer
+        if (pendingWaveFinish) {
+            if (areAllEnemiesGone()) {
+                pendingWaveFinish = false;
+                startInterWaveTimer();
+            }
+            // Don't proceed with other logic until this is resolved
+            return;
+        }
 
         if (waitingForNextWave) {
             if (waveTimerActive) {
@@ -233,7 +245,7 @@ public class WaveManager {
                         System.out.println("Group finished. Starting intra-group timer for " + groupDelayTickLimit + " ticks.");
                     } else {
                         System.out.println("Wave " + (waveIndex+1) + " finished processing enemies.");
-                        startInterWaveTimer();
+                        pendingWaveFinish = true;
                     }
                 }
             }
@@ -381,5 +393,18 @@ public class WaveManager {
                 System.out.println("Warning: Unknown enemy type during conversion: " + enemyType);
                 return null;
         }
+    }
+
+    // Helper method to check if all enemies are dead or have reached the end
+    private boolean areAllEnemiesGone() {
+        if (playing == null || playing.getEnemyManager() == null) return true;
+        var enemies = playing.getEnemyManager().getEnemies();
+        if (enemies.isEmpty()) return true;
+        for (var enemy : enemies) {
+            if (enemy.isAlive() && !enemy.hasReachedEnd()) {
+                return false;
+            }
+        }
+        return true;
     }
 }
