@@ -3,7 +3,6 @@ package scenes;
 import java.awt.AlphaComposite;
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Composite;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -33,6 +32,7 @@ import constants.GameDimensions;
 import helpMethods.FontLoader;
 import helpMethods.LoadSave;
 import helpMethods.ThumbnailCache;
+import helpMethods.BorderImageRotationGenerator;
 import levelselection.LevelSelectionStrategy;
 import main.Game;
 import main.GameStates;
@@ -589,6 +589,9 @@ public class LevelSelectionScene extends JPanel {
         float tileRenderWidth = (float) PREVIEW_WIDTH / numCols;
         float tileRenderHeight = (float) PREVIEW_HEIGHT / numRows;
 
+        // Detect gate edge for proper border rotation
+        int gateEdge = BorderImageRotationGenerator.getInstance().detectGateEdge(levelData);
+
         // Step 1: Fill the entire thumbnail with grass tiles
         int grassTileId = 5; // ID for grass tile
         BufferedImage grassSprite = tileManager.getSprite(grassTileId);
@@ -616,7 +619,26 @@ public class LevelSelectionScene extends JPanel {
                     continue;
                 }
 
-                BufferedImage tileSprite = tileManager.getSprite(tileId);
+                BufferedImage tileSprite = null;
+
+                if (tileId == -3) {
+                    tileSprite = BorderImageRotationGenerator.getInstance().getRotatedBorderImage(true, gateEdge);
+                    // Fallback
+                    if (tileSprite == null) {
+                        tileSprite = tileManager.getSprite(tileId);
+                    }
+                } else if (tileId == -4) { // Gate
+                    tileSprite = BorderImageRotationGenerator.getInstance().getRotatedBorderImage(false, gateEdge);
+
+                    // Fallback
+                    if (tileSprite == null) {
+                        tileSprite = tileManager.getSprite(tileId);
+                    }
+                } else {
+                    // Regular tile
+                    tileSprite = tileManager.getSprite(tileId);
+                }
+
                 if (tileSprite != null) {
                     g2d.drawImage(tileSprite, (int) (c * tileRenderWidth), (int) (r * tileRenderHeight),
                             (int) Math.ceil(tileRenderWidth), (int) Math.ceil(tileRenderHeight), null);

@@ -303,10 +303,10 @@ public class AssetsLoader {
     }
 
     private void loadSelectMapBackgroundImg() {
-        try (InputStream is = LoadSave.class.getResourceAsStream("/UI/SelectMapUI.png.png")) {
+        try (InputStream is = LoadSave.class.getResourceAsStream("/UI/SelectMapUI.png")) {
             selectMapBackgroundImg = ImageIO.read(is);
         } catch (IOException e) {
-            System.err.println("Error loading SelectMapUI.png.png: " + e.getMessage());
+            System.err.println("Error loading SelectMapUI.png: " + e.getMessage());
             e.printStackTrace();
         }
     }
