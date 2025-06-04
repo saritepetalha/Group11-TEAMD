@@ -16,13 +16,14 @@ import scenes.GameOverScene;
 import scenes.Intro;
 import scenes.LevelSelectionScene;
 import scenes.LoadGameMenu;
+import scenes.Loaded;
 import scenes.MapEditing;
 import scenes.Menu;
 import scenes.Options;
 import scenes.Playing;
 import scenes.StatisticsScene;
 
-public class Game extends JFrame implements Runnable{
+public class  Game extends JFrame implements Runnable{
 
 	private GameScreen gamescreen;
 
@@ -45,6 +46,8 @@ public class Game extends JFrame implements Runnable{
 	private TileManager tileManager;
 	private GameStatsManager statsManager;
 
+	// State tracking for map editing context
+	private GameStates previousGameState = GameStates.MENU;
 
 	public Game() {
 		System.out.println("Game Starting...");
@@ -81,6 +84,15 @@ public class Game extends JFrame implements Runnable{
 
 	public void changeGameState(GameStates newState) {
 		GameStates previousState = GameStates.gameState;
+
+		// Special handling for MapEditing based on entry context
+		if (newState == GameStates.EDIT) {
+			handleMapEditingStateChange(previousState);
+		}
+
+		// Track previous state for future reference
+		this.previousGameState = previousState;
+
 		GameStates.gameState = newState;
 
 		AudioManager audioManager = AudioManager.getInstance();
@@ -165,6 +177,22 @@ public class Game extends JFrame implements Runnable{
 			gamescreen.revalidate();
 			gamescreen.repaint();
 		}
+	}
+
+	/**
+	 * Handle MapEditing initialization based on entry context
+	 */
+	private void handleMapEditingStateChange(GameStates previousState) {
+		if (previousState == GameStates.MENU) {
+			// Coming from main menu - create fresh empty map (9x16)
+			mapEditing = new MapEditing(this, this, true);
+			System.out.println("MapEditing: Created fresh map (from main menu)");
+		} else if (previousState == GameStates.NEW_GAME_LEVEL_SELECT) {
+			// Coming from level selection - keep current instance that was set up by editLevel()
+			// The level data was already loaded by LevelSelectionScene.editLevel()
+			System.out.println("MapEditing: Using existing map data (from level selection)");
+		}
+		// For other states, keep existing instance
 	}
 
 	private void initClasses() {

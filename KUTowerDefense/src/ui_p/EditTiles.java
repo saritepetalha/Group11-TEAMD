@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import static main.GameStates.MENU;
 
 import constants.GameDimensions;
+import controllers.MapController;
 import main.Game;
 import managers.AudioManager;
 import scenes.MapEditing;
@@ -23,13 +24,16 @@ public class EditTiles extends Bar {
 
     private final Window owner;
 
-    private MapEditing mapEditing;
+    // Support for both old and new architecture
+    private MapEditing mapEditing;  // For backwards compatibility
+    private MapController mapController;  // For new MVC architecture
     private Tile selectedTile;
 
     private ArrayList<TheButton> tilesButtons = new ArrayList<>();
 
     private TheButton startPoint, endPoint;
 
+    // Constructor for original MapEditing compatibility
     public EditTiles(int x, int y, int width, int height, MapEditing mapEditing, Game game, Window owner) {
         super(x, y, width, height);
         this.mapEditing = mapEditing;
@@ -39,6 +43,26 @@ public class EditTiles extends Bar {
         initButtons();
     }
 
+    // Constructor for MVC architecture
+    public EditTiles(int x, int y, int width, int height, Object mapEditingObject, Game game, Window owner) {
+        super(x, y, width, height);
+
+        // Handle both MapEditing and MVC objects
+        if (mapEditingObject instanceof MapEditing) {
+            this.mapEditing = (MapEditing) mapEditingObject;
+        }
+        // For MVC objects, we'll set the controller later
+
+        this.game = game;
+        this.owner = owner;
+
+        initButtons();
+    }
+
+    // Method to set the MapController for MVC architecture
+    public void setMapController(MapController mapController) {
+        this.mapController = mapController;
+    }
 
     private void initButtons() {
         backMenu = new TheButton("Back",
@@ -100,16 +124,24 @@ public class EditTiles extends Bar {
                 AssetsLoader.getInstance().modeImage
         );
 
+        // Initialize tile buttons based on available tile manager
+        initTileButtons();
+    }
+
+    private void initTileButtons() {
+        managers.TileManager tileManager = getTileManager();
+        if (tileManager == null) return;
+
         int widthButton = GameDimensions.ButtonSize.MEDIUM.getSize();
         int heightButton = GameDimensions.ButtonSize.MEDIUM.getSize();
         int gameWidth = GameDimensions.GAME_WIDTH;
 
         int i;
-        for(i = 0; i < mapEditing.getTileManager().tiles.size(); i++) {
-            Tile tile = mapEditing.getTileManager().tiles.get(i);
+        for(i = 0; i < tileManager.tiles.size(); i++) {
+            Tile tile = tileManager.tiles.get(i);
 
             // skip extra Castle tiles (one button for Castle)
-            if (tile.getName().equals("Castle") && tile != mapEditing.getTileManager().CastleTopLeft) {
+            if (tile.getName().equals("Castle") && tile != tileManager.CastleTopLeft) {
                 continue;
             }
 
@@ -146,13 +178,67 @@ public class EditTiles extends Bar {
                 widthButton,
                 heightButton,
                 i++);
+    }
 
+    // Get tile manager from either architecture
+    private managers.TileManager getTileManager() {
+        if (mapController != null) {
+            return mapController.getMapModel().getTileManager();
+        } else if (mapEditing != null) {
+            return mapEditing.getTileManager();
+        }
+        return null;
     }
 
     private void saveLevel(String levelName){
-        mapEditing.saveLevel(levelName);
+        if (mapController != null) {
+            mapController.saveLevel(levelName);
+        } else if (mapEditing != null) {
+            mapEditing.saveLevel(levelName);
+        }
     }
 
+    private void setSelectedTile(Tile tile) {
+        this.selectedTile = tile;
+        if (mapController != null) {
+            mapController.setSelectedTile(tile);
+        } else if (mapEditing != null) {
+            mapEditing.setSelectedTile(tile);
+        }
+    }
+
+    private void fillAllTiles() {
+        if (mapController != null) {
+            mapController.setMode("Fill");
+        } else if (mapEditing != null) {
+            mapEditing.fillAllTiles();
+        }
+    }
+
+    private void resetAllTiles() {
+        if (mapController != null) {
+            mapController.setMode("Trash");
+        } else if (mapEditing != null) {
+            mapEditing.resetAllTiles();
+        }
+    }
+
+    private String getCurrentLevelName() {
+        if (mapController != null) {
+            return mapController.getMapModel().getCurrentLevelName();
+        } else if (mapEditing != null) {
+            return mapEditing.getCurrentLevelName();
+        }
+        return null;
+    }
+
+    private void setCurrentLevelName(String name) {
+        if (mapController != null) {
+            mapController.getMapModel().setCurrentLevelName(name);
+        } else if (mapEditing != null) {
+            mapEditing.setCurrentLevelName(name);
+        }
+    }
 
     private void drawButtons(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
@@ -246,11 +332,12 @@ public class EditTiles extends Bar {
         }
 
         BufferedImage spriteToDraw;
+        managers.TileManager tileManager = getTileManager();
 
         if (tilesButton.getText().equals("Castle")) {
-            spriteToDraw = mapEditing.getTileManager().getFullCastleSprite();
+            spriteToDraw = tileManager.getFullCastleSprite();
         } else {
-            spriteToDraw = mapEditing.getTileManager().getSprite(tilesButton.getId());
+            spriteToDraw = tileManager.getSprite(tilesButton.getId());
         }
 
         g2d.drawImage(spriteToDraw,
@@ -385,49 +472,55 @@ public class EditTiles extends Bar {
         else if (draw.getBounds().contains(x, y)) {
             AudioManager.getInstance().playButtonClickSound();
             currentMode = "Draw";
+            if (mapController != null) {
+                mapController.setMode("Draw");
+            }
         }
         else if (erase.getBounds().contains(x, y)) {
             AudioManager.getInstance().playButtonClickSound();
             currentMode = "Erase";
+            if (mapController != null) {
+                mapController.setMode("Erase");
+            }
         }
         else if (fill.getBounds().contains(x, y)) {
             AudioManager.getInstance().playButtonClickSound();
             currentMode = "Fill";
-            mapEditing.fillAllTiles();
+            fillAllTiles();
         }
         else if (trash.getBounds().contains(x, y)) {
             AudioManager.getInstance().playButtonClickSound();
             currentMode = "Trash";
-            mapEditing.resetAllTiles();
+            resetAllTiles();
         }
         else if (save.getBounds().contains(x, y)) {
             AudioManager.getInstance().playButtonClickSound();
-            String currentLevel = mapEditing.getCurrentLevelName();
+            String currentLevel = getCurrentLevelName();
             if (currentLevel != null) {
                 saveLevel(currentLevel);
             } else {
                 String levelName = JOptionPane.showInputDialog(owner, "Enter level name:");
                 if (levelName != null && !levelName.trim().isEmpty()) {
-                    mapEditing.setCurrentLevelName(levelName.trim());
+                    setCurrentLevelName(levelName.trim());
                     saveLevel(levelName.trim());
                 }
             }
         }
         else if (startPoint.getBounds().contains(x, y)) {
             selectedTile = new Tile(AssetsLoader.getInstance().startPointImg,-1,"Start Point");
-            mapEditing.setSelectedTile(selectedTile);
+            setSelectedTile(selectedTile);
             System.out.println("Start point selected"); // Debug output
         }
         else if (endPoint.getBounds().contains(x, y)) {
             selectedTile = new Tile(AssetsLoader.getInstance().endPointImg, -2, "End Point");
-            mapEditing.setSelectedTile(selectedTile);
+            setSelectedTile(selectedTile);
             System.out.println("End point selected"); // Debug output
         }
         else{
             for (TheButton tilesButton : tilesButtons) {
                 if (tilesButton.getBounds().contains(x, y)){
-                    selectedTile = mapEditing.getTileManager().getTile(tilesButton.getId());
-                    mapEditing.setSelectedTile(selectedTile);
+                    selectedTile = getTileManager().getTile(tilesButton.getId());
+                    setSelectedTile(selectedTile);
                     return;
                 }
             }
@@ -437,9 +530,18 @@ public class EditTiles extends Bar {
     public void mouseDragged(int x, int y) {
         if (x < GameDimensions.GAME_WIDTH && y < GameDimensions.GAME_HEIGHT) {
             if (currentMode.equals("Draw")) {
-                mapEditing.modifyTile(x, y);
+                if (mapController != null) {
+                    // For MVC architecture - let controller handle the drag
+                    // The controller will call the strategy pattern
+                } else if (mapEditing != null) {
+                    mapEditing.modifyTile(x, y);
+                }
             } else if (currentMode.equals("Erase")) {
-                mapEditing.eraseTile(x, y);
+                if (mapController != null) {
+                    // For MVC architecture - let controller handle the drag
+                } else if (mapEditing != null) {
+                    mapEditing.eraseTile(x, y);
+                }
             }
         }
     }
@@ -537,7 +639,7 @@ public class EditTiles extends Bar {
 
         // only clear the selected tile if not switching to Fill mode
         if (activeButton != fill) {
-            mapEditing.setSelectedTile(null);
+            setSelectedTile(null);
         }
         activeButton.setMousePressed(true);
     }
