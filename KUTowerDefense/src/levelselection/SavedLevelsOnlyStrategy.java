@@ -42,52 +42,29 @@ public class SavedLevelsOnlyStrategy implements LevelSelectionStrategy {
      */
     private boolean hasSaveFile(String levelName) {
         try {
-            // Get the saves directory path using the same method as GameStateManager
-            File projectRoot = findProjectRoot();
+            // Try multiple possible paths in order of preference
+            String[] possiblePaths = {
+                    "src/main/resources/Saves",          // Standard Maven structure from project root
+                    "demo/src/main/resources/Saves",     // If running from parent directory
+                    "main/resources/Saves",              // If running from src directory
+                    "resources/Saves",                   // If running from src/main directory
+                    "KUTowerDefense/resources/Saves"     // Legacy structure
+            };
 
-            // Check if we have a demo subdirectory structure
-            File demoDir = new File(projectRoot, "demo");
-            File savesDir;
-            if (demoDir.exists() && new File(demoDir, "pom.xml").exists()) {
-                savesDir = new File(demoDir, "resources/Saves");
-            } else {
-                savesDir = new File(projectRoot, "resources/Saves");
+            for (String path : possiblePaths) {
+                File savesDir = new File(path);
+                if (savesDir.exists() && savesDir.isDirectory()) {
+                    File saveFile = new File(savesDir, levelName + ".json");
+                    if (saveFile.exists()) {
+                        return true;
+                    }
+                }
             }
 
-            File saveFile = new File(savesDir, levelName + ".json");
-            return saveFile.exists();
+            return false;
         } catch (Exception e) {
             System.err.println("Error checking save file for level: " + levelName + " - " + e.getMessage());
             return false;
         }
-    }
-
-    /**
-     * Finds the project root directory by looking for key indicators
-     */
-    private File findProjectRoot() {
-        File currentDir = new File(System.getProperty("user.dir"));
-        File checkDir = currentDir;
-
-        // Look for project root indicators going up the directory tree
-        for (int i = 0; i < 5; i++) { // Limit search to 5 levels up
-            // Check for Maven project root indicators
-            if (new File(checkDir, "pom.xml").exists() ||
-                    new File(checkDir, "demo/pom.xml").exists()) {
-                return checkDir;
-            }
-
-            // Check if we're inside a demo directory structure
-            if (checkDir.getName().equals("demo") && new File(checkDir, "pom.xml").exists()) {
-                return checkDir;
-            }
-
-            File parent = checkDir.getParentFile();
-            if (parent == null) break;
-            checkDir = parent;
-        }
-
-        // If no clear project root found, return current directory
-        return currentDir;
     }
 }
