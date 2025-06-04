@@ -647,7 +647,7 @@ public class TowerSelectionUI {
         }
 
         // Light effect when hovering (preview the light range)
-        if (lightUpgradeButton.isMouseOver() && canUpgrade && playing.getWeatherManager().isNight()) {
+        if (lightUpgradeButton.isMouseOver() && canUpgrade) {
             float lightRadius = selectedTower.getRange() * 0.7f;
             int centerX = selectedTower.getX() + selectedTower.getWidth() / 2;
             int centerY = selectedTower.getY() + selectedTower.getHeight() / 2;
