@@ -176,8 +176,14 @@ public class PlayingController implements Observer {
     }
     
     public void mouseMoved(int x, int y) {
-        // Only snap to grid if gold factory is selected
+        // Snap to grid if gold factory is selected
         if (model.getUltiManager() != null && model.getUltiManager().isGoldFactorySelected()) {
+            x = (x / GameDimensions.TILE_DISPLAY_SIZE) * GameDimensions.TILE_DISPLAY_SIZE;
+            y = (y / GameDimensions.TILE_DISPLAY_SIZE) * GameDimensions.TILE_DISPLAY_SIZE;
+        }
+        
+        // Snap to grid if warrior placement is active
+        if (model.getPendingWarriorPlacement() != null) {
             x = (x / GameDimensions.TILE_DISPLAY_SIZE) * GameDimensions.TILE_DISPLAY_SIZE;
             y = (y / GameDimensions.TILE_DISPLAY_SIZE) * GameDimensions.TILE_DISPLAY_SIZE;
         }
@@ -197,6 +203,13 @@ public class PlayingController implements Observer {
         if (model.getUltiManager() != null && model.getUltiManager().isGoldFactorySelected() &&
                 !model.isOptionsMenuOpen() && !model.isGamePaused()) {
             // Don't handle placement here - let mouseClicked handle it
+            return;
+        }
+        
+        // Handle warrior placement cancellation with right-click
+        if (model.getPendingWarriorPlacement() != null) {
+            // Note: Right-click handling would need to be added to the mouse event system
+            // For now, this is handled in mouseClicked
             return;
         }
 
@@ -320,16 +333,17 @@ public class PlayingController implements Observer {
                 model.getPlayerManager().spendGold(pendingWarrior.getCost());
             }
 
-            // Place the warrior at the top-left of the tile, with a slight upward offset
-            int placementY = tileY - 8;
-            pendingWarrior.setX(tileX);
-            pendingWarrior.setY(placementY);
+            // Set the target destination with slight upward offset for final position
+            int finalY = tileY - 8;
+            pendingWarrior.setTargetDestination(tileX, finalY);
             
+            // Add warrior to manager (it will start running to the target)
             if (model.getTowerManager() != null) {
                 model.getTowerManager().getWarriors().add(pendingWarrior);
             }
             
-            System.out.println("Warrior placed at tile coordinates: (" + tileX + ", " + placementY + ") for " + pendingWarrior.getCost() + " gold.");
+            System.out.println("Warrior will run from (" + pendingWarrior.getSpawnX() + ", " + pendingWarrior.getSpawnY() + 
+                             ") to (" + tileX + ", " + finalY + ") for " + pendingWarrior.getCost() + " gold.");
             
             // Clear pending placement
             model.setPendingWarriorPlacement(null); // Properly clear the pending warrior

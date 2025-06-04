@@ -248,7 +248,7 @@ public class Playing extends GameScene implements SceneMethods {
     public void incrementEnemyDefeated() {
         controller.getModel().incrementEnemyDefeated();
     }
-    
+
     public void addTotalDamage(int damage) {
         controller.getModel().addTotalDamage(damage);
     }
@@ -276,11 +276,11 @@ public class Playing extends GameScene implements SceneMethods {
     public String getMapName() {
         return getCurrentMapName();
     }
-    
+
     public void setCurrentMapName(String mapName) {
         controller.getModel().setCurrentMapName(mapName);
     }
-    
+
     public void setCurrentDifficulty(String difficulty) {
         if (controller != null) {
             controller.getModel().setCurrentDifficulty(difficulty);

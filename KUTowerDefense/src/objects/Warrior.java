@@ -10,6 +10,7 @@ import java.awt.image.BufferedImage;
 
 public abstract class Warrior {
 
+    // Position and identification
     private int x, y, ID, countDownClock;
     protected int damage;
     protected float range, cooldown;
@@ -20,31 +21,72 @@ public abstract class Warrior {
     // Strategy Pattern: Warrior targeting behavior
     protected TargetingStrategy targetingStrategy;
 
-    // Animation fields
+    // Animation fields - updated for new sprite system
     protected int animationIndex = 0;
     protected int animationTick = 0;
-    protected int animationSpeed = 15; // Adjust as needed
-    protected int maxFrameCount;
+    protected int animationSpeed = 8; // Faster animation for 8-frame sprites
+    protected int runFrameCount = 8; // Run animations have 8 frames
+    protected int attackFrameCount = 8; // Default attack frame count (wizard)
 
-    public Warrior(int x, int y) {
-        this.x = x;
-        this.y = y;
+    // ========== NEW: Movement and State System ==========
+    
+    public enum WarriorState {
+        RUNNING,    // Moving from spawn to destination
+        IDLE,       // Stationary but no enemies in range
+        ATTACKING   // Stationary and attacking enemies
+    }
+    
+    private WarriorState currentState = WarriorState.RUNNING;
+    
+    // Movement fields
+    private int spawnX, spawnY;     // Where the warrior spawned from (tower position)
+    private int targetX, targetY;   // Where the warrior is moving to
+    private float moveSpeed = 2.0f; // Movement speed in pixels per update
+    private boolean hasReachedDestination = false;
+    
+    // Cached animation frames
+    private BufferedImage[] runFrames = null;
+    private BufferedImage[] attackFrames = null;
+
+    public Warrior(int spawnX, int spawnY, int targetX, int targetY) {
+        // Start at spawn position
+        this.x = spawnX;
+        this.y = spawnY;
+        this.spawnX = spawnX;
+        this.spawnY = spawnY;
+        this.targetX = targetX;
+        this.targetY = targetY;
+        
         this.ID = num;
         num++;
 
         // Default targeting strategy is FirstEnemy (current behavior)
         this.targetingStrategy = new FirstEnemyStrategy();
         initializeAnimationParameters();
+        loadAnimationFrames();
     }
 
     // Constructor with custom targeting strategy
-    public Warrior(int x, int y, TargetingStrategy targetingStrategy) {
-        this.x = x;
-        this.y = y;
+    public Warrior(int spawnX, int spawnY, int targetX, int targetY, TargetingStrategy targetingStrategy) {
+        this.x = spawnX;
+        this.y = spawnY;
+        this.spawnX = spawnX;
+        this.spawnY = spawnY;
+        this.targetX = targetX;
+        this.targetY = targetY;
+        
         this.ID = num;
         num++;
         this.targetingStrategy = targetingStrategy != null ? targetingStrategy : new FirstEnemyStrategy();
         initializeAnimationParameters();
+        loadAnimationFrames();
+    }
+    
+    // Legacy constructor for backward compatibility
+    public Warrior(int x, int y) {
+        this(x, y, x, y); // No movement, start in attacking state
+        this.hasReachedDestination = true;
+        this.currentState = WarriorState.ATTACKING;
     }
 
     protected abstract void initializeAnimationParameters();
@@ -54,6 +96,56 @@ public abstract class Warrior {
     public abstract float getRange();
     public abstract int getDamage();
     public abstract int getCost();
+    
+    /**
+     * Load animation frames for this warrior type
+     */
+    private void loadAnimationFrames() {
+        runFrames = LoadSave.getWarriorRunAnimation(this);
+        attackFrames = LoadSave.getWarriorAttackAnimation(this);
+    }
+
+    /**
+     * Update warrior movement and state
+     */
+    public void update(float gameSpeedMultiplier) {
+        // Update cooldown
+        countDownClock += gameSpeedMultiplier * attackSpeedMultiplier;
+        
+        // Update based on current state
+        if (currentState == WarriorState.RUNNING && !hasReachedDestination) {
+            updateMovement(gameSpeedMultiplier);
+        }
+        
+        // Update animation
+        updateAnimationTick();
+    }
+    
+    /**
+     * Update warrior movement towards target position
+     */
+    private void updateMovement(float speedMultiplier) {
+        float dx = targetX - x;
+        float dy = targetY - y;
+        float distance = (float) Math.sqrt(dx * dx + dy * dy);
+        
+        // Check if we've reached the destination
+        if (distance <= moveSpeed * speedMultiplier) {
+            // Snap to exact target position
+            x = targetX;
+            y = targetY;
+            hasReachedDestination = true;
+            currentState = WarriorState.IDLE; // Start in idle state, will be changed to attacking when enemy found
+            System.out.println("Warrior reached destination: (" + targetX + ", " + targetY + ")");
+        } else {
+            // Move towards target
+            float moveX = (dx / distance) * moveSpeed * speedMultiplier;
+            float moveY = (dy / distance) * moveSpeed * speedMultiplier;
+            
+            x += (int) moveX;
+            y += (int) moveY;
+        }
+    }
 
     public boolean isClicked(int mouseX, int mouseY) {
         Rectangle bounds = new Rectangle(x, y, 64, 64);
@@ -87,12 +179,9 @@ public abstract class Warrior {
         countDownClock = 0;
     }
 
+    // Legacy update method for backward compatibility
     public void update() {
-        countDownClock += 1.0f * attackSpeedMultiplier;
-    }
-
-    public void update(float gameSpeedMultiplier) {
-        countDownClock += gameSpeedMultiplier * attackSpeedMultiplier;
+        update(1.0f);
     }
 
     public int getLevel() { return level; }
@@ -133,16 +222,37 @@ public abstract class Warrior {
         this.y = y;
     }
 
+    /**
+     * Get animation frames based on current state
+     */
     public BufferedImage[] getAnimationFrames() {
-        return LoadSave.getWarriorAnimation(this);
+        if (currentState == WarriorState.RUNNING && runFrames != null) {
+            return runFrames;
+        } else if (currentState == WarriorState.ATTACKING && attackFrames != null) {
+            return attackFrames;
+        } else if (currentState == WarriorState.IDLE && attackFrames != null) {
+            // For idle state, create a single-frame array with the first attack frame (resting pose)
+            return new BufferedImage[]{attackFrames[0]};
+        }
+        // Fallback to old method for compatibility
+        return LoadSave.getWarriorAttackAnimation(this);
     }
 
     public void updateAnimationTick() {
+        // Don't animate when idle (stay on first frame)
+        if (currentState == WarriorState.IDLE) {
+            animationIndex = 0;
+            return;
+        }
+        
         animationTick++;
         if (animationTick >= animationSpeed) {
             animationTick = 0;
             animationIndex++;
-            if (animationIndex >= maxFrameCount) {
+            
+            // Use correct frame count based on current state
+            int maxFrames = (currentState == WarriorState.RUNNING) ? runFrameCount : attackFrameCount;
+            if (animationIndex >= maxFrames) {
                 animationIndex = 0;
             }
         }
@@ -150,5 +260,80 @@ public abstract class Warrior {
 
     public int getAnimationIndex() {
         return animationIndex;
+    }
+    
+    // ========== NEW: State and Movement Getters ==========
+    
+    public WarriorState getCurrentState() {
+        return currentState;
+    }
+    
+    public boolean hasReachedDestination() {
+        return hasReachedDestination;
+    }
+    
+    public boolean isRunning() {
+        return currentState == WarriorState.RUNNING && !hasReachedDestination;
+    }
+    
+    public boolean isAttacking() {
+        return currentState == WarriorState.ATTACKING;
+    }
+    
+    public boolean isIdle() {
+        return currentState == WarriorState.IDLE;
+    }
+    
+    public int getSpawnX() {
+        return spawnX;
+    }
+    
+    public int getSpawnY() {
+        return spawnY;
+    }
+    
+    public int getTargetX() {
+        return targetX;
+    }
+    
+    public int getTargetY() {
+        return targetY;
+    }
+    
+    public void setMoveSpeed(float speed) {
+        this.moveSpeed = speed;
+    }
+    
+    public float getMoveSpeed() {
+        return moveSpeed;
+    }
+    
+    /**
+     * Set new target destination and start movement
+     */
+    public void setTargetDestination(int newTargetX, int newTargetY) {
+        this.targetX = newTargetX;
+        this.targetY = newTargetY;
+        this.hasReachedDestination = false;
+        this.currentState = WarriorState.RUNNING;
+        System.out.println("Warrior target set to: (" + newTargetX + ", " + newTargetY + ")");
+    }
+    
+    /**
+     * Set warrior to attacking state when an enemy is found in range
+     */
+    public void setAttackingState() {
+        if (hasReachedDestination) {
+            currentState = WarriorState.ATTACKING;
+        }
+    }
+    
+    /**
+     * Set warrior to idle state when no enemies are in range
+     */
+    public void setIdleState() {
+        if (hasReachedDestination) {
+            currentState = WarriorState.IDLE;
+        }
     }
 } 
