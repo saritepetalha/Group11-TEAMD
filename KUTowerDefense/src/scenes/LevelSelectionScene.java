@@ -100,6 +100,9 @@ public class LevelSelectionScene extends JPanel {
     }
 
     public void refreshLevelList() {
+        System.out.println("Refreshing level list...");
+        System.out.println("Cache stats before refresh: " + ThumbnailCache.getInstance().getCacheStats());
+
         availableLevels = strategy.getLevelsToShow();
         totalPages = Math.max(1, (int) Math.ceil((double) availableLevels.size() / PREVIEWS_PER_PAGE));
 
@@ -114,6 +117,9 @@ public class LevelSelectionScene extends JPanel {
         createMainContent();
         revalidate();
         repaint();
+
+        System.out.println("Level list refreshed successfully.");
+        System.out.println("Cache stats after refresh: " + ThumbnailCache.getInstance().getCacheStats());
     }
 
     private void initUI() {
@@ -543,10 +549,12 @@ public class LevelSelectionScene extends JPanel {
         BufferedImage cachedThumbnail = cache.getCachedThumbnail(levelName, levelDataHash);
 
         if (cachedThumbnail != null) {
+            System.out.println("LevelSelection: Thumbnail cache HIT for " + levelName + " (hash: " + levelDataHash + ")");
             return cachedThumbnail;
         }
 
         // Cache miss - generate new thumbnail
+        System.out.println("LevelSelection: Thumbnail cache MISS for " + levelName + " (hash: " + levelDataHash + ") - generating new thumbnail");
         BufferedImage newThumbnail = generateThumbnail(levelData);
 
         // Cache the generated thumbnail

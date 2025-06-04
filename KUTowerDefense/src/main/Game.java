@@ -39,7 +39,6 @@ public class Game extends JFrame implements Runnable{
 	private Options options;
 	private Playing playing;
 	private MapEditing mapEditing;
-	private Loaded loaded;
 	private LoadGameMenu loadGameMenu;
 	private LevelSelectionScene newGameLevelSelection;
 	private GameOverScene gameOverScene;
@@ -145,9 +144,20 @@ public class Game extends JFrame implements Runnable{
 		pack();
 		setLocationRelativeTo(null);
 
+
+		// Refresh map previews when entering LOAD_GAME
+		// This ensures any newly saved games show updated thumbnails
 		if (newState == GameStates.LOAD_GAME) {
 			if (loadGameMenu != null) {
 				loadGameMenu.refreshMapPreviews();
+			}
+		}
+
+		// Refresh level selection scene when entering NEW_GAME_LEVEL_SELECT
+		// This ensures any edited maps show updated thumbnails
+		if (newState == GameStates.NEW_GAME_LEVEL_SELECT) {
+			if (newGameLevelSelection != null) {
+				newGameLevelSelection.refreshLevelList();
 			}
 		}
 
@@ -172,7 +182,6 @@ public class Game extends JFrame implements Runnable{
 			playing = new Playing(this);
 		}
 		mapEditing = new MapEditing(this, this);
-		loaded = new Loaded(this);
 		loadGameMenu = new LoadGameMenu(this);
 		newGameLevelSelection = new LevelSelectionScene(this, new levelselection.AllLevelsStrategy());
 		gameOverScene = new GameOverScene(this);
