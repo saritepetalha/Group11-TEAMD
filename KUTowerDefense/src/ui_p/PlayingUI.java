@@ -832,7 +832,7 @@ public class PlayingUI {
         // 7. Save button - positioned below main menu button
         int saveLoadWidth = 120;
         int saveLoadHeight = 30;
-        int saveLoadY = btnY + btnHeight + 10; // Position below main menu button
+        int saveLoadY = btnY + btnHeight + 8; // Position below main menu button
 
         // Save button
         saveButton.setX(btnX + (btnWidth - saveLoadWidth) / 2); // Center horizontally with main menu button
