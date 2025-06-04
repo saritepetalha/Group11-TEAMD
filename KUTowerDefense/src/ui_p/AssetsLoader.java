@@ -33,6 +33,7 @@ public class AssetsLoader {
     public BufferedImage difficultyNormalImg;
     public BufferedImage difficultyEasyImg;
     public BufferedImage difficultyHardImg;
+    public BufferedImage difficultyCustomImg;
     public BufferedImage regularMusicImg;
     public BufferedImage pressedMusicImg;
     public BufferedImage backgroundImg;
@@ -259,6 +260,12 @@ public class AssetsLoader {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        try (InputStream is = LoadSave.class.getResourceAsStream("/UI/Custom.png")) {
+            difficultyCustomImg = ImageIO.read(is);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void loadBackgroundImages() {
@@ -303,10 +310,10 @@ public class AssetsLoader {
     }
 
     private void loadSelectMapBackgroundImg() {
-        try (InputStream is = LoadSave.class.getResourceAsStream("/UI/SelectMapUI.png.png")) {
+        try (InputStream is = LoadSave.class.getResourceAsStream("/UI/SelectMapUI.png")) {
             selectMapBackgroundImg = ImageIO.read(is);
         } catch (IOException e) {
-            System.err.println("Error loading SelectMapUI.png.png: " + e.getMessage());
+            System.err.println("Error loading SelectMapUI.png: " + e.getMessage());
             e.printStackTrace();
         }
     }

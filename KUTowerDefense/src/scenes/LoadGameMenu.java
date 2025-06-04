@@ -26,6 +26,7 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -43,6 +44,7 @@ import main.GameStates;
 import managers.TileManager;
 import managers.GameStateManager;
 import managers.GameStateMemento;
+import config.GameOptions;
 import ui_p.AssetsLoader;
 import ui_p.TheButton;
 
@@ -214,6 +216,180 @@ public class LoadGameMenu extends JPanel {
                 previewButton.setToolTipText(null);
                 addCustomTooltipBehavior(previewButton, levelName);
                 previewButton.setPreferredSize(new Dimension(PREVIEW_WIDTH, PREVIEW_HEIGHT));
+                previewButton.setCursor(AssetsLoader.getInstance().customHandCursor);
+
+                // Add mouse listener for cursor management on preview button
+                previewButton.addMouseListener(new MouseAdapter() {
+                    @Override
+                    public void mouseEntered(MouseEvent e) {
+                        previewButton.setCursor(AssetsLoader.getInstance().customHandCursor);
+                    }
+
+                    @Override
+                    public void mouseExited(MouseEvent e) {
+                        previewButton.setCursor(AssetsLoader.getInstance().customNormalCursor);
+                    }
+                });
+
+                // Create a container panel for the preview button and trash button
+                JPanel previewContainer = new JPanel();
+                previewContainer.setLayout(null); // Use absolute positioning
+                previewContainer.setOpaque(false);
+                previewContainer.setPreferredSize(new Dimension(PREVIEW_WIDTH, PREVIEW_HEIGHT));
+
+                // Add the preview button
+                previewButton.setBounds(0, 0, PREVIEW_WIDTH, PREVIEW_HEIGHT);
+                previewContainer.add(previewButton);
+
+                // Create trash button with improved visibility
+                TheButton trashButton = new TheButton("", 0, 0, 20, 20, AssetsLoader.getInstance().buttonImages.get(3));
+                JPanel trashWrapper = new JPanel() {
+                    @Override
+                    protected void paintComponent(Graphics g) {
+                        // Simply draw the trash button without background or hover effects
+                        trashButton.draw(g);
+                    }
+
+                    @Override
+                    public Dimension getPreferredSize() {
+                        return new Dimension(20, 20);
+                    }
+                };
+                trashWrapper.setOpaque(false);
+                trashWrapper.setBounds(PREVIEW_WIDTH - 20, 0, 20, 20); // Exact top-right corner
+                trashWrapper.setCursor(AssetsLoader.getInstance().customHandCursor);
+
+                trashWrapper.addMouseListener(new MouseAdapter() {
+                    @Override
+                    public void mouseEntered(MouseEvent e) {
+                        trashWrapper.setCursor(AssetsLoader.getInstance().customHandCursor);
+                    }
+
+                    @Override
+                    public void mouseExited(MouseEvent e) {
+                        trashWrapper.setCursor(AssetsLoader.getInstance().customNormalCursor);
+                    }
+
+                    @Override
+                    public void mousePressed(MouseEvent e) {
+                        trashButton.setMousePressed(true);
+                        trashWrapper.repaint();
+                        e.consume(); // Prevent event from propagating to preview button
+                    }
+
+                    @Override
+                    public void mouseReleased(MouseEvent e) {
+                        trashButton.setMousePressed(false);
+                        trashWrapper.repaint();
+                        e.consume(); // Prevent event from propagating to preview button
+                    }
+
+                    @Override
+                    public void mouseClicked(MouseEvent e) {
+                        e.consume(); // Prevent event from propagating to preview button
+
+                        // Hide any visible tooltip before showing confirmation
+                        hideCustomTooltip();
+
+                        Font originalFont = javax.swing.UIManager.getFont("OptionPane.messageFont");
+                        Font originalButtonFont = javax.swing.UIManager.getFont("OptionPane.buttonFont");
+                        javax.swing.UIManager.put("OptionPane.messageFont", mvBoliFontBold);
+                        javax.swing.UIManager.put("OptionPane.buttonFont", mvBoliFontBold);
+
+                        // Create custom rounded buttons with proper functionality
+                        final JOptionPane optionPane = new JOptionPane(
+                                "Are you sure you want to delete the saved game '" + levelName + "'?\nThis action cannot be undone.",
+                                JOptionPane.WARNING_MESSAGE,
+                                JOptionPane.YES_NO_OPTION,
+                                null,
+                                new Object[]{}, // Empty options - we'll add custom buttons
+                                null
+                        );
+
+                        // custom yes button
+                        JButton yesButton = new JButton("Yes") {
+                            @Override
+                            protected void paintComponent(Graphics g) {
+                                Graphics2D g2d = (Graphics2D) g.create();
+                                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                                Color bgColor = getModel().isRollover() ? new Color(46, 155, 46) : new Color(34, 139, 34);
+                                g2d.setColor(bgColor);
+                                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
+
+                                g2d.setColor(getForeground());
+                                g2d.setFont(getFont());
+                                FontMetrics fm = g2d.getFontMetrics();
+                                int x = (getWidth() - fm.stringWidth(getText())) / 2;
+                                int y = (getHeight() + fm.getAscent()) / 2 - 2;
+                                g2d.drawString(getText(), x, y);
+
+                                g2d.dispose();
+                            }
+                        };
+                        yesButton.setForeground(Color.WHITE);
+                        yesButton.setFont(mvBoliFontBold);
+                        yesButton.setFocusPainted(false);
+                        yesButton.setBorderPainted(false);
+                        yesButton.setContentAreaFilled(false);
+                        yesButton.setPreferredSize(new Dimension(70, 30));
+
+                        // custom no button
+                        JButton noButton = new JButton("No") {
+                            @Override
+                            protected void paintComponent(Graphics g) {
+                                Graphics2D g2d = (Graphics2D) g.create();
+                                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                                Color bgColor = getModel().isRollover() ? new Color(240, 30, 70) : new Color(220, 20, 60);
+                                g2d.setColor(bgColor);
+                                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
+
+                                g2d.setColor(getForeground());
+                                g2d.setFont(getFont());
+                                FontMetrics fm = g2d.getFontMetrics();
+                                int x = (getWidth() - fm.stringWidth(getText())) / 2;
+                                int y = (getHeight() + fm.getAscent()) / 2 - 2;
+                                g2d.drawString(getText(), x, y);
+
+                                g2d.dispose();
+                            }
+                        };
+                        noButton.setForeground(Color.WHITE);
+                        noButton.setFont(mvBoliFontBold);
+                        noButton.setFocusPainted(false);
+                        noButton.setBorderPainted(false);
+                        noButton.setContentAreaFilled(false);
+                        noButton.setPreferredSize(new Dimension(70, 30));
+
+                        // Add action listeners to close dialog with proper values
+                        yesButton.addActionListener(evt -> optionPane.setValue(JOptionPane.YES_OPTION));
+                        noButton.addActionListener(evt -> optionPane.setValue(JOptionPane.NO_OPTION));
+
+                        // Set the custom buttons
+                        optionPane.setOptions(new Object[]{yesButton, noButton});
+                        optionPane.setInitialValue(noButton); // Default to No
+
+                        // Create and show the dialog
+                        JDialog dialog = optionPane.createDialog(LoadGameMenu.this, "Delete Saved Game");
+                        dialog.setVisible(true);
+
+                        // Get the result
+                        Object result = optionPane.getValue();
+
+                        // Restore original fonts
+                        javax.swing.UIManager.put("OptionPane.messageFont", originalFont);
+                        javax.swing.UIManager.put("OptionPane.buttonFont", originalButtonFont);
+
+                        if (result != null && result.equals(JOptionPane.YES_OPTION)) {
+                            deleteSavedGame(levelName);
+                        }
+                    }
+                });
+
+                // Add trash wrapper on top of preview button (higher z-order)
+                previewContainer.add(trashWrapper);
+                previewContainer.setComponentZOrder(trashWrapper, 0); // Bring to front
 
                 JPanel buttonPanel = new JPanel(new BorderLayout());
                 buttonPanel.setOpaque(false);
@@ -224,13 +400,14 @@ public class LoadGameMenu extends JPanel {
                 nameLabel.setForeground(Color.BLACK);
                 nameLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
 
-                buttonPanel.add(previewButton, BorderLayout.CENTER);
+                buttonPanel.add(previewContainer, BorderLayout.CENTER);
                 buttonPanel.add(nameLabel, BorderLayout.SOUTH);
 
                 previewButton.addActionListener(e -> {
-                    // Hide any visible tooltip before starting the game
+                    // Hide any visible tooltip before loading game
                     hideCustomTooltip();
 
+                    // Prepare overlay data
                     int[][] overlay = LoadSave.loadOverlay(levelName);
                     if (overlay == null) {
                         overlay = new int[levelData.length][levelData[0].length];
@@ -239,7 +416,18 @@ public class LoadGameMenu extends JPanel {
                             overlay[4][15] = 2;
                         }
                     }
-                    game.startPlayingWithLevel(levelData, overlay, levelName);
+
+                    // Load saved game state to get the difficulty
+                    GameStateMemento saveData = gameStateManager.loadGameState(levelName);
+                    String difficulty = "Normal"; // Default fallback
+
+                    // Get difficulty directly from saved game state
+                    if (saveData != null) {
+                        difficulty = saveData.getDifficulty();
+                    }
+
+                    // Directly start the game with the saved difficulty
+                    game.startPlayingWithDifficulty(levelData, overlay, levelName, difficulty);
                     game.changeGameState(GameStates.PLAYING);
                 });
 
@@ -770,6 +958,20 @@ public class LoadGameMenu extends JPanel {
             waveLabel.setOpaque(false);
             contentPanel.add(waveLabel);
 
+            // Add difficulty information
+            String difficultyText = "⚔️ Difficulty: ";
+            if (saveData != null) {
+                difficultyText += saveData.getDifficulty();
+            } else {
+                difficultyText += "Unknown";
+            }
+
+            JLabel difficultyLabel = new JLabel(difficultyText);
+            difficultyLabel.setFont(infoFont);
+            difficultyLabel.setForeground(new Color(128, 0, 128));
+            difficultyLabel.setOpaque(false);
+            contentPanel.add(difficultyLabel);
+
             contentPanel.add(Box.createRigidArea(new Dimension(0, 4)));
 
             String timeAgo = getFileTimeAgo(levelName);
@@ -804,19 +1006,28 @@ public class LoadGameMenu extends JPanel {
      */
     private String getFileTimeAgo(String levelName) {
         try {
-            // Find the saves directory (using same logic as GameStateManager)
-            File projectRoot = findProjectRoot();
-            File demoDir = new File(projectRoot, "demo");
-            File savesDir;
-            if (demoDir.exists() && new File(demoDir, "pom.xml").exists()) {
-                savesDir = new File(demoDir, "src/main/resources/Saves");
-            } else {
-                savesDir = new File(projectRoot, "src/main/resources/Saves");
+            // Try multiple possible paths in order of preference (same as LoadSave)
+            String[] possiblePaths = {
+                    "src/main/resources/Saves",           // Standard Maven structure from project root
+                    "demo/src/main/resources/Saves",     // If running from parent directory
+                    "main/resources/Saves",              // If running from src directory
+                    "resources/Saves",                   // If running from src/main directory
+                    "KUTowerDefense/resources/Saves"     // Legacy structure
+            };
+
+            File saveFile = null;
+            for (String path : possiblePaths) {
+                File savesDir = new File(path);
+                if (savesDir.exists() && savesDir.isDirectory()) {
+                    File testFile = new File(savesDir, levelName + ".json");
+                    if (testFile.exists()) {
+                        saveFile = testFile;
+                        break;
+                    }
+                }
             }
 
-            File saveFile = new File(savesDir, levelName + ".json");
-
-            if (!saveFile.exists()) {
+            if (saveFile == null || !saveFile.exists()) {
                 return "Unknown";
             }
 
@@ -850,36 +1061,6 @@ public class LoadGameMenu extends JPanel {
             System.err.println("Error getting file time for " + levelName + ": " + e.getMessage());
             return "Unknown";
         }
-    }
-
-    /**
-     * Finds the project root directory by looking for key indicators
-     */
-    private File findProjectRoot() {
-        File currentDir = new File(System.getProperty("user.dir"));
-        File checkDir = currentDir;
-
-        // Look for project root indicators going up the directory tree
-        for (int i = 0; i < 5; i++) { // Limit search to 5 levels up
-            // Check for Maven project root indicators
-            if (new File(checkDir, "pom.xml").exists() ||
-                    new File(checkDir, "demo/pom.xml").exists() ||
-                    (new File(checkDir, "src/main/resources").exists() && new File(checkDir, "pom.xml").exists())) {
-                return checkDir;
-            }
-
-            // Check if we're inside a demo directory structure
-            if (checkDir.getName().equals("demo") && new File(checkDir, "pom.xml").exists()) {
-                return checkDir;
-            }
-
-            File parent = checkDir.getParentFile();
-            if (parent == null) break;
-            checkDir = parent;
-        }
-
-        // If no clear project root found, return current directory
-        return currentDir;
     }
 
     @Override
@@ -955,6 +1136,38 @@ public class LoadGameMenu extends JPanel {
         if (tooltipTimer != null) {
             tooltipTimer.stop();
             tooltipTimer = null;
+        }
+    }
+
+    /**
+     * Deletes a saved game and refreshes the UI
+     * @param levelName The name of the saved game to delete
+     */
+    private void deleteSavedGame(String levelName) {
+        try {
+            // Delete the save file (.json)
+            boolean saveDeleted = LoadSave.deleteSavedGame(levelName);
+
+            if (saveDeleted) {
+                // Remove from cache
+                ThumbnailCache.getInstance().removeThumbnail(levelName);
+
+                // Refresh the UI
+                refreshMapPreviews();
+
+                System.out.println("Successfully deleted saved game: " + levelName);
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        "Failed to delete the saved game '" + levelName + "'.",
+                        "Delete Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception e) {
+            System.err.println("Error deleting saved game " + levelName + ": " + e.getMessage());
+            JOptionPane.showMessageDialog(this,
+                    "An error occurred while deleting the saved game: " + e.getMessage(),
+                    "Delete Error",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 }

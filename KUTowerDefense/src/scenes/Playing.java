@@ -111,6 +111,8 @@ public class Playing extends GameScene implements SceneMethods {
 
     private BufferedImage spawnPointIndicator;
 
+    private String currentDifficulty = "Normal"; // Add difficulty field with default
+
     public Playing(Game game, JPanel gamePanel) {
         super(game);
         this.gamePanel = gamePanel;
@@ -1328,7 +1330,7 @@ public class Playing extends GameScene implements SceneMethods {
             ));
         }
 
-        // Create memento with all game state including GameOptions, but without enemy states
+        // Create memento with all game state including GameOptions and difficulty
         GameStateMemento memento = new GameStateMemento(
                 playerManager.getGold(),
                 playerManager.getHealth(),
@@ -1337,7 +1339,8 @@ public class Playing extends GameScene implements SceneMethods {
                 waveManager.getCurrentGroupIndex(),
                 towerStates,
                 new ArrayList<>(), // Empty list for enemy states
-                gameOptions
+                gameOptions,
+                currentDifficulty // Use Playing scene's difficulty field
         );
 
         // Save the memento using the current map name
@@ -1354,6 +1357,9 @@ public class Playing extends GameScene implements SceneMethods {
 
         // Restore game options first
         this.gameOptions = memento.getGameOptions();
+
+        // Restore difficulty
+        setCurrentDifficulty(memento.getDifficulty());
 
         // Restore player state
         playerManager.setGold(memento.getGold());
@@ -1411,6 +1417,34 @@ public class Playing extends GameScene implements SceneMethods {
     }
     public String getMapName() {
         return currentMapName != null ? currentMapName : "default";
+    }
+
+    public String getCurrentDifficulty() {
+        return currentDifficulty;
+    }
+
+    public void setCurrentDifficulty(String difficulty) {
+        // Ensure difficulty is never null and always valid
+        if (difficulty == null) {
+            this.currentDifficulty = "Normal";
+        } else {
+            switch (difficulty) {
+                case "Easy":
+                case "Normal":
+                case "Hard":
+                case "Custom":
+                    this.currentDifficulty = difficulty;
+                    break;
+                default:
+                    this.currentDifficulty = "Normal";
+                    System.out.println("Invalid difficulty '" + difficulty + "', defaulting to Normal");
+            }
+        }
+
+        // Update PlayingUI for display purposes
+        if (playingUI != null) {
+            playingUI.setCurrentDifficulty(this.currentDifficulty);
+        }
     }
 
     public Tower getDisplayedTower() {

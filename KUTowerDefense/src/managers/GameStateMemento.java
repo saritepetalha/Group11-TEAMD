@@ -12,6 +12,7 @@ public class GameStateMemento {
     private List<TowerState> towerStates;
     private List<EnemyState> enemyStates;
     private GameOptions gameOptions;
+    private String difficulty;
 
     /** Gson needs this no-args constructor */
     public GameStateMemento() {
@@ -25,7 +26,8 @@ public class GameStateMemento {
                             int groupIndex,
                             List<TowerState> towerStates,
                             List<EnemyState> enemyStates,
-                            GameOptions gameOptions) {
+                            GameOptions gameOptions,
+                            String difficulty) {
         this.gold = gold;
         this.health = health;
         this.shield = shield;
@@ -34,6 +36,23 @@ public class GameStateMemento {
         this.towerStates = towerStates;
         this.enemyStates = enemyStates;
         this.gameOptions = gameOptions;
+
+        // Ensure difficulty is never null and always valid
+        if (difficulty == null) {
+            this.difficulty = "Normal";
+        } else {
+            switch (difficulty) {
+                case "Easy":
+                case "Normal":
+                case "Hard":
+                case "Custom":
+                    this.difficulty = difficulty;
+                    break;
+                default:
+                    this.difficulty = "Normal";
+                    System.out.println("Invalid difficulty '" + difficulty + "' in GameStateMemento, defaulting to Normal");
+            }
+        }
     }
 
     public int getGold() {
@@ -66,6 +85,10 @@ public class GameStateMemento {
 
     public GameOptions getGameOptions() {
         return gameOptions;
+    }
+
+    public String getDifficulty() {
+        return difficulty != null ? difficulty : "Normal";
     }
 
     public static class TowerState {

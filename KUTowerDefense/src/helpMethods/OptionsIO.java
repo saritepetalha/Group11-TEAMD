@@ -39,56 +39,37 @@ public final class OptionsIO {
     private OptionsIO() { }
 
     /**
-     * Finds the project root directory by looking for key indicators
-     */
-    private static File findProjectRoot() {
-        File currentDir = new File(System.getProperty("user.dir"));
-        File checkDir = currentDir;
-
-        // Look for project root indicators going up the directory tree
-        for (int i = 0; i < 5; i++) { // Limit search to 5 levels up
-            // Check for Maven project root indicators
-            if (new File(checkDir, "pom.xml").exists() ||
-                    new File(checkDir, "demo/pom.xml").exists()) {
-                return checkDir;
-            }
-
-            // Check if we're inside a demo directory structure
-            if (checkDir.getName().equals("demo") && new File(checkDir, "pom.xml").exists()) {
-                return checkDir;
-            }
-
-            File parent = checkDir.getParentFile();
-            if (parent == null) break;
-            checkDir = parent;
-        }
-
-        // If no clear project root found, return current directory
-        return currentDir;
-    }
-
-    /**
      * Gets the appropriate options directory path based on project structure
      */
     private static String getOptionsDirectoryPath() {
-        File projectRoot = findProjectRoot();
+        // Try multiple possible paths in order of preference
+        String[] possiblePaths = {
+                "src/main/resources/Options",          // Standard Maven structure from project root
+                "demo/src/main/resources/Options",     // If running from parent directory
+                "main/resources/Options",              // If running from src directory
+                "resources/Options",                   // If running from src/main directory
+                "KUTowerDefense/resources/Options"     // Legacy structure
+        };
 
-        // Check if we have a demo subdirectory structure
-        File demoDir = new File(projectRoot, "demo");
-        if (demoDir.exists() && new File(demoDir, "pom.xml").exists()) {
-            File defaultPath = new File(demoDir, "resources/Options");
-            try {
-                return defaultPath.getCanonicalPath();
-            } catch (Exception e) {
-                return defaultPath.getAbsolutePath();
+        for (String path : possiblePaths) {
+            File dir = new File(path);
+            if (dir.exists() && dir.isDirectory()) {
+                try {
+                    return dir.getCanonicalPath();
+                } catch (Exception e) {
+                    return dir.getAbsolutePath();
+                }
             }
-        } else {
-            File defaultPath = new File(projectRoot, "resources/Options");
-            try {
-                return defaultPath.getCanonicalPath();
-            } catch (Exception e) {
-                return defaultPath.getAbsolutePath();
-            }
+        }
+
+        // If none found, default to Maven structure and create it
+        String defaultPath = "src/main/resources/Options";
+        File defaultDir = new File(defaultPath);
+        try {
+            defaultDir.mkdirs();
+            return defaultDir.getCanonicalPath();
+        } catch (Exception e) {
+            return defaultDir.getAbsolutePath();
         }
     }
 

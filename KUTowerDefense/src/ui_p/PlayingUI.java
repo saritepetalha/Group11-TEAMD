@@ -665,6 +665,8 @@ public class PlayingUI {
             g2d.drawImage(AssetsLoader.getInstance().difficultyEasyImg, controlX, difficultyY, difficultyWidth, difficultyHeight, null);
         } else if (currentDifficulty.equals("Hard") && AssetsLoader.getInstance().difficultyHardImg != null) {
             g2d.drawImage(AssetsLoader.getInstance().difficultyHardImg, controlX, difficultyY, difficultyWidth, difficultyHeight, null);
+        } else if (currentDifficulty.equals("Custom") && AssetsLoader.getInstance().difficultyCustomImg != null) {
+            g2d.drawImage(AssetsLoader.getInstance().difficultyCustomImg, controlX, difficultyY, difficultyWidth, difficultyHeight, null);
         } else {
             // fallback if images are not available
             g2d.setColor(new Color(80, 80, 200));
@@ -830,7 +832,7 @@ public class PlayingUI {
         // 7. Save button - positioned below main menu button
         int saveLoadWidth = 120;
         int saveLoadHeight = 30;
-        int saveLoadY = btnY + btnHeight + 10; // Position below main menu button
+        int saveLoadY = btnY + btnHeight + 8; // Position below main menu button
 
         // Save button
         saveButton.setX(btnX + (btnWidth - saveLoadWidth) / 2); // Center horizontally with main menu button
@@ -1426,4 +1428,5 @@ public class PlayingUI {
     public void setCurrentDifficulty(String difficulty) {
         this.currentDifficulty = difficulty;
     }
+
 }
