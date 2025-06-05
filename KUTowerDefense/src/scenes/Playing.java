@@ -1,45 +1,10 @@
 package scenes;
 
-import java.awt.AlphaComposite;
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.FontMetrics;
 import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Rectangle;
-import java.awt.Composite;
 import java.awt.event.MouseWheelEvent;
-import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import config.GameOptions;
-import constants.Constants;
-import constants.GameDimensions;
-import enemies.Enemy;
-import helpMethods.BorderImageRotationGenerator;
-import helpMethods.LoadSave;
-import helpMethods.OptionsIO;
 import main.Game;
 import managers.*;
-import objects.ArcherTower;
-import objects.ArtilleryTower;
-import objects.MageTower;
-import objects.Tower;
-import objects.UpgradedArcherTower;
-import objects.UpgradedArtilleryTower;
-import objects.UpgradedMageTower;
-import stats.GameStatsRecord;
-import ui_p.DeadTree;
-import ui_p.LiveTree;
-import ui_p.PlayingUI;
-import ui_p.TowerSelectionUI;
-import objects.Warrior;
 import javax.swing.JPanel;
-import java.awt.RenderingHints;
-
 import controllers.PlayingController;
 
 /**
