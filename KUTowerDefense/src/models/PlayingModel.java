@@ -17,6 +17,7 @@ import objects.*;
 import stats.GameStatsRecord;
 import ui_p.DeadTree;
 import ui_p.LiveTree;
+import ui_p.MineableStone;
 
 /**
  * PlayingModel - Contains all game state data and business logic
@@ -66,6 +67,7 @@ public class PlayingModel extends Observable implements GameContext {
     // Game entities (these will be managed by the controllers)
     private List<DeadTree> deadTrees;
     private List<LiveTree> liveTrees;
+    private List<MineableStone> mineableStones = new ArrayList<>();
     private Tower displayedTower;
     private DeadTree selectedDeadTree;
     private Warrior pendingWarriorPlacement = null;
@@ -83,6 +85,7 @@ public class PlayingModel extends Observable implements GameContext {
     private GoldBagManager goldBagManager;
     private TreeInteractionManager treeInteractionManager;
     private GameStateManager gameStateManager;
+    private StoneMiningManager stoneMiningManager;
     
     // Initialization flag
     private boolean isFirstReset = true;
@@ -93,6 +96,9 @@ public class PlayingModel extends Observable implements GameContext {
         this.gameStateManager = new GameStateManager();
         loadDefaultLevel();
         // Managers will be initialized by the controller
+
+        // Initialize stone mining manager
+        stoneMiningManager = new StoneMiningManager();
     }
     
     public PlayingModel(TileManager tileManager) {
@@ -244,6 +250,10 @@ public class PlayingModel extends Observable implements GameContext {
         }
 
         if (goldBagManager != null) goldBagManager.update();
+
+        if (stoneMiningManager != null) {
+            stoneMiningManager.update();
+        }
 
         updateCounter++;
         if (updateCounter >= 60) {
@@ -908,5 +918,16 @@ public class PlayingModel extends Observable implements GameContext {
      */
     public boolean hasActiveProjectiles() {
         return getActiveProjectileCount() > 0;
+    }
+
+    public StoneMiningManager getStoneMiningManager() {
+        return stoneMiningManager;
+    }
+
+    public void setStoneMiningManager(StoneMiningManager stoneMiningManager) {
+        this.stoneMiningManager = stoneMiningManager;
+    }
+    public List<MineableStone> getMineableStones() {
+        return mineableStones;
     }
 } 

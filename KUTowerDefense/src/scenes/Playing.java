@@ -270,13 +270,9 @@ public class Playing extends GameScene implements SceneMethods {
     
     // UI Resource management - delegate to view observer updates
     public void updateUIResources() {
-        // In the MVC architecture, UI updates are handled automatically by the Observer pattern
-        // But we need this method for backward compatibility with managers
-        // The model will trigger the view updates automatically, so we just need an empty implementation
-        // or we can manually trigger a resource update if needed
-        if (controller != null && controller.getView() != null) {
-            // The view will update automatically via observer pattern when model changes
-            // This is just for compatibility
+        if (controller != null && controller.getModel() != null && controller.getModel().getPlayerManager() != null) {
+            // Update UI with current resources
+            // TODO: Implement UI update
         }
     }
     

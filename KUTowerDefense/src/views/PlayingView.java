@@ -29,6 +29,7 @@ import ui_p.DeadTree;
 import ui_p.LiveTree;
 import ui_p.PlayingUI;
 import ui_p.TowerSelectionUI;
+import javax.swing.JPanel;
 
 /**
  * PlayingView - Handles all rendering logic for the Playing scene
@@ -46,6 +47,7 @@ public class PlayingView implements Observer {
     private PlayingModel model;
     private PlayingUI playingUI;
     private TowerSelectionUI towerSelectionUI;
+    private JPanel gamePane;
     
     // Mouse position for rendering
     private int mouseX, mouseY;
@@ -60,6 +62,16 @@ public class PlayingView implements Observer {
         // Initialize UI components that handle rendering
         initializeUIComponents();
         loadSpawnPointIndicator();
+        
+        // Initialize game pane
+        gamePane = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                render(g);
+            }
+        };
+        gamePane.setLayout(null);
     }
     
     private void initializeUIComponents() {
@@ -97,13 +109,24 @@ public class PlayingView implements Observer {
         }
         
         // Draw the game world
-        drawMap(g);
+        drawTiles(g);
+        drawEnemies(g);
+        drawTowers(g);
+        drawProjectiles(g);
+        drawEffects(g);
         
-        // Draw game entities
-        drawGameEntities(g);
+        // Draw mining button if it exists
+        if (model.getStoneMiningManager() != null && model.getStoneMiningManager().getMineButton() != null) {
+            model.getStoneMiningManager().getMineButton().draw(g);
+        }
         
         // Draw UI elements
         drawUI(g);
+        
+        // Draw stone mining effects
+        if (model.getStoneMiningManager() != null) {
+            model.getStoneMiningManager().draw((Graphics2D) g);
+        }
         
         // Reverse shake effect
         if (model.getUltiManager() != null) {
@@ -111,7 +134,7 @@ public class PlayingView implements Observer {
         }
     }
     
-    private void drawMap(Graphics g) {
+    private void drawTiles(Graphics g) {
         int[][] level = model.getLevel();
         if (level == null) return;
         
@@ -232,20 +255,22 @@ public class PlayingView implements Observer {
         }
     }
     
-    private void drawGameEntities(Graphics g) {
+    private void drawEnemies(Graphics g) {
         // Draw ultimates effects
         if (model.getUltiManager() != null) {
             model.getUltiManager().draw(g);
         }
         
-        // Draw towers
-        if (model.getTowerManager() != null) {
-            model.getTowerManager().draw(g);
-        }
-        
         // Draw enemies
         if (model.getEnemyManager() != null) {
             model.getEnemyManager().draw(g, model.isGamePaused());
+        }
+    }
+    
+    private void drawTowers(Graphics g) {
+        // Draw towers
+        if (model.getTowerManager() != null) {
+            model.getTowerManager().draw(g);
         }
         
         // Draw tower buttons (dead trees)
@@ -253,21 +278,6 @@ public class PlayingView implements Observer {
         
         // Draw live tree buttons
         drawLiveTreeButtons(g);
-        
-        // Draw projectiles
-        if (model.getProjectileManager() != null) {
-            model.getProjectileManager().draw(g);
-        }
-        
-        // Draw fire animations
-        if (model.getFireAnimationManager() != null) {
-            model.getFireAnimationManager().draw(g);
-        }
-        
-        // Draw weather effects
-        if (model.getWeatherManager() != null) {
-            model.getWeatherManager().draw(g);
-        }
         
         // Draw tower selection UI (range indicators, buttons, etc.)
         if (towerSelectionUI != null) {
@@ -300,6 +310,25 @@ public class PlayingView implements Observer {
             for (LiveTree liveTree : liveTrees) {
                 liveTree.draw(g);
             }
+        }
+    }
+    
+    private void drawProjectiles(Graphics g) {
+        // Draw projectiles
+        if (model.getProjectileManager() != null) {
+            model.getProjectileManager().draw(g);
+        }
+    }
+    
+    private void drawEffects(Graphics g) {
+        // Draw weather effects
+        if (model.getWeatherManager() != null) {
+            model.getWeatherManager().draw(g);
+        }
+        
+        // Draw fire animations
+        if (model.getFireAnimationManager() != null) {
+            model.getFireAnimationManager().draw(g);
         }
     }
     
@@ -817,6 +846,10 @@ public class PlayingView implements Observer {
     // Getters for controller access
     public PlayingUI getPlayingUI() { return playingUI; }
     public TowerSelectionUI getTowerSelectionUI() { return towerSelectionUI; }
+    
+    public JPanel getGamePane() {
+        return gamePane;
+    }
     
     /**
      * Temporary adapter classes to bridge between new MVC and existing UI components

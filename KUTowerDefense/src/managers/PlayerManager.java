@@ -145,4 +145,17 @@ public class PlayerManager {
             e.printStackTrace();
         }
     }
+
+    /**
+     * Update GameOptions reference (for when difficulty changes)
+     * Updates the internal GameOptions reference without resetting player stats
+     */
+    public void updateGameOptions(GameOptions newOptions) {
+        if (newOptions != null) {
+            this.gameOptions = newOptions;
+            System.out.println("PlayerManager: Updated GameOptions reference");
+        } else {
+            System.out.println("Warning: Received null GameOptions in updateGameOptions, keeping current options");
+        }
+    }
 }

@@ -11,6 +11,7 @@ import helpMethods.OptionsIO;
 import main.Game;
 import managers.*;
 import models.PlayingModel;
+import models.Tile;
 import objects.Tower;
 import objects.Warrior;
 import scenes.Playing;
@@ -97,6 +98,11 @@ public class PlayingController implements Observer {
         UltiManager ultiManager = new UltiManager(adapter);
         GoldBagManager goldBagManager = new GoldBagManager();
         
+        // Initialize Stone Mining Manager
+        StoneMiningManager stoneMiningManager = StoneMiningManager.getInstance();
+        stoneMiningManager.initialize(model, view);
+        model.setStoneMiningManager(stoneMiningManager);
+        
         // Inject all managers into the model
         model.initializeManagers(waveManager, towerManager, playerManager, projectileManager,
                                enemyManager, ultiManager, weatherManager, fireAnimationManager,
@@ -108,6 +114,11 @@ public class PlayingController implements Observer {
      */
     public void update() {
         model.update();
+
+        if (model.getStoneMiningManager() != null) {
+            model.getStoneMiningManager().update();
+        }
+
         checkButtonStates();
     }
     
@@ -120,28 +131,25 @@ public class PlayingController implements Observer {
     
     // Input handling methods
     public void mouseClicked(int x, int y) {
-        // Handle gold factory placement if selected
-        if (model.getUltiManager() != null && model.getUltiManager().isGoldFactorySelected()) {
-            boolean placed = model.getUltiManager().tryPlaceGoldFactory(x, y);
-            if (!placed) {
-                // If placement failed, keep factory selected for another try
-            }
+        // Handle warrior placement
+        if (model.getPendingWarriorPlacement() != null) {
+            handleWarriorPlacement(x, y);
             return;
         }
 
-        // Handle warrior placement if a warrior is pending placement
-        if (model.getPendingWarriorPlacement() != null) {
-            boolean placed = tryPlaceWarrior(x, y);
-            if (placed) {
-                return; // Successfully placed, exit early
-            }
+        // Handle gold factory placement
+        if (model.getUltiManager() != null && model.getUltiManager().isGoldFactorySelected()) {
+            handleGoldFactoryPlacement(x, y);
+            return;
         }
 
-        // Handle tower selection UI clicks first
-        if (view.getTowerSelectionUI() != null && view.getTowerSelectionUI().hasTowerSelected()) {
-            boolean uiHandledClick = view.getTowerSelectionUI().mouseClicked(x, y);
-            if (uiHandledClick) {
-                return; // UI button was clicked, don't process other interactions
+        // Handle tower selection
+        if (model.getTowerManager() != null) {
+            for (Tower tower : model.getTowerManager().getTowers()) {
+                if (tower.isClicked(x, y)) {
+                    model.setDisplayedTower(tower);
+                    return;
+                }
             }
         }
 
@@ -163,60 +171,95 @@ public class PlayingController implements Observer {
             }
         }
 
-        // Check for tower selection/deselection
-        Tower clickedTower = getTowerAt(x, y);
-        if (clickedTower != null) {
-            model.setDisplayedTower(clickedTower);
-            view.getTowerSelectionUI().setSelectedTower(clickedTower);
-            audioManager.playButtonClickSound();
-        } else {
-            model.setDisplayedTower(null);
-            view.getTowerSelectionUI().setSelectedTower(null);
+        // Handle stone mining
+        if (model.getStoneMiningManager() != null) {
+            int tileX = x / GameDimensions.TILE_DISPLAY_SIZE;
+            int tileY = y / GameDimensions.TILE_DISPLAY_SIZE;
+            if (tileX >= 0 && tileX < model.getLevel()[0].length && 
+                tileY >= 0 && tileY < model.getLevel().length) {
+                int tileId = model.getLevel()[tileY][tileX];
+                if (tileId == 19 || tileId == 23) {
+                    model.getStoneMiningManager().handleStoneClick(new objects.Tile(tileX, tileY, tileId));
+                }
+            }
         }
     }
-    
+
     public void mouseMoved(int x, int y) {
-        // Snap to grid if gold factory is selected
-        if (model.getUltiManager() != null && model.getUltiManager().isGoldFactorySelected()) {
-            x = (x / GameDimensions.TILE_DISPLAY_SIZE) * GameDimensions.TILE_DISPLAY_SIZE;
-            y = (y / GameDimensions.TILE_DISPLAY_SIZE) * GameDimensions.TILE_DISPLAY_SIZE;
+        // Handle stone mining manager mouse events
+        if (model.getStoneMiningManager() != null) {
+            model.getStoneMiningManager().mouseMoved(x, y);
         }
-        
-        // Snap to grid if warrior placement is active
-        if (model.getPendingWarriorPlacement() != null) {
-            x = (x / GameDimensions.TILE_DISPLAY_SIZE) * GameDimensions.TILE_DISPLAY_SIZE;
-            y = (y / GameDimensions.TILE_DISPLAY_SIZE) * GameDimensions.TILE_DISPLAY_SIZE;
-        }
-        
+
         view.mouseMoved(x, y);
     }
-    
+
     public void mousePressed(int x, int y) {
         // Handle lightning targeting
         if (model.getUltiManager() != null && model.getUltiManager().isWaitingForLightningTarget()) {
-            // Trigger lightning at the clicked position
             model.getUltiManager().triggerLightningAt(x, y);
             return;
         }
 
-        // Handle gold factory placement
-        if (model.getUltiManager() != null && model.getUltiManager().isGoldFactorySelected() &&
-                !model.isOptionsMenuOpen() && !model.isGamePaused()) {
-            // Don't handle placement here - let mouseClicked handle it
-            return;
+        if (model.getStoneMiningManager() != null &&
+                model.getStoneMiningManager().getMineButton() != null &&
+                model.getStoneMiningManager().getMineButton().getBounds().contains(x, y)) {
+            model.getStoneMiningManager().mousePressed(x, y);
         }
-        
-        // Handle warrior placement cancellation with right-click
+
+        // Handle stone mining
+        if (model.getStoneMiningManager() != null) {
+            int tileX = x / GameDimensions.TILE_DISPLAY_SIZE;
+            int tileY = y / GameDimensions.TILE_DISPLAY_SIZE;
+            if (tileX >= 0 && tileX < model.getLevel()[0].length &&
+                    tileY >= 0 && tileY < model.getLevel().length) {
+                int tileId = model.getLevel()[tileY][tileX];
+                if (tileId == 19 || tileId == 23) {
+                    model.getStoneMiningManager().handleStoneClick(new objects.Tile(tileX, tileY, tileId));
+                } else {
+                    model.getStoneMiningManager().clearMiningButton();
+                }
+            }
+        }
+
+        // Handle stone mining manager mouse events
+        if (model.getStoneMiningManager() != null) {
+            model.getStoneMiningManager().mousePressed(x, y);
+        }
+
+        // Handle warrior placement
         if (model.getPendingWarriorPlacement() != null) {
-            // Note: Right-click handling would need to be added to the mouse event system
-            // For now, this is handled in mouseClicked
-            return;
+            // Handle warrior placement in mouseClicked
+
+        }
+
+        // Handle gold factory placement
+        if (model.getUltiManager() != null && model.getUltiManager().isGoldFactorySelected()) {
+            // Handle gold factory placement in mouseClicked
+
+        }
+
+        // Handle tower selection
+        if (model.getTowerManager() != null) {
+            // Tower selection is handled in mouseClicked
+
+        }
+
+        // Handle tree interactions
+        if (model.getTreeInteractionManager() != null) {
+            model.getTreeInteractionManager().handleDeadTreeInteraction(x, y);
+            model.getTreeInteractionManager().handleLiveTreeInteraction(x, y);
         }
 
         view.mousePressed(x, y);
     }
-    
+
     public void mouseReleased(int x, int y) {
+        // Handle stone mining manager mouse events
+        if (model.getStoneMiningManager() != null) {
+            model.getStoneMiningManager().mouseReleased(x, y);
+        }
+
         view.mouseReleased(x, y);
     }
     
@@ -431,6 +474,9 @@ public class PlayingController implements Observer {
         // Reinitialize managers with the new options
         reinitializeManagersWithNewOptions();
         
+        // Apply difficulty stats to existing game entities
+        applyDifficultyToExistingEntities();
+        
         System.out.println("Difficulty configuration reloaded and managers updated");
         System.out.println("Current GameOptions: Gold=" + model.getGameOptions().getStartingGold() + 
                          ", Health=" + model.getGameOptions().getStartingPlayerHP() + 
@@ -441,52 +487,44 @@ public class PlayingController implements Observer {
      * Reinitialize managers with updated GameOptions
      */
     private void reinitializeManagersWithNewOptions() {
-        PlayingAdapter adapter = new PlayingAdapter();
+        // Update existing managers with new GameOptions where possible
+        // This is more efficient than recreating everything
         
-        WeatherManager weatherManager = new WeatherManager();
-        ProjectileManager projectileManager = new ProjectileManager(adapter);
-        TreeInteractionManager treeInteractionManager = new TreeInteractionManager(adapter);
-        FireAnimationManager fireAnimationManager = new FireAnimationManager();
+        if (model.getEnemyManager() != null) {
+            model.getEnemyManager().updateGameOptions(model.getGameOptions());
+        }
         
-        // Create managers with UPDATED GameOptions
-        WaveManager waveManager = new WaveManager(adapter, model.getGameOptions());
-        EnemyManager enemyManager = new EnemyManager(adapter, model.getOverlay(), model.getLevel(), model.getGameOptions());
-        PlayerManager playerManager = new PlayerManager(model.getGameOptions());
+        if (model.getWaveManager() != null) {
+            // WaveManager will get updated via applyDifficultyToExistingEntities
+        }
         
-        TowerManager towerManager = new TowerManager(adapter);
-        UltiManager ultiManager = new UltiManager(adapter);
-        GoldBagManager goldBagManager = new GoldBagManager();
+        if (model.getPlayerManager() != null) {
+            model.getPlayerManager().updateGameOptions(model.getGameOptions());
+        }
         
-        // Set TowerManager reference in WeatherManager for lighting effects
-        weatherManager.setTowerManager(towerManager);
-        
-        // Inject all managers into the model
-        model.initializeManagers(waveManager, towerManager, playerManager, projectileManager,
-                               enemyManager, ultiManager, weatherManager, fireAnimationManager,
-                               goldBagManager, treeInteractionManager);
-        
-        // Apply starting values from the new GameOptions
-        applyDifficultyStartingValues();
+        System.out.println("Updated existing managers with new GameOptions");
     }
     
     /**
-     * Apply starting values from GameOptions after difficulty change
+     * Apply difficulty settings to existing towers, enemies, and waves
      */
-    private void applyDifficultyStartingValues() {
-        if (model.getPlayerManager() != null && model.getGameOptions() != null) {
-            // Set starting gold from difficulty options
-            model.getPlayerManager().setGold(model.getGameOptions().getStartingGold());
-            
-            // Reset health and shield to difficulty values  
-            int newMaxHealth = model.getGameOptions().getStartingPlayerHP();
-            int newShield = model.getGameOptions().getStartingShield();
-            
-            model.getPlayerManager().setHealth(newMaxHealth);
-            model.getPlayerManager().setShield(newShield);
-            
-            System.out.println("Applied difficulty starting values: Gold=" + model.getGameOptions().getStartingGold() + 
-                             ", Health=" + newMaxHealth + ", Shield=" + newShield);
+    private void applyDifficultyToExistingEntities() {
+        // Apply new enemy stats to all existing enemies
+        if (model.getEnemyManager() != null) {
+            model.getEnemyManager().updateAllEnemyStatsFromOptions();
         }
+        
+        // Apply new tower stats to all existing towers
+        if (model.getTowerManager() != null) {
+            model.getTowerManager().updateAllTowerStatsFromOptions(model.getGameOptions());
+        }
+        
+        // Update wave manager with new wave configuration
+        if (model.getWaveManager() != null) {
+            model.getWaveManager().updateWaveConfigurationFromOptions(model.getGameOptions());
+        }
+        
+        System.out.println("Applied difficulty settings to existing game entities");
     }
     
     // ================ GAME STATE MANAGEMENT ================
@@ -776,6 +814,20 @@ public class PlayingController implements Observer {
                 level[y][x] = 15;
             }
             System.out.println("Tile modified at (" + x + ", " + y + ") to: " + tile);
+        }
+    }
+
+    private void handleWarriorPlacement(int x, int y) {
+        boolean placed = tryPlaceWarrior(x, y);
+        if (placed) {
+            model.setPendingWarriorPlacement(null);
+        }
+    }
+
+    private void handleGoldFactoryPlacement(int x, int y) {
+        boolean placed = model.getUltiManager().tryPlaceGoldFactory(x, y);
+        if (!placed) {
+            // If placement failed, keep factory selected for another try
         }
     }
 } 
