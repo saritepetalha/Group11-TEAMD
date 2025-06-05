@@ -23,7 +23,7 @@ public class TreeInteractionManager {
                 int tileX = tree.getX();
                 int tileY = tree.getY();
                 if (tree.getArcherButton().isMousePressed(mouseX, mouseY)) {
-                    int cost = Constants.Towers.getCost(Constants.Towers.ARCHER);
+                    int cost = playing.getTowerManager().getTowerCostFromOptions(Constants.Towers.ARCHER, playing.getGameOptions());
                     if (playing.getPlayerManager().spendGold(cost)) {
                         playing.getTowerManager().buildArcherTower(tileX, tileY);
                         playing.getDeadTrees().remove(tree);
@@ -36,7 +36,7 @@ public class TreeInteractionManager {
                     return;
                 }
                 if (tree.getMageButton().isMousePressed(mouseX, mouseY)) {
-                    int cost = Constants.Towers.getCost(Constants.Towers.MAGE);
+                    int cost = playing.getTowerManager().getTowerCostFromOptions(Constants.Towers.MAGE, playing.getGameOptions());
                     if (playing.getPlayerManager().spendGold(cost)) {
                         playing.getTowerManager().buildMageTower(tileX, tileY);
                         playing.getDeadTrees().remove(tree);
@@ -49,7 +49,7 @@ public class TreeInteractionManager {
                     return;
                 }
                 if (tree.getArtilleryButton().isMousePressed(mouseX, mouseY)) {
-                    int cost = Constants.Towers.getCost(Constants.Towers.ARTILLERY);
+                    int cost = playing.getTowerManager().getTowerCostFromOptions(Constants.Towers.ARTILLERY, playing.getGameOptions());
                     if (playing.getPlayerManager().spendGold(cost)) {
                         playing.getTowerManager().buildArtilerryTower(tileX, tileY);
                         playing.getDeadTrees().remove(tree);

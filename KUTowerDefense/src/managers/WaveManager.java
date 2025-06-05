@@ -407,4 +407,28 @@ public class WaveManager {
         }
         return true;
     }
+
+    /**
+     * Update wave configuration from new GameOptions
+     * This is called when difficulty changes to apply new wave settings
+     */
+    public void updateWaveConfigurationFromOptions(GameOptions newOptions) {
+        if (newOptions == null) {
+            System.out.println("Warning: Cannot update wave configuration - GameOptions is null");
+            return;
+        }
+        
+        this.gameOptions = newOptions;
+        System.out.println("Updating wave configuration with new difficulty settings...");
+        
+        // Update inter-wave delay
+        setInterWaveDelay(newOptions.getInterWaveDelay());
+        
+        // Reload waves from the new options
+        loadWavesFromOptions();
+        
+        // If we're currently waiting for a wave or between waves, the new configuration will take effect
+        // If we're in the middle of a wave, let it finish with the old settings and new waves will use new settings
+        System.out.println("Wave configuration updated: " + waves.size() + " waves loaded, inter-wave delay: " + newOptions.getInterWaveDelay() + "s");
+    }
 }

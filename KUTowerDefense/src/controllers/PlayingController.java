@@ -431,6 +431,9 @@ public class PlayingController implements Observer {
         // Reinitialize managers with the new options
         reinitializeManagersWithNewOptions();
         
+        // Apply difficulty stats to existing game entities
+        applyDifficultyToExistingEntities();
+        
         System.out.println("Difficulty configuration reloaded and managers updated");
         System.out.println("Current GameOptions: Gold=" + model.getGameOptions().getStartingGold() + 
                          ", Health=" + model.getGameOptions().getStartingPlayerHP() + 
@@ -441,52 +444,44 @@ public class PlayingController implements Observer {
      * Reinitialize managers with updated GameOptions
      */
     private void reinitializeManagersWithNewOptions() {
-        PlayingAdapter adapter = new PlayingAdapter();
+        // Update existing managers with new GameOptions where possible
+        // This is more efficient than recreating everything
         
-        WeatherManager weatherManager = new WeatherManager();
-        ProjectileManager projectileManager = new ProjectileManager(adapter);
-        TreeInteractionManager treeInteractionManager = new TreeInteractionManager(adapter);
-        FireAnimationManager fireAnimationManager = new FireAnimationManager();
+        if (model.getEnemyManager() != null) {
+            model.getEnemyManager().updateGameOptions(model.getGameOptions());
+        }
         
-        // Create managers with UPDATED GameOptions
-        WaveManager waveManager = new WaveManager(adapter, model.getGameOptions());
-        EnemyManager enemyManager = new EnemyManager(adapter, model.getOverlay(), model.getLevel(), model.getGameOptions());
-        PlayerManager playerManager = new PlayerManager(model.getGameOptions());
+        if (model.getWaveManager() != null) {
+            // WaveManager will get updated via applyDifficultyToExistingEntities
+        }
         
-        TowerManager towerManager = new TowerManager(adapter);
-        UltiManager ultiManager = new UltiManager(adapter);
-        GoldBagManager goldBagManager = new GoldBagManager();
+        if (model.getPlayerManager() != null) {
+            model.getPlayerManager().updateGameOptions(model.getGameOptions());
+        }
         
-        // Set TowerManager reference in WeatherManager for lighting effects
-        weatherManager.setTowerManager(towerManager);
-        
-        // Inject all managers into the model
-        model.initializeManagers(waveManager, towerManager, playerManager, projectileManager,
-                               enemyManager, ultiManager, weatherManager, fireAnimationManager,
-                               goldBagManager, treeInteractionManager);
-        
-        // Apply starting values from the new GameOptions
-        applyDifficultyStartingValues();
+        System.out.println("Updated existing managers with new GameOptions");
     }
     
     /**
-     * Apply starting values from GameOptions after difficulty change
+     * Apply difficulty settings to existing towers, enemies, and waves
      */
-    private void applyDifficultyStartingValues() {
-        if (model.getPlayerManager() != null && model.getGameOptions() != null) {
-            // Set starting gold from difficulty options
-            model.getPlayerManager().setGold(model.getGameOptions().getStartingGold());
-            
-            // Reset health and shield to difficulty values  
-            int newMaxHealth = model.getGameOptions().getStartingPlayerHP();
-            int newShield = model.getGameOptions().getStartingShield();
-            
-            model.getPlayerManager().setHealth(newMaxHealth);
-            model.getPlayerManager().setShield(newShield);
-            
-            System.out.println("Applied difficulty starting values: Gold=" + model.getGameOptions().getStartingGold() + 
-                             ", Health=" + newMaxHealth + ", Shield=" + newShield);
+    private void applyDifficultyToExistingEntities() {
+        // Apply new enemy stats to all existing enemies
+        if (model.getEnemyManager() != null) {
+            model.getEnemyManager().updateAllEnemyStatsFromOptions();
         }
+        
+        // Apply new tower stats to all existing towers
+        if (model.getTowerManager() != null) {
+            model.getTowerManager().updateAllTowerStatsFromOptions(model.getGameOptions());
+        }
+        
+        // Update wave manager with new wave configuration
+        if (model.getWaveManager() != null) {
+            model.getWaveManager().updateWaveConfigurationFromOptions(model.getGameOptions());
+        }
+        
+        System.out.println("Applied difficulty settings to existing game entities");
     }
     
     // ================ GAME STATE MANAGEMENT ================

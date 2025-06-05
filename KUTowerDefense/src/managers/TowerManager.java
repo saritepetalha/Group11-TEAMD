@@ -677,6 +677,87 @@ public class TowerManager {
     public int getLightUpgradeCost() {
         return 50; // Changed from 100 to 50
     }
+    
+    /**
+     * Update all existing towers with new stats from GameOptions
+     * This is called when difficulty changes to apply new tower stats
+     */
+    public void updateAllTowerStatsFromOptions(config.GameOptions gameOptions) {
+        if (gameOptions == null) {
+            System.out.println("Warning: Cannot update tower stats - GameOptions is null");
+            return;
+        }
+        
+        System.out.println("Updating all existing towers with new difficulty settings...");
+        for (Tower tower : towers) {
+            if (tower != null && !tower.isDestroyed()) {
+                applyGameOptionsToTower(tower, gameOptions);
+            }
+        }
+        System.out.println("Updated " + towers.size() + " towers with new difficulty settings");
+    }
+    
+    /**
+     * Apply GameOptions stats to a specific tower
+     */
+    private void applyGameOptionsToTower(Tower tower, config.GameOptions gameOptions) {
+        try {
+            config.TowerType towerType = getTowerTypeFromConstants(tower.getType());
+            if (towerType != null && gameOptions.getTowerStats().containsKey(towerType)) {
+                config.TowerStats stats = gameOptions.getTowerStats().get(towerType);
+                
+                // Apply stats using reflection to access protected fields
+                java.lang.reflect.Field damageField = Tower.class.getDeclaredField("damage");
+                damageField.setAccessible(true);
+                damageField.setInt(tower, stats.getDamage());
+                
+                java.lang.reflect.Field rangeField = Tower.class.getDeclaredField("range");
+                rangeField.setAccessible(true);
+                rangeField.setFloat(tower, (float)stats.getRange() * GameDimensions.TILE_DISPLAY_SIZE); // Convert to pixels
+                
+                java.lang.reflect.Field cooldownField = Tower.class.getDeclaredField("cooldown");
+                cooldownField.setAccessible(true);
+                cooldownField.setFloat(tower, (float)(60.0 / stats.getFireRate())); // Convert fire rate to cooldown ticks
+                
+                System.out.println("Applied stats to " + towerType + " tower: Damage=" + stats.getDamage() + 
+                                 ", Range=" + stats.getRange() + ", FireRate=" + stats.getFireRate());
+            }
+        } catch (Exception e) {
+            System.out.println("Error applying stats to tower: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Convert Constants tower type to TowerType enum
+     */
+    private config.TowerType getTowerTypeFromConstants(int towerType) {
+        switch (towerType) {
+            case constants.Constants.Towers.ARCHER:
+                return config.TowerType.ARCHER;
+            case constants.Constants.Towers.ARTILLERY:
+                return config.TowerType.ARTILLERY;
+            case constants.Constants.Towers.MAGE:
+                return config.TowerType.MAGE;
+            default:
+                return null;
+        }
+    }
+    
+    /**
+     * Get tower build cost from GameOptions
+     */
+    public int getTowerCostFromOptions(int towerType, config.GameOptions gameOptions) {
+        if (gameOptions == null) {
+            return constants.Constants.Towers.getCost(towerType); // Fallback to Constants
+        }
+        
+        config.TowerType type = getTowerTypeFromConstants(towerType);
+        if (type != null && gameOptions.getTowerStats().containsKey(type)) {
+            return gameOptions.getTowerStats().get(type).getBuildCost();
+        }
+        
+        return constants.Constants.Towers.getCost(towerType); // Fallback
+    }
 }
 
 
