@@ -205,7 +205,6 @@ public class PlayingController implements Observer {
                 model.getStoneMiningManager().getMineButton() != null &&
                 model.getStoneMiningManager().getMineButton().getBounds().contains(x, y)) {
             model.getStoneMiningManager().mousePressed(x, y);
-            return; // Don't process anything else
         }
 
         // Handle stone mining
@@ -231,19 +230,19 @@ public class PlayingController implements Observer {
         // Handle warrior placement
         if (model.getPendingWarriorPlacement() != null) {
             // Handle warrior placement in mouseClicked
-            return;
+
         }
 
         // Handle gold factory placement
         if (model.getUltiManager() != null && model.getUltiManager().isGoldFactorySelected()) {
             // Handle gold factory placement in mouseClicked
-            return;
+
         }
 
         // Handle tower selection
         if (model.getTowerManager() != null) {
             // Tower selection is handled in mouseClicked
-            return;
+
         }
 
         // Handle tree interactions
