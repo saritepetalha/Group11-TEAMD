@@ -114,6 +114,11 @@ public class PlayingController implements Observer {
      */
     public void update() {
         model.update();
+
+        if (model.getStoneMiningManager() != null) {
+            model.getStoneMiningManager().update();
+        }
+
         checkButtonStates();
     }
     

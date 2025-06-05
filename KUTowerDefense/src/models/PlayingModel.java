@@ -251,6 +251,10 @@ public class PlayingModel extends Observable implements GameContext {
 
         if (goldBagManager != null) goldBagManager.update();
 
+        if (stoneMiningManager != null) {
+            stoneMiningManager.update();
+        }
+
         updateCounter++;
         if (updateCounter >= 60) {
             timePlayedInSeconds++;
