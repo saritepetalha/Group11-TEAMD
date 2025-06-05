@@ -895,5 +895,32 @@ public class EnemyManager {
         float yDiff = e1.getSpriteCenterY() - e2.getSpriteCenterY();
         return (float) Math.sqrt(xDiff * xDiff + yDiff * yDiff);
     }
+
+    /**
+     * Update all existing enemies with new stats from GameOptions
+     * This is called when difficulty changes to apply new enemy stats
+     */
+    public void updateAllEnemyStatsFromOptions() {
+        if (gameOptions == null) {
+            System.out.println("Warning: Cannot update enemy stats - GameOptions is null");
+            return;
+        }
+        
+        System.out.println("Updating all existing enemies with new difficulty settings...");
+        for (Enemy enemy : enemies) {
+            if (enemy != null && enemy.isAlive()) {
+                enemy.updateStatsFromOptions(gameOptions);
+            }
+        }
+        System.out.println("Updated " + enemies.size() + " enemies with new difficulty settings");
+    }
+    
+    /**
+     * Update GameOptions reference (for when difficulty changes)
+     */
+    public void updateGameOptions(GameOptions newOptions) {
+        this.gameOptions = newOptions != null ? newOptions : GameOptions.defaults();
+        System.out.println("EnemyManager: Updated GameOptions reference");
+    }
 }
 
