@@ -17,6 +17,7 @@ import objects.*;
 import stats.GameStatsRecord;
 import ui_p.DeadTree;
 import ui_p.LiveTree;
+import ui_p.MineableStone;
 
 /**
  * PlayingModel - Contains all game state data and business logic
@@ -66,6 +67,7 @@ public class PlayingModel extends Observable implements GameContext {
     // Game entities (these will be managed by the controllers)
     private List<DeadTree> deadTrees;
     private List<LiveTree> liveTrees;
+    private List<MineableStone> mineableStones = new ArrayList<>();
     private Tower displayedTower;
     private DeadTree selectedDeadTree;
     private Warrior pendingWarriorPlacement = null;
@@ -920,5 +922,8 @@ public class PlayingModel extends Observable implements GameContext {
 
     public void setStoneMiningManager(StoneMiningManager stoneMiningManager) {
         this.stoneMiningManager = stoneMiningManager;
+    }
+    public List<MineableStone> getMineableStones() {
+        return mineableStones;
     }
 } 

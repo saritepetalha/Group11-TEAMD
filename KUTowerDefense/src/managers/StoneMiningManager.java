@@ -212,10 +212,6 @@ public class StoneMiningManager {
         }
     }
 
-    public void loadButtonImage(BufferedImage sheet) {
-        this.buttonSheetImg = sheet;
-    }
-
     public static void loadButtonImageFile() {
         InputStream is = LoadSave.class.getResourceAsStream("/UI/kutowerbuttons4.png");
         try {

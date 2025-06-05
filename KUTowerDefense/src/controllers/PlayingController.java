@@ -196,15 +196,24 @@ public class PlayingController implements Observer {
             return;
         }
 
+        if (model.getStoneMiningManager() != null &&
+                model.getStoneMiningManager().getMineButton() != null &&
+                model.getStoneMiningManager().getMineButton().getBounds().contains(x, y)) {
+            model.getStoneMiningManager().mousePressed(x, y);
+            return; // Don't process anything else
+        }
+
         // Handle stone mining
         if (model.getStoneMiningManager() != null) {
             int tileX = x / GameDimensions.TILE_DISPLAY_SIZE;
             int tileY = y / GameDimensions.TILE_DISPLAY_SIZE;
-            if (tileX >= 0 && tileX < model.getLevel()[0].length && 
-                tileY >= 0 && tileY < model.getLevel().length) {
+            if (tileX >= 0 && tileX < model.getLevel()[0].length &&
+                    tileY >= 0 && tileY < model.getLevel().length) {
                 int tileId = model.getLevel()[tileY][tileX];
                 if (tileId == 19 || tileId == 23) {
                     model.getStoneMiningManager().handleStoneClick(new objects.Tile(tileX, tileY, tileId));
+                } else {
+                    model.getStoneMiningManager().clearMiningButton();
                 }
             }
         }
