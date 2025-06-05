@@ -83,6 +83,7 @@ public class PlayingModel extends Observable implements GameContext {
     private GoldBagManager goldBagManager;
     private TreeInteractionManager treeInteractionManager;
     private GameStateManager gameStateManager;
+    private StoneMiningManager stoneMiningManager;
     
     // Initialization flag
     private boolean isFirstReset = true;
@@ -93,6 +94,9 @@ public class PlayingModel extends Observable implements GameContext {
         this.gameStateManager = new GameStateManager();
         loadDefaultLevel();
         // Managers will be initialized by the controller
+
+        // Initialize stone mining manager
+        stoneMiningManager = new StoneMiningManager();
     }
     
     public PlayingModel(TileManager tileManager) {
@@ -908,5 +912,13 @@ public class PlayingModel extends Observable implements GameContext {
      */
     public boolean hasActiveProjectiles() {
         return getActiveProjectileCount() > 0;
+    }
+
+    public StoneMiningManager getStoneMiningManager() {
+        return stoneMiningManager;
+    }
+
+    public void setStoneMiningManager(StoneMiningManager stoneMiningManager) {
+        this.stoneMiningManager = stoneMiningManager;
     }
 } 
