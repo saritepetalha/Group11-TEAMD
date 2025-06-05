@@ -99,7 +99,7 @@ public class PlayingController implements Observer {
         GoldBagManager goldBagManager = new GoldBagManager();
         
         // Initialize Stone Mining Manager
-        StoneMiningManager stoneMiningManager = StoneMiningManager.getInstance();
+        StoneMiningManager stoneMiningManager = new StoneMiningManager(model); // model implements GameContext
         stoneMiningManager.initialize(model, view);
         model.setStoneMiningManager(stoneMiningManager);
         

@@ -98,7 +98,7 @@ public class PlayingModel extends Observable implements GameContext {
         // Managers will be initialized by the controller
 
         // Initialize stone mining manager
-        stoneMiningManager = new StoneMiningManager();
+        stoneMiningManager = StoneMiningManager.getInstance(this);
     }
     
     public PlayingModel(TileManager tileManager) {
