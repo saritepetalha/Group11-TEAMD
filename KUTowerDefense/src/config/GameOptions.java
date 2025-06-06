@@ -6,7 +6,7 @@ public class GameOptions {
 
     // ---------- Economy & player ----------
     private int startingGold     = 500;
-    private static int startingPlayerHP = 20;
+    private int startingPlayerHP = 20;
     private int startingShield   = 25;// current in‐game gold
 
     // ---------- Weather settings ----------
@@ -48,8 +48,8 @@ public class GameOptions {
     public void setInterWaveDelay(double d)  { this.interWaveDelay = d; }
 
     /**
-            * Index of the currently active wave (0-based).
-            */
+     * Index of the currently active wave (0-based).
+     */
     public int getCurrentWaveIndex() { return currentWaveIndex; }
 
     /**
@@ -87,7 +87,7 @@ public class GameOptions {
         o.currentWaveIndex   = 0;
         o.currentGroupIndex  = 0;
         o.savedGold          = 0;
-        o.savedCastleHealth  = startingPlayerHP;
+        o.savedCastleHealth  = o.startingPlayerHP;
         o.weatherEnabled     = true;
         o.currentWeather     = "Random";
         // Reset progress trackers
@@ -95,7 +95,7 @@ public class GameOptions {
         o.currentGroupIndex = 0;
         // Enemy defaults - based on Constants.Enemies values
         o.enemyStats.put(EnemyType.GOBLIN, new EnemyStats(100, 0.85, 5));
-        o.enemyStats.put(EnemyType.WARRIOR, new EnemyStats(200, 0.45, 25));
+        o.enemyStats.put(EnemyType.KNIGHT, new EnemyStats(200, 0.45, 25));
         o.enemyStats.put(EnemyType.BARREL, new EnemyStats(150, 0.6, 15));
         o.enemyStats.put(EnemyType.TNT, new EnemyStats(50, 1.2, 2));
         o.enemyStats.put(EnemyType.TROLL, new EnemyStats(300, 0.15, 10));
@@ -111,13 +111,13 @@ public class GameOptions {
         // Waves - updated to use WARRIOR instead of KNIGHT
         Group g1 = new Group(Map.of(EnemyType.GOBLIN, 8), 0.5);
         Group g2 = new Group(Map.of(EnemyType.GOBLIN, 5,
-                EnemyType.WARRIOR, 2), 0.4);
+                EnemyType.KNIGHT, 2), 0.4);
 
         o.waves.add(new Wave(List.of(g1),               0.0)); // 1-group wave
         o.waves.add(new Wave(List.of(g1, g2),           1.5)); // 2-group wave
         o.interWaveDelay     = 8.0;
         o.startingGold       = 300;
-        o.startingPlayerHP   = 15;
+        o.startingPlayerHP   = 20;
         o.startingShield     = 25;
         return o;
     }

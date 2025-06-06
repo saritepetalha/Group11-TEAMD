@@ -18,7 +18,7 @@ import static constants.Constants.Enemies.BARREL;
 import static constants.Constants.Enemies.GOBLIN;
 import static constants.Constants.Enemies.TNT;
 import static constants.Constants.Enemies.TROLL;
-import static constants.Constants.Enemies.WARRIOR;
+import static constants.Constants.Enemies.KNIGHT;
 import static constants.Constants.PathPoints.END_POINT;
 import static constants.Constants.PathPoints.START_POINT;
 import constants.GameDimensions;
@@ -27,7 +27,7 @@ import enemies.Enemy;
 import enemies.Goblin;
 import enemies.TNT;
 import enemies.Troll;
-import enemies.Warrior;
+import enemies.Knight;
 import helpMethods.LoadSave;
 import helpMethods.OptionsIO;
 import objects.GridPoint;
@@ -314,9 +314,9 @@ public class EnemyManager {
                 System.out.println("Adding Goblin");
                 enemy = new Goblin(x, y, nextEnemyID++);
                 break;
-            case WARRIOR:
-                System.out.println("Adding Warrior");
-                enemy = new Warrior(x, y, nextEnemyID++);
+            case KNIGHT:
+                System.out.println("Adding Knight");
+                enemy = new Knight(x, y, nextEnemyID++);
                 break;
             case TNT:
                 System.out.println("Adding TNT");
@@ -460,25 +460,25 @@ public class EnemyManager {
 
     // updated method to extract all enemy animation frames
     public static BufferedImage[] extractEnemyFrames() {
-        // need space for: 6 goblin + 6 warrior + 6 tnt + 3 barrel + 10 troll = 31 frames
+        // need space for: 6 goblin + 6 knight + 6 tnt + 3 barrel + 10 troll = 31 frames
         BufferedImage[] enemyFrames = new BufferedImage[31];
 
         BufferedImage goblinSheet = LoadSave.getEnemyAtlas("goblin");
-        BufferedImage warriorSheet = LoadSave.getEnemyAtlas("warrior");
+        BufferedImage knightSheet = LoadSave.getEnemyAtlas("knight");
         BufferedImage barrelSheet = LoadSave.getEnemyAtlas("barrel");
         BufferedImage tntSheet = LoadSave.getEnemyAtlas("tnt");
         BufferedImage trollSheet = LoadSave.getEnemyAtlas("troll");
 
-        // Extract goblin frames (6 frames)
+        // Extract goblin frames (6 frames) - keeping current extraction for consistency
         for (int i = 0; i < 6; i++) {
             BufferedImage goblinFrame = goblinSheet.getSubimage(i * 192, 0, 192, 192);
             enemyFrames[i] = goblinFrame.getSubimage(20, 57, 115, 75);
         }
 
-        // Extract warrior frames (6 frames)
+        // Extract knight frames (6 frames)
         for (int i = 0; i < 6; i++) {
-            BufferedImage warriorFrame = warriorSheet.getSubimage(i * 192, 0, 192, 192);
-            enemyFrames[6 + i] = warriorFrame.getSubimage(50, 40, 120, 100);
+            BufferedImage knightFrame = knightSheet.getSubimage(i * 192, 0, 192, 192);
+            enemyFrames[6 + i] = knightFrame.getSubimage(50, 40, 120, 100);
         }
 
         // Extract TNT frames (6 frames)
@@ -491,7 +491,7 @@ public class EnemyManager {
         // Extract barrel frames (3 frames)
         for (int i = 0; i < 3; i++) {
             BufferedImage barrelFrame = barrelSheet.getSubimage(i * 128, 0, 128, 128);
-            enemyFrames[18 + i] = barrelFrame.getSubimage(24, 24,80, 80);
+            enemyFrames[18 + i] = barrelFrame.getSubimage(24, 16,80, 80);
         }
 
         // Extract troll frames (10 frames)
@@ -503,6 +503,69 @@ public class EnemyManager {
         return enemyFrames;
     }
 
+    /**
+     * Calculates the anchor point offset for each enemy type based on their sprite sheet anchor points
+     * and current sub-image extraction parameters.
+     *
+     * @param enemyType The type of enemy
+     * @param scale The scale factor applied to the sprite
+     * @return An array containing [offsetX, offsetY] to align the anchor point with enemy center
+     */
+    private int[] calculateAnchorOffset(int enemyType, float scale) {
+        int anchorX, anchorY;
+        int extractStartX, extractStartY;
+
+        switch (enemyType) {
+            case GOBLIN:
+                // Original anchor: (96, 128), extraction: getSubimage(20, 57, 115, 75)
+                anchorX = Enemy.GOBLIN_ANCHOR_X;
+                anchorY = Enemy.GOBLIN_ANCHOR_Y;
+                extractStartX = 20;
+                extractStartY = 57;
+                break;
+            case KNIGHT:
+                // Original anchor: (96, 128), extraction: getSubimage(50, 40, 120, 100)
+                anchorX = Enemy.KNIGHT_ANCHOR_X;
+                anchorY = Enemy.KNIGHT_ANCHOR_Y;
+                extractStartX = 50;
+                extractStartY = 40;
+                break;
+            case TNT:
+                // Original anchor: (96, 128), extraction: getSubimage(60, 60, 100, 72)
+                anchorX = Enemy.TNT_ANCHOR_X;
+                anchorY = Enemy.TNT_ANCHOR_Y;
+                extractStartX = 60;
+                extractStartY = 60;
+                break;
+            case BARREL:
+                // Original anchor: (64, 96), extraction: getSubimage(24, 24, 80, 80)
+                anchorX = Enemy.BARREL_ANCHOR_X;
+                anchorY = Enemy.BARREL_ANCHOR_Y;
+                extractStartX = 24;
+                extractStartY = 24;
+                break;
+            case TROLL:
+                // Original anchor: (120, 240), extraction: getSubimage(0, 0, 401, 268)
+                anchorX = Enemy.TROLL_ANCHOR_X;
+                anchorY = Enemy.TROLL_ANCHOR_Y;
+                extractStartX = 0;
+                extractStartY = 0;
+                break;
+            default:
+                return new int[]{0, 0};
+        }
+
+        // Calculate where the anchor point is within the extracted sub-image
+        int anchorInSubImageX = anchorX - extractStartX;
+        int anchorInSubImageY = anchorY - extractStartY;
+
+        // Apply scale and calculate offset to center the anchor point
+        int scaledAnchorX = (int)(anchorInSubImageX * scale);
+        int scaledAnchorY = (int)(anchorInSubImageY * scale);
+
+        return new int[]{scaledAnchorX, scaledAnchorY};
+    }
+
     private void drawEnemy(Enemy enemy, Graphics g){
         // Calculate base index based on enemy type and get animation frame
         int baseIndex;
@@ -512,7 +575,7 @@ public class EnemyManager {
             case GOBLIN:
                 baseIndex = 0;
                 break;
-            case WARRIOR:
+            case KNIGHT:
                 baseIndex = 6;
                 break;
             case TNT:
@@ -540,54 +603,38 @@ public class EnemyManager {
 
         BufferedImage sprite = enemyImages[frame];
 
-        // adjust drawing based on enemy size
-        int drawX, drawY;
-        int drawWidth, drawHeight;
+        // calculate scale and dimensions based on enemy size
+        float scale;
         Enemy.Size size = enemy.getSize();
 
-        // calculate position and scale based on enemy size
         switch (size) {
             case SMALL:
-                // small enemies (goblin, tnt) - 60% of original size
-                drawWidth = (int)(sprite.getWidth() * 0.6);
-                drawHeight = (int)(sprite.getHeight() * 0.6);
-                drawX = (int)(enemy.getX() - drawWidth/2 - 10);
-                drawY = (int)(enemy.getY() - drawHeight/2 - 10);
+                scale = 0.6f; // 60% of original size
                 break;
             case MEDIUM:
-                // medium enemies (warrior, barrel) - 80% of original size
-                drawWidth = (int)(sprite.getWidth() * 0.8);
-                drawHeight = (int)(sprite.getHeight() * 0.8);
-                if (enemy.getEnemyType() == BARREL) {
-                    drawX = (int)(enemy.getX() - drawWidth/2 - 15);
-                    drawY = (int)(enemy.getY() - drawHeight/2 - 15);
-                } else {
-                    drawX = (int)(enemy.getX() - drawWidth/2 - 25);
-                    drawY = (int)(enemy.getY() - drawHeight/2 - 25);
-                }
+                scale = 0.8f; // 80% of original size
                 break;
             case LARGE:
-                // large enemies (troll) - larger size with adjusted position
                 if (enemy.getEnemyType() == TROLL) {
-                    drawWidth = (int)(sprite.getWidth() * 0.4);
-                    drawHeight = (int)(sprite.getHeight() * 0.4);
-                    drawX = (int)(enemy.getX() - drawWidth/2 - 40);
-                    drawY = (int)(enemy.getY() - drawHeight/2 - 40);
+                    scale = 0.4f; // 40% for troll
                 } else {
-                    drawWidth = (int)(sprite.getWidth() * 0.5);
-                    drawHeight = (int)(sprite.getHeight() * 0.5);
-                    drawX = (int)(enemy.getX() - drawWidth/2 - 50);
-                    drawY = (int)(enemy.getY() - drawHeight/2 - 50);
+                    scale = 0.5f; // 50% for other large enemies
                 }
                 break;
             default:
-                // default 100% size
-                drawWidth = sprite.getWidth();
-                drawHeight = sprite.getHeight();
-                drawX = (int)(enemy.getX() - drawWidth/2);
-                drawY = (int)(enemy.getY() - drawHeight/2);
+                scale = 1.0f; // 100% size
                 break;
         }
+
+        int drawWidth = (int)(sprite.getWidth() * scale);
+        int drawHeight = (int)(sprite.getHeight() * scale);
+
+        // Calculate anchor point offset for this enemy type and scale
+        int[] anchorOffset = calculateAnchorOffset(enemy.getEnemyType(), scale);
+
+        // Position the sprite so that the anchor point aligns with the enemy's center position
+        int drawX = (int)(enemy.getX() - anchorOffset[0]);
+        int drawY = (int)(enemy.getY() - anchorOffset[1]);
 
         boolean facingLeft = enemy.getDirX() < 0;
 
@@ -860,7 +907,7 @@ public class EnemyManager {
 
         for (Enemy enemy : enemies) {
             if (enemy.isAlive()) {
-                if (enemy.getEnemyType() == Constants.Enemies.WARRIOR) {
+                if (enemy.getEnemyType() == Constants.Enemies.KNIGHT) {
                     knights.add(enemy);
                 } else if (enemy.getEnemyType() == Constants.Enemies.GOBLIN) {
                     goblins.add(enemy);
@@ -905,7 +952,7 @@ public class EnemyManager {
             System.out.println("Warning: Cannot update enemy stats - GameOptions is null");
             return;
         }
-        
+
         System.out.println("Updating all existing enemies with new difficulty settings...");
         for (Enemy enemy : enemies) {
             if (enemy != null && enemy.isAlive()) {
@@ -914,7 +961,7 @@ public class EnemyManager {
         }
         System.out.println("Updated " + enemies.size() + " enemies with new difficulty settings");
     }
-    
+
     /**
      * Update GameOptions reference (for when difficulty changes)
      */

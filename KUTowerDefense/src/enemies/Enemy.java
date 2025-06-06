@@ -48,17 +48,18 @@ public abstract class Enemy {
     private float synergyGoblinSpeed = 0f;
     public static BufferedImage thunderIcon = null;
 
-    // Constants for sprite centering offsets, adjust if drawing logic in EnemyManager changes
-    private static final int SMALL_SPRITE_CENTER_OFFSET_X = 10;
-    private static final int SMALL_SPRITE_CENTER_OFFSET_Y = 10;
-    private static final int MEDIUM_BARREL_SPRITE_CENTER_OFFSET_X = 15;
-    private static final int MEDIUM_BARREL_SPRITE_CENTER_OFFSET_Y = 15;
-    private static final int MEDIUM_DEFAULT_SPRITE_CENTER_OFFSET_X = 25;
-    private static final int MEDIUM_DEFAULT_SPRITE_CENTER_OFFSET_Y = 25;
-    private static final int LARGE_TROLL_SPRITE_CENTER_OFFSET_X = 40;
-    private static final int LARGE_TROLL_SPRITE_CENTER_OFFSET_Y = 40;
-    private static final int LARGE_DEFAULT_SPRITE_CENTER_OFFSET_X = 50;
-    private static final int LARGE_DEFAULT_SPRITE_CENTER_OFFSET_Y = 50;
+    // Constants for sprite anchor points in original sprite sheets (used by EnemyManager for precise alignment)
+    // These represent the pixel coordinates that should align with the road center
+    public static final int GOBLIN_ANCHOR_X = 96;
+    public static final int GOBLIN_ANCHOR_Y = 128;
+    public static final int KNIGHT_ANCHOR_X = 96;
+    public static final int KNIGHT_ANCHOR_Y = 128;
+    public static final int TNT_ANCHOR_X = 96;
+    public static final int TNT_ANCHOR_Y = 128;
+    public static final int BARREL_ANCHOR_X = 64;
+    public static final int BARREL_ANCHOR_Y = 96;
+    public static final int TROLL_ANCHOR_X = 120;
+    public static final int TROLL_ANCHOR_Y = 240;
 
     public void setAlive(boolean alive) {
         this.alive = alive;
@@ -98,10 +99,10 @@ public abstract class Enemy {
 
         // Initialize boundary directly using Size enum properties
         this.boundary = new Rectangle(
-            (int)this.x - this.size.getWidth() / 2,
-            (int)this.y - this.size.getHeight() / 2,
-            this.size.getWidth(),
-            this.size.getHeight()
+                (int)this.x - this.size.getWidth() / 2,
+                (int)this.y - this.size.getHeight() / 2,
+                this.size.getWidth(),
+                this.size.getHeight()
         );
 
         initializeHealth();
@@ -185,8 +186,8 @@ public abstract class Enemy {
             switch (enemyType) {
                 case GOBLIN:
                     return EnemyType.GOBLIN;
-                case WARRIOR:
-                    return EnemyType.WARRIOR;
+                case KNIGHT:
+                    return EnemyType.KNIGHT;
                 case BARREL:
                     return EnemyType.BARREL;
                 case TNT:
@@ -211,7 +212,7 @@ public abstract class Enemy {
         float effSpeed = getEffectiveSpeed();
         this.x += xSpeed * effSpeed;
         this.y += ySpeed * effSpeed;
-        
+
         // Update direction based on movement
         if (xSpeed != 0 || ySpeed != 0) { // Avoid division by zero if no movement
             float totalComponentSpeed = (float) Math.sqrt(xSpeed * xSpeed + ySpeed * ySpeed);
@@ -220,7 +221,7 @@ public abstract class Enemy {
                 this.dirY = ySpeed / totalComponentSpeed;
             }
         } else {
-             // If no movement, keep previous direction or set to a default (e.g., 0,0)
+            // If no movement, keep previous direction or set to a default (e.g., 0,0)
             // For now, we'll assume dirX and dirY remain as they were
         }
         updateBoundary();
@@ -323,8 +324,8 @@ public abstract class Enemy {
             case BARREL:
                 AudioManager.getInstance().playRandomGoblinDeathSound();
                 break;
-            case WARRIOR:
-                AudioManager.getInstance().playWarriorDeathSound();
+            case KNIGHT:
+                AudioManager.getInstance().playKnightDeathSound();
                 break;
             default:
                 // Optional: Log a warning or play a default sound for unhandled types
@@ -373,56 +374,22 @@ public abstract class Enemy {
 
     /**
      * Gets the center X coordinate of the enemy's sprite as drawn on screen
+     * With the new anchor-based positioning system, the sprite center is the same as the enemy's position
      * @return The exact center X coordinate of the sprite
      */
     public float getSpriteCenterX() {
-        // the adjustment factors are based on how enemies are drawn in EnemyManager.drawEnemy
-        // can be modified
-        switch (size) {
-            case SMALL:
-                return x - SMALL_SPRITE_CENTER_OFFSET_X;
-            case MEDIUM:
-                if (enemyType == Constants.Enemies.BARREL) {
-                    return x - MEDIUM_BARREL_SPRITE_CENTER_OFFSET_X;
-                } else {
-                    return x - MEDIUM_DEFAULT_SPRITE_CENTER_OFFSET_X;
-                }
-            case LARGE:
-                if (enemyType == Constants.Enemies.TROLL) {
-                    return x - LARGE_TROLL_SPRITE_CENTER_OFFSET_X;
-                } else {
-                    return x - LARGE_DEFAULT_SPRITE_CENTER_OFFSET_X;
-                }
-            default:
-                return x;
-        }
+        // With anchor-based positioning, the enemy's x position represents the sprite center
+        return x;
     }
 
     /**
      * Gets the center Y coordinate of the enemy's sprite as drawn on screen
+     * With the new anchor-based positioning system, the sprite center is the same as the enemy's position
      * @return The exact center Y coordinate of the sprite
      */
     public float getSpriteCenterY() {
-        // the adjustment factors are based on how enemies are drawn in EnemyManager.drawEnemy
-        // can be modified
-        switch (size) {
-            case SMALL:
-                return y - SMALL_SPRITE_CENTER_OFFSET_Y;
-            case MEDIUM:
-                if (enemyType == Constants.Enemies.BARREL) {
-                    return y - MEDIUM_BARREL_SPRITE_CENTER_OFFSET_Y;
-                } else {
-                    return y - MEDIUM_DEFAULT_SPRITE_CENTER_OFFSET_Y;
-                }
-            case LARGE:
-                if (enemyType == Constants.Enemies.TROLL) {
-                    return y - LARGE_TROLL_SPRITE_CENTER_OFFSET_Y;
-                } else {
-                    return y - LARGE_DEFAULT_SPRITE_CENTER_OFFSET_Y;
-                }
-            default:
-                return y;
-        }
+        // With anchor-based positioning, the enemy's y position represents the sprite center
+        return y;
     }
     public int getGoldReward() {
         return goldReward;
