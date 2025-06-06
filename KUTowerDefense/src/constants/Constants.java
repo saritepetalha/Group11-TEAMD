@@ -17,7 +17,7 @@ public class Constants {
                 case MAGICBOLT:
                     return 6f;
                 case WIZARD_BOLT:
-                    return 5f;
+                    return 7f; // Slightly faster than regular magic bolt
             }
             return 0f;
         }
@@ -121,7 +121,7 @@ public class Constants {
 
     public static class Enemies {
         public static final int GOBLIN = 0;
-        public static final int WARRIOR = 1;
+        public static final int KNIGHT = 1;
         public static final int BARREL = 2;
         public static final int TNT = 4;
         public static final int TROLL = 3;
@@ -130,7 +130,7 @@ public class Constants {
             switch (enemyType) {
                 case GOBLIN:
                     return 5;
-                case WARRIOR:
+                case KNIGHT:
                     return 25;
                 case TNT:
                     return 2;
@@ -147,8 +147,8 @@ public class Constants {
             switch (enemyType) {
                 case GOBLIN:
                     return 0.85f;
-                case WARRIOR:
-                    return 0.45f;
+                case KNIGHT:
+                    return 0.55f;
                 case BARREL:
                     return 0.6f;
                 case TNT:
@@ -163,7 +163,7 @@ public class Constants {
             switch (enemyType) {
                 case GOBLIN:
                     return 100;
-                case WARRIOR:
+                case KNIGHT:
                     return 200;
                 case BARREL:
                     return 150;

@@ -1,5 +1,6 @@
 {
   "startingGold": 300,
+  "startingPlayerHP": 20,
   "startingShield": 25,
   "weatherEnabled": true,
   "currentWeather": "Random",
@@ -9,7 +10,7 @@
       "moveSpeed": 0.85,
       "goldReward": 5
     },
-    "WARRIOR": {
+    "KNIGHT": {
       "hitPoints": 200,
       "moveSpeed": 0.45,
       "goldReward": 25
@@ -76,7 +77,7 @@
         {
           "composition": {
             "GOBLIN": 5,
-            "WARRIOR": 2
+            "KNIGHT": 2
           },
           "intraEnemyDelay": 0.4
         }
@@ -94,7 +95,7 @@
         },
         {
           "composition": {
-            "WARRIOR": 4,
+            "KNIGHT": 4,
             "TNT": 3
           },
           "intraEnemyDelay": 0.3
@@ -107,7 +108,7 @@
         {
           "composition": {
             "GOBLIN": 15,
-            "WARRIOR": 6,
+            "KNIGHT": 6,
             "BARREL": 3
           },
           "intraEnemyDelay": 0.3
@@ -127,7 +128,7 @@
         {
           "composition": {
             "GOBLIN": 20,
-            "WARRIOR": 8,
+            "KNIGHT": 8,
             "BARREL": 6,
             "TNT": 4,
             "TROLL": 3

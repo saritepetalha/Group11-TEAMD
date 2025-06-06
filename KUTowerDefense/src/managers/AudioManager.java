@@ -40,7 +40,7 @@ public class AudioManager {
     public static final String GOBLIN_DEATH_1 = "GoblinDeath1";
     public static final String GOBLIN_DEATH_2 = "GoblinDeath2";
     public static final String GOBLIN_DEATH_3 = "GoblinDeath3";
-    public static final String WARRIOR_DEATH = "WarriorDeath";
+    public static final String KNIGHT_DEATH = "KnightDeath";
     public static final String TROLL_DEATH = "TrollDeath";
 
     // Victory/Lose sound constants
@@ -112,7 +112,7 @@ public class AudioManager {
         loadSound(GOBLIN_DEATH_1, "GoblinDeath1.wav");
         loadSound(GOBLIN_DEATH_2, "GoblinDeath2.wav");
         loadSound(GOBLIN_DEATH_3, "GoblinDeath3.wav");
-        loadSound(WARRIOR_DEATH, "WarriorDeath.wav");
+        loadSound(KNIGHT_DEATH, "KnightDeath.wav");
         loadSound(TROLL_DEATH, "TrollDeath.wav");
         //loadSound("wave_start", "wave_start.wav");
         // Load victory and lose sounds
@@ -266,10 +266,10 @@ public class AudioManager {
             playSound(GOBLIN_DEATH_3);
     }
 
-    public void playWarriorDeathSound() {
+    public void playKnightDeathSound() {
         if (soundMuted) return;
 
-        playSound(WARRIOR_DEATH);
+        playSound(KNIGHT_DEATH);
     }
 
     public void playTrollDeathSound() {

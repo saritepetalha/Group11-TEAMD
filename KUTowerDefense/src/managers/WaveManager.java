@@ -14,7 +14,7 @@ import static constants.Constants.Enemies.BARREL;
 import static constants.Constants.Enemies.GOBLIN;
 import static constants.Constants.Enemies.TNT;
 import static constants.Constants.Enemies.TROLL;
-import static constants.Constants.Enemies.WARRIOR;
+import static constants.Constants.Enemies.KNIGHT;
 import helpMethods.OptionsIO;
 import scenes.Playing;
 
@@ -113,13 +113,13 @@ public class WaveManager {
         Group g3_3 = new Group(Map.of(EnemyType.GOBLIN, 3), 0.5);
         waves.add(new Wave(List.of(g3_1, g3_2, g3_3), 1.5));
 
-        Group g4_1 = new Group(Map.of(EnemyType.WARRIOR, 2), 1.2);
+        Group g4_1 = new Group(Map.of(EnemyType.KNIGHT, 2), 1.2);
         Group g4_2 = new Group(Map.of(EnemyType.GOBLIN, 4), 0.4);
         Group g4_3 = new Group(Map.of(EnemyType.TNT, 1), 0.0);
         Group g4_4 = new Group(Map.of(EnemyType.BARREL, 2), 1.0);
         waves.add(new Wave(List.of(g4_1, g4_2, g4_3, g4_4), 1.0));
 
-        Group g5_1 = new Group(Map.of(EnemyType.WARRIOR, 3), 1.0);
+        Group g5_1 = new Group(Map.of(EnemyType.KNIGHT, 3), 1.0);
         Group g5_2 = new Group(Map.of(EnemyType.TNT, 2), 0.8);
         Group g5_3 = new Group(Map.of(EnemyType.GOBLIN, 5), 0.3);
         Group g5_4 = new Group(Map.of(EnemyType.TROLL, 1), 0.0);
@@ -385,7 +385,7 @@ public class WaveManager {
 
         switch (enemyType) {
             case GOBLIN: return GOBLIN;
-            case WARRIOR: return WARRIOR;
+            case KNIGHT: return KNIGHT;
             case BARREL: return BARREL;
             case TNT: return TNT;
             case TROLL: return TROLL;
@@ -417,16 +417,16 @@ public class WaveManager {
             System.out.println("Warning: Cannot update wave configuration - GameOptions is null");
             return;
         }
-        
+
         this.gameOptions = newOptions;
         System.out.println("Updating wave configuration with new difficulty settings...");
-        
+
         // Update inter-wave delay
         setInterWaveDelay(newOptions.getInterWaveDelay());
-        
+
         // Reload waves from the new options
         loadWavesFromOptions();
-        
+
         // If we're currently waiting for a wave or between waves, the new configuration will take effect
         // If we're in the middle of a wave, let it finish with the old settings and new waves will use new settings
         System.out.println("Wave configuration updated: " + waves.size() + " waves loaded, inter-wave delay: " + newOptions.getInterWaveDelay() + "s");
