@@ -82,11 +82,19 @@ public class PlayingController implements Observer {
 
         PlayingAdapter adapter = new PlayingAdapter();
 
+        // Create WeatherManager first and inject it into model immediately
+        // so other managers can access it during their initialization
         WeatherManager weatherManager = new WeatherManager();
+        
+        // Inject WeatherManager into model first so adapter can return it
+        model.setWeatherManager(weatherManager);
+        
         ProjectileManager projectileManager = new ProjectileManager(adapter);
         TreeInteractionManager treeInteractionManager = new TreeInteractionManager(adapter);
         FireAnimationManager fireAnimationManager = new FireAnimationManager();
         WaveManager waveManager = new WaveManager(adapter, model.getGameOptions());
+        
+        // Now EnemyManager can properly access WeatherManager through adapter
         EnemyManager enemyManager = new EnemyManager(adapter, model.getOverlay(), model.getLevel(), model.getGameOptions());
         TowerManager towerManager = new TowerManager(adapter);
 
@@ -102,7 +110,7 @@ public class PlayingController implements Observer {
         stoneMiningManager.initialize(model, view);
         model.setStoneMiningManager(stoneMiningManager);
 
-        // Inject all managers into the model
+        // Inject remaining managers into the model (WeatherManager already set above)
         model.initializeManagers(waveManager, towerManager, playerManager, projectileManager,
                 enemyManager, ultiManager, weatherManager, fireAnimationManager,
                 goldBagManager, treeInteractionManager);
