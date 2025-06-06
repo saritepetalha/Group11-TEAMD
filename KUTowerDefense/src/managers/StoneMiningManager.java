@@ -2,6 +2,7 @@ package managers;
 
 import constants.GameDimensions;
 import helpMethods.LoadSave;
+import interfaces.GameContext;
 import objects.Tile;
 import ui_p.TheButton;
 
@@ -48,14 +49,26 @@ public class StoneMiningManager {
     private static final int TOTAL_FRAMES = 5; // update this according to your image
     private boolean isAnimating = false;
 
-    public StoneMiningManager() {
+    private int miningTickCounter = 0;
+    private static final int MINING_TICKS = 60 * 20;
+    private final GameContext gameContext;
+
+    public StoneMiningManager(GameContext context) {
         loadButtonImageFile();
         loadPickaxeAnimation();
+        this.gameContext = context;
+    }
+
+    public static StoneMiningManager getInstance(GameContext context) {
+        if (instance == null) {
+            instance = new StoneMiningManager(context);
+        }
+        return instance;
     }
 
     public static StoneMiningManager getInstance() {
         if (instance == null) {
-            instance = new StoneMiningManager();
+            throw new IllegalStateException("StoneMiningManager must be initialized with context first.");
         }
         return instance;
     }
@@ -124,30 +137,16 @@ public class StoneMiningManager {
         if (mineButton == null) {
             return;
         }
+
         showButton = false;
-        miningStartTime = System.currentTimeMillis();
         isMiningInProgress = true;
+        miningTickCounter = 0;
+        miningProgress = 0f;
 
         currentFrame = 0;
         animationTick = 0;
-
-        // Start mining timer
-        miningTimer = new Timer(MINING_DURATION, e -> {
-            completeMining();
-        });
-        miningTimer.setRepeats(false);
-        miningTimer.start();
-
-        miningAnimationTimer = new Timer(ANIMATION_INTERVAL, e -> {
-            miningProgress = (float)(System.currentTimeMillis() - miningStartTime) / MINING_DURATION;
-            if (miningProgress >= 1.0f) {
-                miningAnimationTimer.stop();
-                completeMining();
-            }
-        });
-        miningAnimationTimer.setRepeats(true);
-        miningAnimationTimer.start();
     }
+
 
 
     private void completeMining() {
@@ -304,12 +303,26 @@ public class StoneMiningManager {
     }
 
     public void update() {
-        if (isMiningInProgress && pickaxeFrames != null && pickaxeFrames.length > 0) {
-            animationTick++;
-            if (animationTick >= MAX_TICKS_PER_FRAME) {
-                animationTick = 0;
-                currentFrame = (currentFrame + 1) % TOTAL_FRAMES;
-            }
+        if (!isMiningInProgress || currentMiningTile == null)
+            return;
+
+        if (gameContext.isGamePaused())
+            return;
+
+        float speed = gameContext.getGameSpeedMultiplier();
+
+        miningTickCounter += speed;
+        miningProgress = (float) miningTickCounter / MINING_TICKS;
+
+        animationTick += speed;
+        if (animationTick >= MAX_TICKS_PER_FRAME) {
+            animationTick = 0;
+            currentFrame = (currentFrame + 1) % TOTAL_FRAMES;
+        }
+
+        if (miningTickCounter >= MINING_TICKS) {
+            completeMining();
         }
     }
+
 } 
