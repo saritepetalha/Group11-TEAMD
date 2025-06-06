@@ -312,6 +312,27 @@ public class PlayingView implements Observer {
             }
         }
     }
+    
+    /**
+     * Handles mouse movement for tree button tooltips
+     */
+    public void handleMouseMovedForTooltips(int mouseX, int mouseY) {
+        // Handle dead tree tooltips
+        List<DeadTree> deadTrees = model.getDeadTrees();
+        if (deadTrees != null) {
+            for (DeadTree deadTree : deadTrees) {
+                deadTree.handleMouseHover(mouseX, mouseY, model);
+            }
+        }
+        
+        // Handle live tree tooltips  
+        List<LiveTree> liveTrees = model.getLiveTrees();
+        if (liveTrees != null) {
+            for (LiveTree liveTree : liveTrees) {
+                liveTree.handleMouseHover(mouseX, mouseY, model);
+            }
+        }
+    }
 
     private void drawProjectiles(Graphics g) {
         // Draw projectiles

@@ -11,7 +11,7 @@ public class GoldFactory {
     private static final int MIN_GOLD = 15;
     private static final int MAX_GOLD = 25;
     private static final int FACTORY_SIZE = 64;
-    private static final long LIFETIME_MILLIS = 60000; // 1 minute lifetime
+    private static final long LIFETIME_MILLIS = 10000; // 1 minute lifetime
 
     private int tileX, tileY; // Store as tile coordinates
     private long lastSpawnTime;

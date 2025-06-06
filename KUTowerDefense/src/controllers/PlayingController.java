@@ -211,6 +211,9 @@ public class PlayingController implements Observer {
             model.getStoneMiningManager().mouseMoved(x, y);
         }
 
+        // Handle tooltips for tree buttons
+        view.handleMouseMovedForTooltips(x, y);
+        
         view.mouseMoved(x, y);
     }
 

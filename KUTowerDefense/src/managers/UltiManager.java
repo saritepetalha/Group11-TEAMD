@@ -219,8 +219,9 @@ public class UltiManager {
             strike.draw(g2d);
         }
 
-        // Draw gold factories
-        for (GoldFactory factory : goldFactories) {
+        // Draw gold factories - create defensive copy to avoid ConcurrentModificationException
+        List<GoldFactory> factoriesCopy = new ArrayList<>(goldFactories);
+        for (GoldFactory factory : factoriesCopy) {
             factory.draw(g);
         }
     }
@@ -228,10 +229,29 @@ public class UltiManager {
     public boolean isLightningPlaying() {
         return !activeStrikes.isEmpty();
     }
+    
+    // Getter methods for cooldown calculations
+    public long getLastEarthquakeTime() {
+        return lastEarthquakeUsedGameTime;
+    }
+    
+    public long getLastLightningTime() {
+        return lastLightningUsedGameTime;
+    }
+    
+    public long getLastGoldFactoryTime() {
+        return lastGoldFactoryUsedGameTime;
+    }
+    
+    public boolean hasActiveGoldFactory() {
+        return !goldFactories.isEmpty();
+    }
 
     public boolean canUseGoldFactory() {
         long currentGameTime = playing.getGameTime();
-        return currentGameTime - lastGoldFactoryUsedGameTime >= goldFactoryCooldownMillis;
+        boolean cooldownReady = currentGameTime - lastGoldFactoryUsedGameTime >= goldFactoryCooldownMillis;
+        boolean noActiveFactory = goldFactories.isEmpty(); // Only allow if no factories exist
+        return cooldownReady && noActiveFactory;
     }
 
     public void selectGoldFactory() {

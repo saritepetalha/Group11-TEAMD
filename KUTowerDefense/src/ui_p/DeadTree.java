@@ -14,6 +14,7 @@ public class DeadTree {
     public int x,y;
     public boolean showChoices = false;
     public TheButton mageButton, archerButton, artilleryButton;
+    private CostTooltip tooltip;
     private ArrayList<TheButton> theButtons = new ArrayList<>();
     private ArrayList<BufferedImage> ButtonImages = new ArrayList<>();
 
@@ -32,6 +33,8 @@ public class DeadTree {
         theButtons.add(mageButton = new TheButton("Mage", x - size + 16, y, size, size, ButtonImages.get(1)));
         theButtons.add(archerButton = new TheButton("Archer", x + 16, y - size, size, size, ButtonImages.get(0)));
         theButtons.add(artilleryButton = new TheButton("Artillery", x + size + 16, y, size, size, ButtonImages.get(2)));
+        
+        this.tooltip = new CostTooltip();
     }
 
     public void draw(Graphics g) {
@@ -39,6 +42,10 @@ public class DeadTree {
             mageButton.draw(g);
             archerButton.draw(g);
             artilleryButton.draw(g);
+            
+            // Update and draw tooltip
+            tooltip.update();
+            tooltip.draw((Graphics2D) g);
         }
     }
 
@@ -102,5 +109,37 @@ public class DeadTree {
 
     public int getY() {
         return y;
+    }
+    
+    /**
+     * Handles mouse hover for tooltips - should be called from Playing/Controller
+     */
+    public void handleMouseHover(int mouseX, int mouseY, models.PlayingModel playing) {
+        if (!showChoices) {
+            tooltip.hide();
+            return;
+        }
+        
+        if (archerButton.getBounds().contains(mouseX, mouseY)) {
+            int cost = playing.getTowerManager().getTowerCostFromOptions(constants.Constants.Towers.ARCHER, playing.getGameOptions());
+            boolean canAfford = playing.getPlayerManager().getGold() >= cost;
+            tooltip.show("Archer Tower", cost, 
+                "Fast firing, long range. Effective against light enemies.", 
+                canAfford, mouseX, mouseY);
+        } else if (mageButton.getBounds().contains(mouseX, mouseY)) {
+            int cost = playing.getTowerManager().getTowerCostFromOptions(constants.Constants.Towers.MAGE, playing.getGameOptions());
+            boolean canAfford = playing.getPlayerManager().getGold() >= cost;
+            tooltip.show("Mage Tower", cost, 
+                "Magical attacks with special effects. Can spawn wizard warriors.", 
+                canAfford, mouseX, mouseY);
+        } else if (artilleryButton.getBounds().contains(mouseX, mouseY)) {
+            int cost = playing.getTowerManager().getTowerCostFromOptions(constants.Constants.Towers.ARTILLERY, playing.getGameOptions());
+            boolean canAfford = playing.getPlayerManager().getGold() >= cost;
+            tooltip.show("Artillery Tower", cost, 
+                "Slow but powerful. Area of effect damage.", 
+                canAfford, mouseX, mouseY);
+        } else {
+            tooltip.hide();
+        }
     }
 }
