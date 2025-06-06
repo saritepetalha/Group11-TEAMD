@@ -81,6 +81,12 @@ public class PlayingView implements Observer {
         // Use the shared adapter for both UI components
         this.playingUI = new PlayingUIAdapter(model, sharedAdapter);
         this.towerSelectionUI = new TowerSelectionUI(sharedAdapter);
+
+        // Initialize the difficulty display
+        if (playingUI != null) {
+            playingUI.setCurrentDifficulty(model.getCurrentDifficulty());
+            System.out.println("Initialized PlayingUI with difficulty: " + model.getCurrentDifficulty());
+        }
     }
 
     private void loadSpawnPointIndicator() {
@@ -854,6 +860,9 @@ public class PlayingView implements Observer {
             case "gameStateReset":
                 handleGameStateReset();
                 break;
+            case "difficultyChanged":
+                updateDifficultyDisplay();
+                break;
             // Add more cases as needed
         }
     }
@@ -877,10 +886,18 @@ public class PlayingView implements Observer {
         }
     }
 
+    private void updateDifficultyDisplay() {
+        if (playingUI != null) {
+            playingUI.setCurrentDifficulty(model.getCurrentDifficulty());
+            System.out.println("Updated PlayingUI difficulty display to: " + model.getCurrentDifficulty());
+        }
+    }
+
     private void handleGameStateReset() {
         // Handle any view-specific reset logic
         updateUIResources();
         updateTowerSelection();
+        updateDifficultyDisplay();
     }
 
     // Getters for controller access

@@ -67,7 +67,8 @@ public class PlayerManager {
     }
 
     public void heal(int amount) {
-        health = Math.min(MAX_HEALTH, health + amount);
+        int maxHealth = getMaxHealthFromOptions();
+        health = Math.min(maxHealth, health + amount);
     }
 
     public void rechargeShield(int amount) {
@@ -88,7 +89,7 @@ public class PlayerManager {
     }
 
     public int getMaxHealth() {
-        return MAX_HEALTH;
+        return getMaxHealthFromOptions();
     }
 
     public int getMaxShield() {
@@ -117,7 +118,8 @@ public class PlayerManager {
     }
 
     public void setHealth(int health) {
-        this.health = Math.min(MAX_HEALTH, Math.max(0, health));
+        int maxHealth = getMaxHealthFromOptions();
+        this.health = Math.min(maxHealth, Math.max(0, health));
     }
 
     public void setShield(int shield) {
@@ -157,5 +159,15 @@ public class PlayerManager {
         } else {
             System.out.println("Warning: Received null GameOptions in updateGameOptions, keeping current options");
         }
+    }
+
+    /**
+     * Get max health from GameOptions, fallback to constant if options unavailable
+     */
+    private int getMaxHealthFromOptions() {
+        if (gameOptions != null) {
+            return gameOptions.getStartingPlayerHP();
+        }
+        return MAX_HEALTH; // Fallback to constant
     }
 }

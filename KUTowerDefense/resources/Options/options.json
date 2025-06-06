@@ -1,56 +1,57 @@
 {
-  "startingGold": 300,
+  "startingGold": 200,
+  "startingPlayerHP": 25,
   "startingShield": 25,
   "weatherEnabled": true,
   "currentWeather": "Random",
   "enemyStats": {
     "GOBLIN": {
-      "hitPoints": 100,
-      "moveSpeed": 0.85,
-      "goldReward": 5
+      "hitPoints": 80,
+      "moveSpeed": 0.7,
+      "goldReward": 6
     },
     "KNIGHT": {
-      "hitPoints": 200,
-      "moveSpeed": 0.45,
-      "goldReward": 25
+      "hitPoints": 160,
+      "moveSpeed": 0.35,
+      "goldReward": 30
     },
     "BARREL": {
-      "hitPoints": 150,
-      "moveSpeed": 0.6,
-      "goldReward": 15
+      "hitPoints": 120,
+      "moveSpeed": 0.5,
+      "goldReward": 18
     },
     "TNT": {
-      "hitPoints": 50,
-      "moveSpeed": 1.2,
-      "goldReward": 2
+      "hitPoints": 40,
+      "moveSpeed": 1.0,
+      "goldReward": 3
     },
     "TROLL": {
-      "hitPoints": 300,
-      "moveSpeed": 0.15,
-      "goldReward": 10
+      "hitPoints": 240,
+      "moveSpeed": 0.12,
+      "goldReward": 12
     }
   },
   "towerStats": {
     "ARTILLERY": {
-      "buildCost": 120,
-      "range": 2.5,
-      "fireRate": 0.6,
-      "aoeRadius": 1.5,
-      "damage": 25
+      "buildCost": 100,
+      "range": 3.0,
+      "fireRate": 0.7,
+      "aoeRadius": 1.8,
+      "damage": 30
     },
     "ARCHER": {
-      "buildCost": 60,
-      "range": 3.5,
-      "fireRate": 1.2,
+      "buildCost": 50,
+      "range": 4.0,
+      "fireRate": 1.4,
       "aoeRadius": 0.0,
-      "damage": 15
+      "damage": 18
     },
     "MAGE": {
-      "buildCost": 90,
-      "range": 3.0,
-      "fireRate": 0.9,
+      "buildCost": 75,
+      "range": 3.5,
+      "fireRate": 1.0,
       "aoeRadius": 0.0,
-      "damage": 20
+      "damage": 25
     }
   },
   "waves": [
@@ -58,13 +59,9 @@
       "groups": [
         {
           "composition": {
-            "GOBLIN": 1,
-            "KNIGHT": 1,
-            "BARREL": 1,
-            "TNT": 1,
-            "TROLL": 1
+            "GOBLIN": 6
           },
-          "intraEnemyDelay": 0.5
+          "intraEnemyDelay": 0.8
         }
       ],
       "intraGroupDelay": 0.0
@@ -75,20 +72,74 @@
           "composition": {
             "GOBLIN": 8
           },
+          "intraEnemyDelay": 0.7
+        },
+        {
+          "composition": {
+            "GOBLIN": 4,
+            "KNIGHT": 2
+          },
+          "intraEnemyDelay": 0.6
+        }
+      ],
+      "intraGroupDelay": 2.0
+    },
+    {
+      "groups": [
+        {
+          "composition": {
+            "GOBLIN": 10,
+            "BARREL": 3
+          },
           "intraEnemyDelay": 0.5
         },
         {
           "composition": {
-            "GOBLIN": 5,
-            "KNIGHT": 2
+            "KNIGHT": 3,
+            "TNT": 2
           },
           "intraEnemyDelay": 0.4
         }
       ],
-      "intraGroupDelay": 1.5
+      "intraGroupDelay": 2.5
+    },
+    {
+      "groups": [
+        {
+          "composition": {
+            "GOBLIN": 12,
+            "KNIGHT": 4,
+            "BARREL": 2
+          },
+          "intraEnemyDelay": 0.4
+        },
+        {
+          "composition": {
+            "TNT": 4,
+            "TROLL": 1
+          },
+          "intraEnemyDelay": 0.3
+        }
+      ],
+      "intraGroupDelay": 3.0
+    },
+    {
+      "groups": [
+        {
+          "composition": {
+            "GOBLIN": 15,
+            "KNIGHT": 6,
+            "BARREL": 4,
+            "TNT": 3,
+            "TROLL": 2
+          },
+          "intraEnemyDelay": 0.3
+        }
+      ],
+      "intraGroupDelay": 0.0
     }
   ],
-  "interWaveDelay": 8.0,
+  "interWaveDelay": 12.0,
   "currentWaveIndex": 0,
   "currentGroupIndex": 0,
   "savedGold": 0,

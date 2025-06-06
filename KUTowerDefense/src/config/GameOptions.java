@@ -6,7 +6,7 @@ public class GameOptions {
 
     // ---------- Economy & player ----------
     private int startingGold     = 500;
-    private static int startingPlayerHP = 20;
+    private int startingPlayerHP = 20;
     private int startingShield   = 25;// current in‐game gold
 
     // ---------- Weather settings ----------
@@ -87,7 +87,7 @@ public class GameOptions {
         o.currentWaveIndex   = 0;
         o.currentGroupIndex  = 0;
         o.savedGold          = 0;
-        o.savedCastleHealth  = startingPlayerHP;
+        o.savedCastleHealth  = o.startingPlayerHP;
         o.weatherEnabled     = true;
         o.currentWeather     = "Random";
         // Reset progress trackers
@@ -117,7 +117,7 @@ public class GameOptions {
         o.waves.add(new Wave(List.of(g1, g2),           1.5)); // 2-group wave
         o.interWaveDelay     = 8.0;
         o.startingGold       = 300;
-        o.startingPlayerHP   = 15;
+        o.startingPlayerHP   = 20;
         o.startingShield     = 25;
         return o;
     }
