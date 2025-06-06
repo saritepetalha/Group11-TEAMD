@@ -204,23 +204,33 @@ public class CostTooltip {
     
     private void drawWrappedText(Graphics2D g2d, String text, int x, int y, int maxWidth) {
         FontMetrics fm = g2d.getFontMetrics();
-        String[] words = text.split(" ");
-        StringBuilder line = new StringBuilder();
+        
+        // First split by explicit line breaks (\n)
+        String[] lines = text.split("\n");
         int lineY = y + fm.getAscent();
         
-        for (String word : words) {
-            String testLine = line.length() > 0 ? line + " " + word : word;
-            if (fm.stringWidth(testLine) > maxWidth && line.length() > 0) {
-                g2d.drawString(line.toString(), x, lineY);
-                line = new StringBuilder(word);
-                lineY += fm.getHeight();
-            } else {
-                line = new StringBuilder(testLine);
+        for (String lineText : lines) {
+            // Then handle word wrapping for each line
+            String[] words = lineText.split(" ");
+            StringBuilder line = new StringBuilder();
+            
+            for (String word : words) {
+                String testLine = line.length() > 0 ? line + " " + word : word;
+                if (fm.stringWidth(testLine) > maxWidth && line.length() > 0) {
+                    g2d.drawString(line.toString(), x, lineY);
+                    line = new StringBuilder(word);
+                    lineY += fm.getHeight();
+                } else {
+                    line = new StringBuilder(testLine);
+                }
             }
-        }
-        
-        if (line.length() > 0) {
-            g2d.drawString(line.toString(), x, lineY);
+            
+            if (line.length() > 0) {
+                g2d.drawString(line.toString(), x, lineY);
+            }
+            
+            // Move to next line (for explicit line breaks)
+            lineY += fm.getHeight();
         }
     }
     
@@ -251,29 +261,36 @@ public class CostTooltip {
             tempG2d.setFont(DESC_FONT);
             FontMetrics descFm = tempG2d.getFontMetrics();
             
-            // Calculate wrapped text dimensions
-            String[] words = description.split(" ");
-            StringBuilder line = new StringBuilder();
-            int lines = 0;
+            // Calculate wrapped text dimensions with line break support
+            String[] lineBreaks = description.split("\n");
+            int totalLines = 0;
             int maxLineWidth = 200; // Max description width
             
-            for (String word : words) {
-                String testLine = line.length() > 0 ? line + " " + word : word;
-                if (descFm.stringWidth(testLine) > maxLineWidth && line.length() > 0) {
-                    maxWidth = Math.max(maxWidth, descFm.stringWidth(line.toString()));
-                    line = new StringBuilder(word);
-                    lines++;
-                } else {
-                    line = new StringBuilder(testLine);
+            for (String lineText : lineBreaks) {
+                String[] words = lineText.split(" ");
+                StringBuilder line = new StringBuilder();
+                int linesInThisBreak = 0;
+                
+                for (String word : words) {
+                    String testLine = line.length() > 0 ? line + " " + word : word;
+                    if (descFm.stringWidth(testLine) > maxLineWidth && line.length() > 0) {
+                        maxWidth = Math.max(maxWidth, descFm.stringWidth(line.toString()));
+                        line = new StringBuilder(word);
+                        linesInThisBreak++;
+                    } else {
+                        line = new StringBuilder(testLine);
+                    }
                 }
+                
+                if (line.length() > 0) {
+                    maxWidth = Math.max(maxWidth, descFm.stringWidth(line.toString()));
+                    linesInThisBreak++;
+                }
+                
+                totalLines += linesInThisBreak;
             }
             
-            if (line.length() > 0) {
-                maxWidth = Math.max(maxWidth, descFm.stringWidth(line.toString()));
-                lines++;
-            }
-            
-            totalHeight += lines * descFm.getHeight();
+            totalHeight += totalLines * descFm.getHeight();
         }
         
         width = maxWidth + 2 * PADDING;
