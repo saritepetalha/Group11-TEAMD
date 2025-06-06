@@ -34,7 +34,7 @@ import javax.swing.JPanel;
 /**
  * PlayingView - Handles all rendering logic for the Playing scene
  * Part of the MVC architecture for the Playing scene
- * 
+ *
  * Responsibilities:
  * - Render the game world (map, entities, effects)
  * - Handle UI rendering (status bars, buttons, overlays)
@@ -43,26 +43,26 @@ import javax.swing.JPanel;
  */
 @SuppressWarnings("deprecation")
 public class PlayingView implements Observer {
-    
+
     private PlayingModel model;
     private PlayingUI playingUI;
     private TowerSelectionUI towerSelectionUI;
     private JPanel gamePane;
-    
+
     // Mouse position for rendering
     private int mouseX, mouseY;
-    
+
     // Spawn point indicator for warrior placement
     private BufferedImage spawnPointIndicator;
-    
+
     public PlayingView(PlayingModel model) {
         this.model = model;
         this.model.addObserver(this);
-        
+
         // Initialize UI components that handle rendering
         initializeUIComponents();
         loadSpawnPointIndicator();
-        
+
         // Initialize game pane
         gamePane = new JPanel() {
             @Override
@@ -73,16 +73,16 @@ public class PlayingView implements Observer {
         };
         gamePane.setLayout(null);
     }
-    
+
     private void initializeUIComponents() {
         // Create one shared adapter to avoid multiple instances
         PlayingAdapter sharedAdapter = new PlayingAdapter(model);
-        
+
         // Use the shared adapter for both UI components
         this.playingUI = new PlayingUIAdapter(model, sharedAdapter);
         this.towerSelectionUI = new TowerSelectionUI(sharedAdapter);
     }
-    
+
     private void loadSpawnPointIndicator() {
         // Create a placeholder graphic for warrior placement
         int indicatorSize = 24;
@@ -98,7 +98,7 @@ public class PlayingView implements Observer {
 
         g.dispose();
     }
-    
+
     /**
      * Main render method called by the controller
      */
@@ -107,37 +107,37 @@ public class PlayingView implements Observer {
         if (model.getUltiManager() != null) {
             model.getUltiManager().applyShakeIfNeeded(g);
         }
-        
+
         // Draw the game world
         drawTiles(g);
         drawEnemies(g);
         drawTowers(g);
         drawProjectiles(g);
         drawEffects(g);
-        
+
         // Draw mining button if it exists
         if (model.getStoneMiningManager() != null && model.getStoneMiningManager().getMineButton() != null) {
             model.getStoneMiningManager().getMineButton().draw(g);
         }
-        
+
         // Draw UI elements
         drawUI(g);
-        
+
         // Draw stone mining effects
         if (model.getStoneMiningManager() != null) {
             model.getStoneMiningManager().draw((Graphics2D) g);
         }
-        
+
         // Reverse shake effect
         if (model.getUltiManager() != null) {
             model.getUltiManager().reverseShake(g);
         }
     }
-    
+
     private void drawTiles(Graphics g) {
         int[][] level = model.getLevel();
         if (level == null) return;
-        
+
         // Fill background color
         g.setColor(new Color(134, 177, 63, 255));
         g.fillRect(0, 0, GameDimensions.GAME_WIDTH, GameDimensions.GAME_HEIGHT);
@@ -146,7 +146,7 @@ public class PlayingView implements Observer {
         int colCount = level[0].length;
 
         // Check if we're in snow mode
-        boolean isSnowActive = model.getTileManager() != null && 
+        boolean isSnowActive = model.getTileManager() != null &&
                 model.getTileManager().getSnowState() != SnowTransitionManager.SnowState.NORMAL;
 
         // Detect which edge contains the gate (endpoint) for border rendering
@@ -158,7 +158,7 @@ public class PlayingView implements Observer {
             drawNormalMap(g, level, rowCount, colCount, gateEdge);
         }
     }
-    
+
     /**
      * Draws the map with proper snow layering
      */
@@ -199,7 +199,7 @@ public class PlayingView implements Observer {
             }
         }
     }
-    
+
     /**
      * Draws the map normally (without snow effects)
      */
@@ -227,7 +227,7 @@ public class PlayingView implements Observer {
             }
         }
     }
-    
+
     /**
      * Gets the appropriate snowy grass sprite
      */
@@ -235,7 +235,7 @@ public class PlayingView implements Observer {
         if (model.getTileManager() == null) return null;
         return model.getTileManager().getSprite(5); // Grass tile ID
     }
-    
+
     /**
      * Draws border tiles with proper rotation
      */
@@ -254,47 +254,47 @@ public class PlayingView implements Observer {
             g.drawImage(img, x, y, ts, ts, null);
         }
     }
-    
+
     private void drawEnemies(Graphics g) {
         // Draw ultimates effects
         if (model.getUltiManager() != null) {
             model.getUltiManager().draw(g);
         }
-        
+
         // Draw enemies
         if (model.getEnemyManager() != null) {
             model.getEnemyManager().draw(g, model.isGamePaused());
         }
     }
-    
+
     private void drawTowers(Graphics g) {
         // Draw towers
         if (model.getTowerManager() != null) {
             model.getTowerManager().draw(g);
         }
-        
+
         // Draw tower buttons (dead trees)
         drawTowerButtons(g);
-        
+
         // Draw live tree buttons
         drawLiveTreeButtons(g);
-        
+
         // Draw tower selection UI (range indicators, buttons, etc.)
         if (towerSelectionUI != null) {
             towerSelectionUI.draw(g);
         }
-        
+
         // Draw tower light effects
         if (model.getTowerManager() != null) {
             model.getTowerManager().drawLightEffects(g);
         }
-        
+
         // Draw gold bags
         if (model.getGoldBagManager() != null) {
             model.getGoldBagManager().draw(g);
         }
     }
-    
+
     private void drawTowerButtons(Graphics g) {
         List<DeadTree> deadTrees = model.getDeadTrees();
         if (deadTrees != null) {
@@ -303,7 +303,7 @@ public class PlayingView implements Observer {
             }
         }
     }
-    
+
     private void drawLiveTreeButtons(Graphics g) {
         List<LiveTree> liveTrees = model.getLiveTrees();
         if (liveTrees != null) {
@@ -312,32 +312,32 @@ public class PlayingView implements Observer {
             }
         }
     }
-    
+
     private void drawProjectiles(Graphics g) {
         // Draw projectiles
         if (model.getProjectileManager() != null) {
             model.getProjectileManager().draw(g);
         }
     }
-    
+
     private void drawEffects(Graphics g) {
         // Draw weather effects
         if (model.getWeatherManager() != null) {
             model.getWeatherManager().draw(g);
         }
-        
+
         // Draw fire animations
         if (model.getFireAnimationManager() != null) {
             model.getFireAnimationManager().draw(g);
         }
     }
-    
+
     private void drawUI(Graphics g) {
         // Draw Gold Factory preview if selected (in game world, before UI)
         if (model.getUltiManager() != null && model.getUltiManager().isGoldFactorySelected()) {
             drawGoldFactoryPreview((Graphics2D) g);
         }
-        
+
         // Draw Warrior placement preview if warrior is pending (in game world, before UI)
         if (model.getPendingWarriorPlacement() != null) {
             drawWarriorPlacementPreview((Graphics2D) g);
@@ -362,12 +362,17 @@ public class PlayingView implements Observer {
         if (model.getUltiManager() != null && model.getUltiManager().isGoldFactorySelected()) {
             drawGoldFactoryPlacementMessage(g);
         }
+
+        // Draw lightning targeting message if waiting for target
+        if (model.getUltiManager() != null && model.getUltiManager().isWaitingForLightningTarget()) {
+            drawLightningTargetingMessage(g);
+        }
     }
-    
+
     private void drawWarriorPlacementPreview(Graphics2D g) {
         Warrior pendingWarrior = model.getPendingWarriorPlacement();
         if (pendingWarrior == null) return;
-        
+
         // Snap to tile grid
         int tileX = (mouseX / GameDimensions.TILE_DISPLAY_SIZE) * GameDimensions.TILE_DISPLAY_SIZE;
         int tileY = (mouseY / GameDimensions.TILE_DISPLAY_SIZE) * GameDimensions.TILE_DISPLAY_SIZE;
@@ -393,24 +398,24 @@ public class PlayingView implements Observer {
             if (warriorSprite != null) {
                 Composite originalComposite = g.getComposite();
                 g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.8f));
-                
+
                 // Determine sprite dimensions and scaling based on warrior type
                 int drawWidth, drawHeight;
                 int drawX, drawY;
-                
+
                 if (pendingWarrior instanceof objects.WizardWarrior) {
                     // Wizard sprites - match the exact drawing size from TowerManager
-                    drawWidth = 92;  
-                    drawHeight = 76; 
+                    drawWidth = 92;
+                    drawHeight = 76;
                     drawX = tileX + (64 - drawWidth) / 2;
-                    drawY = tileY + (64 - drawHeight) + 4; 
+                    drawY = tileY + (64 - drawHeight) + 4;
                 } else {
-                    drawWidth = 84;  
-                    drawHeight = 84; 
+                    drawWidth = 84;
+                    drawHeight = 84;
                     drawX = tileX + (64 - drawWidth) / 2;
-                    drawY = tileY + (64 - drawHeight) + 12; 
+                    drawY = tileY + (64 - drawHeight) + 12;
                 }
-                
+
                 g.drawImage(warriorSprite, drawX, drawY, drawWidth, drawHeight, null);
                 g.setComposite(originalComposite);
             } else {
@@ -458,14 +463,14 @@ public class PlayingView implements Observer {
 
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
     }
-    
+
     /**
      * Helper method to check if a tile is valid for warrior placement
      */
     private boolean isValidTileForWarriorPlacement(int pixelX, int pixelY) {
         int[][] level = model.getLevel();
         if (level == null) return false;
-        
+
         int tileC = pixelX / GameDimensions.TILE_DISPLAY_SIZE;
         int tileR = pixelY / GameDimensions.TILE_DISPLAY_SIZE;
 
@@ -487,7 +492,7 @@ public class PlayingView implements Observer {
             if (model.getTowerManager() != null) {
                 int tileX = (pixelX / GameDimensions.TILE_DISPLAY_SIZE) * GameDimensions.TILE_DISPLAY_SIZE;
                 int tileY = (pixelY / GameDimensions.TILE_DISPLAY_SIZE) * GameDimensions.TILE_DISPLAY_SIZE;
-                
+
                 for (Warrior warrior : model.getTowerManager().getWarriors()) {
                     if (warrior.getX() == tileX && warrior.getY() == tileY - 8) { // Account for warrior offset
                         return false;
@@ -499,7 +504,7 @@ public class PlayingView implements Observer {
         }
         return false;
     }
-    
+
     /**
      * Helper method to get warrior sprite based on warrior type
      */
@@ -511,7 +516,7 @@ public class PlayingView implements Observer {
         }
         return null;
     }
-    
+
     /**
      * Helper method to get warrior initial for fallback display
      */
@@ -523,16 +528,16 @@ public class PlayingView implements Observer {
         }
         return "?";
     }
-    
+
     private void drawWarriorPlacementMessage(Graphics g) {
         Warrior pendingWarrior = model.getPendingWarriorPlacement();
         if (pendingWarrior == null) return;
-        
+
         String warriorType = getWarriorTypeName(pendingWarrior);
-        String message = "⚔️ Click to place " + warriorType + " Warrior ($" + pendingWarrior.getCost() + ") | Right-click to cancel ⚔️";
+        String message = "⚔️ Click to place " + warriorType + " Warrior ($" + pendingWarrior.getCost() + ") | Right-click to cancel ❌";
 
         g.setColor(new Color(100, 149, 237)); // Cornflower blue
-        g.setFont(new Font("Arial", Font.BOLD, 18));
+        g.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
         int stringWidth = g.getFontMetrics().stringWidth(message);
         int x = (GameDimensions.GAME_WIDTH - stringWidth) / 2;
         int y = 30;
@@ -555,7 +560,7 @@ public class PlayingView implements Observer {
                     if (level[r][c] == 5) { // Grass tile
                         int tilePixelX = c * GameDimensions.TILE_DISPLAY_SIZE;
                         int tilePixelY = r * GameDimensions.TILE_DISPLAY_SIZE;
-                        
+
                         // Check if this specific tile is valid (no towers/warriors)
                         if (isValidTileForWarriorPlacement(tilePixelX, tilePixelY)) {
                             // Blue highlight for valid tiles
@@ -577,7 +582,7 @@ public class PlayingView implements Observer {
 
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
     }
-    
+
     /**
      * Helper method to get warrior type name for display
      */
@@ -589,11 +594,11 @@ public class PlayingView implements Observer {
         }
         return "Unknown";
     }
-    
+
     private void drawCastleHealthBar(Graphics g) {
         int[][] level = model.getLevel();
         if (level == null || model.getTileManager() == null || model.getPlayerManager() == null) return;
-        
+
         int castleX = -1, castleY = -1;
         outer:
         for (int i = 0; i < level.length - 1; i++) {
@@ -618,9 +623,9 @@ public class PlayingView implements Observer {
 
         g.setColor(Color.DARK_GRAY);
         g.fillRoundRect(barX, barY, barWidth, barHeight, 6, 6);
-        
-        float healthPercent = Math.max(0, 
-            (float) model.getPlayerManager().getHealth() / model.getPlayerManager().getStartingHealthAmount());
+
+        float healthPercent = Math.max(0,
+                (float) model.getPlayerManager().getHealth() / model.getPlayerManager().getStartingHealthAmount());
         Color healthColor = new Color((int) (255 * (1 - healthPercent)), (int) (220 * healthPercent), 40);
         int healthBarWidth = (int) (barWidth * healthPercent);
         g.setColor(healthColor);
@@ -629,7 +634,7 @@ public class PlayingView implements Observer {
         g.setColor(Color.BLACK);
         g.drawRoundRect(barX, barY, barWidth, barHeight, 6, 6);
     }
-    
+
     private void drawGoldFactoryPreview(Graphics2D g) {
         // Snap to tile grid
         int tileX = (mouseX / 64) * 64;
@@ -711,12 +716,12 @@ public class PlayingView implements Observer {
 
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
     }
-    
+
     private void drawGoldFactoryPlacementMessage(Graphics g) {
-        String message = "✨ Click to place Gold Factory | Click button again to cancel ✨";
+        String message = "🏭 Click to place Gold Factory ($100) | Right-click to cancel ❌";
 
         g.setColor(new Color(255, 215, 0));
-        g.setFont(new Font("Arial", Font.BOLD, 18));
+        g.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
         int stringWidth = g.getFontMetrics().stringWidth(message);
         int x = (GameDimensions.GAME_WIDTH - stringWidth) / 2;
         int y = 30;
@@ -755,21 +760,49 @@ public class PlayingView implements Observer {
 
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
     }
-    
+
+    private void drawLightningTargetingMessage(Graphics g) {
+        String message = "⚡ Click to target Lightning Strike ($75) | Right-click to cancel ❌";
+
+        g.setColor(new Color(255, 255, 100)); // Bright yellow for lightning
+        g.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
+        int stringWidth = g.getFontMetrics().stringWidth(message);
+        int x = (GameDimensions.GAME_WIDTH - stringWidth) / 2;
+        int y = 30;
+
+        Graphics2D g2d = (Graphics2D) g;
+        // Message background
+        g2d.setColor(new Color(0, 0, 0, 100));
+        g2d.fillRoundRect(x - 10, y - 20, stringWidth + 20, 30, 10, 10);
+
+        g.setColor(new Color(255, 255, 100));
+        g.drawString(message, x, y);
+    }
+
     // Mouse event handling for UI
     public void mouseMoved(int x, int y) {
         this.mouseX = x;
         this.mouseY = y;
-        
+
         if (playingUI != null) {
             playingUI.mouseMoved(x, y);
         }
-        
+
         if (towerSelectionUI != null) {
             towerSelectionUI.mouseMoved(x, y);
         }
     }
-    
+
+    public boolean mouseClicked(int x, int y) {
+        boolean handled = false;
+
+        if (towerSelectionUI != null) {
+            handled = towerSelectionUI.mouseClicked(x, y);
+        }
+
+        return handled;
+    }
+
     public void mousePressed(int x, int y) {
         if (playingUI != null) {
             playingUI.mousePressed(x, y);
@@ -778,7 +811,7 @@ public class PlayingView implements Observer {
             towerSelectionUI.mousePressed(x, y);
         }
     }
-    
+
     public void mouseReleased(int x, int y) {
         if (playingUI != null) {
             playingUI.mouseReleased();
@@ -787,19 +820,19 @@ public class PlayingView implements Observer {
             towerSelectionUI.mouseReleased();
         }
     }
-    
+
     public void mouseDragged(int x, int y) {
         if (playingUI != null) {
             playingUI.mouseDragged(x, y);
         }
     }
-    
+
     public void mouseWheelMoved(MouseWheelEvent e) {
         if (playingUI != null) {
             playingUI.mouseWheelMoved(e);
         }
     }
-    
+
     @Override
     public void update(Observable o, Object arg) {
         // Handle model updates
@@ -817,136 +850,136 @@ public class PlayingView implements Observer {
             // Add more cases as needed
         }
     }
-    
+
     private void updateUIResources() {
         if (playingUI != null && model.getPlayerManager() != null) {
             playingUI.setGoldAmount(model.getPlayerManager().getGold());
             playingUI.setHealthAmount(model.getPlayerManager().getHealth());
             playingUI.setShieldAmount(model.getPlayerManager().getShield());
-            
+
             if (model.getGameOptions() != null) {
                 playingUI.setStartingHealthAmount(model.getGameOptions().getStartingPlayerHP());
                 playingUI.setStartingShieldAmount(model.getGameOptions().getStartingShield());
             }
         }
     }
-    
+
     private void updateTowerSelection() {
         if (towerSelectionUI != null) {
             towerSelectionUI.setSelectedTower(model.getDisplayedTower());
         }
     }
-    
+
     private void handleGameStateReset() {
         // Handle any view-specific reset logic
         updateUIResources();
         updateTowerSelection();
     }
-    
+
     // Getters for controller access
     public PlayingUI getPlayingUI() { return playingUI; }
     public TowerSelectionUI getTowerSelectionUI() { return towerSelectionUI; }
-    
+
     public JPanel getGamePane() {
         return gamePane;
     }
-    
+
     /**
      * Temporary adapter classes to bridge between new MVC and existing UI components
      */
     private static class PlayingUIAdapter extends PlayingUI {
         private PlayingModel model;
         private PlayingAdapter sharedAdapter;
-        
+
         public PlayingUIAdapter(PlayingModel model, PlayingAdapter sharedAdapter) {
             super(sharedAdapter);
             this.model = model;
             this.sharedAdapter = sharedAdapter;
         }
-        
+
         @Override
         public void setCurrentDifficulty(String difficulty) {
             super.setCurrentDifficulty(difficulty);
         }
     }
-    
+
     private static class PlayingAdapter extends scenes.Playing {
         private PlayingModel model;
-        
+
         public PlayingAdapter(PlayingModel model) {
             super(null, true); // Use safe constructor with isAdapter=true
             this.model = model;
         }
-        
+
         // Override key methods that UI components need
         @Override
         public boolean isGamePaused() { return model.isGamePaused(); }
-        
+
         @Override
         public boolean isOptionsMenuOpen() { return model.isOptionsMenuOpen(); }
-        
+
         @Override
         public float getGameSpeedMultiplier() { return model.getGameSpeedMultiplier(); }
-        
+
         @Override
         public String getWaveStatus() { return model.getWaveStatus(); }
-        
+
         @Override
         public managers.WeatherManager getWeatherManager() { return model.getWeatherManager(); }
-        
+
         @Override
         public managers.TileManager getTileManager() { return model.getTileManager(); }
-        
+
         @Override
         public managers.PlayerManager getPlayerManager() { return model.getPlayerManager(); }
-        
+
         @Override
         public managers.UltiManager getUltiManager() { return model.getUltiManager(); }
-        
+
         @Override
         public int[][] getLevel() { return model.getLevel(); }
-        
+
         // Override all manager getters to prevent null access
         @Override
         public managers.WaveManager getWaveManager() { return model.getWaveManager(); }
-        
+
         @Override
         public managers.EnemyManager getEnemyManager() { return model.getEnemyManager(); }
-        
+
         @Override
         public managers.TowerManager getTowerManager() { return model.getTowerManager(); }
-        
+
         @Override
         public managers.GoldBagManager getGoldBagManager() { return model.getGoldBagManager(); }
-        
+
         @Override
         public managers.FireAnimationManager getFireAnimationManager() { return model.getFireAnimationManager(); }
-        
+
         @Override
         public int[][] getOverlay() { return model.getOverlay(); }
-        
+
         @Override
         public long getGameTime() { return model.getGameTime(); }
-        
+
         @Override
         public String getCurrentMapName() { return model.getCurrentMapName(); }
-        
+
         @Override
         public String getCurrentDifficulty() { return model.getCurrentDifficulty(); }
-        
+
         @Override
         public boolean isAllWavesFinished() { return model.isAllWavesFinished(); }
-        
+
         @Override
         public config.GameOptions getGameOptions() { return model.getGameOptions(); }
-        
+
         // Override tree-related methods
         @Override
         public java.util.List<ui_p.DeadTree> getDeadTrees() { return model.getDeadTrees(); }
-        
+
         @Override
         public java.util.List<ui_p.LiveTree> getLiveTrees() { return model.getLiveTrees(); }
-        
+
         // Override methods that are called by UI components
         @Override
         public void startWarriorPlacement(Warrior warrior) {
@@ -956,7 +989,7 @@ public class PlayingView implements Observer {
             model.setDisplayedTower(null);
             System.out.println("Warrior placement mode started for: " + warrior.getClass().getSimpleName());
         }
-        
+
         @Override
         public void modifyTile(int x, int y, String tile) {
             // Handle tile modification directly through model (same logic as Playing.java)
@@ -965,7 +998,7 @@ public class PlayingView implements Observer {
 
             int[][] level = model.getLevel();
             if (level == null) return;
-            
+
             if (tile.equals("ARCHER")) {
                 level[y][x] = 26;
             } else if (tile.equals("MAGE")) {

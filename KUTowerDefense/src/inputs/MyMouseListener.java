@@ -101,6 +101,11 @@ public class MyMouseListener implements MouseListener, MouseMotionListener, Mous
 
         }
         else if (e.getButton() == MouseEvent.BUTTON3) {
+            if (GameStates.gameState == GameStates.PLAYING) {
+                if (game.getPlaying() != null) {
+                    game.getPlaying().rightMouseClicked(e.getX(), e.getY());
+                }
+            }
             System.out.println("Right mouse button was clicked");
         }
 
@@ -108,49 +113,54 @@ public class MyMouseListener implements MouseListener, MouseMotionListener, Mous
 
     @Override
     public void mousePressed(MouseEvent e) {
-        if (GameStates.gameState == GameStates.PLAYING) {
-            if (game.getPlaying() != null) {
-                game.getPlaying().mousePressed(e.getX(), e.getY());
+        // Only handle left-click presses to avoid triggering actions on right-click
+        if (e.getButton() == MouseEvent.BUTTON1) {
+            if (GameStates.gameState == GameStates.PLAYING) {
+                if (game.getPlaying() != null) {
+                    game.getPlaying().mousePressed(e.getX(), e.getY());
+                }
+            }
+            else if (GameStates.gameState == GameStates.MENU) {
+                game.getMenu().mousePressed(e.getX(), e.getY());
+            }
+            else if (GameStates.gameState == GameStates.OPTIONS) {
+                game.getOptions().mousePressed(e.getX(), e.getY());
+            }
+            else if (GameStates.gameState == GameStates.EDIT) {
+                game.getMapEditing().mousePressed(e.getX(), e.getY());
+            }
+            else if (GameStates.gameState == GameStates.GAME_OVER) {
+                if (game.getGameOverScene() != null) {
+                    game.getGameOverScene().mousePressed(e.getX(), e.getY());
+                }
+            }
+            else if (GameStates.gameState == GameStates.STATISTICS) {
+                game.getStatisticsScene().mousePressed(e.getX(), e.getY());
             }
         }
-        else if (GameStates.gameState == GameStates.MENU) {
-            game.getMenu().mousePressed(e.getX(), e.getY());
-        }
-        else if (GameStates.gameState == GameStates.OPTIONS) {
-            game.getOptions().mousePressed(e.getX(), e.getY());
-        }
-        else if (GameStates.gameState == GameStates.EDIT) {
-            game.getMapEditing().mousePressed(e.getX(), e.getY());
-        }
-        else if (GameStates.gameState == GameStates.GAME_OVER) {
-            if (game.getGameOverScene() != null) {
-                game.getGameOverScene().mousePressed(e.getX(), e.getY());
-            }
-        }
-        else if (GameStates.gameState == GameStates.STATISTICS) {
-            game.getStatisticsScene().mousePressed(e.getX(), e.getY());
-        }
-
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
-        if (GameStates.gameState == GameStates.PLAYING) {
-            if (game.getPlaying() != null) {
-                game.getPlaying().mouseReleased(e.getX(), e.getY());
+        // Only handle left-click releases to be consistent with mousePressed
+        if (e.getButton() == MouseEvent.BUTTON1) {
+            if (GameStates.gameState == GameStates.PLAYING) {
+                if (game.getPlaying() != null) {
+                    game.getPlaying().mouseReleased(e.getX(), e.getY());
+                }
             }
-        }
-        else if (GameStates.gameState == GameStates.MENU) {
-            game.getMenu().mouseReleased(e.getX(), e.getY());
-        }
-        else if (GameStates.gameState == GameStates.OPTIONS) {
-            game.getOptions().mouseReleased(e.getX(), e.getY());
-        }
-        else if (GameStates.gameState == GameStates.EDIT) {
-            game.getMapEditing().mouseReleased(e.getX(), e.getY());
-        }
-        else if (GameStates.gameState == GameStates.STATISTICS) {
-            game.getStatisticsScene().mouseReleased(e.getX(), e.getY());
+            else if (GameStates.gameState == GameStates.MENU) {
+                game.getMenu().mouseReleased(e.getX(), e.getY());
+            }
+            else if (GameStates.gameState == GameStates.OPTIONS) {
+                game.getOptions().mouseReleased(e.getX(), e.getY());
+            }
+            else if (GameStates.gameState == GameStates.EDIT) {
+                game.getMapEditing().mouseReleased(e.getX(), e.getY());
+            }
+            else if (GameStates.gameState == GameStates.STATISTICS) {
+                game.getStatisticsScene().mouseReleased(e.getX(), e.getY());
+            }
         }
     }
 

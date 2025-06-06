@@ -11,7 +11,6 @@ import helpMethods.OptionsIO;
 import main.Game;
 import managers.*;
 import models.PlayingModel;
-import models.Tile;
 import objects.Tower;
 import objects.Warrior;
 import scenes.Playing;
@@ -22,7 +21,7 @@ import views.PlayingView;
 /**
  * PlayingController - Handles input and coordinates between Model and View
  * Part of the MVC architecture for the Playing scene
- * 
+ *
  * Responsibilities:
  * - Handle all user input (mouse, keyboard)
  * - Coordinate between Model and View
@@ -32,57 +31,57 @@ import views.PlayingView;
  */
 @SuppressWarnings("deprecation")
 public class PlayingController implements Observer {
-    
+
     private PlayingModel model;
     private PlayingView view;
     private Game game;
-    
+
     // Managers that need special handling or aren't part of the model
     private AudioManager audioManager;
-    
+
     public PlayingController(Game game) {
         this.game = game;
         this.model = new PlayingModel();
         this.view = new PlayingView(model);
-        
+
         // Observe model changes to handle game state transitions
         this.model.addObserver(this);
-        
+
         initializeManagersForModel();
         audioManager = AudioManager.getInstance();
     }
-    
+
     public PlayingController(Game game, managers.TileManager tileManager) {
         this.game = game;
         this.model = new PlayingModel(tileManager);
         this.view = new PlayingView(model);
-        
+
         this.model.addObserver(this);
-        
+
         initializeManagersForModel();
         audioManager = AudioManager.getInstance();
     }
-    
+
     public PlayingController(Game game, managers.TileManager tileManager, int[][] customLevel, int[][] customOverlay) {
         this.game = game;
         this.model = new PlayingModel(tileManager, customLevel, customOverlay);
         this.view = new PlayingView(model);
-        
+
         this.model.addObserver(this);
-        
+
         initializeManagersForModel();
         audioManager = AudioManager.getInstance();
     }
-    
+
     /**
      * Initialize all managers and inject them into the model
      */
     private void initializeManagersForModel() {
         // For now, we'll create managers using the PlayingAdapter pattern
         // In a full refactor, these would be updated to work directly with the model
-        
+
         PlayingAdapter adapter = new PlayingAdapter();
-        
+
         WeatherManager weatherManager = new WeatherManager();
         ProjectileManager projectileManager = new ProjectileManager(adapter);
         TreeInteractionManager treeInteractionManager = new TreeInteractionManager(adapter);
@@ -90,25 +89,25 @@ public class PlayingController implements Observer {
         WaveManager waveManager = new WaveManager(adapter, model.getGameOptions());
         EnemyManager enemyManager = new EnemyManager(adapter, model.getOverlay(), model.getLevel(), model.getGameOptions());
         TowerManager towerManager = new TowerManager(adapter);
-        
+
         // Set TowerManager reference in WeatherManager for lighting effects
         weatherManager.setTowerManager(towerManager);
-        
+
         PlayerManager playerManager = new PlayerManager(model.getGameOptions());
         UltiManager ultiManager = new UltiManager(adapter);
         GoldBagManager goldBagManager = new GoldBagManager();
-        
+
         // Initialize Stone Mining Manager
         StoneMiningManager stoneMiningManager = new StoneMiningManager(model); // model implements GameContext
         stoneMiningManager.initialize(model, view);
         model.setStoneMiningManager(stoneMiningManager);
-        
+
         // Inject all managers into the model
         model.initializeManagers(waveManager, towerManager, playerManager, projectileManager,
-                               enemyManager, ultiManager, weatherManager, fireAnimationManager,
-                               goldBagManager, treeInteractionManager);
+                enemyManager, ultiManager, weatherManager, fireAnimationManager,
+                goldBagManager, treeInteractionManager);
     }
-    
+
     /**
      * Main update method - called every frame
      */
@@ -121,14 +120,14 @@ public class PlayingController implements Observer {
 
         checkButtonStates();
     }
-    
+
     /**
      * Main render method - delegates to view
      */
     public void render(java.awt.Graphics g) {
         view.render(g);
     }
-    
+
     // Input handling methods
     public void mouseClicked(int x, int y) {
         // Handle warrior placement
@@ -143,12 +142,24 @@ public class PlayingController implements Observer {
             return;
         }
 
+        // First, check if tower selection UI handles the click (for upgrade/targeting buttons)
+        if (view.mouseClicked(x, y)) {
+            // TowerSelectionUI handled the click, don't process other interactions
+            return;
+        }
+
+        // Clear current selection first
+        clearCurrentSelection();
+
         // Handle tower selection
+        Tower clickedTower = null;
         if (model.getTowerManager() != null) {
             for (Tower tower : model.getTowerManager().getTowers()) {
                 if (tower.isClicked(x, y)) {
+                    clickedTower = tower;
                     model.setDisplayedTower(tower);
-                    return;
+                    System.out.println("🏰 Tower selected: " + tower.getClass().getSimpleName());
+                    break;
                 }
             }
         }
@@ -157,7 +168,7 @@ public class PlayingController implements Observer {
         if (model.getDeadTrees() != null && model.getTreeInteractionManager() != null) {
             model.getTreeInteractionManager().handleDeadTreeInteraction(x, y);
         }
-        
+
         // Handle live trees
         if (model.getLiveTrees() != null && model.getTreeInteractionManager() != null) {
             model.getTreeInteractionManager().handleLiveTreeInteraction(x, y);
@@ -166,20 +177,29 @@ public class PlayingController implements Observer {
         // Gold bag collection
         if (model.getGoldBagManager() != null) {
             var collectedBag = model.getGoldBagManager().tryCollect(x, y);
-            if (collectedBag != null && model.getPlayerManager() != null) {
-                model.getPlayerManager().addGold(collectedBag.getGoldAmount());
+            if (collectedBag != null) {
+                if (model.getPlayerManager() != null) {
+                    model.getPlayerManager().addGold(collectedBag.getGoldAmount());
+                }
             }
         }
 
         // Handle stone mining
         if (model.getStoneMiningManager() != null) {
-            int tileX = x / GameDimensions.TILE_DISPLAY_SIZE;
-            int tileY = y / GameDimensions.TILE_DISPLAY_SIZE;
-            if (tileX >= 0 && tileX < model.getLevel()[0].length && 
-                tileY >= 0 && tileY < model.getLevel().length) {
-                int tileId = model.getLevel()[tileY][tileX];
-                if (tileId == 19 || tileId == 23) {
-                    model.getStoneMiningManager().handleStoneClick(new objects.Tile(tileX, tileY, tileId));
+            // Check if mine button was clicked
+            if (model.getStoneMiningManager().getMineButton() != null &&
+                    model.getStoneMiningManager().getMineButton().getBounds().contains(x, y)) {
+                // Mine button click is handled
+            } else {
+                // Check if stone tile was clicked
+                int tileX = x / GameDimensions.TILE_DISPLAY_SIZE;
+                int tileY = y / GameDimensions.TILE_DISPLAY_SIZE;
+                if (tileX >= 0 && tileX < model.getLevel()[0].length &&
+                        tileY >= 0 && tileY < model.getLevel().length) {
+                    int tileId = model.getLevel()[tileY][tileX];
+                    if (tileId == 19 || tileId == 23) {
+                        model.getStoneMiningManager().handleStoneClick(new objects.Tile(tileX, tileY, tileId));
+                    }
                 }
             }
         }
@@ -262,19 +282,93 @@ public class PlayingController implements Observer {
 
         view.mouseReleased(x, y);
     }
-    
+
     public void mouseDragged(int x, int y) {
         view.mouseDragged(x, y);
     }
-    
+
     public void mouseWheelMoved(MouseWheelEvent e) {
         view.mouseWheelMoved(e);
     }
-    
+
+    public void rightMouseClicked(int x, int y) {
+        boolean cancelled = false;
+
+        // Cancel warrior placement
+        if (model.getPendingWarriorPlacement() != null) {
+            String warriorType = model.getPendingWarriorPlacement().getClass().getSimpleName().replace("Warrior", "");
+            model.setPendingWarriorPlacement(null);
+            model.setDisplayedTower(null);
+            System.out.println("🛡️ " + warriorType + " warrior placement cancelled by right-click!");
+            cancelled = true;
+        }
+
+        // Cancel lightning targeting
+        if (model.getUltiManager() != null && model.getUltiManager().isWaitingForLightningTarget()) {
+            model.getUltiManager().setWaitingForLightningTarget(false);
+            System.out.println("⚡ Lightning strike targeting cancelled by right-click!");
+            cancelled = true;
+        }
+
+        // Cancel gold factory placement
+        if (model.getUltiManager() != null && model.getUltiManager().isGoldFactorySelected()) {
+            model.getUltiManager().deselectGoldFactory();
+            System.out.println("🏭 Gold factory placement cancelled by right-click!");
+            cancelled = true;
+        }
+
+        if (!cancelled) {
+            System.out.println("🖱️ Right-click: No active placement mode to cancel.");
+        }
+    }
+
+    /**
+     * TRULY OPTIMIZED: Clear all selections without loops (brute force clear everything)
+     */
+    private void clearCurrentSelection() {
+        boolean somethingWasCleared = false;
+
+        // Clear tower selection
+        if (model.getDisplayedTower() != null) {
+            model.setDisplayedTower(null);
+            somethingWasCleared = true;
+        }
+
+        // Clear dead tree selection
+        if (model.getSelectedDeadTree() != null) {
+            model.getSelectedDeadTree().setShowChoices(false);
+            model.setSelectedDeadTree(null);
+            somethingWasCleared = true;
+        }
+
+        // Clear ALL dead tree choices (brute force - clear everything)
+        if (model.getDeadTrees() != null) {
+            for (var deadTree : model.getDeadTrees()) {
+                deadTree.setShowChoices(false);
+            }
+        }
+
+        // Clear ALL live tree choices (brute force - clear everything)
+        if (model.getLiveTrees() != null) {
+            for (var liveTree : model.getLiveTrees()) {
+                liveTree.setShowChoices(false);
+            }
+        }
+
+        // Clear stone mining selection
+        if (model.getStoneMiningManager() != null) {
+            model.getStoneMiningManager().clearMiningButton();
+        }
+
+        if (somethingWasCleared) {
+            System.out.println("🗙 Previous selection cleared");
+        }
+    }
+
     // Game control methods
     private void checkButtonStates() {
         if (view.getPlayingUI() == null) return;
-        
+
         // Check the states of control buttons
         if (view.getPlayingUI().getPauseButton().isMousePressed()) {
             handlePauseButton(true);
@@ -298,13 +392,13 @@ public class PlayingController implements Observer {
             handleOptionsButton(false);
         }
     }
-    
+
     private void handlePauseButton(boolean isPressed) {
         if (isPressed != model.isGamePaused()) {
             model.togglePause();
         }
     }
-    
+
     private void handleFastForwardButton(boolean isPressed) {
         if (isPressed && !model.isGameSpeedIncreased()) {
             model.toggleFastForward();
@@ -314,7 +408,7 @@ public class PlayingController implements Observer {
             System.out.println("Game speed normal");
         }
     }
-    
+
     private void handleOptionsButton(boolean isPressed) {
         if (isPressed && !model.isOptionsMenuOpen()) {
             model.toggleOptionsMenu();
@@ -330,7 +424,7 @@ public class PlayingController implements Observer {
             System.out.println("Options menu closed and game resumed");
         }
     }
-    
+
     private void handleBackOptionsButton(boolean isPressed) {
         if (isPressed && model.isOptionsMenuOpen()) {
             model.toggleOptionsMenu();
@@ -340,7 +434,7 @@ public class PlayingController implements Observer {
             System.out.println("Options menu closed via back button and game resumed");
         }
     }
-    
+
     private void handleMainMenuButton(boolean isPressed) {
         if (isPressed && model.isOptionsMenuOpen()) {
             model.toggleOptionsMenu();
@@ -348,11 +442,11 @@ public class PlayingController implements Observer {
             returnToMainMenu();
         }
     }
-    
+
     // Helper methods
     private Tower getTowerAt(int mouseX, int mouseY) {
         if (model.getTowerManager() == null) return null;
-        
+
         for (Tower tower : model.getTowerManager().getTowers()) {
             if (tower.isClicked(mouseX, mouseY)) {
                 return tower;
@@ -360,11 +454,11 @@ public class PlayingController implements Observer {
         }
         return null;
     }
-    
+
     private boolean tryPlaceWarrior(int x, int y) {
         Warrior pendingWarrior = model.getPendingWarriorPlacement();
         if (pendingWarrior == null) return false;
-        
+
         // Snap click coordinates to the grid
         int tileX = (x / GameDimensions.TILE_DISPLAY_SIZE) * GameDimensions.TILE_DISPLAY_SIZE;
         int tileY = (y / GameDimensions.TILE_DISPLAY_SIZE) * GameDimensions.TILE_DISPLAY_SIZE;
@@ -379,15 +473,15 @@ public class PlayingController implements Observer {
             // Set the target destination with slight upward offset for final position
             int finalY = tileY - 8;
             pendingWarrior.setTargetDestination(tileX, finalY);
-            
+
             // Add warrior to manager (it will start running to the target)
             if (model.getTowerManager() != null) {
                 model.getTowerManager().getWarriors().add(pendingWarrior);
             }
-            
-            System.out.println("Warrior will run from (" + pendingWarrior.getSpawnX() + ", " + pendingWarrior.getSpawnY() + 
-                             ") to (" + tileX + ", " + finalY + ") for " + pendingWarrior.getCost() + " gold.");
-            
+
+            System.out.println("Warrior will run from (" + pendingWarrior.getSpawnX() + ", " + pendingWarrior.getSpawnY() +
+                    ") to (" + tileX + ", " + finalY + ") for " + pendingWarrior.getCost() + " gold.");
+
             // Clear pending placement
             model.setPendingWarriorPlacement(null); // Properly clear the pending warrior
             model.setDisplayedTower(null); // Also clear tower selection
@@ -395,11 +489,11 @@ public class PlayingController implements Observer {
         }
         return false;
     }
-    
+
     private boolean isValidTileForPlacement(int pixelX, int pixelY) {
         int[][] level = model.getLevel();
         if (level == null) return false;
-        
+
         int tileC = pixelX / GameDimensions.TILE_DISPLAY_SIZE;
         int tileR = pixelY / GameDimensions.TILE_DISPLAY_SIZE;
 
@@ -418,10 +512,10 @@ public class PlayingController implements Observer {
         }
         return false;
     }
-    
+
     private boolean isWarriorAt(int x, int y) {
         if (model.getTowerManager() == null) return false;
-        
+
         for (Warrior warrior : model.getTowerManager().getWarriors()) {
             if (warrior.getX() == x && warrior.getY() == y) {
                 return true;
@@ -429,40 +523,40 @@ public class PlayingController implements Observer {
         }
         return false;
     }
-    
+
     public void returnToMainMenu() {
         System.out.println("Returning to main menu");
         game.changeGameState(main.GameStates.MENU);
     }
-    
+
     public void startWarriorPlacement(Warrior warrior) {
         // Clear tower selection
         if (view.getTowerSelectionUI() != null) {
             view.getTowerSelectionUI().setSelectedTower(null);
         }
-        
+
         // Set pending warrior in model
         model.setPendingWarriorPlacement(warrior);
-        
+
         System.out.println("Warrior placement mode started for: " + warrior.getClass().getSimpleName());
     }
-    
+
     // Level and game state management
     public void loadLevel(String levelName) {
         // This would need to be implemented to work with the model
         // For now, delegate to model methods when available
         model.setCurrentMapName(levelName);
     }
-    
+
     public void saveLevel(String filename) {
         // This would save the current level state
         // Implementation depends on how level saving is handled
     }
-    
+
     public void reloadGameOptions() {
         model.reloadGameOptions();
     }
-    
+
     /**
      * Reload difficulty configuration and reinitialize managers
      * This should be called when the difficulty is changed
@@ -470,41 +564,41 @@ public class PlayingController implements Observer {
     public void reloadDifficultyConfiguration() {
         // Reload the GameOptions from disk (which should have the new difficulty settings)
         model.reloadGameOptions();
-        
+
         // Reinitialize managers with the new options
         reinitializeManagersWithNewOptions();
-        
+
         // Apply difficulty stats to existing game entities
         applyDifficultyToExistingEntities();
-        
+
         System.out.println("Difficulty configuration reloaded and managers updated");
-        System.out.println("Current GameOptions: Gold=" + model.getGameOptions().getStartingGold() + 
-                         ", Health=" + model.getGameOptions().getStartingPlayerHP() + 
-                         ", Shield=" + model.getGameOptions().getStartingShield());
+        System.out.println("Current GameOptions: Gold=" + model.getGameOptions().getStartingGold() +
+                ", Health=" + model.getGameOptions().getStartingPlayerHP() +
+                ", Shield=" + model.getGameOptions().getStartingShield());
     }
-    
+
     /**
      * Reinitialize managers with updated GameOptions
      */
     private void reinitializeManagersWithNewOptions() {
         // Update existing managers with new GameOptions where possible
         // This is more efficient than recreating everything
-        
+
         if (model.getEnemyManager() != null) {
             model.getEnemyManager().updateGameOptions(model.getGameOptions());
         }
-        
+
         if (model.getWaveManager() != null) {
             // WaveManager will get updated via applyDifficultyToExistingEntities
         }
-        
+
         if (model.getPlayerManager() != null) {
             model.getPlayerManager().updateGameOptions(model.getGameOptions());
         }
-        
+
         System.out.println("Updated existing managers with new GameOptions");
     }
-    
+
     /**
      * Apply difficulty settings to existing towers, enemies, and waves
      */
@@ -513,22 +607,22 @@ public class PlayingController implements Observer {
         if (model.getEnemyManager() != null) {
             model.getEnemyManager().updateAllEnemyStatsFromOptions();
         }
-        
+
         // Apply new tower stats to all existing towers
         if (model.getTowerManager() != null) {
             model.getTowerManager().updateAllTowerStatsFromOptions(model.getGameOptions());
         }
-        
+
         // Update wave manager with new wave configuration
         if (model.getWaveManager() != null) {
             model.getWaveManager().updateWaveConfigurationFromOptions(model.getGameOptions());
         }
-        
+
         System.out.println("Applied difficulty settings to existing game entities");
     }
-    
+
     // ================ GAME STATE MANAGEMENT ================
-    
+
     /**
      * Save the current game state
      * @param filename The filename to save to (without extension)
@@ -538,7 +632,7 @@ public class PlayingController implements Observer {
         if (filename == null || filename.trim().isEmpty()) {
             filename = "quicksave";
         }
-        
+
         boolean success = model.saveGameState(filename);
         if (success) {
             System.out.println("Game saved successfully as: " + filename);
@@ -547,7 +641,7 @@ public class PlayingController implements Observer {
         }
         return success;
     }
-    
+
     /**
      * Load a game state from file
      * @param filename The filename to load from (without extension)
@@ -557,7 +651,7 @@ public class PlayingController implements Observer {
         if (filename == null || filename.trim().isEmpty()) {
             filename = "quicksave";
         }
-        
+
         boolean success = model.loadGameState(filename);
         if (success) {
             System.out.println("Game loaded successfully from: " + filename);
@@ -568,7 +662,7 @@ public class PlayingController implements Observer {
         }
         return success;
     }
-    
+
     /**
      * Reset the game to initial state
      */
@@ -576,23 +670,23 @@ public class PlayingController implements Observer {
         model.resetGameState();
         System.out.println("Game state reset to initial conditions");
     }
-    
+
     /**
      * Quick save functionality - saves to default filename
      */
     public boolean quickSave() {
         return saveGameState("quicksave");
     }
-    
+
     /**
      * Quick load functionality - loads from default filename
      */
     public boolean quickLoad() {
         return loadGameState("quicksave");
     }
-    
+
     // ================ PROJECTILE ABSTRACTION ================
-    
+
     /**
      * Handle projectile creation - abstracted from direct manager access
      * @param shooter The shooter (Tower or Warrior)
@@ -601,7 +695,7 @@ public class PlayingController implements Observer {
     public void createProjectile(Object shooter, Enemy target) {
         model.createProjectile(shooter, target);
     }
-    
+
     /**
      * Get active projectile count
      * @return Number of active projectiles
@@ -609,7 +703,7 @@ public class PlayingController implements Observer {
     public int getActiveProjectileCount() {
         return model.getActiveProjectileCount();
     }
-    
+
     /**
      * Check if there are active projectiles
      * @return true if projectiles are active
@@ -617,7 +711,7 @@ public class PlayingController implements Observer {
     public boolean hasActiveProjectiles() {
         return model.hasActiveProjectiles();
     }
-    
+
     @Override
     public void update(Observable o, Object arg) {
         // Handle model state changes
@@ -636,7 +730,7 @@ public class PlayingController implements Observer {
             // Add more cases as needed
         }
     }
-    
+
     private void handleVictory() {
         GameStatsRecord record = model.createGameStatsRecord(true);
         game.getStatsManager().addRecord(record);
@@ -655,7 +749,7 @@ public class PlayingController implements Observer {
 
         game.changeGameState(main.GameStates.GAME_OVER);
     }
-    
+
     private void handleGameOver() {
         GameStatsRecord record = model.createGameStatsRecord(false);
         game.getStatsManager().addRecord(record);
@@ -674,24 +768,24 @@ public class PlayingController implements Observer {
 
         game.changeGameState(main.GameStates.GAME_OVER);
     }
-    
+
     private void startEnemySpawning() {
         if (model.getWaveManager() != null) {
             model.getWaveManager().resetWaveManager();
         }
     }
-    
+
     // Getters for external access (if needed)
     public PlayingModel getModel() { return model; }
     public PlayingView getView() { return view; }
-    
+
     // Utility methods for compatibility
     public boolean isGamePaused() { return model.isGamePaused(); }
     public boolean isOptionsMenuOpen() { return model.isOptionsMenuOpen(); }
     public float getGameSpeedMultiplier() { return model.getGameSpeedMultiplier(); }
     public String getCurrentMapName() { return model.getCurrentMapName(); }
     public String getCurrentDifficulty() { return model.getCurrentDifficulty(); }
-    
+
     /**
      * Temporary adapter class to provide Playing-like interface to managers
      * In a full refactor, managers would be updated to work directly with the controller/model
@@ -701,52 +795,52 @@ public class PlayingController implements Observer {
             // Use the safe constructor that doesn't create a controller
             super(PlayingController.this.game, true); // true = isAdapter flag
         }
-        
+
         @Override
         public EnemyManager getEnemyManager() { return model.getEnemyManager(); }
-        
+
         @Override
         public WeatherManager getWeatherManager() { return model.getWeatherManager(); }
-        
+
         @Override
         public PlayerManager getPlayerManager() { return model.getPlayerManager(); }
-        
+
         @Override
         public TowerManager getTowerManager() { return model.getTowerManager(); }
-        
+
         @Override
         public GoldBagManager getGoldBagManager() { return model.getGoldBagManager(); }
-        
+
         @Override
         public UltiManager getUltiManager() { return model.getUltiManager(); }
-        
+
         @Override
         public void incrementEnemyDefeated() { model.incrementEnemyDefeated(); }
-        
+
         @Override
         public void addTotalDamage(int damage) { model.addTotalDamage(damage); }
-        
+
         @Override
         public void enemyReachedEnd(Enemy enemy) { model.enemyReachedEnd(enemy); }
-        
+
         @Override
         public void spawnEnemy(int enemyType) { model.spawnEnemy(enemyType); }
-        
+
         @Override
         public boolean isGamePaused() { return model.isGamePaused(); }
-        
+
         @Override
         public float getGameSpeedMultiplier() { return model.getGameSpeedMultiplier(); }
-        
+
         @Override
         public long getGameTime() { return model.getGameTime(); }
-        
+
         @Override
         public int[][] getLevel() { return model.getLevel(); }
-        
+
         @Override
         public int[][] getOverlay() { return model.getOverlay(); }
-        
+
         @Override
         public void startWarriorPlacement(Warrior warrior) {
             // Instead of calling controller (which is null), handle directly
@@ -755,45 +849,45 @@ public class PlayingController implements Observer {
             model.setDisplayedTower(null);
             System.out.println("Warrior placement mode started for: " + warrior.getClass().getSimpleName());
         }
-        
+
         @Override
         public void shootEnemy(Object shooter, Enemy enemy) {
             // Use the abstracted method instead of direct manager access
             createProjectile(shooter, enemy);
         }
-        
+
         // Override additional methods that might be called by managers
         @Override
         public managers.WaveManager getWaveManager() { return model.getWaveManager(); }
-        
+
         @Override
         public managers.TileManager getTileManager() { return model.getTileManager(); }
-        
+
         @Override
         public managers.FireAnimationManager getFireAnimationManager() { return model.getFireAnimationManager(); }
-        
+
         @Override
         public String getCurrentMapName() { return model.getCurrentMapName(); }
-        
+
         @Override
         public String getCurrentDifficulty() { return model.getCurrentDifficulty(); }
-        
+
         @Override
         public boolean isAllWavesFinished() { return model.isAllWavesFinished(); }
-        
+
         @Override
         public config.GameOptions getGameOptions() { return model.getGameOptions(); }
-        
+
         @Override
         public String getWaveStatus() { return model.getWaveStatus(); }
-        
+
         // Override tree-related methods
         @Override
         public java.util.List<ui_p.DeadTree> getDeadTrees() { return model.getDeadTrees(); }
-        
+
         @Override
         public java.util.List<ui_p.LiveTree> getLiveTrees() { return model.getLiveTrees(); }
-        
+
         // Override methods that are called by UI components
         @Override
         public void modifyTile(int x, int y, String tile) {
@@ -803,7 +897,7 @@ public class PlayingController implements Observer {
 
             int[][] level = model.getLevel();
             if (level == null) return;
-            
+
             if (tile.equals("ARCHER")) {
                 level[y][x] = 26;
             } else if (tile.equals("MAGE")) {
