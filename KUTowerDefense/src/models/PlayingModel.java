@@ -505,6 +505,12 @@ public class PlayingModel extends Observable implements GameContext {
         notifyObservers("deadTreeSelected");
     }
     
+    public void setWeatherManager(WeatherManager weatherManager) {
+        this.weatherManager = weatherManager;
+        setChanged();
+        notifyObservers("weatherManagerSet");
+    }
+    
     public GameOptions getGameOptions() {
         return gameOptions;
     }

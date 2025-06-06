@@ -94,11 +94,7 @@ public class TowerManager {
             return; // Tower is on cooldown
         }
 
-        // Check if tower can attack during night (needs light or it's daytime)
-        boolean isNight = playing.getWeatherManager() != null && playing.getWeatherManager().isNight();
-        if (isNight && !(tower instanceof LightDecorator)) {
-            return; // Tower cannot attack at night without light upgrade
-        }
+        // Towers can always attack - night effects are handled through enemy targeting
 
         // Collect all enemies in range
         List<Enemy> enemiesInRange = new ArrayList<>();

@@ -756,6 +756,7 @@ public class EnemyManager {
 
     public void clearEnemies() {
         enemies.clear();
+        enemySpawnTimes.clear();
     }
 
     public void addEnemy(Enemy enemy) {
@@ -816,7 +817,7 @@ public class EnemyManager {
         }
     }
 
-    private boolean wasNight = false;
+
 
     private boolean isGoblinInvisible(Enemy enemy) {
         if (weatherManager == null) {
@@ -825,16 +826,7 @@ public class EnemyManager {
 
         boolean isNight = weatherManager.isNight();
 
-        if (isNight && !wasNight) {
-            long currentTime = System.currentTimeMillis();
-            for (Enemy e : enemies) {
-                if (e.getEnemyType() == 0) { // GOBLIN
-                    enemySpawnTimes.put(e, currentTime);
-                }
-            }
-        }
-        wasNight = isNight;
-
+        // Goblins are invisible during night, unless lit by a tower with light
         if (isNight && enemy.getEnemyType() == 0) { // GOBLIN = 0
             // Check if goblin is lit by any tower with light
             if (playing.getTowerManager().isEnemyLit(enemy)) {
@@ -842,21 +834,12 @@ public class EnemyManager {
                 return false; // Goblin is visible due to tower light
             }
 
-            Long spawnTime = enemySpawnTimes.get(enemy);
-
-            if (spawnTime == null) {
-                long currentTime = System.currentTimeMillis();
-                enemySpawnTimes.put(enemy, currentTime);
-                enemy.setInvisible(true);
-                return true;
-            }
-
-            long currentTime = System.currentTimeMillis();
-            boolean isInvisible = (currentTime - spawnTime) < 10000; // First 10 seconds invisible
-
-            enemy.setInvisible(isInvisible);
-            return isInvisible;
+            // Goblin is invisible throughout the entire night
+            enemy.setInvisible(true);
+            return true;
         }
+        
+        // During day, goblins are always visible
         enemy.setInvisible(false);
         return false;
     }
