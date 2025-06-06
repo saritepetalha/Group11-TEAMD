@@ -55,6 +55,9 @@ public class PlayingUI {
     private TheButton earthquakeButton;
     private TheButton lightningButton;
     private TheButton goldFactoryButton;
+    
+    // Tooltip system
+    private CostTooltip tooltip;
 
     // option values (WILL BE CHANGED TO BE READ FROM FILE)
     private int soundVolume = 80;
@@ -82,6 +85,7 @@ public class PlayingUI {
         this.playing = playing;
         this.startingHealthAmount = MAX_HEALTH;
         this.startingShieldAmount = MAX_SHIELD;
+        this.tooltip = new CostTooltip();
         initButtons();
     }
 
@@ -187,6 +191,10 @@ public class PlayingUI {
                 !playing.isOptionsMenuOpen() && !playing.isGamePaused()) {
             drawGoldFactoryPreview((Graphics2D) g);
         }
+        
+        // Update and draw tooltip
+        tooltip.update();
+        tooltip.draw((Graphics2D) g);
     }
 
     private void drawStatusBars(Graphics g) {
@@ -510,34 +518,28 @@ public class PlayingUI {
     private void drawControlButton(Graphics2D g2d, TheButton button, int x, int y, int width, int height,
                                    BufferedImage normalImg, BufferedImage hoverImg, BufferedImage pressedImg) {
 
-        // Special handling for pause button when game is paused
-        if (button == pauseButton && playing.isGamePaused()) {
-            // Draw a more prominent pulsing glow effect
-            long currentTime = System.currentTimeMillis();
-            float alpha = (float) (0.5f + 0.3f * Math.sin(currentTime * 0.005)); // Stronger pulse
-
-            // Draw outer glow
-            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha * 0.5f));
-            g2d.setColor(new Color(255, 255, 0)); // Yellow glow
-            g2d.fillOval(x - 4, y - 4, width + 8, height + 8);
-
-            // Draw inner glow
-            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-            g2d.setColor(new Color(255, 255, 200)); // Brighter inner glow
-            g2d.fillOval(x - 2, y - 2, width + 4, height + 4);
-
-            // Reset composite
-            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
-        }
-
         boolean isEarthquakeCooldown = (button == earthquakeButton && !playing.getUltiManager().canUseEarthquake());
         boolean isLightningCooldown = (button == lightningButton && !playing.getUltiManager().canUseLightning());
-        boolean isGoldFactoryCooldown = (button == goldFactoryButton && !playing.getUltiManager().canUseGoldFactory());
+        boolean isGoldFactoryUnavailable = false;
+        
+        if (button == goldFactoryButton) {
+            // Check if gold factory can be used (handles cooldown AND active factory check)
+            boolean canUse = playing.getUltiManager().canUseGoldFactory();
+            boolean canAfford = playing.getPlayerManager().getGold() >= 100;
+            boolean hasActiveFactory = playing.getUltiManager().hasActiveGoldFactory();
+            long currentGameTime = playing.getGameTime();
+            long timeSinceLastUse = currentGameTime - playing.getUltiManager().getLastGoldFactoryTime();
+            boolean cooldownReady = timeSinceLastUse >= 30000;
+            
+
+            isGoldFactoryUnavailable = !canUse || !canAfford;
+        }
 
         // Draw the normal image first
         g2d.drawImage(normalImg, x, y, width, height, null);
 
-        if (isEarthquakeCooldown || isLightningCooldown || isGoldFactoryCooldown || button.isMousePressed()) {
+        // Handle different visual states - show pressed/grayed state for unavailable buttons
+        if (isEarthquakeCooldown || isLightningCooldown || isGoldFactoryUnavailable || button.isMousePressed()) {
             g2d.drawImage(pressedImg, x, y, width, height, null);
         } else if (button.isMouseOver()) {
             long currentTime = System.currentTimeMillis();
@@ -546,7 +548,10 @@ public class PlayingUI {
             g2d.drawImage(hoverImg, x, y, width, height, null);
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
 
-            if (button == earthquakeButton || button == lightningButton || button == goldFactoryButton) {
+            // Only show glow effect for buttons that are actually usable
+            if ((button == earthquakeButton && !isEarthquakeCooldown) || 
+                (button == lightningButton && !isLightningCooldown) || 
+                (button == goldFactoryButton && !isGoldFactoryUnavailable)) {
                 g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha * 0.6f));
                 g2d.setColor(new Color(255, 255, 255, 100));
                 g2d.setStroke(new BasicStroke(3f));
@@ -1040,15 +1045,46 @@ public class PlayingUI {
             mainMenuButton.setMouseOver(true);
         }
 
-        // Check ultimate buttons for hover
+        // Check ultimate buttons for hover and show tooltips
         if (isMouseOverButton(earthquakeButton, mouseX, mouseY)) {
             earthquakeButton.setMouseOver(true);
-        }
-        if (isMouseOverButton(lightningButton, mouseX, mouseY)) {
+            boolean canUse = playing.getUltiManager().canUseEarthquake();
+            boolean canAfford = playing.getPlayerManager().getGold() >= 50;
+            long remainingCooldown = canUse ? 0 : 15000 - (playing.getGameTime() - playing.getUltiManager().getLastEarthquakeTime());
+            tooltip.showUltimate("Earthquake", 50, 
+                "Deals 20 damage to all enemies. 50% chance to destroy level 1 towers.",
+                canAfford, !canUse, remainingCooldown, mouseX, mouseY);
+        } else if (isMouseOverButton(lightningButton, mouseX, mouseY)) {
             lightningButton.setMouseOver(true);
-        }
-        if (isMouseOverButton(goldFactoryButton, mouseX, mouseY)) {
+            boolean canUse = playing.getUltiManager().canUseLightning();
+            boolean canAfford = playing.getPlayerManager().getGold() >= 75;
+            long remainingCooldown = canUse ? 0 : 20000 - (playing.getGameTime() - playing.getUltiManager().getLastLightningTime());
+            tooltip.showUltimate("Lightning Strike", 75,
+                "Deals 80 damage to enemies in a large radius. Click to target.",
+                canAfford, !canUse, remainingCooldown, mouseX, mouseY);
+        } else if (isMouseOverButton(goldFactoryButton, mouseX, mouseY)) {
             goldFactoryButton.setMouseOver(true);
+            boolean canUse = playing.getUltiManager().canUseGoldFactory();
+            boolean canAfford = playing.getPlayerManager().getGold() >= 100;
+            boolean hasActiveFactory = playing.getUltiManager().hasActiveGoldFactory();
+            
+            String description;
+            if (hasActiveFactory) {
+                description = "Only one Gold Factory allowed at a time. Destroy existing factory first.";
+            } else {
+                description = "Produces gold bags over time. Place on grass tiles only.";
+            }
+            
+            long remainingCooldown = 0;
+            if (!canUse && !hasActiveFactory) {
+                remainingCooldown = 30000 - (playing.getGameTime() - playing.getUltiManager().getLastGoldFactoryTime());
+            }
+            
+            tooltip.showUltimate("Gold Factory", 100, description,
+                canAfford && !hasActiveFactory, !canUse, remainingCooldown, mouseX, mouseY);
+        } else {
+            // Hide tooltip if not hovering over any button
+            tooltip.hide();
         }
     }
 
@@ -1200,6 +1236,12 @@ public class PlayingUI {
                 return;
             }
 
+            // Check if there's already an active factory
+            if (playing.getUltiManager().hasActiveGoldFactory()) {
+                System.out.println("Only one Gold Factory allowed at a time!");
+                return;
+            }
+
             if (playing.getUltiManager().canUseGoldFactory()) {
                 if (playing.getPlayerManager().getGold() >= 100) { // goldFactoryCost
                     playing.getUltiManager().selectGoldFactory();
@@ -1267,6 +1309,7 @@ public class PlayingUI {
 
         earthquakeButton.setMousePressed(false);
         lightningButton.setMousePressed(false);
+        goldFactoryButton.setMousePressed(false);
     }
 
     public void mouseDragged(int mouseX, int mouseY) {

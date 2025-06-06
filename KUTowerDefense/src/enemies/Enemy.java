@@ -412,14 +412,19 @@ public abstract class Enemy {
     }
 
     public void applySlow(float slowFactor, int durationTicks) {
-        if (!isSlowed || slowFactor < this.currentSlowFactor) { // Apply new slow if not slowed, or if new slow is stronger
+        if (!isSlowed || slowFactor < this.currentSlowFactor) { 
+            // Apply new slow if not slowed, or if new slow is stronger
             this.isSlowed = true;
             this.currentSlowFactor = slowFactor;
             this.slowTimer = durationTicks;
             if (snowflakeIcon == null) {
                 snowflakeIcon = LoadSave.getImageFromPath("/TowerAssets/snow flake icon.png");
             }
+        } else if (slowFactor == this.currentSlowFactor) {
+            // Same strength slow - reset the timer (as requested: "4 sec count down will be reset")
+            this.slowTimer = durationTicks;
         }
+        // If new slow is weaker, ignore it (don't reset timer)
     }
 
     private void updateSlow() {

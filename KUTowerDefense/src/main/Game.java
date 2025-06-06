@@ -370,23 +370,45 @@ public class  Game extends JFrame implements Runnable{
 		// Load the appropriate difficulty configuration
 		config.GameOptions gameOptions = null;
 		try {
+			System.out.println("=== DIFFICULTY LOADING DEBUG ===");
+			System.out.println("Selected difficulty: " + difficulty);
+			
 			if ("Easy".equals(difficulty)) {
 				gameOptions = helpMethods.OptionsIO.load("easy");
+				System.out.println("Loaded Easy difficulty. Starting gold: " + (gameOptions != null ? gameOptions.getStartingGold() : "NULL"));
 			} else if ("Normal".equals(difficulty)) {
 				gameOptions = helpMethods.OptionsIO.load("normal");
+				System.out.println("Loaded Normal difficulty. Starting gold: " + (gameOptions != null ? gameOptions.getStartingGold() : "NULL"));
 			} else if ("Hard".equals(difficulty)) {
 				gameOptions = helpMethods.OptionsIO.load("hard");
+				System.out.println("Loaded Hard difficulty. Starting gold: " + (gameOptions != null ? gameOptions.getStartingGold() : "NULL"));
 			} else if ("Custom".equals(difficulty)) {
 				// Use current options.json (custom settings from main menu)
 				gameOptions = helpMethods.OptionsIO.load();
+				System.out.println("Loaded Custom difficulty. Starting gold: " + (gameOptions != null ? gameOptions.getStartingGold() : "NULL"));
 			}
 
 			if (gameOptions != null) {
 				// Save the difficulty options to options.json so Playing can use them
 				helpMethods.OptionsIO.save(gameOptions);
+				System.out.println("Saved difficulty settings to options.json. Starting gold: " + gameOptions.getStartingGold());
+				
+				// Wait a moment to ensure file I/O completes
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+				}
+				
+				// Verify the save worked
+				config.GameOptions verifyOptions = helpMethods.OptionsIO.load();
+				System.out.println("Verification: Reloaded options.json. Starting gold: " + verifyOptions.getStartingGold());
+			} else {
+				System.out.println("ERROR: Failed to load difficulty configuration!");
 			}
 		} catch (Exception e) {
 			System.err.println("Error loading difficulty configuration: " + e.getMessage());
+			e.printStackTrace();
 			// Fallback to default if loading fails
 		}
 
@@ -394,6 +416,12 @@ public class  Game extends JFrame implements Runnable{
 		this.playing.setCurrentMapName(mapName);
 		// Set the difficulty in the Playing scene (this will also update PlayingUI)
 		this.playing.setCurrentDifficulty(difficulty);
+		
+		// Force reload of GameOptions after setting difficulty to ensure it takes effect
+		if (this.playing != null) {
+			this.playing.reloadGameOptions();
+			System.out.println("=== FORCED RELOAD AFTER DIFFICULTY SET ===");
+		}
 	}
 
 	public void resetGameWithSameLevel() {

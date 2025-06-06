@@ -7,11 +7,11 @@ import java.awt.image.BufferedImage;
 import java.util.Random;
 
 public class GoldFactory {
-    private static final int SPAWN_INTERVAL_MILLIS = 4000; // 4 seconds
+    private static final int SPAWN_INTERVAL_MILLIS = 5000; // 5 seconds
     private static final int MIN_GOLD = 15;
     private static final int MAX_GOLD = 25;
     private static final int FACTORY_SIZE = 64;
-    private static final long LIFETIME_MILLIS = 60000; // 1 minute lifetime
+    private static final long LIFETIME_MILLIS = 30000; // 30 seconds lifetime
 
     private int tileX, tileY; // Store as tile coordinates
     private long lastSpawnTime;

@@ -44,20 +44,24 @@ public final class OptionsIO {
     private static String getOptionsDirectoryPath() {
         // Try multiple possible paths in order of preference
         String[] possiblePaths = {
+                "KUTowerDefense/resources/Options",    // Correct location with difficulty files - try FIRST
                 "src/main/resources/Options",          // Standard Maven structure from project root
                 "demo/src/main/resources/Options",     // If running from parent directory
                 "main/resources/Options",              // If running from src directory
-                "resources/Options",                   // If running from src/main directory
-                "KUTowerDefense/resources/Options"     // Legacy structure
+                "resources/Options"                    // If running from src/main directory (wrong location)
         };
 
         for (String path : possiblePaths) {
             File dir = new File(path);
             if (dir.exists() && dir.isDirectory()) {
                 try {
-                    return dir.getCanonicalPath();
+                    String canonicalPath = dir.getCanonicalPath();
+                    System.out.println("OptionsIO: Using options directory: " + canonicalPath);
+                    return canonicalPath;
                 } catch (Exception e) {
-                    return dir.getAbsolutePath();
+                    String absolutePath = dir.getAbsolutePath();
+                    System.out.println("OptionsIO: Using options directory (fallback): " + absolutePath);
+                    return absolutePath;
                 }
             }
         }
@@ -67,9 +71,13 @@ public final class OptionsIO {
         File defaultDir = new File(defaultPath);
         try {
             defaultDir.mkdirs();
-            return defaultDir.getCanonicalPath();
+            String canonicalPath = defaultDir.getCanonicalPath();
+            System.out.println("OptionsIO: Created and using options directory: " + canonicalPath);
+            return canonicalPath;
         } catch (Exception e) {
-            return defaultDir.getAbsolutePath();
+            String absolutePath = defaultDir.getAbsolutePath();
+            System.out.println("OptionsIO: Created and using options directory (fallback): " + absolutePath);
+            return absolutePath;
         }
     }
 
@@ -84,11 +92,13 @@ public final class OptionsIO {
      * @return never {@code null}
      */
     public static GameOptions load() {
+        System.out.println("OptionsIO.load(): Loading from default path: " + CONFIG_PATH.toAbsolutePath());
         synchronized (GSON) {        // Gson is not 100 % threadsafe
             try {
                 if (Files.notExists(CONFIG_PATH) || Files.size(CONFIG_PATH) == 0) {
                     GameOptions defaults = GameOptions.defaults();
                     save(defaults);  // creates folders + file
+                    System.out.println("OptionsIO.load(): Created new default options.json");
                     return defaults;
                 }
 
@@ -99,10 +109,14 @@ public final class OptionsIO {
                         // JSON was empty or only whitespace
                         opts = GameOptions.defaults();
                         save(opts);
+                        System.out.println("OptionsIO.load(): JSON was empty, used defaults");
+                    } else {
+                        System.out.println("OptionsIO.load(): Successfully loaded options.json. Starting gold: " + opts.getStartingGold());
                     }
                     return opts;
                 }
             } catch (IOException | RuntimeException ex) {
+                System.out.println("OptionsIO.load(): Exception loading options.json: " + ex.getMessage());
                 ex.printStackTrace();
                 // Fallback – keep the game runnable even if JSON is corrupt
                 GameOptions defaults = GameOptions.defaults();
@@ -114,15 +128,21 @@ public final class OptionsIO {
 
     public static GameOptions load(String filename) {
         Path path = CONFIG_DIR.resolve(filename + ".json");
+        System.out.println("OptionsIO.load: Trying to load from: " + path.toAbsolutePath());
+        System.out.println("OptionsIO.load: File exists: " + Files.exists(path));
         synchronized (GSON) {
             try {
                 if (Files.notExists(path) || Files.size(path) == 0) {
+                    System.out.println("OptionsIO.load: File not found or empty: " + path);
                     return null;
                 }
                 try (var reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
-                    return GSON.fromJson(reader, GameOptions.class);
+                    GameOptions options = GSON.fromJson(reader, GameOptions.class);
+                    System.out.println("OptionsIO.load: Successfully loaded " + filename + ". Starting gold: " + (options != null ? options.getStartingGold() : "NULL"));
+                    return options;
                 }
             } catch (IOException | RuntimeException ex) {
+                System.out.println("OptionsIO.load: Exception loading " + filename + ": " + ex.getMessage());
                 ex.printStackTrace();
                 return null;
             }

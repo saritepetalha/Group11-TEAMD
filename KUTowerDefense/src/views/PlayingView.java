@@ -54,6 +54,9 @@ public class PlayingView implements Observer {
 
     // Spawn point indicator for warrior placement
     private BufferedImage spawnPointIndicator;
+    
+    // Tooltip for warrior information
+    private ui_p.CostTooltip warriorTooltip;
 
     public PlayingView(PlayingModel model) {
         this.model = model;
@@ -62,6 +65,9 @@ public class PlayingView implements Observer {
         // Initialize UI components that handle rendering
         initializeUIComponents();
         loadSpawnPointIndicator();
+        
+        // Initialize warrior tooltip
+        this.warriorTooltip = new ui_p.CostTooltip();
 
         // Initialize game pane
         gamePane = new JPanel() {
@@ -318,6 +324,104 @@ public class PlayingView implements Observer {
             }
         }
     }
+    
+    /**
+     * Handles mouse movement for tree button tooltips
+     */
+    public void handleMouseMovedForTooltips(int mouseX, int mouseY) {
+        // Handle dead tree tooltips
+        List<DeadTree> deadTrees = model.getDeadTrees();
+        if (deadTrees != null) {
+            for (DeadTree deadTree : deadTrees) {
+                deadTree.handleMouseHover(mouseX, mouseY, model);
+            }
+        }
+        
+        // Handle live tree tooltips  
+        List<LiveTree> liveTrees = model.getLiveTrees();
+        if (liveTrees != null) {
+            for (LiveTree liveTree : liveTrees) {
+                liveTree.handleMouseHover(mouseX, mouseY, model);
+            }
+        }
+    }
+    
+    /**
+     * Handles warrior hover detection and tooltip display
+     */
+    private void handleWarriorHover(int mouseX, int mouseY) {
+        if (model.getTowerManager() == null || warriorTooltip == null) {
+            return;
+        }
+
+        boolean hoveredWarrior = false;
+        
+        // Check each warrior for hover
+        for (objects.Warrior warrior : model.getTowerManager().getWarriors()) {
+            if (isMouseOverWarrior(warrior, mouseX, mouseY)) {
+                // Show warrior tooltip
+                String warriorName = getWarriorClassName(warrior);
+                String description = getWarriorDescription(warrior);
+                
+                warriorTooltip.showSimple(warriorName, description, mouseX, mouseY);
+                hoveredWarrior = true;
+                break; // Only show one tooltip at a time
+            }
+        }
+        
+        // Hide tooltip if not hovering any warrior
+        if (!hoveredWarrior) {
+            warriorTooltip.hide();
+        }
+        
+        // Update tooltip animation
+        warriorTooltip.update();
+    }
+    
+    /**
+     * Checks if mouse is over a warrior (using smaller, more precise hitbox)
+     */
+    private boolean isMouseOverWarrior(objects.Warrior warrior, int mouseX, int mouseY) {
+        int warriorCenterX = warrior.getX() + 32; // Center of the 64x64 tile
+        int warriorCenterY = warrior.getY() + 32;
+        
+        // Use smaller, more precise hitbox (about 60% of sprite size)
+        int hitboxWidth, hitboxHeight;
+        if (warrior instanceof objects.WizardWarrior) {
+            hitboxWidth = 55;  // Reduced from 92
+            hitboxHeight = 45; // Reduced from 76
+        } else { // ArcherWarrior
+            hitboxWidth = 50;  // Reduced from 84
+            hitboxHeight = 50; // Reduced from 84
+        }
+        
+        // Center the hitbox on the warrior
+        int hitboxX = warriorCenterX - hitboxWidth / 2;
+        int hitboxY = warriorCenterY - hitboxHeight / 2;
+        
+        return mouseX >= hitboxX && mouseX <= hitboxX + hitboxWidth &&
+               mouseY >= hitboxY && mouseY <= hitboxY + hitboxHeight;
+    }
+    
+    /**
+     * Gets the warrior class name for tooltip
+     */
+    private String getWarriorClassName(objects.Warrior warrior) {
+        if (warrior instanceof objects.ArcherWarrior) {
+            return "Archer Warrior";
+        } else if (warrior instanceof objects.WizardWarrior) {
+            return "Wizard Warrior";
+        }
+        return "Warrior";
+    }
+    
+    /**
+     * Gets warrior description with time remaining for tooltip
+     */
+    private String getWarriorDescription(objects.Warrior warrior) {
+        long remainingLifetime = warrior.getRemainingLifetime() / 1000; // Convert to seconds
+        return String.format("Time remaining: %ds", remainingLifetime);
+    }
 
     private void drawProjectiles(Graphics g) {
         // Draw projectiles
@@ -372,6 +476,11 @@ public class PlayingView implements Observer {
         // Draw lightning targeting message if waiting for target
         if (model.getUltiManager() != null && model.getUltiManager().isWaitingForLightningTarget()) {
             drawLightningTargetingMessage(g);
+        }
+        
+        // Draw warrior tooltip (rendered on top of everything)
+        if (warriorTooltip != null) {
+            warriorTooltip.draw((Graphics2D) g);
         }
     }
 
@@ -513,6 +622,15 @@ public class PlayingView implements Observer {
                 }
             }
 
+            // Check distance limitation from spawning tower
+            Warrior pendingWarrior = model.getPendingWarriorPlacement();
+            if (pendingWarrior != null) {
+                Tower spawnTower = pendingWarrior.getSpawnedFromTower();
+                if (spawnTower != null && !spawnTower.isWithinSpawnDistance(pixelX, pixelY)) {
+                    return false; // Too far from tower
+                }
+            }
+
             return true;
         }
         return false;
@@ -547,7 +665,7 @@ public class PlayingView implements Observer {
         if (pendingWarrior == null) return;
 
         String warriorType = getWarriorTypeName(pendingWarrior);
-        String message = "⚔️ Click to place " + warriorType + " Warrior ($" + pendingWarrior.getCost() + ") | Right-click to cancel ❌";
+        String message = "⚔️ Click to place " + warriorType + " Warrior ($" + pendingWarrior.getCost() + ") | Range: 3 tiles | Right-click to cancel ❌";
 
         g.setColor(new Color(100, 149, 237)); // Cornflower blue
         g.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
@@ -562,6 +680,22 @@ public class PlayingView implements Observer {
 
         g.setColor(new Color(100, 149, 237));
         g.drawString(message, x, y);
+
+        // Draw spawn range indicator around the spawning tower
+        Tower spawnTower = pendingWarrior.getSpawnedFromTower();
+        if (spawnTower != null) {
+            g2d.setColor(new Color(100, 149, 237, 30)); // Light blue with transparency
+            g2d.setStroke(new BasicStroke(2f));
+            
+            // Calculate range area (3 tiles = 3 * 64 pixels)
+            int rangeInPixels = 3 * GameDimensions.TILE_DISPLAY_SIZE;
+            int centerX = spawnTower.getX() + spawnTower.getWidth() / 2;
+            int centerY = spawnTower.getY() + spawnTower.getHeight() / 2;
+            
+            // Draw range circle
+            g2d.drawOval(centerX - rangeInPixels, centerY - rangeInPixels, 
+                        rangeInPixels * 2, rangeInPixels * 2);
+        }
 
         // Draw blue squares on all valid placement tiles
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -796,6 +930,9 @@ public class PlayingView implements Observer {
     public void mouseMoved(int x, int y) {
         this.mouseX = x;
         this.mouseY = y;
+
+        // Check for warrior hover first (before other UI elements)
+        handleWarriorHover(x, y);
 
         if (playingUI != null) {
             playingUI.mouseMoved(x, y);

@@ -1061,8 +1061,6 @@ public class LevelSelectionScene extends JPanel {
     }
 
     private void playLevel(String levelName, int[][] levelData) {
-        System.out.println("Playing level: " + levelName);
-
         int[][] overlayData = LoadSave.loadOverlay(levelName);
         if (overlayData == null) {
             overlayData = new int[levelData.length][levelData[0].length];

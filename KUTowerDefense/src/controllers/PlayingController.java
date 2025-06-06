@@ -211,6 +211,9 @@ public class PlayingController implements Observer {
             model.getStoneMiningManager().mouseMoved(x, y);
         }
 
+        // Handle tooltips for tree buttons
+        view.handleMouseMovedForTooltips(x, y);
+        
         view.mouseMoved(x, y);
     }
 
@@ -465,9 +468,21 @@ public class PlayingController implements Observer {
 
         // Check if the clicked position is a valid tile for placement
         if (isValidTileForPlacement(tileX, tileY)) {
+            // Check distance limitation from spawning tower
+            Tower spawnTower = pendingWarrior.getSpawnedFromTower();
+            if (spawnTower != null && !spawnTower.isWithinSpawnDistance(tileX, tileY)) {
+                System.out.println("Target location is too far from tower! Maximum distance: 3 tiles");
+                return false;
+            }
+
             // Deduct gold for the warrior
             if (model.getPlayerManager() != null) {
                 model.getPlayerManager().spendGold(pendingWarrior.getCost());
+            }
+
+            // Update tower's warrior count
+            if (spawnTower != null) {
+                spawnTower.addWarrior();
             }
 
             // Set the target destination with slight upward offset for final position
@@ -516,8 +531,21 @@ public class PlayingController implements Observer {
     private boolean isWarriorAt(int x, int y) {
         if (model.getTowerManager() == null) return false;
 
+        // Convert the placement coordinates to tile coordinates 
+        int placementTileC = x / GameDimensions.TILE_DISPLAY_SIZE;
+        int placementTileR = y / GameDimensions.TILE_DISPLAY_SIZE;
+
         for (Warrior warrior : model.getTowerManager().getWarriors()) {
-            if (warrior.getX() == x && warrior.getY() == y) {
+            // Skip warriors that are returning to tower (about to be removed)
+            if (warrior.isReturning()) continue;
+            
+            // Get the tile that this warrior will occupy
+            // Need to account for the -8 offset applied to warrior Y position
+            int warriorTargetTileC = warrior.getTargetX() / GameDimensions.TILE_DISPLAY_SIZE;
+            int warriorTargetTileR = (warrior.getTargetY() + 8) / GameDimensions.TILE_DISPLAY_SIZE; // Add back the offset
+            
+            // Check if same tile
+            if (warriorTargetTileC == placementTileC && warriorTargetTileR == placementTileR) {
                 return true;
             }
         }

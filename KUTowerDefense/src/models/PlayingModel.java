@@ -621,6 +621,11 @@ public class PlayingModel extends Observable implements GameContext {
      */
     public void resetGameState() {
         try {
+            // Reload GameOptions to ensure we have the current difficulty settings
+            this.gameOptions = loadOptionsOrDefault();
+            System.out.println("=== RESET GAME STATE DEBUG ===");
+            System.out.println("Reloaded GameOptions. Starting gold: " + gameOptions.getStartingGold());
+            
             // Reset game state flags
             gamePaused = false;
             gameSpeedIncreased = false;
