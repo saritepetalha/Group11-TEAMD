@@ -26,17 +26,19 @@ public class ProjectileManager {
     private BufferedImage[][] rotatedFireballFrames;
     private BufferedImage[] explosion_imgs;
     private BufferedImage[] arrowFrames;
+    private BufferedImage[] wizardFrames;
     private int projID = 0;
 
     public ProjectileManager(Playing playing) {
         this.playing = playing;
         importImages();
         loadArrowFrames();
+        loadWizardFrames();
     }
 
     private void importImages() {
-        proj_imgs = new BufferedImage[3];
-        for (int i = 0; i < 3; i++) {
+        proj_imgs = new BufferedImage[4];
+        for (int i = 0; i < 4; i++) {
             proj_imgs[i] = LoadSave.getTowerMaterial(i, 24, 24);
         }
         fireball_imgs = LoadSave.getFireballAnimation();
@@ -58,6 +60,15 @@ public class ProjectileManager {
         if (rotatedFireballFrames == null) {
             RotatedProjectileFrameGenerator.generateAndSaveFireballFrames();
             rotatedFireballFrames = LoadSave.loadFireballFrames();
+        }
+    }
+
+    private void loadWizardFrames() {
+        final int frameCount = 72;
+        wizardFrames = LoadSave.loadWizardFrames(frameCount);
+        if (wizardFrames == null) {
+            RotatedProjectileFrameGenerator.generateAndSaveWizardFrames();
+            wizardFrames = LoadSave.loadWizardFrames(frameCount);
         }
     }
 
@@ -103,20 +114,20 @@ public class ProjectileManager {
         float ySpeed = (dy / distance) * projectileSpeed;
 
         Projectile projectile = new Projectile(
-            shooterCenterX,
-            shooterCenterY,
-            xSpeed,
-            ySpeed,
-            projID++,
-            damage,
-            projType,
-            level,
-            angle
+                shooterCenterX,
+                shooterCenterY,
+                xSpeed,
+                ySpeed,
+                projID++,
+                damage,
+                projType,
+                level,
+                angle
         );
 
-        if (playing.getWeatherManager().isWindy() && 
-            projType == Constants.Projectiles.ARROW && 
-            Math.random() < 0.3) {
+        if (playing.getWeatherManager().isWindy() &&
+                projType == Constants.Projectiles.ARROW &&
+                Math.random() < 0.3) {
             projectile.setWillMiss(true);
         }
 
@@ -171,10 +182,10 @@ public class ProjectileManager {
 
             // Create hit area
             Rectangle hitArea = new Rectangle(
-                (int)centerX - hitSize/2,
-                (int)centerY - hitSize/2,
-                hitSize,
-                hitSize
+                    (int)centerX - hitSize/2,
+                    (int)centerY - hitSize/2,
+                    hitSize,
+                    hitSize
             );
 
             // Check for hit
@@ -218,6 +229,20 @@ public class ProjectileManager {
             playing.getEnemyManager().teleportEnemyToStart(enemy);
         }
 
+        // Wizard warrior effects - slightly different from mage tower
+        if (projectile.getProjectileType() == Constants.Projectiles.WIZARD_BOLT) {
+            // Wizard warriors have a smaller chance for teleport effect but it's always available
+            if (Math.random() < 0.02) {
+                enemy.applyTeleportEffect();
+                playing.getEnemyManager().teleportEnemyToStart(enemy);
+            }
+
+            // Wizard warriors apply a lighter slow effect at level 2
+            if (projectile.getLevel() == 2) {
+                enemy.applySlow(0.6f, 90); // Less severe slow, shorter duration
+            }
+        }
+
         // Artillery AOE damage
         if (projectile.getProjectileType() == CANNONBALL) {
             handleAOEDamage(projectile, enemy);
@@ -257,6 +282,8 @@ public class ProjectileManager {
             drawFireball(projectile, g);
         } else if (projectile.getProjectileType() == ARROW && arrowFrames != null) {
             drawArrow(projectile, g);
+        } else if (projectile.getProjectileType() == WIZARD_BOLT && wizardFrames != null) {
+            drawWizard(projectile, g);
         } else {
             drawDefaultProjectile(projectile, g);
         }
@@ -266,9 +293,9 @@ public class ProjectileManager {
         int frame = projectile.getExplosionFrame();
         if (frame >= 0 && frame < explosion_imgs.length) {
             g.drawImage(explosion_imgs[frame],
-                (int)projectile.getPos().x - explosion_imgs[frame].getWidth() / 2,
-                (int)projectile.getPos().y - explosion_imgs[frame].getHeight() / 2,
-                null);
+                    (int)projectile.getPos().x - explosion_imgs[frame].getWidth() / 2,
+                    (int)projectile.getPos().y - explosion_imgs[frame].getHeight() / 2,
+                    null);
         }
     }
 
@@ -280,9 +307,9 @@ public class ProjectileManager {
             BufferedImage fireballImg = rotatedFireballFrames[animFrame][rotationFrame];
             if (fireballImg != null) {
                 g.drawImage(fireballImg,
-                    (int)projectile.getPos().x - fireballImg.getWidth() / 2,
-                    (int)projectile.getPos().y - fireballImg.getHeight() / 2,
-                    null);
+                        (int)projectile.getPos().x - fireballImg.getWidth() / 2,
+                        (int)projectile.getPos().y - fireballImg.getHeight() / 2,
+                        null);
             }
         }
     }
@@ -291,9 +318,19 @@ public class ProjectileManager {
         int frameIndex = projectile.getRotationFrameIndex();
         if (frameIndex >= 0 && frameIndex < arrowFrames.length) {
             g.drawImage(arrowFrames[frameIndex],
-                (int)projectile.getPos().x - 12,
-                (int)projectile.getPos().y - 12,
-                null);
+                    (int)projectile.getPos().x - 12,
+                    (int)projectile.getPos().y - 12,
+                    null);
+        }
+    }
+
+    private void drawWizard(Projectile projectile, Graphics g) {
+        int frameIndex = projectile.getRotationFrameIndex();
+        if (frameIndex >= 0 && frameIndex < wizardFrames.length) {
+            g.drawImage(wizardFrames[frameIndex],
+                    (int)projectile.getPos().x - 12,
+                    (int)projectile.getPos().y - 12,
+                    null);
         }
     }
 
@@ -301,9 +338,9 @@ public class ProjectileManager {
         BufferedImage img = proj_imgs[projectile.getProjectileType()];
         if (img != null) {
             g.drawImage(img,
-                (int)projectile.getPos().x - img.getWidth() / 2,
-                (int)projectile.getPos().y - img.getHeight() / 2,
-                null);
+                    (int)projectile.getPos().x - img.getWidth() / 2,
+                    (int)projectile.getPos().y - img.getHeight() / 2,
+                    null);
         }
     }
 
@@ -318,11 +355,11 @@ public class ProjectileManager {
 
     private int getProjectileType(Warrior warrior) {
         if (warrior instanceof WizardWarrior) {
-            return MAGICBOLT;
+            return WIZARD_BOLT;
         } else if (warrior instanceof ArcherWarrior) {
             return ARROW;
         }
-        return ARROW; // Default to ARROW if type is unknown
+        return ARROW;
     }
 
     public void clearProjectiles() {
