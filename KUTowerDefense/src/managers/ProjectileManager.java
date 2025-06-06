@@ -218,9 +218,9 @@ public class ProjectileManager {
     }
 
     private void applySpecialEffects(Projectile projectile, Enemy enemy) {
-        // Mage slow effect
+        // Mage slow effect - 20% slow for 4 seconds (Level 2 mage towers only)
         if (projectile.getProjectileType() == MAGICBOLT && projectile.getLevel() == 2) {
-            enemy.applySlow(0.5f, 120);
+            enemy.applySlow(0.8f, 240); // 20% slow (80% speed) for 4 seconds (240 ticks at 60 FPS)
         }
 
         // Mage teleport effect
@@ -275,6 +275,8 @@ public class ProjectileManager {
             drawExplosion(projectile, g);
         } else if (projectile.getProjectileType() == CANNONBALL && projectile.getLevel() == 2) {
             drawFireball(projectile, g);
+        } else if (projectile.getProjectileType() == MAGICBOLT && projectile.getLevel() == 2) {
+            drawUpgradedMagicBolt(projectile, g);
         } else if (projectile.getProjectileType() == ARROW && arrowFrames != null) {
             drawArrow(projectile, g);
         } else if (projectile.getProjectileType() == WIZARD_BOLT && wizardFrames != null) {
@@ -327,6 +329,38 @@ public class ProjectileManager {
                     (int)projectile.getPos().y - 12,
                     null);
         }
+    }
+
+    private void drawUpgradedMagicBolt(Projectile projectile, Graphics g) {
+        Graphics2D g2d = (Graphics2D) g;
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        
+        int centerX = (int)projectile.getPos().x;
+        int centerY = (int)projectile.getPos().y;
+        
+        // Create a completely new purple magic bolt instead of layering on the blue one
+        
+        // Outer purple glow
+        g2d.setColor(new Color(138, 43, 226, 80)); // Purple with transparency
+        g2d.fillOval(centerX - 10, centerY - 10, 20, 20);
+        
+        // Middle purple core
+        g2d.setColor(new Color(148, 0, 211, 160)); // Darker purple, more opaque
+        g2d.fillOval(centerX - 6, centerY - 6, 12, 12);
+        
+        // Inner bright purple core
+        g2d.setColor(new Color(186, 85, 211, 220)); // Medium purple
+        g2d.fillOval(centerX - 4, centerY - 4, 8, 8);
+        
+        // Central bright core
+        g2d.setColor(new Color(255, 255, 255, 200)); // Bright white center
+        g2d.fillOval(centerX - 2, centerY - 2, 4, 4);
+        
+        // Add trailing sparkles
+        g2d.setColor(new Color(200, 162, 200, 120));
+        g2d.fillOval(centerX - 1, centerY - 1, 2, 2);
+        
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
     }
 
     private void drawDefaultProjectile(Projectile projectile, Graphics g) {
