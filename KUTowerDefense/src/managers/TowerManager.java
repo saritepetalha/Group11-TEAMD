@@ -492,12 +492,19 @@ public class TowerManager {
     }
 
     public void updateWarriors(float speedMultiplier) {
-        for (Warrior warrior : warriors) {
-            warrior.update(speedMultiplier); // Handles cooldown and movement
+        // Update all warriors and handle lifetime/removal logic
+        warriors.removeIf(warrior -> {
+            warrior.update(speedMultiplier); // Handles cooldown, movement, and lifetime
 
-            // Only allow attacking if warrior has reached destination
-            if (!warrior.hasReachedDestination()) {
-                continue; // Skip attacking logic for running warriors
+            // Remove warriors that have returned to tower after lifetime expired
+            if (warrior.shouldBeRemoved()) {
+                System.out.println("Removing warrior that returned to tower");
+                return true;
+            }
+
+            // Only allow attacking if warrior has reached destination and isn't returning
+            if (!warrior.hasReachedDestination() || warrior.isReturning()) {
+                return false; // Skip attacking logic for running/returning warriors
             }
 
             // Check if there are enemies in range
@@ -520,7 +527,9 @@ public class TowerManager {
             } else {
                 warrior.setIdleState();
             }
-        }
+
+            return false; // Keep warrior
+        });
     }
 
     private void attackEnemyIfInRange(Warrior warrior) {
@@ -616,6 +625,9 @@ public class TowerManager {
                     }
                 }
             }
+            
+            // Draw lifetime bar for the warrior
+            warrior.drawLifetimeBar(g);
         }
     }
     /**

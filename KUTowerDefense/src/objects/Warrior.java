@@ -17,6 +17,11 @@ public abstract class Warrior {
     private static int num = 0;
     protected int level = 1;
     protected float attackSpeedMultiplier = 1.0f;
+    
+    // Lifetime management (similar to GoldFactory)
+    private static final long LIFETIME_MILLIS = 30000; // 30 seconds lifetime
+    private long creationTime;
+    private boolean isReturning = false;
 
     // Strategy Pattern: Warrior targeting behavior
     protected TargetingStrategy targetingStrategy;
@@ -33,7 +38,8 @@ public abstract class Warrior {
     public enum WarriorState {
         RUNNING,    // Moving from spawn to destination
         IDLE,       // Stationary but no enemies in range
-        ATTACKING   // Stationary and attacking enemies
+        ATTACKING,  // Stationary and attacking enemies
+        RETURNING   // Moving back to tower (lifetime expired)
     }
 
     private WarriorState currentState = WarriorState.RUNNING;
@@ -64,6 +70,7 @@ public abstract class Warrior {
 
         this.ID = num;
         num++;
+        this.creationTime = System.currentTimeMillis();
 
         // Default targeting strategy is FirstEnemy (current behavior)
         this.targetingStrategy = new FirstEnemyStrategy();
@@ -85,6 +92,7 @@ public abstract class Warrior {
 
         this.ID = num;
         num++;
+        this.creationTime = System.currentTimeMillis();
         this.targetingStrategy = targetingStrategy != null ? targetingStrategy : new FirstEnemyStrategy();
         initializeAnimationParameters();
         loadAnimationFrames();
@@ -98,6 +106,7 @@ public abstract class Warrior {
         this(x, y, x, y); // No movement, start in attacking state
         this.hasReachedDestination = true;
         this.currentState = WarriorState.ATTACKING;
+        this.creationTime = System.currentTimeMillis();
     }
 
     protected abstract void initializeAnimationParameters();
@@ -123,9 +132,17 @@ public abstract class Warrior {
         // Update cooldown
         countDownClock += gameSpeedMultiplier * attackSpeedMultiplier;
 
+        // Check if lifetime has expired and warrior should return to tower
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - creationTime > LIFETIME_MILLIS && !isReturning) {
+            startReturningToTower();
+        }
+
         // Update based on current state
         if (currentState == WarriorState.RUNNING && !hasReachedDestination) {
             updateMovement(gameSpeedMultiplier);
+        } else if (currentState == WarriorState.RETURNING) {
+            updateReturnMovement(gameSpeedMultiplier);
         }
 
         // Update animation
@@ -150,6 +167,55 @@ public abstract class Warrior {
             System.out.println("Warrior reached destination: (" + targetX + ", " + targetY + ")");
         } else {
             // Move towards target
+            float moveX = (dx / distance) * moveSpeed * speedMultiplier;
+            float moveY = (dy / distance) * moveSpeed * speedMultiplier;
+
+            x += (int) moveX;
+            y += (int) moveY;
+        }
+    }
+
+    /**
+     * Start the return-to-tower process when lifetime expires
+     */
+    private void startReturningToTower() {
+        isReturning = true;
+        currentState = WarriorState.RETURNING;
+        
+        // Set target back to spawn position (tower)
+        targetX = spawnX;
+        targetY = spawnY;
+        hasReachedDestination = false;
+        
+        // Update facing direction for return journey - face the direction towards tower
+        int deltaX = targetX - x; // Current position to tower
+        if (deltaX < 0) {
+            facingLeft = true; // Tower is to the left
+        } else if (deltaX > 0) {
+            facingLeft = false; // Tower is to the right
+        }
+        // If deltaX == 0, keep current facing direction
+        
+        System.out.println("Warrior lifetime expired, returning to tower at (" + spawnX + ", " + spawnY + ")");
+    }
+
+    /**
+     * Update warrior movement back to tower
+     */
+    private void updateReturnMovement(float speedMultiplier) {
+        float dx = targetX - x;
+        float dy = targetY - y;
+        float distance = (float) Math.sqrt(dx * dx + dy * dy);
+
+        // Check if we've reached the tower
+        if (distance <= moveSpeed * speedMultiplier) {
+            // Warrior has returned to tower - it should be removed by TowerManager
+            x = targetX;
+            y = targetY;
+            hasReachedDestination = true;
+            System.out.println("Warrior returned to tower and should be removed");
+        } else {
+            // Move towards tower
             float moveX = (dx / distance) * moveSpeed * speedMultiplier;
             float moveY = (dy / distance) * moveSpeed * speedMultiplier;
 
@@ -281,7 +347,7 @@ public abstract class Warrior {
      * Get animation frames based on current state
      */
     public BufferedImage[] getAnimationFrames() {
-        if (currentState == WarriorState.RUNNING && runFrames != null) {
+        if ((currentState == WarriorState.RUNNING || currentState == WarriorState.RETURNING) && runFrames != null) {
             return runFrames;
         } else if (currentState == WarriorState.ATTACKING && attackFrames != null) {
             return attackFrames;
@@ -306,7 +372,7 @@ public abstract class Warrior {
             animationIndex++;
 
             // Use correct frame count based on current state
-            int maxFrames = (currentState == WarriorState.RUNNING) ? runFrameCount : attackFrameCount;
+            int maxFrames = (currentState == WarriorState.RUNNING || currentState == WarriorState.RETURNING) ? runFrameCount : attackFrameCount;
             if (animationIndex >= maxFrames) {
                 animationIndex = 0;
             }
@@ -429,5 +495,62 @@ public abstract class Warrior {
             currentState = WarriorState.IDLE;
             clearCurrentTarget(); // Clear target when going idle
         }
+    }
+
+    /**
+     * Check if warrior should be removed (has returned to tower)
+     */
+    public boolean shouldBeRemoved() {
+        return isReturning && hasReachedDestination;
+    }
+
+    /**
+     * Check if warrior is in returning state
+     */
+    public boolean isReturning() {
+        return isReturning;
+    }
+
+    /**
+     * Get remaining lifetime in milliseconds
+     */
+    public long getRemainingLifetime() {
+        long currentTime = System.currentTimeMillis();
+        long elapsed = currentTime - creationTime;
+        return Math.max(0, LIFETIME_MILLIS - elapsed);
+    }
+
+    /**
+     * Get lifetime percentage (1.0 = full lifetime, 0.0 = expired)
+     */
+    public float getLifetimePercentage() {
+        long remaining = getRemainingLifetime();
+        return (float) remaining / LIFETIME_MILLIS;
+    }
+
+    /**
+     * Draw lifetime bar above the warrior (similar to GoldFactory)
+     */
+    public void drawLifetimeBar(Graphics g) {
+        if (isReturning) return; // Don't show lifetime bar when returning
+
+        float lifePercentage = getLifetimePercentage();
+
+        int barWidth = getWidth() / 2; // Make bar much smaller (32 pixels instead of 64)
+        int barHeight = 4; // Make bar very thin
+        int barX = x + (getWidth() - barWidth) / 2; // Center the small bar
+        int barY = y + getHeight() - 4; // Position it much closer to the warrior (near the bottom)
+
+        // Background
+        g.setColor(Color.DARK_GRAY);
+        g.fillRect(barX, barY, barWidth, barHeight);
+
+        // Life remaining
+        g.setColor(lifePercentage > 0.3f ? Color.GREEN : Color.RED);
+        g.fillRect(barX, barY, (int)(barWidth * lifePercentage), barHeight);
+
+        // Border
+        g.setColor(Color.BLACK);
+        g.drawRect(barX, barY, barWidth, barHeight);
     }
 } 

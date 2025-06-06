@@ -519,8 +519,21 @@ public class PlayingController implements Observer {
     private boolean isWarriorAt(int x, int y) {
         if (model.getTowerManager() == null) return false;
 
+        // Convert the placement coordinates to tile coordinates 
+        int placementTileC = x / GameDimensions.TILE_DISPLAY_SIZE;
+        int placementTileR = y / GameDimensions.TILE_DISPLAY_SIZE;
+
         for (Warrior warrior : model.getTowerManager().getWarriors()) {
-            if (warrior.getX() == x && warrior.getY() == y) {
+            // Skip warriors that are returning to tower (about to be removed)
+            if (warrior.isReturning()) continue;
+            
+            // Get the tile that this warrior will occupy
+            // Need to account for the -8 offset applied to warrior Y position
+            int warriorTargetTileC = warrior.getTargetX() / GameDimensions.TILE_DISPLAY_SIZE;
+            int warriorTargetTileR = (warrior.getTargetY() + 8) / GameDimensions.TILE_DISPLAY_SIZE; // Add back the offset
+            
+            // Check if same tile
+            if (warriorTargetTileC == placementTileC && warriorTargetTileR == placementTileR) {
                 return true;
             }
         }
