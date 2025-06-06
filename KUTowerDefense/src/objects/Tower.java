@@ -16,6 +16,11 @@ public abstract class Tower {
     protected int level = 1;
     protected float attackSpeedMultiplier = 1.0f;
 
+    // Warrior spawning limitations
+    protected int maxWarriors = 2; // Maximum warriors per tower
+    protected int currentWarriors = 0; // Current number of active warriors from this tower
+    protected static final int MAX_SPAWN_DISTANCE_TILES = 3; // Maximum distance in tiles
+
     // Destroyed state
     protected boolean destroyed = false;
     protected java.awt.image.BufferedImage destroyedSprite = null;
@@ -158,5 +163,45 @@ public abstract class Tower {
         // Reset any other necessary tower stats upon revival, e.g., health if towers had health
         // For now, just resetting the destroyed flag.
         this.countDownClock = 0; // Reset cooldown as well
+    }
+
+    // Warrior management methods
+    public boolean canSpawnWarrior() {
+        return currentWarriors < maxWarriors;
+    }
+
+    public void addWarrior() {
+        if (currentWarriors < maxWarriors) {
+            currentWarriors++;
+        }
+    }
+
+    public void removeWarrior() {
+        if (currentWarriors > 0) {
+            currentWarriors--;
+        }
+    }
+
+    public int getCurrentWarriors() {
+        return currentWarriors;
+    }
+
+    public int getMaxWarriors() {
+        return maxWarriors;
+    }
+
+    public boolean isWithinSpawnDistance(int targetX, int targetY) {
+        // Convert positions to tile coordinates
+        int towerTileX = x / 64; // Assuming 64x64 tile size
+        int towerTileY = y / 64;
+        int targetTileX = targetX / 64;
+        int targetTileY = targetY / 64;
+
+        // Calculate distance in tiles
+        int deltaX = Math.abs(targetTileX - towerTileX);
+        int deltaY = Math.abs(targetTileY - towerTileY);
+        int maxDistance = Math.max(deltaX, deltaY); // Chebyshev distance (allows diagonal)
+
+        return maxDistance <= MAX_SPAWN_DISTANCE_TILES;
     }
 }

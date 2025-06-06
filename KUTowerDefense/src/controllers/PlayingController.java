@@ -468,9 +468,21 @@ public class PlayingController implements Observer {
 
         // Check if the clicked position is a valid tile for placement
         if (isValidTileForPlacement(tileX, tileY)) {
+            // Check distance limitation from spawning tower
+            Tower spawnTower = pendingWarrior.getSpawnedFromTower();
+            if (spawnTower != null && !spawnTower.isWithinSpawnDistance(tileX, tileY)) {
+                System.out.println("Target location is too far from tower! Maximum distance: 3 tiles");
+                return false;
+            }
+
             // Deduct gold for the warrior
             if (model.getPlayerManager() != null) {
                 model.getPlayerManager().spendGold(pendingWarrior.getCost());
+            }
+
+            // Update tower's warrior count
+            if (spawnTower != null) {
+                spawnTower.addWarrior();
             }
 
             // Set the target destination with slight upward offset for final position

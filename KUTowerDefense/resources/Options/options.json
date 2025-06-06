@@ -1,56 +1,56 @@
 {
-  "startingGold": 300,
+  "startingGold": 500,
   "startingShield": 25,
   "weatherEnabled": true,
   "currentWeather": "Random",
   "enemyStats": {
     "GOBLIN": {
-      "hitPoints": 100,
-      "moveSpeed": 0.85,
-      "goldReward": 5
+      "hitPoints": 130,
+      "moveSpeed": 1.0,
+      "goldReward": 4
     },
     "WARRIOR": {
-      "hitPoints": 200,
-      "moveSpeed": 0.45,
-      "goldReward": 25
+      "hitPoints": 280,
+      "moveSpeed": 0.6,
+      "goldReward": 20
     },
     "BARREL": {
-      "hitPoints": 150,
-      "moveSpeed": 0.6,
-      "goldReward": 15
+      "hitPoints": 200,
+      "moveSpeed": 0.8,
+      "goldReward": 12
     },
     "TNT": {
-      "hitPoints": 50,
-      "moveSpeed": 1.2,
-      "goldReward": 2
+      "hitPoints": 70,
+      "moveSpeed": 1.5,
+      "goldReward": 1
     },
     "TROLL": {
-      "hitPoints": 300,
-      "moveSpeed": 0.15,
-      "goldReward": 10
+      "hitPoints": 420,
+      "moveSpeed": 0.2,
+      "goldReward": 8
     }
   },
   "towerStats": {
     "ARTILLERY": {
-      "buildCost": 120,
-      "range": 2.5,
-      "fireRate": 0.6,
-      "aoeRadius": 1.5,
-      "damage": 25
+      "buildCost": 150,
+      "range": 2.0,
+      "fireRate": 0.5,
+      "aoeRadius": 1.2,
+      "damage": 20
     },
     "ARCHER": {
-      "buildCost": 60,
-      "range": 3.5,
-      "fireRate": 1.2,
+      "buildCost": 80,
+      "range": 3.0,
+      "fireRate": 1.0,
       "aoeRadius": 0.0,
-      "damage": 15
+      "damage": 12
     },
     "MAGE": {
-      "buildCost": 90,
-      "range": 3.0,
-      "fireRate": 0.9,
+      "buildCost": 120,
+      "range": 2.5,
+      "fireRate": 0.7,
       "aoeRadius": 0.0,
-      "damage": 20
+      "damage": 15
     }
   },
   "waves": [
@@ -58,9 +58,10 @@
       "groups": [
         {
           "composition": {
-            "GOBLIN": 8
+            "GOBLIN": 12,
+            "TNT": 2
           },
-          "intraEnemyDelay": 0.5
+          "intraEnemyDelay": 0.3
         }
       ],
       "intraGroupDelay": 0.0
@@ -69,16 +70,37 @@
       "groups": [
         {
           "composition": {
-            "GOBLIN": 8
+            "GOBLIN": 15,
+            "WARRIOR": 3
           },
-          "intraEnemyDelay": 0.5
+          "intraEnemyDelay": 0.25
         },
         {
           "composition": {
-            "GOBLIN": 5,
-            "WARRIOR": 2
+            "BARREL": 4,
+            "TNT": 4
           },
-          "intraEnemyDelay": 0.4
+          "intraEnemyDelay": 0.2
+        }
+      ],
+      "intraGroupDelay": 1.0
+    },
+    {
+      "groups": [
+        {
+          "composition": {
+            "GOBLIN": 20,
+            "WARRIOR": 6,
+            "BARREL": 4
+          },
+          "intraEnemyDelay": 0.2
+        },
+        {
+          "composition": {
+            "TNT": 8,
+            "TROLL": 2
+          },
+          "intraEnemyDelay": 0.15
         }
       ],
       "intraGroupDelay": 1.5
@@ -87,17 +109,19 @@
       "groups": [
         {
           "composition": {
-            "GOBLIN": 12,
-            "BARREL": 4
+            "GOBLIN": 25,
+            "WARRIOR": 10,
+            "BARREL": 8,
+            "TNT": 6
           },
-          "intraEnemyDelay": 0.4
+          "intraEnemyDelay": 0.15
         },
         {
           "composition": {
-            "WARRIOR": 4,
-            "TNT": 3
+            "TROLL": 4,
+            "WARRIOR": 8
           },
-          "intraEnemyDelay": 0.3
+          "intraEnemyDelay": 0.1
         }
       ],
       "intraGroupDelay": 2.0
@@ -106,39 +130,27 @@
       "groups": [
         {
           "composition": {
-            "GOBLIN": 15,
-            "WARRIOR": 6,
-            "BARREL": 3
+            "GOBLIN": 30,
+            "WARRIOR": 15,
+            "BARREL": 12,
+            "TNT": 10,
+            "TROLL": 6
           },
-          "intraEnemyDelay": 0.3
+          "intraEnemyDelay": 0.1
         },
         {
           "composition": {
-            "TNT": 5,
-            "TROLL": 2
+            "TROLL": 8,
+            "WARRIOR": 12,
+            "BARREL": 6
           },
-          "intraEnemyDelay": 0.25
+          "intraEnemyDelay": 0.08
         }
       ],
-      "intraGroupDelay": 2.5
-    },
-    {
-      "groups": [
-        {
-          "composition": {
-            "GOBLIN": 20,
-            "WARRIOR": 8,
-            "BARREL": 6,
-            "TNT": 4,
-            "TROLL": 3
-          },
-          "intraEnemyDelay": 0.2
-        }
-      ],
-      "intraGroupDelay": 0.0
+      "intraGroupDelay": 1.0
     }
   ],
-  "interWaveDelay": 8.0,
+  "interWaveDelay": 5.0,
   "currentWaveIndex": 0,
   "currentGroupIndex": 0,
   "savedGold": 0,

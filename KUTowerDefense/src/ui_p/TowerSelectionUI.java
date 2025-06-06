@@ -534,8 +534,11 @@ public class TowerSelectionUI {
 
         if (tempWarrior != null) {
             spawnCost = tempWarrior.getCost();
-            canAfford = playing.getPlayerManager().getGold() >= spawnCost;
+            canAfford = playing.getPlayerManager().getGold() >= spawnCost && selectedTower.canSpawnWarrior();
+            
+            // Simple button text without count (count will be shown in tooltip)
             text = "Spawn";
+            
             if (canAfford) {
                 bgColor = spawnButton.isMouseOver() ? new Color(120, 170, 120) : new Color(100, 150, 100);
                 textColor = Color.WHITE;
@@ -716,8 +719,19 @@ public class TowerSelectionUI {
                 
                 if (tempWarrior != null) {
                     int spawnCost = tempWarrior.getCost();
-                    boolean canAfford = playing.getPlayerManager().getGold() >= spawnCost;
-                    tooltip.show("Spawn Warrior", spawnCost, description, canAfford, mouseX, mouseY);
+                    boolean canAfford = playing.getPlayerManager().getGold() >= spawnCost && selectedTower.canSpawnWarrior();
+                    
+                    // Create a well-formatted description for the spawn button
+                    String spawnDescription = 
+                        "Deploy a warrior to fight enemies. Warriors have a 30-second lifetime. " +
+                        "Can only spawn within 3 tiles of this tower.";
+                    
+                    // Enhanced title with warrior count
+                    String spawnTitle = String.format("Spawn Warrior (%d/%d)", 
+                        selectedTower.getCurrentWarriors(), 
+                        selectedTower.getMaxWarriors());
+                    
+                    tooltip.show(spawnTitle, spawnCost, spawnDescription, canAfford, mouseX, mouseY);
                     tooltipShown = true;
                 }
             }
@@ -869,12 +883,18 @@ public class TowerSelectionUI {
             }
 
             if (warriorToSpawn != null) {
-                if (playing.getPlayerManager().getGold() >= warriorToSpawn.getCost()) {
-                    // Gold check successful, proceed to placement mode
+                if (playing.getPlayerManager().getGold() >= warriorToSpawn.getCost() && selectedTower.canSpawnWarrior()) {
+                    // Set the tower reference in the warrior
+                    warriorToSpawn.setSpawnedFromTower(selectedTower);
+                    
+                    // Gold and warrior limit check successful, proceed to placement mode
                     playing.startWarriorPlacement(warriorToSpawn);
                 } else {
-                    System.out.println("Not enough gold to spawn warrior!");
-                    // Optionally, provide visual feedback to the player (e.g., button turns red)
+                    if (playing.getPlayerManager().getGold() < warriorToSpawn.getCost()) {
+                        System.out.println("Not enough gold to spawn warrior!");
+                    } else {
+                        System.out.println("Tower already has maximum warriors (" + selectedTower.getMaxWarriors() + ")!");
+                    }
                 }
             }
             handled = true;

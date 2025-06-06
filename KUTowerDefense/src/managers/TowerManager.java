@@ -498,6 +498,11 @@ public class TowerManager {
 
             // Remove warriors that have returned to tower after lifetime expired
             if (warrior.shouldBeRemoved()) {
+                // Decrement the tower's warrior count when removing the warrior
+                Tower spawnTower = warrior.getSpawnedFromTower();
+                if (spawnTower != null) {
+                    spawnTower.removeWarrior();
+                }
                 System.out.println("Removing warrior that returned to tower");
                 return true;
             }

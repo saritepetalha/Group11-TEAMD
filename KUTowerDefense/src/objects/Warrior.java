@@ -18,6 +18,9 @@ public abstract class Warrior {
     protected int level = 1;
     protected float attackSpeedMultiplier = 1.0f;
     
+    // Tower reference for tracking
+    private Tower spawnedFromTower;
+    
     // Lifetime management (similar to GoldFactory)
     private static final long LIFETIME_MILLIS = 30000; // 30 seconds lifetime
     private long creationTime;
@@ -552,5 +555,14 @@ public abstract class Warrior {
         // Border
         g.setColor(Color.BLACK);
         g.drawRect(barX, barY, barWidth, barHeight);
+    }
+
+    // Tower reference methods
+    public Tower getSpawnedFromTower() {
+        return spawnedFromTower;
+    }
+
+    public void setSpawnedFromTower(Tower tower) {
+        this.spawnedFromTower = tower;
     }
 } 

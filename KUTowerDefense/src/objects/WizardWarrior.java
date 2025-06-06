@@ -24,6 +24,12 @@ public class WizardWarrior extends Warrior {
         super(spawnX, spawnY, targetX, targetY, targetingStrategy);
         setDefaultProperties();
     }
+    
+    public WizardWarrior(int spawnX, int spawnY, int targetX, int targetY, Tower spawnedFromTower) {
+        super(spawnX, spawnY, targetX, targetY);
+        setSpawnedFromTower(spawnedFromTower);
+        setDefaultProperties();
+    }
 
     @Override
     protected void initializeAnimationParameters() {
