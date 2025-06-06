@@ -11,7 +11,6 @@ import objects.TowerDecorator;
 import strategies.TargetingStrategy;
 import scenes.Playing;
 import ui_p.DeadTree;
-import helpMethods.Utils;
 import ui_p.LiveTree;
 import objects.Warrior;
 import objects.WizardWarrior;
@@ -293,7 +292,7 @@ public class TowerManager {
                 }
 
                 BufferedImage spriteToDraw = null;
-                
+
                 // Check if this tower has light upgrade
                 boolean hasLightUpgrade = tower instanceof LightDecorator;
 
@@ -495,12 +494,12 @@ public class TowerManager {
     public void updateWarriors(float speedMultiplier) {
         for (Warrior warrior : warriors) {
             warrior.update(speedMultiplier); // Handles cooldown and movement
-            
+
             // Only allow attacking if warrior has reached destination
             if (!warrior.hasReachedDestination()) {
                 continue; // Skip attacking logic for running warriors
             }
-            
+
             // Check if there are enemies in range
             boolean hasEnemiesInRange = false;
             for (Enemy enemy : playing.getEnemyManager().getEnemies()) {
@@ -509,11 +508,11 @@ public class TowerManager {
                     break;
                 }
             }
-            
+
             // Update warrior state based on enemy presence
             if (hasEnemiesInRange) {
                 warrior.setAttackingState();
-                
+
                 // Only attack if cooldown is over
                 if (warrior.isCooldownOver()) {
                     attackEnemyIfInRange(warrior);
@@ -539,6 +538,9 @@ public class TowerManager {
             Enemy target = strategy.selectTarget(enemiesInRange, warrior);
 
             if (target != null) {
+                // Update warrior's facing direction to face the target enemy
+                warrior.updateFacingDirectionForTarget(target);
+
                 playing.shootEnemy(warrior, target);
                 warrior.resetCooldown();
             }
@@ -554,16 +556,16 @@ public class TowerManager {
         // Use warrior center position for range calculation
         int warriorCenterX = warrior.getX() + warrior.getWidth() / 2;
         int warriorCenterY = warrior.getY() + warrior.getHeight() / 2;
-        
+
         // Get enemy center position
         float enemyCenterX = enemy.getSpriteCenterX();
         float enemyCenterY = enemy.getSpriteCenterY();
-        
+
         // Calculate distance between centers
         float dx = enemyCenterX - warriorCenterX;
         float dy = enemyCenterY - warriorCenterY;
         float distance = (float) Math.sqrt(dx * dx + dy * dy);
-        
+
         // Add a small buffer (half of enemy size) to account for enemy hitbox
         float enemySize = enemy.getWidth() / 2f;
         float adjustedDistance = distance - enemySize;
@@ -583,7 +585,7 @@ public class TowerManager {
                     if (sprite != null) {
                         int x = warrior.getX();
                         int y = warrior.getY();
-                        
+
                         // Determine sprite dimensions and scaling based on warrior type
                         int drawWidth, drawHeight;
                         if (warrior instanceof WizardWarrior) {
@@ -594,15 +596,23 @@ public class TowerManager {
                             x += (64 - drawWidth) / 2;
                             y += (64 - drawHeight) + 12; // Moved 8 pixels closer to bottom
                         } else {
-                            // Archer sprites are 100x100, make them larger 
-                            drawWidth = 84;  // Increased from 64  
+                            // Archer sprites are 100x100, make them larger
+                            drawWidth = 84;  // Increased from 64
                             drawHeight = 84; // Increased from 64
                             // Center horizontally and position closer to bottom
                             x += (64 - drawWidth) / 2;
                             y += (64 - drawHeight) + 20; // Moved 6 pixels closer to bottom
                         }
-                        
-                        g.drawImage(sprite, x, y, drawWidth, drawHeight, null);
+
+                        // Handle sprite mirroring based on facing direction
+                        if (warrior.isFacingLeft()) {
+                            // Draw the sprite mirrored horizontally by using negative width
+                            // and adjusting the x-coordinate accordingly
+                            g.drawImage(sprite, x + drawWidth, y, -drawWidth, drawHeight, null);
+                        } else {
+                            // Normal drawing for facing right
+                            g.drawImage(sprite, x, y, drawWidth, drawHeight, null);
+                        }
                     }
                 }
             }
@@ -677,7 +687,7 @@ public class TowerManager {
     public int getLightUpgradeCost() {
         return 50; // Changed from 100 to 50
     }
-    
+
     /**
      * Update all existing towers with new stats from GameOptions
      * This is called when difficulty changes to apply new tower stats
@@ -687,7 +697,7 @@ public class TowerManager {
             System.out.println("Warning: Cannot update tower stats - GameOptions is null");
             return;
         }
-        
+
         System.out.println("Updating all existing towers with new difficulty settings...");
         for (Tower tower : towers) {
             if (tower != null && !tower.isDestroyed()) {
@@ -696,7 +706,7 @@ public class TowerManager {
         }
         System.out.println("Updated " + towers.size() + " towers with new difficulty settings");
     }
-    
+
     /**
      * Apply GameOptions stats to a specific tower
      */
@@ -705,28 +715,28 @@ public class TowerManager {
             config.TowerType towerType = getTowerTypeFromConstants(tower.getType());
             if (towerType != null && gameOptions.getTowerStats().containsKey(towerType)) {
                 config.TowerStats stats = gameOptions.getTowerStats().get(towerType);
-                
+
                 // Apply stats using reflection to access protected fields
                 java.lang.reflect.Field damageField = Tower.class.getDeclaredField("damage");
                 damageField.setAccessible(true);
                 damageField.setInt(tower, stats.getDamage());
-                
+
                 java.lang.reflect.Field rangeField = Tower.class.getDeclaredField("range");
                 rangeField.setAccessible(true);
                 rangeField.setFloat(tower, (float)stats.getRange() * GameDimensions.TILE_DISPLAY_SIZE); // Convert to pixels
-                
+
                 java.lang.reflect.Field cooldownField = Tower.class.getDeclaredField("cooldown");
                 cooldownField.setAccessible(true);
                 cooldownField.setFloat(tower, (float)(60.0 / stats.getFireRate())); // Convert fire rate to cooldown ticks
-                
-                System.out.println("Applied stats to " + towerType + " tower: Damage=" + stats.getDamage() + 
-                                 ", Range=" + stats.getRange() + ", FireRate=" + stats.getFireRate());
+
+                System.out.println("Applied stats to " + towerType + " tower: Damage=" + stats.getDamage() +
+                        ", Range=" + stats.getRange() + ", FireRate=" + stats.getFireRate());
             }
         } catch (Exception e) {
             System.out.println("Error applying stats to tower: " + e.getMessage());
         }
     }
-    
+
     /**
      * Convert Constants tower type to TowerType enum
      */
@@ -742,7 +752,7 @@ public class TowerManager {
                 return null;
         }
     }
-    
+
     /**
      * Get tower build cost from GameOptions
      */
@@ -750,12 +760,12 @@ public class TowerManager {
         if (gameOptions == null) {
             return constants.Constants.Towers.getCost(towerType); // Fallback to Constants
         }
-        
+
         config.TowerType type = getTowerTypeFromConstants(towerType);
         if (type != null && gameOptions.getTowerStats().containsKey(type)) {
             return gameOptions.getTowerStats().get(type).getBuildCost();
         }
-        
+
         return constants.Constants.Towers.getCost(towerType); // Fallback
     }
 }

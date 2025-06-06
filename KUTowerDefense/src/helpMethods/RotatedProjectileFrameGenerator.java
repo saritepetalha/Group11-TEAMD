@@ -150,6 +150,53 @@ public class RotatedProjectileFrameGenerator {
         System.out.println("Fireball frames kept at original size: 48x32 pixels with transparent background");
     }
 
+    public static void generateAndSaveWizardFrames() {
+        System.out.println("Generating wizard projectile frames...");
+
+        // Load base wizard projectile image
+        BufferedImage baseWizardProjectile = LoadSave.getImageFromPath("/TowerAssets/WizardProjectile.png");
+        if (baseWizardProjectile == null) {
+            System.err.println("Failed to load base wizard projectile image!");
+            return;
+        }
+
+        // Generate 72 frames with 5.0 degree steps (same as arrows)
+        int frameCount = 72;
+        double angleStep = 5.0;
+        BufferedImage[] originalFrames = RotSprite.generateSpriteSheet(baseWizardProjectile, null, frameCount, angleStep);
+
+        // Use proper Maven structure for output paths
+        File projectRoot = findProjectRoot();
+        File demoDir = new File(projectRoot, "demo");
+        File defaultPath;
+
+        if (demoDir.exists() && new File(demoDir, "pom.xml").exists()) {
+            defaultPath = new File(demoDir, "src/main/resources/TowerAssets/WizardFrames");
+        } else {
+            defaultPath = new File(projectRoot, "src/main/resources/TowerAssets/WizardFrames");
+        }
+
+        String basePath;
+        try {
+            basePath = defaultPath.getCanonicalPath() + "/";
+        } catch (Exception e) {
+            basePath = defaultPath.getAbsolutePath() + "/";
+        }
+
+        // Save each frame after resizing to 24x24
+        for (int i = 0; i < originalFrames.length; i++) {
+            BufferedImage resizedFrame = LoadSave.resizeImage(originalFrames[i], 24, 24);
+            String outputPath = basePath + "wizard_frame_" + i + ".png";
+            LoadSave.saveImage(resizedFrame, outputPath);
+
+            if (i % 10 == 0 || i == originalFrames.length - 1) {
+                System.out.println("Generated wizard frame " + (i + 1) + "/" + originalFrames.length);
+            }
+        }
+
+        System.out.println("Wizard projectile frames generation complete!");
+    }
+
     public static void generateAllProjectileFrames() {
         System.out.println("=== Generating All Rotated Projectile Frames ===");
         System.out.println("Note: This will create frames with transparent backgrounds");
@@ -158,11 +205,14 @@ public class RotatedProjectileFrameGenerator {
         generateAndSaveArrowFrames();
         System.out.println();
         generateAndSaveFireballFrames();
+        System.out.println();
+        generateAndSaveWizardFrames();
 
         System.out.println();
         System.out.println("=== All projectile frames generated! ===");
         System.out.println("Arrow frames: 72 frames (5° intervals, resized to 24x24)");
         System.out.println("Fireball frames: 180 frames (5 animation × 36 rotation, original 48x32 size)");
+        System.out.println("Wizard frames: 72 frames (5° intervals, resized to 24x24)");
         System.out.println("All frames saved with transparent backgrounds for proper game rendering.");
     }
 

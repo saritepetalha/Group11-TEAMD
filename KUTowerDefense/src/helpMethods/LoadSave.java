@@ -72,6 +72,7 @@ public class LoadSave {
             case 0 -> "/TowerAssets/arrow.png";
             case 1 -> "/TowerAssets/cannonball.png";
             case 2 -> "/TowerAssets/magicbolt.png";
+            case 3 -> "/TowerAssets/WizardProjectile.png";
 
             default -> throw new IllegalArgumentException("Unknown projectile type: " + projectileType);
         };
@@ -563,14 +564,14 @@ public class LoadSave {
     public static BufferedImage[] getWarriorRunAnimation(Warrior warrior) {
         String path = "/Warriors/" + (warrior instanceof WizardWarrior ? "wizard_run.png" : "archer_run.png");
         BufferedImage spriteSheet = getImageFromPath(path);
-        
+
         if (spriteSheet == null) {
             return null;
         }
-        
+
         final int frameCount = 8; // All new run sprites have 8 frames
         BufferedImage[] frames = new BufferedImage[frameCount];
-        
+
         if (warrior instanceof WizardWarrior) {
             // Wizard: 1848x190 total, 8 frames = 231x190 each (horizontal layout)
             int frameWidth = 231;
@@ -586,10 +587,10 @@ public class LoadSave {
                 frames[i] = spriteSheet.getSubimage(i * frameWidth, 0, frameWidth, frameHeight);
             }
         }
-        
+
         return frames;
     }
-    
+
     /**
      * Get warrior attack animation frames
      * Archer: 600x100 with 6 frames (100x100 each, horizontal)
@@ -598,13 +599,13 @@ public class LoadSave {
     public static BufferedImage[] getWarriorAttackAnimation(Warrior warrior) {
         String path = "/Warriors/" + (warrior instanceof WizardWarrior ? "wizard_attack.png" : "archer_attack.png");
         BufferedImage spriteSheet = getImageFromPath(path);
-        
+
         if (spriteSheet == null) {
             return null;
         }
-        
+
         BufferedImage[] frames;
-        
+
         if (warrior instanceof WizardWarrior) {
             // Wizard: 1848x190 total, 8 frames = 231x190 each (horizontal layout)
             final int frameCount = 8;
@@ -624,7 +625,7 @@ public class LoadSave {
                 frames[i] = spriteSheet.getSubimage(i * frameWidth, 0, frameWidth, frameHeight);
             }
         }
-        
+
         return frames;
     }
 
@@ -722,6 +723,22 @@ public class LoadSave {
             }
         }
         System.out.println("Extracted " + tileId + " tiles from " + type + " snow atlas");
+    }
+
+    // Method to load wizard projectile frames from files if they exist
+    public static BufferedImage[] loadWizardFrames(int frameCount) {
+        BufferedImage[] frames = new BufferedImage[frameCount];
+
+        // Try to load frames from files first
+        for (int i = 0; i < frameCount; i++) {
+            String framePath = "/TowerAssets/WizardFrames/wizard_frame_" + i + ".png";
+            frames[i] = getImageFromPath(framePath);
+            if (frames[i] == null) {
+                return null; // If any frame is missing, return null to trigger generation
+            }
+        }
+
+        return frames;
     }
 
 }

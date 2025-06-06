@@ -16,7 +16,6 @@ import scenes.GameOverScene;
 import scenes.Intro;
 import scenes.LevelSelectionScene;
 import scenes.LoadGameMenu;
-import scenes.Loaded;
 import scenes.MapEditing;
 import scenes.Menu;
 import scenes.Options;

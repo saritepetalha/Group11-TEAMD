@@ -5,6 +5,7 @@ public class Constants {
         public static final int ARROW = 0;
         public static final int CANNONBALL = 1;
         public static final int MAGICBOLT = 2;
+        public static final int WIZARD_BOLT = 3;
 
         // speeds (pixels per tick/frame)
         public static float getSpeed(int type) {
@@ -15,6 +16,8 @@ public class Constants {
                     return 4f; // slower, but Area of Effect
                 case MAGICBOLT:
                     return 6f;
+                case WIZARD_BOLT:
+                    return 5f;
             }
             return 0f;
         }
@@ -28,6 +31,8 @@ public class Constants {
                     return 20;
                 case MAGICBOLT:
                     return 15;
+                case WIZARD_BOLT:
+                    return 15; // Same damage as magic bolt
             }
             return 0;
         }
