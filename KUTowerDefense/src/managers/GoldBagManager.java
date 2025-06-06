@@ -21,22 +21,28 @@ public class GoldBagManager {
         while (iterator.hasNext()) {
             GoldBag bag = iterator.next();
             bag.update();
-            if (bag.isCollected() || bag.isExpired()) {
+            if (bag.isExpired() || (bag.isCollected() && !bag.isShowingCollectionEffect())) {
                 iterator.remove();
             }
         }
     }
 
     public void draw(Graphics g) {
-        for (GoldBag bag : goldBags) {
+        // Create a defensive copy to avoid ConcurrentModificationException
+        ArrayList<GoldBag> bagsCopy = new ArrayList<>(goldBags);
+        for (GoldBag bag : bagsCopy) {
             bag.draw(g);
         }
     }
 
     public GoldBag tryCollect(int mouseX, int mouseY) {
-        for (GoldBag bag : goldBags) {
+        // Create a defensive copy to avoid ConcurrentModificationException
+        ArrayList<GoldBag> bagsCopy = new ArrayList<>(goldBags);
+        for (GoldBag bag : bagsCopy) {
             if (!bag.isCollected() && bag.contains(mouseX, mouseY)) {
                 bag.collect();
+                // Play collection sound
+                AudioManager.getInstance().playSound("coin_collect");
                 return bag;
             }
         }
