@@ -92,13 +92,10 @@ public class TowerSelectionUI {
             currentButtonY += BUTTON_HEIGHT + BUTTON_SPACING;
 
             // Create spawn button below targeting button, only for Archer and Mage Towers
-            // Also check if the tower is a LightDecorator wrapping an Archer or Mage Tower
-            Tower towerToCheckForSpawn = selectedTower;
-            if (selectedTower instanceof objects.LightDecorator) {
-                towerToCheckForSpawn = ((objects.LightDecorator) selectedTower).decoratedTower;
-            }
-
-            if (towerToCheckForSpawn instanceof objects.ArcherTower || towerToCheckForSpawn instanceof objects.MageTower) {
+            // Need to check through all decorator layers to find the base tower type
+            boolean canSpawn = canTowerSpawn(selectedTower);
+            
+            if (canSpawn) {
                 spawnButton = new TheButton("Spawn",
                         buttonX,
                         currentButtonY,
@@ -517,14 +514,15 @@ public class TowerSelectionUI {
         int spawnCost = 0;
         String text = "Spawn"; // Default text
 
-        Tower towerForSpawning = selectedTower;
-        if (selectedTower instanceof objects.LightDecorator) {
-            towerForSpawning = ((objects.LightDecorator) selectedTower).decoratedTower;
+        // Unwrap all decorators to get the base tower type
+        Tower baseTower = selectedTower;
+        while (baseTower instanceof objects.TowerDecorator) {
+            baseTower = ((objects.TowerDecorator) baseTower).decoratedTower;
         }
 
-        if (towerForSpawning instanceof objects.MageTower) {
+        if (baseTower instanceof objects.MageTower) {
             tempWarrior = new WizardWarrior(selectedTower.getX(), selectedTower.getY());
-        } else if (towerForSpawning instanceof objects.ArcherTower) {
+        } else if (baseTower instanceof objects.ArcherTower) {
             tempWarrior = new ArcherWarrior(selectedTower.getX(), selectedTower.getY());
         }
 
@@ -760,24 +758,24 @@ public class TowerSelectionUI {
         if (spawnButton != null && spawnButton.getBounds().contains(mouseX, mouseY)) {
             Warrior warriorToSpawn = null;
 
-            // Determine the correct tower to check for spawning capabilities
-            Tower towerForSpawningCheck = selectedTower;
-            if (selectedTower instanceof objects.LightDecorator) {
-                towerForSpawningCheck = ((objects.LightDecorator) selectedTower).decoratedTower;
+            // Determine the base tower type by unwrapping all decorators
+            Tower baseTower = selectedTower;
+            while (baseTower instanceof objects.TowerDecorator) {
+                baseTower = ((objects.TowerDecorator) baseTower).decoratedTower;
             }
 
             // Get the tower's spawn position (center of the tower)
             int spawnX = selectedTower.getX() + selectedTower.getWidth() / 2 - 32; // Center and offset for warrior size
             int spawnY = selectedTower.getY() + selectedTower.getHeight() / 2 - 32;
 
-            // Check the type of the (potentially unwrapped) tower and create warrior for spawning
-            if (towerForSpawningCheck instanceof objects.MageTower) {
+            // Check the type of the base tower and create warrior for spawning
+            if (baseTower instanceof objects.MageTower) {
                 // Create wizard warrior at spawn position, target will be set during placement
                 warriorToSpawn = new WizardWarrior(spawnX, spawnY, spawnX, spawnY); // Same position initially
                 // Store spawn position for later use
                 warriorToSpawn.setX(spawnX);
                 warriorToSpawn.setY(spawnY);
-            } else if (towerForSpawningCheck instanceof objects.ArcherTower) {
+            } else if (baseTower instanceof objects.ArcherTower) {
                 // Create archer warrior at spawn position, target will be set during placement
                 warriorToSpawn = new ArcherWarrior(spawnX, spawnY, spawnX, spawnY); // Same position initially
                 // Store spawn position for later use  
@@ -798,6 +796,22 @@ public class TowerSelectionUI {
         }
 
         return handled;
+    }
+
+    /**
+     * Helper method to check if a tower can spawn warriors
+     * Recursively unwraps decorators to find the base tower type
+     */
+    private boolean canTowerSpawn(Tower tower) {
+        Tower currentTower = tower;
+        
+        // Unwrap all decorator layers to find the base tower
+        while (currentTower instanceof objects.TowerDecorator) {
+            currentTower = ((objects.TowerDecorator) currentTower).decoratedTower;
+        }
+        
+        // Check if the base tower is an Archer or Mage tower
+        return currentTower instanceof objects.ArcherTower || currentTower instanceof objects.MageTower;
     }
 
     /**
