@@ -47,7 +47,7 @@ public class LoadSave {
     public static BufferedImage getEnemyAtlas(String enemyType) {
         BufferedImage img = null;
         String path = switch (enemyType.toLowerCase()) {
-            case "warrior" -> "/EnemyAssets/Warrior_Blue.png";
+            case "knight" -> "/EnemyAssets/Knight_Blue.png";
             case "goblin" -> "/EnemyAssets/Goblin_Red.png";
             case "barrel" -> "/EnemyAssets/Barrel_Purple.png";
             case "tnt" -> "/EnemyAssets/TNT_Red.png";
