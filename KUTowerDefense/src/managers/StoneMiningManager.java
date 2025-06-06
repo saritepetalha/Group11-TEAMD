@@ -1,18 +1,14 @@
 package managers;
-
-import helpMethods.LoadSave;
 import interfaces.GameContext;
 import objects.Tile;
 import ui_p.TheButton;
+import ui_p.AssetsLoader;
 
-import javax.imageio.ImageIO;
 import javax.swing.Timer;
 import java.awt.Graphics2D;
 import java.awt.Color;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.io.InputStream;
 
 import scenes.Playing;
 import models.PlayingModel;
@@ -36,24 +32,19 @@ public class StoneMiningManager {
     private float miningProgress;
     private Timer miningAnimationTimer;
     private boolean showButton = false;
-    private static BufferedImage buttonSheetImg;
-    private static BufferedImage buttonImage;
-
-    private BufferedImage pickaxeSpriteSheet;
     private BufferedImage[] pickaxeFrames;
     private int currentFrame = 0;
     private int animationTick = 0;
-    private static final int MAX_TICKS_PER_FRAME = 8; // speed of animation
-    private static final int TOTAL_FRAMES = 5; // update this according to your image
-    private boolean isAnimating = false;
+    private static final int MAX_TICKS_PER_FRAME = 6; // Slightly faster for smoother 8-frame animation
+    private static final int TOTAL_FRAMES = 8; // 8-frame Crush_Side-Sheet animation
 
     private int miningTickCounter = 0;
     private static final int MINING_TICKS = 60 * 20;
     private final GameContext gameContext;
 
     public StoneMiningManager(GameContext context) {
-        loadButtonImageFile();
-        loadPickaxeAnimation();
+        pickaxeFrames = AssetsLoader.getInstance().pickaxeAnimationFrames;
+
         this.gameContext = context;
     }
 
@@ -97,7 +88,9 @@ public class StoneMiningManager {
     public void showMiningButton(Tile tile) {
         int x = tile.getX() * TILE_DISPLAY_SIZE;
         int y = tile.getY() * TILE_DISPLAY_SIZE;
-        mineButton = new TheButton("Mine", x + 16, y - 32, 32, 32, buttonImage);
+        // Use AssetsLoader for button image
+        BufferedImage pickaxeButtonImg = AssetsLoader.getInstance().pickaxeButtonImg;
+        mineButton = new TheButton("Mine", x + 16, y - 32, 32, 32, pickaxeButtonImg);
     }
 
     public void clearMiningButton() {
@@ -206,23 +199,16 @@ public class StoneMiningManager {
             int pixelX = tileX * tileSize;
             int pixelY = tileY * tileSize;
 
-            // 3. Draw pickaxe animation centered on tile
-            if (pickaxeFrames != null && pickaxeFrames.length > 0) {
+            // 3. Draw pickaxe animation half a tile to the left and only if not paused
+            if (!gameContext.isGamePaused() && pickaxeFrames != null && pickaxeFrames.length > 0) {
                 int frameWidth = pickaxeFrames[currentFrame].getWidth();
                 int frameHeight = pickaxeFrames[currentFrame].getHeight();
 
-                // Center the frame on tile
-                int drawX = pixelX + (tileSize / 2) - (frameWidth / 2);
-                int drawY = pixelY + (tileSize / 2) - (frameHeight / 2);
+                // Position half a tile to the left
+                int drawX = pixelX + (tileSize / 4) - (frameWidth / 2);
+                int drawY = pixelY + (tileSize / 2) - frameHeight;
 
-                System.out.println("Drawing pickaxe frame " + currentFrame + " at (" + drawX + ", " + drawY + ")");
                 g.drawImage(pickaxeFrames[currentFrame], drawX, drawY, null);
-
-                animationTick++;
-                if (animationTick >= MAX_TICKS_PER_FRAME) {
-                    animationTick = 0;
-                    currentFrame = (currentFrame + 1) % TOTAL_FRAMES;
-                }
             }
 
             // 4. Draw progress bar
@@ -244,43 +230,6 @@ public class StoneMiningManager {
             g.fillRoundRect(progressX, progressY, progressWidth, 4, 2, 2);
 
             g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-        }
-    }
-
-
-
-    public static void loadButtonImageFile() {
-        InputStream is = LoadSave.class.getResourceAsStream("/UI/kutowerbuttons4.png");
-        try {
-            buttonSheetImg = ImageIO.read(is);
-            buttonImage = buttonSheetImg.getSubimage(
-                    TILE_DISPLAY_SIZE * 2,
-                    TILE_DISPLAY_SIZE * 2,
-                    TILE_DISPLAY_SIZE,
-                    TILE_DISPLAY_SIZE
-            );
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void loadPickaxeAnimation() {
-        try (InputStream is = LoadSave.class.getResourceAsStream("/UI/Pickaxe_Swing_Anim.png")) {
-            BufferedImage original = ImageIO.read(is);
-
-            // Resize sprite sheet to 320x64 (5 frames, 64x64 each)
-            pickaxeSpriteSheet = LoadSave.resizeImage(original, 64 * TOTAL_FRAMES, 64);
-
-            pickaxeFrames = new BufferedImage[TOTAL_FRAMES];
-            for (int i = 0; i < TOTAL_FRAMES; i++) {
-                pickaxeFrames[i] = pickaxeSpriteSheet.getSubimage(
-                        i * 64, 0, 64, 64
-                );
-            }
-
-            System.out.println("Pickaxe animation loaded and resized.");
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 

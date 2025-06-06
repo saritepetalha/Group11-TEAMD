@@ -53,6 +53,8 @@ public class AssetsLoader {
     public BufferedImage goldFactorySprite;
     public BufferedImage[] lightningFrames;
     public BufferedImage saveButtonImg;
+    public BufferedImage pickaxeButtonImg;
+    public BufferedImage[] pickaxeAnimationFrames;
     public java.awt.Cursor customHandCursor;
     public java.awt.Cursor customNormalCursor;
 
@@ -97,6 +99,7 @@ public class AssetsLoader {
         loadGoldFactoryButtonImages();
         loadLightningAssets();
         loadSaveButtonImage();
+        loadPickaxeAssets();
         loadHandCursor();
         loadNormalCursor();
     }
@@ -386,6 +389,31 @@ public class AssetsLoader {
             } catch (Exception e) {
                 System.err.println("Error checking UI resources: " + e.getMessage());
             }
+        }
+    }
+
+    private void loadPickaxeAssets() {
+        // Load pickaxe button image
+        pickaxeButtonImg = loadImage("/UI/pickaxeButton.png");
+
+        // Load pickaxe animation frames
+        try (InputStream is = LoadSave.class.getResourceAsStream("/Effects/Crush_Side-Sheet.png")) {
+            if (is != null) {
+                BufferedImage spriteSheet = ImageIO.read(is);
+                final int frameCount = 8;
+                pickaxeAnimationFrames = new BufferedImage[frameCount];
+
+                for (int i = 0; i < frameCount; i++) {
+                    pickaxeAnimationFrames[i] = spriteSheet.getSubimage(i * 64, 0, 64, 64);
+                }
+
+                System.out.println("✅ Pickaxe animation loaded with " + frameCount + " frames.");
+            } else {
+                System.err.println("❌ Pickaxe animation not found: /Effects/Crush_Side-Sheet.png");
+            }
+        } catch (IOException e) {
+            System.err.println("❌ Error loading pickaxe animation: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
