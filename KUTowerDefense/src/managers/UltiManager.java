@@ -2,7 +2,6 @@ package managers;
 
 import enemies.Enemy;
 import helpMethods.LoadSave;
-import main.Game;
 import objects.GoldFactory;
 import scenes.Playing;
 import ui_p.AssetsLoader;

@@ -236,11 +236,6 @@ public class ProjectileManager {
                 enemy.applyTeleportEffect();
                 playing.getEnemyManager().teleportEnemyToStart(enemy);
             }
-
-            // Wizard warriors apply a lighter slow effect at level 2
-            if (projectile.getLevel() == 2) {
-                enemy.applySlow(0.6f, 90); // Less severe slow, shorter duration
-            }
         }
 
         // Artillery AOE damage

@@ -416,7 +416,14 @@ public class PlayingView implements Observer {
                     drawY = tileY + (64 - drawHeight) + 12;
                 }
 
-                g.drawImage(warriorSprite, drawX, drawY, drawWidth, drawHeight, null);
+                // Handle sprite mirroring for preview based on warrior's facing direction
+                if (pendingWarrior.isFacingLeft()) {
+                    // Draw the sprite mirrored horizontally
+                    g.drawImage(warriorSprite, drawX + drawWidth, drawY, -drawWidth, drawHeight, null);
+                } else {
+                    // Normal drawing for facing right
+                    g.drawImage(warriorSprite, drawX, drawY, drawWidth, drawHeight, null);
+                }
                 g.setComposite(originalComposite);
             } else {
                 // Fallback - draw warrior initial

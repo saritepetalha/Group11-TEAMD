@@ -3,7 +3,6 @@ package managers;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.Map;
-import constants.GameDimensions;
 import helpMethods.LoadSave;
 
 /**

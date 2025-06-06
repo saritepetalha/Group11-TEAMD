@@ -29,21 +29,26 @@ public abstract class Warrior {
     protected int attackFrameCount = 8; // Default attack frame count (wizard)
 
     // ========== NEW: Movement and State System ==========
-    
+
     public enum WarriorState {
         RUNNING,    // Moving from spawn to destination
         IDLE,       // Stationary but no enemies in range
         ATTACKING   // Stationary and attacking enemies
     }
-    
+
     private WarriorState currentState = WarriorState.RUNNING;
-    
+
     // Movement fields
     private int spawnX, spawnY;     // Where the warrior spawned from (tower position)
     private int targetX, targetY;   // Where the warrior is moving to
     private float moveSpeed = 2.0f; // Movement speed in pixels per update
     private boolean hasReachedDestination = false;
-    
+
+    // ========== NEW: Facing Direction System ==========
+
+    private boolean facingLeft = false; // Default facing right (false = facing right, true = facing left)
+    private Enemy currentTarget = null; // Current enemy being targeted
+
     // Cached animation frames
     private BufferedImage[] runFrames = null;
     private BufferedImage[] attackFrames = null;
@@ -56,7 +61,7 @@ public abstract class Warrior {
         this.spawnY = spawnY;
         this.targetX = targetX;
         this.targetY = targetY;
-        
+
         this.ID = num;
         num++;
 
@@ -64,6 +69,9 @@ public abstract class Warrior {
         this.targetingStrategy = new FirstEnemyStrategy();
         initializeAnimationParameters();
         loadAnimationFrames();
+
+        // Set initial facing direction based on spawn vs target position
+        determineFacingDirectionForMovement();
     }
 
     // Constructor with custom targeting strategy
@@ -74,14 +82,17 @@ public abstract class Warrior {
         this.spawnY = spawnY;
         this.targetX = targetX;
         this.targetY = targetY;
-        
+
         this.ID = num;
         num++;
         this.targetingStrategy = targetingStrategy != null ? targetingStrategy : new FirstEnemyStrategy();
         initializeAnimationParameters();
         loadAnimationFrames();
+
+        // Set initial facing direction based on spawn vs target position
+        determineFacingDirectionForMovement();
     }
-    
+
     // Legacy constructor for backward compatibility
     public Warrior(int x, int y) {
         this(x, y, x, y); // No movement, start in attacking state
@@ -96,7 +107,7 @@ public abstract class Warrior {
     public abstract float getRange();
     public abstract int getDamage();
     public abstract int getCost();
-    
+
     /**
      * Load animation frames for this warrior type
      */
@@ -111,16 +122,16 @@ public abstract class Warrior {
     public void update(float gameSpeedMultiplier) {
         // Update cooldown
         countDownClock += gameSpeedMultiplier * attackSpeedMultiplier;
-        
+
         // Update based on current state
         if (currentState == WarriorState.RUNNING && !hasReachedDestination) {
             updateMovement(gameSpeedMultiplier);
         }
-        
+
         // Update animation
         updateAnimationTick();
     }
-    
+
     /**
      * Update warrior movement towards target position
      */
@@ -128,7 +139,7 @@ public abstract class Warrior {
         float dx = targetX - x;
         float dy = targetY - y;
         float distance = (float) Math.sqrt(dx * dx + dy * dy);
-        
+
         // Check if we've reached the destination
         if (distance <= moveSpeed * speedMultiplier) {
             // Snap to exact target position
@@ -141,10 +152,54 @@ public abstract class Warrior {
             // Move towards target
             float moveX = (dx / distance) * moveSpeed * speedMultiplier;
             float moveY = (dy / distance) * moveSpeed * speedMultiplier;
-            
+
             x += (int) moveX;
             y += (int) moveY;
         }
+    }
+
+    /**
+     * Determines facing direction based on movement from spawn to target
+     */
+    private void determineFacingDirectionForMovement() {
+        int deltaX = targetX - spawnX;
+
+        // Only consider X axis difference as requested
+        if (deltaX < 0) {
+            // Moving left (target is to the left of spawn tower)
+            facingLeft = true;
+        } else if (deltaX > 0) {
+            // Moving right (target is to the right of spawn tower)
+            facingLeft = false;
+        }
+        // If deltaX == 0, keep default facing direction (right)
+    }
+
+    /**
+     * Updates facing direction based on target enemy position
+     */
+    public void updateFacingDirectionForTarget(Enemy targetEnemy) {
+        if (targetEnemy == null) return;
+
+        this.currentTarget = targetEnemy;
+
+        // Get warrior center position
+        int warriorCenterX = x + getWidth() / 2;
+
+        // Get enemy center position
+        float enemyCenterX = targetEnemy.getSpriteCenterX();
+
+        // Determine facing based on enemy position relative to warrior
+        float deltaX = enemyCenterX - warriorCenterX;
+
+        if (deltaX < 0) {
+            // Enemy is to the left, face left
+            facingLeft = true;
+        } else if (deltaX > 0) {
+            // Enemy is to the right, face right
+            facingLeft = false;
+        }
+        // If deltaX == 0, keep current facing direction
     }
 
     public boolean isClicked(int mouseX, int mouseY) {
@@ -244,12 +299,12 @@ public abstract class Warrior {
             animationIndex = 0;
             return;
         }
-        
+
         animationTick++;
         if (animationTick >= animationSpeed) {
             animationTick = 0;
             animationIndex++;
-            
+
             // Use correct frame count based on current state
             int maxFrames = (currentState == WarriorState.RUNNING) ? runFrameCount : attackFrameCount;
             if (animationIndex >= maxFrames) {
@@ -261,53 +316,87 @@ public abstract class Warrior {
     public int getAnimationIndex() {
         return animationIndex;
     }
-    
+
     // ========== NEW: State and Movement Getters ==========
-    
+
     public WarriorState getCurrentState() {
         return currentState;
     }
-    
+
     public boolean hasReachedDestination() {
         return hasReachedDestination;
     }
-    
+
     public boolean isRunning() {
         return currentState == WarriorState.RUNNING && !hasReachedDestination;
     }
-    
+
     public boolean isAttacking() {
         return currentState == WarriorState.ATTACKING;
     }
-    
+
     public boolean isIdle() {
         return currentState == WarriorState.IDLE;
     }
-    
+
     public int getSpawnX() {
         return spawnX;
     }
-    
+
     public int getSpawnY() {
         return spawnY;
     }
-    
+
     public int getTargetX() {
         return targetX;
     }
-    
+
     public int getTargetY() {
         return targetY;
     }
-    
+
     public void setMoveSpeed(float speed) {
         this.moveSpeed = speed;
     }
-    
+
     public float getMoveSpeed() {
         return moveSpeed;
     }
-    
+
+    // ========== NEW: Facing Direction Getters ==========
+
+    /**
+     * Returns whether the warrior is currently facing left
+     * @return true if facing left, false if facing right
+     */
+    public boolean isFacingLeft() {
+        return facingLeft;
+    }
+
+    /**
+     * Sets the facing direction manually
+     * @param facingLeft true for facing left, false for facing right
+     */
+    public void setFacingLeft(boolean facingLeft) {
+        this.facingLeft = facingLeft;
+    }
+
+    /**
+     * Gets the current target enemy (may be null)
+     */
+    public Enemy getCurrentTarget() {
+        return currentTarget;
+    }
+
+    /**
+     * Clears the current target and resets facing to movement direction
+     */
+    public void clearCurrentTarget() {
+        this.currentTarget = null;
+        // Reset to movement-based facing direction
+        determineFacingDirectionForMovement();
+    }
+
     /**
      * Set new target destination and start movement
      */
@@ -316,9 +405,13 @@ public abstract class Warrior {
         this.targetY = newTargetY;
         this.hasReachedDestination = false;
         this.currentState = WarriorState.RUNNING;
+
+        // Update facing direction for new movement
+        determineFacingDirectionForMovement();
+
         System.out.println("Warrior target set to: (" + newTargetX + ", " + newTargetY + ")");
     }
-    
+
     /**
      * Set warrior to attacking state when an enemy is found in range
      */
@@ -327,13 +420,14 @@ public abstract class Warrior {
             currentState = WarriorState.ATTACKING;
         }
     }
-    
+
     /**
      * Set warrior to idle state when no enemies are in range
      */
     public void setIdleState() {
         if (hasReachedDestination) {
             currentState = WarriorState.IDLE;
+            clearCurrentTarget(); // Clear target when going idle
         }
     }
 } 

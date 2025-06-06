@@ -1,6 +1,5 @@
 package managers;
 
-import constants.GameDimensions;
 import helpMethods.LoadSave;
 import interfaces.GameContext;
 import objects.Tile;
@@ -8,7 +7,6 @@ import ui_p.TheButton;
 
 import javax.imageio.ImageIO;
 import javax.swing.Timer;
-import java.awt.event.ActionListener;
 import java.awt.Graphics2D;
 import java.awt.Color;
 import java.awt.RenderingHints;
