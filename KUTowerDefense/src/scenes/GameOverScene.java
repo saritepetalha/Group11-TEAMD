@@ -102,8 +102,10 @@ public class GameOverScene extends GameScene implements SceneMethods{
     @Override
     public void mouseClicked(int x, int y) {
         if (replayButton.getBounds().contains(x, y)) {
+            playButtonClickSound();
             game.resetGameWithSameLevel();
         } else if (menuButton.getBounds().contains(x, y)) {
+            playButtonClickSound();
             game.changeGameState(GameStates.MENU);
         }
     }

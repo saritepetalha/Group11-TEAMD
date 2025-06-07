@@ -528,19 +528,33 @@ public class TowerSelectionUI {
 
         if (baseTower instanceof objects.MageTower) {
             tempWarrior = new WizardWarrior(selectedTower.getX(), selectedTower.getY());
+            text = "Wizard"; // Change from "Spawn" to "Wizard"
         } else if (baseTower instanceof objects.ArcherTower) {
             tempWarrior = new ArcherWarrior(selectedTower.getX(), selectedTower.getY());
+            text = "Archer"; // Change from "Spawn" to "Archer"
+        } else if (baseTower instanceof objects.ArtilleryTower) {
+            // Artillery towers spawn TNT warriors - different logic
+            boolean canSpawnTNT = playing.getTowerManager().canSpawnTNTWarrior(selectedTower);
+            spawnCost = 75; // TNT warrior cost
+            canAfford = playing.getPlayerManager().getGold() >= spawnCost && canSpawnTNT;
+            
+            // Simple button text without count (count will be shown in tooltip)
+            text = "TNT";
+            
+            if (canAfford) {
+                bgColor = spawnButton.isMouseOver() ? new Color(170, 120, 70) : new Color(150, 100, 50);
+                textColor = Color.WHITE;
+            }
+            // Skip the tempWarrior logic since TNT warriors work differently
         }
 
         if (tempWarrior != null) {
             spawnCost = tempWarrior.getCost();
             canAfford = playing.getPlayerManager().getGold() >= spawnCost && selectedTower.canSpawnWarrior();
             
-            // Simple button text without count (count will be shown in tooltip)
-            text = "Spawn";
-            
             if (canAfford) {
-                bgColor = spawnButton.isMouseOver() ? new Color(120, 170, 120) : new Color(100, 150, 100);
+                // Use same color scheme as TNT button for consistency
+                bgColor = spawnButton.isMouseOver() ? new Color(170, 120, 70) : new Color(150, 100, 50);
                 textColor = Color.WHITE;
             } else {
                 // bgColor and textColor already set to greyed out defaults
@@ -655,7 +669,7 @@ public class TowerSelectionUI {
 
         // Light effect when hovering (preview the light range)
         if (lightUpgradeButton.isMouseOver() && canUpgrade) {
-            float lightRadius = selectedTower.getRange() * 0.7f;
+            float lightRadius = selectedTower.getRange(); // Same as tower range
             int centerX = selectedTower.getX() + selectedTower.getWidth() / 2;
             int centerY = selectedTower.getY() + selectedTower.getHeight() / 2;
 
@@ -715,6 +729,21 @@ public class TowerSelectionUI {
                 } else if (baseTower instanceof objects.ArcherTower) {
                     tempWarrior = new ArcherWarrior(0, 0);
                     description = "Spawn an Archer Warrior with ranged attacks and high mobility.";
+                } else if (baseTower instanceof objects.ArtilleryTower) {
+                    // TNT warrior logic - different from regular warriors
+                    int spawnCost = 75;
+                    boolean canAfford = playing.getPlayerManager().getGold() >= spawnCost && playing.getTowerManager().canSpawnTNTWarrior(selectedTower);
+                    
+                    String spawnDescription = "Deploy a TNT Warrior that runs to the closest enemy and explodes, " +
+                            "dealing area damage. Destroys level 1 towers within 3 tiles with 75% chance. " +
+                            "No time limit. Maximum 2 per tower.";
+                    
+                    int currentTNT = playing.getTowerManager().getTNTWarriorCount(selectedTower);
+                    String spawnTitle = String.format("Spawn TNT Warrior (%d/2)", currentTNT);
+                    
+                    tooltip.show(spawnTitle, spawnCost, spawnDescription, canAfford, mouseX, mouseY);
+                    tooltipShown = true;
+                    return; // Skip the regular warrior logic below
                 }
                 
                 if (tempWarrior != null) {
@@ -874,12 +903,33 @@ public class TowerSelectionUI {
                 // Store spawn position for later use
                 warriorToSpawn.setX(spawnX);
                 warriorToSpawn.setY(spawnY);
+                
+                // Don't play spawn sound here - will be played after placement is completed
             } else if (baseTower instanceof objects.ArcherTower) {
                 // Create archer warrior at spawn position, target will be set during placement
                 warriorToSpawn = new ArcherWarrior(spawnX, spawnY, spawnX, spawnY); // Same position initially
                 // Store spawn position for later use  
                 warriorToSpawn.setX(spawnX);
                 warriorToSpawn.setY(spawnY);
+                
+                // Don't play spawn sound here - will be played after placement is completed
+            } else if (baseTower instanceof objects.ArtilleryTower) {
+                // TNT warriors work differently - spawn directly without placement
+                int tntCost = 75;
+                if (playing.getPlayerManager().getGold() >= tntCost && playing.getTowerManager().canSpawnTNTWarrior(selectedTower)) {
+                    playing.getPlayerManager().spendGold(tntCost);
+                    playing.getTowerManager().spawnTNTWarrior(selectedTower);
+                    playing.updateUIResources();
+                    System.out.println("TNT Warrior spawned!");
+                } else {
+                    if (playing.getPlayerManager().getGold() < tntCost) {
+                        System.out.println("Not enough gold to spawn TNT warrior!");
+                    } else {
+                        System.out.println("Tower already has maximum TNT warriors (2)!");
+                    }
+                }
+                handled = true;
+                return handled; // Exit early for TNT warriors
             }
 
             if (warriorToSpawn != null) {
@@ -915,8 +965,10 @@ public class TowerSelectionUI {
             currentTower = ((objects.TowerDecorator) currentTower).decoratedTower;
         }
         
-        // Check if the base tower is an Archer or Mage tower
-        return currentTower instanceof objects.ArcherTower || currentTower instanceof objects.MageTower;
+        // Check if the base tower is an Archer, Mage, or Artillery tower
+        return currentTower instanceof objects.ArcherTower || 
+               currentTower instanceof objects.MageTower ||
+               currentTower instanceof objects.ArtilleryTower;
     }
 
     /**

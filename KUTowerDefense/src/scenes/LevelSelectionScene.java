@@ -220,7 +220,10 @@ public class LevelSelectionScene extends JPanel {
         previewButton.setPreferredSize(new Dimension(PREVIEW_WIDTH, PREVIEW_HEIGHT));
         previewButton.setCursor(AssetsLoader.getInstance().customHandCursor);
 
-        previewButton.addActionListener(e -> showDifficultyOverlay(levelName, levelData));
+        previewButton.addActionListener(e -> {
+            managers.AudioManager.getInstance().playButtonClickSound();
+            showDifficultyOverlay(levelName, levelData);
+        });
 
         int buttonSize = 28;
         int spacing = 8;
@@ -252,10 +255,13 @@ public class LevelSelectionScene extends JPanel {
                     @Override
                     public void mouseClicked(MouseEvent e) {
                         if (playButton.getBounds().contains(e.getPoint())) {
+                            managers.AudioManager.getInstance().playButtonClickSound();
                             showDifficultyOverlay(levelName, levelData);
                         } else if (editButton.getBounds().contains(e.getPoint())) {
+                            managers.AudioManager.getInstance().playButtonClickSound();
                             editLevel(levelName, levelData);
                         } else if (trashButton.getBounds().contains(e.getPoint())) {
+                            managers.AudioManager.getInstance().playButtonClickSound();
                             Font originalFont = javax.swing.UIManager.getFont("OptionPane.messageFont");
                             Font originalButtonFont = javax.swing.UIManager.getFont("OptionPane.buttonFont");
                             javax.swing.UIManager.put("OptionPane.messageFont", mvBoliFontBold);
@@ -471,6 +477,7 @@ public class LevelSelectionScene extends JPanel {
         stylePageButton(prevPageButton);
         prevPageButton.addActionListener(e -> {
             if (currentPage > 0) {
+                managers.AudioManager.getInstance().playButtonClickSound();
                 currentPage--;
                 refreshCurrentPage();
             }
@@ -482,6 +489,7 @@ public class LevelSelectionScene extends JPanel {
         stylePageButton(nextPageButton);
         nextPageButton.addActionListener(e -> {
             if (currentPage < totalPages - 1) {
+                managers.AudioManager.getInstance().playButtonClickSound();
                 currentPage++;
                 refreshCurrentPage();
             }
@@ -544,6 +552,8 @@ public class LevelSelectionScene extends JPanel {
 
             @Override
             public void mouseClicked(MouseEvent e) {
+                // Play button click sound for back button
+                managers.AudioManager.getInstance().playButtonClickSound();
                 game.changeGameState(GameStates.MENU);
             }
         });
@@ -1027,6 +1037,8 @@ public class LevelSelectionScene extends JPanel {
 
             @Override
             public void mouseClicked(MouseEvent e) {
+                // Play button click sound for difficulty selection
+                managers.AudioManager.getInstance().playButtonClickSound();
                 selectDifficultyAndPlay(difficulty);
             }
         });

@@ -24,6 +24,8 @@ public abstract class Warrior {
     // Lifetime management (similar to GoldFactory)
     private static final long LIFETIME_MILLIS = 30000; // 30 seconds lifetime
     private long creationTime;
+    private long placementTime = 0; // Time when warrior was actually placed
+    private boolean isPlaced = false; // Whether warrior has been placed and lifetime should start
     private boolean isReturning = false;
 
     // Strategy Pattern: Warrior targeting behavior
@@ -136,8 +138,9 @@ public abstract class Warrior {
         countDownClock += gameSpeedMultiplier * attackSpeedMultiplier;
 
         // Check if lifetime has expired and warrior should return to tower
+        // Only start checking lifetime after warrior has been placed
         long currentTime = System.currentTimeMillis();
-        if (currentTime - creationTime > LIFETIME_MILLIS && !isReturning) {
+        if (isPlaced && currentTime - placementTime > LIFETIME_MILLIS && !isReturning) {
             startReturningToTower();
         }
 
@@ -518,8 +521,11 @@ public abstract class Warrior {
      * Get remaining lifetime in milliseconds
      */
     public long getRemainingLifetime() {
+        if (!isPlaced) {
+            return LIFETIME_MILLIS; // Full lifetime if not placed yet
+        }
         long currentTime = System.currentTimeMillis();
-        long elapsed = currentTime - creationTime;
+        long elapsed = currentTime - placementTime;
         return Math.max(0, LIFETIME_MILLIS - elapsed);
     }
 
@@ -527,15 +533,26 @@ public abstract class Warrior {
      * Get lifetime percentage (1.0 = full lifetime, 0.0 = expired)
      */
     public float getLifetimePercentage() {
+        if (!isPlaced) {
+            return 1.0f; // Full lifetime if not placed yet
+        }
         long remaining = getRemainingLifetime();
         return (float) remaining / LIFETIME_MILLIS;
+    }
+    
+    /**
+     * Mark the warrior as placed and start its lifetime timer
+     */
+    public void markAsPlaced() {
+        this.isPlaced = true;
+        this.placementTime = System.currentTimeMillis();
     }
 
     /**
      * Draw lifetime bar above the warrior (similar to GoldFactory)
      */
     public void drawLifetimeBar(Graphics g) {
-        if (isReturning) return; // Don't show lifetime bar when returning
+        if (isReturning || !isPlaced) return; // Don't show lifetime bar when returning or not placed yet
 
         float lifePercentage = getLifetimePercentage();
 

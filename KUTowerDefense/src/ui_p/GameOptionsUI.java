@@ -513,7 +513,9 @@ public class GameOptionsUI extends JPanel {
                 waves.add(wavePanel.getWave());
             }
 
+            // Save to both options.json and custom_options.json to preserve user settings
             OptionsIO.save(options);
+            OptionsIO.saveCustom(options);
 
             // Ensure changes are applied to an existing Playing instance
             if (game != null && game.getPlaying() != null) {

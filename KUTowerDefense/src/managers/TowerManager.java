@@ -15,6 +15,9 @@ import ui_p.LiveTree;
 import objects.Warrior;
 import objects.WizardWarrior;
 import objects.ArcherWarrior;
+import objects.TNTWarrior;
+import java.util.Map;
+import java.util.HashMap;
 import objects.LightDecorator;
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -30,6 +33,8 @@ public class TowerManager {
     private ArrayList<Tower> towers = new ArrayList<>();
     private List<TowerUpgradeEffect> upgradeEffects = new ArrayList<>();
     private List<Warrior> warriors = new ArrayList<>();
+    private List<objects.TNTWarrior> tntWarriors = new ArrayList<>();
+    private Map<Tower, Integer> towerTNTCounts = new HashMap<>(); // Track total TNT warriors spawned per tower
 
     public TowerManager(Playing playing) {
         this.playing = playing;
@@ -110,18 +115,21 @@ public class TowerManager {
             Enemy target = strategy.selectTarget(enemiesInRange, tower);
 
             if (target != null) {
-                playing.shootEnemy(tower, target);
-                tower.resetCooldown();
-
-                // Windy weather effect: Archer towers have 30% chance to miss
+                // Check windy weather effect BEFORE shooting
+                boolean shouldMiss = false;
                 if (playing.getWeatherManager().isWindy() && tower.getType() == constants.Constants.Towers.ARCHER) {
                     // 30% chance to miss in windy weather
                     if (Math.random() < 0.3) {
-                        // Miss the shot - don't actually shoot
+                        shouldMiss = true;
                         System.out.println("Archer tower missed due to windy weather!");
-                        return; // Exit without shooting
                     }
                 }
+                
+                // Always shoot (for cooldown consistency), but the projectile will handle miss logic
+                playing.shootEnemy(tower, target);
+                tower.resetCooldown();
+                
+                // Note: The ProjectileManager will handle the actual miss behavior using willMiss flag
             }
         }
     }
@@ -531,6 +539,9 @@ public class TowerManager {
 
             return false; // Keep warrior
         });
+        
+        // Update TNT warriors
+        updateTNTWarriors(speedMultiplier);
     }
 
     private void attackEnemyIfInRange(Warrior warrior) {
@@ -630,6 +641,99 @@ public class TowerManager {
             // Draw lifetime bar for the warrior
             warrior.drawLifetimeBar(g);
         }
+        
+        // Draw TNT warriors
+        for (TNTWarrior tnt : tntWarriors) {
+            tnt.draw(g);
+        }
+    }
+    
+    private void updateTNTWarriors(float speedMultiplier) {
+        List<TNTWarrior> tntToRemove = new ArrayList<>();
+        List<enemies.Enemy> allEnemies = playing.getEnemyManager().getEnemies();
+        
+        for (TNTWarrior tnt : tntWarriors) {
+            tnt.update(speedMultiplier, allEnemies);
+            
+            // Mark for removal if explosion is complete
+            if (!tnt.isActive()) {
+                tntToRemove.add(tnt);
+            }
+        }
+        
+        // Remove completed TNT warriors (but don't decrease total spawn count)
+        for (TNTWarrior tnt : tntToRemove) {
+            tntWarriors.remove(tnt);
+            // Note: We don't decrease towerTNTCounts because it tracks total spawns, not active TNT warriors
+        }
+    }
+    
+    public void spawnTNTWarrior(Tower artilleryTower) {
+        // Check if tower can spawn more TNT warriors (max 2 total)
+        int totalSpawned = towerTNTCounts.getOrDefault(artilleryTower, 0);
+        if (totalSpawned >= 2) {
+            System.out.println("Artillery tower has already spawned maximum TNT warriors (2 total)");
+            return;
+        }
+        
+        // Check if there are any enemies to target
+        List<enemies.Enemy> allEnemies = playing.getEnemyManager().getEnemies();
+        enemies.Enemy closestEnemy = null;
+        float closestDistance = Float.MAX_VALUE;
+        
+        int towerCenterX = artilleryTower.getX() + artilleryTower.getWidth() / 2;
+        int towerCenterY = artilleryTower.getY() + artilleryTower.getHeight() / 2;
+        
+        for (enemies.Enemy enemy : allEnemies) {
+            if (enemy.isAlive()) {
+                float dx = enemy.getSpriteCenterX() - towerCenterX;
+                float dy = enemy.getSpriteCenterY() - towerCenterY;
+                float distance = (float) Math.sqrt(dx * dx + dy * dy);
+                if (distance < closestDistance) {
+                    closestDistance = distance;
+                    closestEnemy = enemy;
+                }
+            }
+        }
+        
+        if (closestEnemy == null) {
+            System.out.println("No enemies available for TNT warrior to target");
+            return;
+        }
+        
+        // Create TNT warrior at tower position
+        TNTWarrior tntWarrior = new TNTWarrior(towerCenterX, towerCenterY);
+        tntWarrior.setTarget(closestEnemy);
+        tntWarrior.setPlayingScene(playing); // Pass playing scene for screen shake effects
+        
+        // Add to lists and update total spawn count
+        tntWarriors.add(tntWarrior);
+        towerTNTCounts.put(artilleryTower, totalSpawned + 1);
+        
+        // Play TNT spawn sound
+        AudioManager.getInstance().playTNTSpawnSound();
+        
+        System.out.println("Spawned TNT warrior from artillery tower at position (" + towerCenterX + ", " + towerCenterY + "), targeting closest enemy at (" + closestEnemy.getSpriteCenterX() + ", " + closestEnemy.getSpriteCenterY() + ")");
+    }
+    
+    public boolean canSpawnTNTWarrior(Tower tower) {
+        // Only artillery towers can spawn TNT warriors
+        if (tower.getType() != constants.Constants.Towers.ARTILLERY) {
+            return false;
+        }
+        
+        // Check if tower has reached maximum total TNT warrior spawns
+        int totalSpawned = towerTNTCounts.getOrDefault(tower, 0);
+        return totalSpawned < 2;
+    }
+    
+    public int getTNTWarriorCount(Tower tower) {
+        // Returns total spawned count (for tooltip display)
+        return towerTNTCounts.getOrDefault(tower, 0);
+    }
+    
+    public List<TNTWarrior> getTNTWarriors() {
+        return tntWarriors;
     }
     /**
      * Checks if any tower with light is illuminating the given position at night
