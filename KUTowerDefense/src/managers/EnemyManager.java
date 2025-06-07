@@ -1440,7 +1440,7 @@ public class EnemyManager {
                 break;
             case LARGE:
                 if (enemy.getEnemyType() == TROLL) {
-                    scale = 0.4f; // 40% for troll
+                    scale = 0.33f; // 35% for troll (75% of previous 40%)
                 } else {
                     scale = 0.5f; // 50% for other large enemies
                 }
