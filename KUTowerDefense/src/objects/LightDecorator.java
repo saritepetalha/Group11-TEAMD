@@ -18,8 +18,8 @@ public class LightDecorator extends TowerDecorator {
 
     public LightDecorator(Tower decoratedTower) {
         super(decoratedTower);
-        // Light radius is 70% of tower's range
-        this.lightRadius = decoratedTower.getRange() * 0.7f;
+        // Light radius is same as tower's range
+        this.lightRadius = decoratedTower.getRange();
         loadLightSprite();
         initializeLightParticles();
         this.animationStartTime = System.nanoTime();
