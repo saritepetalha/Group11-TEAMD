@@ -59,9 +59,13 @@
       "groups": [
         {
           "composition": {
-            "GOBLIN": 8
+            "GOBLIN": 1,
+            "KNIGHT": 1,
+            "BARREL": 1,
+            "TNT": 1,
+            "TROLL": 1
           },
-          "intraEnemyDelay": 0.5
+          "intraEnemyDelay": 1.0
         }
       ],
       "intraGroupDelay": 0.0
