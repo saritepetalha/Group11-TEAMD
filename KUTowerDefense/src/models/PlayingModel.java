@@ -14,6 +14,7 @@ import helpMethods.OptionsIO;
 import interfaces.GameContext;
 import managers.*;
 import objects.*;
+import skills.SkillTree;
 import stats.GameStatsRecord;
 import ui_p.DeadTree;
 import ui_p.LiveTree;
@@ -669,7 +670,6 @@ public class PlayingModel extends Observable implements GameContext {
             if (managersInitialized()) {
                 // Reset player manager resources
                 if (playerManager != null) {
-                    // Use GameOptions starting values instead of hardcoded values
                     int startingGold = (gameOptions != null) ? gameOptions.getStartingGold() : 100;
                     int startingHealth = (gameOptions != null) ? gameOptions.getStartingPlayerHP() : castleMaxHealth;
                     int startingShield = (gameOptions != null) ? gameOptions.getStartingShield() : castleMaxHealth;
@@ -690,13 +690,10 @@ public class PlayingModel extends Observable implements GameContext {
                     projectileManager.clearProjectiles();
                 }
                 if (waveManager != null) {
-                    // Reset wave manager - basic reset without specific method
-                    // Will be improved when proper reset methods are available
                     System.out.println("Wave manager reset - full implementation pending");
                 }
                 if (towerManager != null) {
                     towerManager.clearTowers();
-                    // Clear warriors if method exists
                     try {
                         java.lang.reflect.Method clearWarriorsMethod = towerManager.getClass().getMethod("clearWarriors");
                         clearWarriorsMethod.invoke(towerManager);
@@ -705,7 +702,6 @@ public class PlayingModel extends Observable implements GameContext {
                     }
                 }
                 if (goldBagManager != null) {
-                    // Clear gold bags if method exists
                     try {
                         java.lang.reflect.Method clearMethod = goldBagManager.getClass().getMethod("clear");
                         clearMethod.invoke(goldBagManager);
@@ -720,6 +716,9 @@ public class PlayingModel extends Observable implements GameContext {
                     liveTrees = towerManager.findLiveTrees(level);
                 }
             }
+            
+            // Ekonomi skilleri için başlangıç bonusunu uygula
+            initializeGame();
             
             setChanged();
             notifyObservers("gameStateReset");
@@ -940,5 +939,36 @@ public class PlayingModel extends Observable implements GameContext {
     }
     public List<MineableStone> getMineableStones() {
         return mineableStones;
+    }
+
+    private void initializeGame() {
+        // Apply starting gold bonus from skill tree
+        int startingGoldBonus = SkillTree.getInstance().getStartingGold();
+        if (playerManager != null) {
+            playerManager.addGold(startingGoldBonus);
+        }
+    }
+
+    public void addGold(int amount) {
+        if (playerManager != null) {
+            playerManager.addGold(amount);
+        }
+    }
+
+    public void onWaveComplete() {
+        // Apply interest from skill tree
+        if (playerManager != null) {
+            int currentGold = playerManager.getGold();
+            System.out.println("Wave complete - Current gold: " + currentGold);
+            int interest = SkillTree.getInstance().calculateInterest(currentGold);
+            if (interest > 0) {
+                playerManager.addGold(interest);
+                System.out.println("Interest earned: " + interest + " gold. New total: " + playerManager.getGold());
+            } else {
+                System.out.println("No interest earned this wave");
+            }
+        } else {
+            System.out.println("PlayerManager is null, cannot calculate interest");
+        }
     }
 } 

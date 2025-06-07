@@ -86,7 +86,7 @@ public class ProjectileManager {
             projectileSpeed = Constants.Projectiles.getSpeed(projType);
             shooterCenterX = tower.getX() + tower.getWidth() / 2;
             shooterCenterY = tower.getY() + tower.getHeight() / 2;
-            damage = tower.getDamage();
+            damage = tower.getConditionBasedDamage();
             level = tower.getLevel();
         } else if (shooter instanceof Warrior) {
             Warrior warrior = (Warrior) shooter;

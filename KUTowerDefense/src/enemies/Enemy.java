@@ -63,6 +63,14 @@ public abstract class Enemy {
     public static final int TROLL_ANCHOR_X = 120;
     public static final int TROLL_ANCHOR_Y = 240;
 
+    private boolean isFrozen = false;
+    private long freezeTimer = 0; // Will store remaining duration in ticks
+
+    public void setAlive(boolean alive) {
+        this.alive = alive;
+    }
+
+
     // Enemy size category
     public enum Size {
         SMALL(32, 32),
@@ -146,7 +154,7 @@ public abstract class Enemy {
     public void updateStatsFromOptions(GameOptions options) {
         try {
             if (options == null) {
-                System.out.println("Warning: GameOptions is null, using default stats for enemy ID " + id);
+                //System.out.println("Warning: GameOptions is null, using default stats for enemy ID " + id);
                 return;
             }
 
@@ -183,7 +191,7 @@ public abstract class Enemy {
      * Converts the enemy's integer type to the corresponding EnemyType enum
      * @return The EnemyType enum value, or null if not found
      */
-    protected EnemyType getEnemyTypeEnum() {
+    public EnemyType getEnemyTypeEnum() {
         try {
             switch (enemyType) {
                 case GOBLIN:
@@ -235,6 +243,9 @@ public abstract class Enemy {
     }
 
     public void updateAnimationTick() {
+        if (isFrozen) {
+            return;
+        }
         animationTick++;
         if (animationTick >= animationSpeed) {
             animationTick = 0;
@@ -398,21 +409,49 @@ public abstract class Enemy {
         }
     }
 
+    public void freeze(int durationTicks) {
+        this.isFrozen = true;
+        this.freezeTimer = durationTicks;
+        System.out.println("Enemy ID: " + id + " is now frozen.");
+    }
+
+    private void updateFreeze() {
+        if (isFrozen) {
+            freezeTimer--;
+            System.out.println("Freeze timer: " + freezeTimer);
+            if (freezeTimer <= 0) {
+                isFrozen = false;
+                System.out.println("Freeze effect ended for enemy ID: " + id);
+            }
+        }
+    }
+
+    public boolean isFrozen() {
+        return isFrozen;
+    }
+
     public void update() {
+        updateFreeze();
+        if (!isFrozen) {
+            updateAnimationTick();
+        }
+        updateStatsFromOptions(null);
         updateSlow();
         updateTeleportEffect();
-        updateAnimationTick();
     }
 
     public float getEffectiveSpeed() {
-        float effectiveSpeed = speed;
-        // Apply combat synergy first
-        if (hasCombatSynergy) {
-            effectiveSpeed = (originalSpeed + synergyGoblinSpeed) * 0.5f; // Use multiplication instead of division
+        if (isFrozen) {
+            return 0; // Ensure no movement when frozen
         }
-        // Then apply slow if active
+        float effectiveSpeed = speed;
+        if (hasCombatSynergy) {
+
+            effectiveSpeed = (originalSpeed + synergyGoblinSpeed) * 0.5f; // Use multiplication instead of division
+
+        }
         if (isSlowed) {
-            effectiveSpeed *= currentSlowFactor;
+            effectiveSpeed *= 0.5f;
         }
         return effectiveSpeed;
     }
@@ -433,5 +472,54 @@ public abstract class Enemy {
             hasCombatSynergy = false;
             synergyGoblinSpeed = 0f;
         }
+    }
+
+
+    public boolean hasCombatSynergy() {
+        return hasCombatSynergy;
+    }
+
+    public boolean isInvisible() {
+        return invisible;
+    }
+
+    public void setInvisible(boolean invisible) {
+        this.invisible = invisible;
+    }
+
+    public void draw(Graphics2D g2d) {
+        //System.out.println("Drawing enemy ID: " + id);
+        // Draw the enemy sprite using the current animation frame
+        BufferedImage sprite = getSpriteFrame(animationIndex);
+        if (sprite != null) {
+            g2d.drawImage(sprite, (int)x - getWidth() / 2, (int)y - getHeight() / 2, getWidth(), getHeight(), null);
+        }
+        // If frozen, draw a semi-transparent ice-blue overlay
+        if (isFrozen) {
+            System.out.println("Enemy ID: " + id + " is frozen.");
+            Composite oldComposite = g2d.getComposite();
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.4f));
+            g2d.setColor(new Color(100, 200, 255)); // ice-blue
+            g2d.fillOval((int)x - getWidth() / 2, (int)y - getHeight() / 2, getWidth(), getHeight());
+            g2d.setComposite(oldComposite);
+        }
+        // Health bar drawing
+        int barWidth = getWidth();
+        int barHeight = 6;
+        int barX = (int)x - barWidth / 2;
+        int barY = (int)y - getHeight() / 2 - 10; // Above the enemy
+
+        float healthPercent = Math.max(0, (float)health / maxHealth);
+        g2d.setColor(Color.DARK_GRAY);
+        g2d.fillRect(barX, barY, barWidth, barHeight);
+        g2d.setColor(Color.RED);
+        g2d.fillRect(barX, barY, (int)(barWidth * healthPercent), barHeight);
+        g2d.setColor(Color.BLACK);
+        g2d.drawRect(barX, barY, barWidth, barHeight);
+    }
+
+    // Default implementation that returns null. Subclasses can override if needed.
+    protected BufferedImage getSpriteFrame(int animationIndex) {
+        return null;
     }
 }

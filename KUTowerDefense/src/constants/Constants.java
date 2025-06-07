@@ -77,6 +77,18 @@ public class Constants {
             return 0;
         }
 
+        public static int getUpgradeCost(int towerType) {
+            switch (towerType) {
+                case ARCHER:
+                    return 75;
+                case ARTILLERY:
+                    return 120;
+                case MAGE:
+                    return 100;
+            }
+            return 0;
+        }
+
         public static String getName(int towerType) {
             switch (towerType) {
                 case ARCHER:

@@ -3,6 +3,7 @@ package managers;
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Composite;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -36,6 +37,8 @@ import scenes.Playing;
 import constants.Constants;
 import pathfinding.RoadNetworkPathfinder;
 import pathfinding.TileConnectivity;
+import skills.SkillTree;
+import skills.SkillType;
 
 public class EnemyManager {
     // Performance constants
@@ -45,7 +48,7 @@ public class EnemyManager {
     private static final int GOLD_BAG_SPAWN_CHANCE = 50; // 50% chance
     
     private Playing playing;
-    private BufferedImage[] enemyImages;
+    private static BufferedImage[] enemyImages;
     private ArrayList<Enemy> enemies = new ArrayList<>();
     private ArrayList<GridPoint> pathPoints = new ArrayList<>();
     private GridPoint startPoint, endPoint;
@@ -268,6 +271,10 @@ public class EnemyManager {
         for (Enemy e : enemiesCopy) {
             if (!e.isAlive()) {
                 playing.getPlayerManager().addGold(e.getGoldReward());
+                // Plunderer bonus: Eğer skill seçiliyse +1 altın ver
+                if (SkillTree.getInstance().isSkillSelected(SkillType.PLUNDERER_BONUS)) {
+                    playing.getPlayerManager().addGold(1);
+                }
                 playing.updateUIResources();
                 System.out.println("Enemy " + e.getId() + " killed. + " + e.getGoldReward() + " gold!");
                 // Chance to spawn a gold bag
@@ -1390,7 +1397,8 @@ public class EnemyManager {
         return result;
     }
 
-    private void drawEnemy(Enemy enemy, Graphics g){
+    private void drawEnemy(Enemy enemy, Graphics g) {
+        //System.out.println("Drawing enemy ID: " + enemy.getId());
         // Calculate base index based on enemy type and get animation frame
         int baseIndex;
 
@@ -1537,6 +1545,16 @@ public class EnemyManager {
 
         // Health bar and effects should be drawn with the original transform (which we didn't change)
         drawHealthBar(g, enemy, drawX, drawY, drawWidth, drawHeight);
+
+        // If frozen, draw a semi-transparent ice-blue overlay
+        if (enemy.isFrozen()) {
+            Graphics2D g2d = (Graphics2D) g;
+            Composite oldComposite = g2d.getComposite();
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.4f));
+            g2d.setColor(new Color(100, 200, 255)); // ice-blue
+            g2d.fillOval(drawX, drawY, drawWidth, drawHeight);
+            g2d.setComposite(oldComposite);
+        }
     }
 
     private void drawHealthBar(Graphics g, Enemy enemy, int x, int y, int width, int height) {
@@ -1828,6 +1846,12 @@ public class EnemyManager {
     public void updateGameOptions(GameOptions newOptions) {
         this.gameOptions = newOptions != null ? newOptions : GameOptions.defaults();
         System.out.println("EnemyManager: Updated GameOptions reference");
+    }
+
+    public static BufferedImage getEnemyFrame(int enemyType, int animationIndex) {
+        // Assuming enemyImages is a static array or accessible in a way that allows this method to work
+        // You may need to adjust this based on how frames are stored
+        return enemyImages[enemyType * 6 + animationIndex]; // Assuming 6 frames per enemy type
     }
 
 }

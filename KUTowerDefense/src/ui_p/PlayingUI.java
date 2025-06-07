@@ -55,6 +55,7 @@ public class PlayingUI {
     private TheButton earthquakeButton;
     private TheButton lightningButton;
     private TheButton goldFactoryButton;
+    private TheButton freezeButton;
     
     // Tooltip system
     private CostTooltip tooltip;
@@ -136,6 +137,13 @@ public class PlayingUI {
                 startX - 4 * (ultiButtonSize + buttonSpacing), startY,
                 ultiButtonSize, ultiButtonSize,
                 AssetsLoader.getInstance().lightningButtonNormal
+        );
+
+        // Freeze button (use earthquake icon for now)
+        freezeButton = new TheButton("Freeze",
+                startX - 5 * (ultiButtonSize + buttonSpacing), startY,
+                ultiButtonSize, ultiButtonSize,
+                AssetsLoader.getInstance().earthquakeButtonImg // placeholder icon
         );
 
         backOptionsButton = new TheButton("Back",
@@ -501,7 +509,7 @@ public class PlayingUI {
 
         drawControlButton(g2d, earthquakeButton,
                 startX - 2 * (ultiButtonSize + buttonSpacing), startY,
-                ultiButtonSize,ultiButtonSize,
+                ultiButtonSize, ultiButtonSize,
                 AssetsLoader.getInstance().earthquakeButtonImg,
                 AssetsLoader.getInstance().earthquakeButtonHoverImg,
                 AssetsLoader.getInstance().earthquakeButtonPressedImg);
@@ -512,6 +520,14 @@ public class PlayingUI {
                 AssetsLoader.getInstance().lightningButtonNormal,
                 AssetsLoader.getInstance().lightningButtonHover,
                 AssetsLoader.getInstance().lightningButtonPressed);
+
+        // Draw freeze button (use earthquake hover/pressed for now)
+        drawControlButton(g2d, freezeButton,
+                startX - 5 * (ultiButtonSize + buttonSpacing), startY,
+                ultiButtonSize, ultiButtonSize,
+                AssetsLoader.getInstance().earthquakeButtonImg,
+                AssetsLoader.getInstance().earthquakeButtonHoverImg,
+                AssetsLoader.getInstance().earthquakeButtonPressedImg);
     }
 
 
@@ -1029,6 +1045,7 @@ public class PlayingUI {
         earthquakeButton.setMouseOver(false);
         lightningButton.setMouseOver(false);
         goldFactoryButton.setMouseOver(false);
+        freezeButton.setMouseOver(false);
 
         // check which button is hovered
         if (isMouseOverButton(fastForwardButton, mouseX, mouseY)) {
@@ -1082,6 +1099,9 @@ public class PlayingUI {
             
             tooltip.showUltimate("Gold Factory", 100, description,
                 canAfford && !hasActiveFactory, !canUse, remainingCooldown, mouseX, mouseY);
+        } else if (isMouseOverButton(freezeButton, mouseX, mouseY)) {
+            freezeButton.setMouseOver(true);
+            tooltip.showUltimate("Freeze", 0, "Freezes enemies temporarily.", true, false, 0, mouseX, mouseY);
         } else {
             // Hide tooltip if not hovering over any button
             tooltip.hide();
@@ -1283,6 +1303,12 @@ public class PlayingUI {
             }
             return;
         }
+
+        if (freezeButton != null && freezeButton.getBounds().contains(mouseX, mouseY)) {
+            System.out.println("Freeze button clicked");
+            playing.getUltiManager().triggerFreeze();
+            return;
+        }
     }
 
     // helper method to toggle button state
@@ -1310,6 +1336,7 @@ public class PlayingUI {
         earthquakeButton.setMousePressed(false);
         lightningButton.setMousePressed(false);
         goldFactoryButton.setMousePressed(false);
+        freezeButton.setMousePressed(false);
     }
 
     public void mouseDragged(int mouseX, int mouseY) {

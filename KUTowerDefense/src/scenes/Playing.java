@@ -272,6 +272,10 @@ public class Playing extends GameScene implements SceneMethods {
         return controller;
     }
 
+    public void setController(PlayingController controller) {
+        this.controller = controller;
+    }
+
     // UI Resource management - delegate to view observer updates
     public void updateUIResources() {
         if (controller != null && controller.getModel() != null && controller.getModel().getPlayerManager() != null) {
@@ -316,5 +320,10 @@ public class Playing extends GameScene implements SceneMethods {
         } else if (tile.equals("DEADTREE")) {
             level[y][x] = 15;
         }
+    }
+
+    public void onWaveComplete() {
+        System.out.println("Playing.onWaveComplete called - controller is " + (controller != null ? "not null" : "null"));
+        if (controller != null) controller.getModel().onWaveComplete();
     }
 }

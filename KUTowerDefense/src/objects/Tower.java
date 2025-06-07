@@ -4,6 +4,9 @@ import constants.Constants;
 import enemies.Enemy;
 import strategies.TargetingStrategy;
 import strategies.FirstEnemyStrategy;
+import skills.SkillTree;
+import skills.SkillType;
+import constants.GameDimensions;
 
 import java.awt.*;
 
@@ -15,6 +18,20 @@ public abstract class Tower {
     private static int num = 0;
     protected int level = 1;
     protected float attackSpeedMultiplier = 1.0f;
+
+    // Tower condition system
+    protected int usageCount = 0;
+    protected float condition = 100.0f; // 100% is perfect condition
+    protected static final int MAX_USAGE_BEFORE_DEGRADATION = 50; // Number of attacks before condition starts degrading
+    protected static final float MIN_CONDITION = 20.0f; // Minimum condition before repair is required
+    protected static final float CONDITION_DAMAGE_MULTIPLIER = 0.5f; // How much condition affects damage
+    protected static final float CONDITION_RANGE_MULTIPLIER = 0.3f; // How much condition affects range
+    protected static final float CONDITION_SPEED_MULTIPLIER = 0.4f; // How much condition affects attack speed
+
+    // Tower type specific degradation rates
+    protected static final float ARCHER_DEGRADATION_RATE = 0.3f; // Archer towers degrade slower
+    protected static final float ARTILLERY_DEGRADATION_RATE = 0.8f; // Artillery towers degrade faster
+    protected static final float MAGE_DEGRADATION_RATE = 0.5f; // Mage towers degrade at medium rate
 
     // Warrior spawning limitations
     protected int maxWarriors = 2; // Maximum warriors per tower
@@ -45,6 +62,9 @@ public abstract class Tower {
     public long debrisStartTime = 0;
     public static final int DEBRIS_DURATION_MS = 500;
 
+    private boolean boostActive = false;
+    private long boostEndTime = 0;
+
     public abstract int getType();
 
     public Tower(int x, int y) {
@@ -67,7 +87,6 @@ public abstract class Tower {
     }
 
     public abstract float getCooldown();
-    public abstract float getRange();
     public abstract int getDamage();
 
     protected void setDefaultCooldown() {
@@ -116,16 +135,93 @@ public abstract class Tower {
 
     public void update() {
         countDownClock += 1.0f * attackSpeedMultiplier;
+        updateCondition();
     }
 
     public void update(float gameSpeedMultiplier) {
         countDownClock += gameSpeedMultiplier * attackSpeedMultiplier;
+        updateCondition();
+    }
+
+    private void updateCondition() {
+        if (usageCount > MAX_USAGE_BEFORE_DEGRADATION) {
+            float degradationRate = getDegradationRate();
+            condition = Math.max(MIN_CONDITION, condition - degradationRate);
+        }
+    }
+
+    protected float getDegradationRate() {
+        switch (getType()) {
+            case Constants.Towers.ARCHER:
+                return ARCHER_DEGRADATION_RATE;
+            case Constants.Towers.ARTILLERY:
+                return ARTILLERY_DEGRADATION_RATE;
+            case Constants.Towers.MAGE:
+                return MAGE_DEGRADATION_RATE;
+            default:
+                return 0.5f; // Default degradation rate
+        }
+    }
+
+    public void incrementUsage() {
+        usageCount++;
+        // Artillery towers degrade faster with each shot
+        if (getType() == Constants.Towers.ARTILLERY) {
+            condition = Math.max(MIN_CONDITION, condition - 0.1f);
+        }
+    }
+
+    public float getCondition() {
+        return condition;
+    }
+
+    public boolean needsRepair() {
+        return condition <= MIN_CONDITION;
+    }
+
+    public void repair() {
+        condition = 100.0f;
+        usageCount = 0;
+    }
+
+    public float getEffectiveRange() {
+        return getRange();
+    }
+
+    public float getConditionBasedRange() {
+        float baseRange = getRange();
+        float conditionMultiplier = 1.0f - (CONDITION_RANGE_MULTIPLIER * (1.0f - condition / 100.0f));
+        return baseRange * conditionMultiplier;
+    }
+
+    public int getConditionBasedDamage() {
+        int baseDamage = getDamage();
+        float conditionMultiplier = 1.0f - (CONDITION_DAMAGE_MULTIPLIER * (1.0f - condition / 100.0f));
+        return (int)(baseDamage * conditionMultiplier);
+    }
+
+    public float getAttackSpeedMultiplier() {
+        return attackSpeedMultiplier;
+    }
+
+    public float getConditionBasedAttackSpeed() {
+        float baseMultiplier = attackSpeedMultiplier;
+        float conditionMultiplier = 1.0f - (CONDITION_SPEED_MULTIPLIER * (1.0f - condition / 100.0f));
+        return baseMultiplier * conditionMultiplier;
+    }
+
+    public int getUsageCount() {
+        return usageCount;
     }
 
     public int getLevel() { return level; }
     public boolean isUpgradeable() { return level == 1; }
     public abstract Tower upgrade();
     public void setLevel(int lvl) { this.level = lvl; }
+
+    public int getUpgradeCost() {
+        return Constants.Towers.getUpgradeCost(getType());
+    }
 
     // Default implementation for on-hit effects. Can be overridden by specific towers or decorators.
     public void applyOnHitEffect(Enemy enemy, scenes.Playing playingScene) {
@@ -135,14 +231,6 @@ public abstract class Tower {
 
     public void setAttackSpeedMultiplier(float multiplier) {
         this.attackSpeedMultiplier = multiplier;
-    }
-
-    public float getAttackSpeedMultiplier() {
-        return attackSpeedMultiplier;
-    }
-
-    public float getEffectiveRange() {
-        return getRange();
     }
 
     public int getWidth() {
@@ -203,5 +291,24 @@ public abstract class Tower {
         int maxDistance = Math.max(deltaX, deltaY); // Chebyshev distance (allows diagonal)
 
         return maxDistance <= MAX_SPAWN_DISTANCE_TILES;
+    }
+
+    public void activateBoost() {
+        boostActive = true;
+        boostEndTime = System.currentTimeMillis() + 40000; // 40 seconds
+    }
+
+    public boolean isBoostActive() {
+        return boostActive && System.currentTimeMillis() < boostEndTime;
+    }
+
+    public float getRange() {
+        float baseRange = range;
+        if (SkillTree.getInstance().isSkillSelected(SkillType.EAGLE_EYE)) {
+            float bonus = GameDimensions.TILE_DISPLAY_SIZE;
+            System.out.println("[EAGLE_EYE] Tower applies bonus range: " + baseRange + " -> " + (baseRange + bonus));
+            baseRange += bonus;
+        }
+        return baseRange;
     }
 }

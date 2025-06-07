@@ -24,8 +24,13 @@ public class UpgradedArcherTower extends TowerDecorator {
 
     @Override
     public float getRange() {
-        // 50% wider range.
-        return decoratedTower.getRange() * 1.5f;
+        float baseRange = decoratedTower.getRange() * 1.5f;
+        if (skills.SkillTree.getInstance().isSkillSelected(skills.SkillType.EAGLE_EYE)) {
+            float bonus = constants.GameDimensions.TILE_DISPLAY_SIZE;
+            System.out.println("[EAGLE_EYE] Upgraded Archer tower applies bonus range: " + baseRange + " -> " + (baseRange + bonus));
+            baseRange += bonus;
+        }
+        return baseRange;
     }
 
     @Override

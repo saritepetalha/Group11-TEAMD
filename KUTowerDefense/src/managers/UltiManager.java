@@ -5,6 +5,8 @@ import helpMethods.LoadSave;
 import objects.GoldFactory;
 import scenes.Playing;
 import ui_p.AssetsLoader;
+import skills.SkillTree;
+import skills.SkillType;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -26,7 +28,6 @@ public class UltiManager {
     private long lastEarthquakeUsedGameTime = -999999;
     private final long earthquakeCooldownMillis = 15000;
     private final int earthquakeCost = 50;
-    private final int earthquakeDamage = 20;
 
     private long lastLightningUsedGameTime = -999999;
     private final long lightningCooldownMillis = 20000;
@@ -45,6 +46,10 @@ public class UltiManager {
     private final List<LightningStrike> activeStrikes = new ArrayList<>();
     private final List<GoldFactory> goldFactories = new ArrayList<>();
 
+    private long lastFreezeUsedGameTime = -999999;
+    private final long freezeCooldownMillis = 20000; // 20 seconds cooldown
+    private final int freezeCost = 60; // Cost in gold
+    private static final int freezeDuration = 300; // 5 seconds at 60 UPS
 
     public UltiManager(Playing playing) {
         this.playing = playing;
@@ -64,9 +69,15 @@ public class UltiManager {
 
         lastEarthquakeUsedGameTime = playing.getGameTime();
 
+        int finalEarthquakeDamage = earthquakeCost;
+        if (SkillTree.getInstance().isSkillSelected(SkillType.SHATTERING_FORCE)) {
+            finalEarthquakeDamage = Math.round(earthquakeCost * 1.25f);
+            System.out.println("[SHATTERING_FORCE] Earthquake deals bonus damage: " + earthquakeCost + " -> " + finalEarthquakeDamage);
+        }
+
         for (Enemy enemy : playing.getEnemyManager().getEnemies()) {
             if (enemy.isAlive()) {
-                enemy.hurt(earthquakeDamage, true);
+                enemy.hurt(finalEarthquakeDamage, true);
             }
         }
 
@@ -107,8 +118,6 @@ public class UltiManager {
         AudioManager.getInstance().playSound("earthquake");
     }
 
-
-
     private void startScreenShake() {
         earthquakeActive = true;
         shakeStartTime = System.currentTimeMillis();
@@ -143,18 +152,37 @@ public class UltiManager {
         }
     }
 
+    private long getEffectiveEarthquakeCooldown() {
+        long cooldown = earthquakeCooldownMillis;
+        if (SkillTree.getInstance().isSkillSelected(SkillType.BATTLE_READINESS)) {
+            cooldown = Math.round(cooldown * 0.9f);
+        }
+        return cooldown;
+    }
+
     public boolean canUseEarthquake() {
         long currentGameTime = playing.getGameTime();
-        return currentGameTime - lastEarthquakeUsedGameTime >= earthquakeCooldownMillis;
+        return currentGameTime - lastEarthquakeUsedGameTime >= getEffectiveEarthquakeCooldown();
     }
 
     public void toggleLightningTargeting() {
         waitingForLightningTarget = !waitingForLightningTarget;
     }
 
+    private long getEffectiveLightningCooldown() {
+        long cooldown = lightningCooldownMillis;
+        if (SkillTree.getInstance().isSkillSelected(SkillType.DIVINE_WRATH)) {
+            cooldown = Math.round(cooldown * 0.8f);
+        }
+        if (SkillTree.getInstance().isSkillSelected(SkillType.BATTLE_READINESS)) {
+            cooldown = Math.round(cooldown * 0.9f);
+        }
+        return cooldown;
+    }
+
     public boolean canUseLightning() {
         long currentGameTime = playing.getGameTime();
-        return currentGameTime - lastLightningUsedGameTime >= lightningCooldownMillis;
+        return currentGameTime - lastLightningUsedGameTime >= getEffectiveLightningCooldown();
     }
 
     public boolean isWaitingForLightningTarget() {
@@ -174,6 +202,14 @@ public class UltiManager {
             System.out.println("Lightning Strike is on cooldown!");
             waitingForLightningTarget = false;
             return;
+        }
+        if (SkillTree.getInstance().isSkillSelected(SkillType.DIVINE_WRATH)) {
+            long cooldown = Math.round(lightningCooldownMillis * 0.8f);
+            System.out.println("[DIVINE_WRATH] Lightning cooldown reduced: " + lightningCooldownMillis + " -> " + cooldown);
+        }
+        if (SkillTree.getInstance().isSkillSelected(SkillType.BATTLE_READINESS)) {
+            long cooldown = getEffectiveLightningCooldown();
+            System.out.println("[BATTLE_READINESS] Lightning cooldown reduced: " + lightningCooldownMillis + " -> " + cooldown);
         }
         
         if (playing.getPlayerManager().getGold() < lightningCost) {
@@ -256,15 +292,27 @@ public class UltiManager {
         return !goldFactories.isEmpty();
     }
 
+    private long getEffectiveGoldFactoryCooldown() {
+        long cooldown = goldFactoryCooldownMillis;
+        if (SkillTree.getInstance().isSkillSelected(SkillType.BATTLE_READINESS)) {
+            cooldown = Math.round(cooldown * 0.9f);
+        }
+        return cooldown;
+    }
+
     public boolean canUseGoldFactory() {
         long currentGameTime = playing.getGameTime();
-        boolean cooldownReady = currentGameTime - lastGoldFactoryUsedGameTime >= goldFactoryCooldownMillis;
-        boolean noActiveFactory = goldFactories.isEmpty(); // Only allow if no factories exist
+        boolean cooldownReady = currentGameTime - lastGoldFactoryUsedGameTime >= getEffectiveGoldFactoryCooldown();
+        boolean noActiveFactory = goldFactories.isEmpty();
         return cooldownReady && noActiveFactory;
     }
 
     public void selectGoldFactory() {
         if (canUseGoldFactory() && playing.getPlayerManager().getGold() >= goldFactoryCost) {
+            if (SkillTree.getInstance().isSkillSelected(SkillType.BATTLE_READINESS)) {
+                long cooldown = getEffectiveGoldFactoryCooldown();
+                System.out.println("[BATTLE_READINESS] Gold Factory cooldown reduced: " + goldFactoryCooldownMillis + " -> " + cooldown);
+            }
             goldFactorySelected = true;
             goldFactorySelectedTime = System.currentTimeMillis();
         }
@@ -330,6 +378,57 @@ public class UltiManager {
         return false;
     }
 
+    public void triggerFreeze() {
+        long currentGameTime = playing.getGameTime();
+        if (currentGameTime - lastFreezeUsedGameTime < getEffectiveFreezeCooldown()) {
+            System.out.println("Freeze is on cooldown!");
+            return;
+        }
+        if (SkillTree.getInstance().isSkillSelected(SkillType.BATTLE_READINESS)) {
+            long cooldown = getEffectiveFreezeCooldown();
+            System.out.println("[BATTLE_READINESS] Freeze cooldown reduced: " + freezeCooldownMillis + " -> " + cooldown);
+        }
+        if (playing.getPlayerManager().getGold() < freezeCost) {
+            System.out.println("Not enough gold for Freeze!");
+            return;
+        }
+        System.out.println("Freeze triggered successfully with duration: " + freezeDuration + " ticks");
+        lastFreezeUsedGameTime = currentGameTime;
+        playing.getPlayerManager().spendGold(freezeCost);
+        playing.updateUIResources();
+
+        for (Enemy enemy : playing.getEnemyManager().getEnemies()) {
+            if (enemy.isAlive()) {
+                enemy.freeze(freezeDuration);
+            }
+        }
+    }
+
+    private long getEffectiveFreezeCooldown() {
+        long cooldown = freezeCooldownMillis;
+        if (SkillTree.getInstance().isSkillSelected(SkillType.BATTLE_READINESS)) {
+            cooldown = Math.round(cooldown * 0.9f);
+        }
+        return cooldown;
+    }
+
+    public boolean canUseFreeze() {
+        long currentGameTime = playing.getGameTime();
+        return currentGameTime - lastFreezeUsedGameTime >= getEffectiveFreezeCooldown();
+    }
+
+    public long getLastFreezeTime() {
+        return lastFreezeUsedGameTime;
+    }
+
+    public long getLightningCooldownMillis() {
+        long cooldown = lightningCooldownMillis;
+        if (SkillTree.getInstance().isSkillSelected(SkillType.DIVINE_WRATH)) {
+            cooldown = Math.round(lightningCooldownMillis * 0.8f);
+        }
+        return cooldown;
+    }
+
     private class LightningStrike {
         int x, y;
         int currentFrame = 0;
@@ -367,8 +466,6 @@ public class UltiManager {
                 g2d.drawImage(visiblePart, x - frame.getWidth() / 2, drawStartY, null);
             }
         }
-
-
     }
 }
 

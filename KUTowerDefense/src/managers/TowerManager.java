@@ -115,8 +115,15 @@ public class TowerManager {
             Enemy target = strategy.selectTarget(enemiesInRange, tower);
 
             if (target != null) {
+
+                tower.incrementUsage(); // Increment usage count when tower attacks
+                tower.resetCooldown();
+                tower.applyOnHitEffect(target, playing);
+
+                // Windy weather effect: Archer towers have 30% chance to miss
                 // Check windy weather effect BEFORE shooting
                 boolean shouldMiss = false;
+
                 if (playing.getWeatherManager().isWindy() && tower.getType() == constants.Constants.Towers.ARCHER) {
                     // 30% chance to miss in windy weather
                     if (Math.random() < 0.3) {
@@ -135,7 +142,7 @@ public class TowerManager {
     }
 
     private boolean isEnemyInRange(Tower tower, Enemy enemy) {
-        float effectiveRange = tower.getRange();
+        float effectiveRange = tower.getConditionBasedRange();
         if (playing.getWeatherManager().isRaining()) {
             effectiveRange *= playing.getWeatherManager().getTowerRangeMultiplier();
         }
