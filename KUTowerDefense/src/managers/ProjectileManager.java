@@ -147,6 +147,22 @@ public class ProjectileManager {
         }
 
         projectiles.add(projectile);
+        
+        // Play appropriate sound effect based on projectile type
+        switch (projType) {
+            case Constants.Projectiles.ARROW:
+                managers.AudioManager.getInstance().playArrowShotSound();
+                break;
+            case Constants.Projectiles.CANNONBALL:
+                managers.AudioManager.getInstance().playBombShotSound();
+                break;
+            case Constants.Projectiles.MAGICBOLT:
+                managers.AudioManager.getInstance().playSpellShotSound();
+                break;
+            case Constants.Projectiles.WIZARD_BOLT:
+                managers.AudioManager.getInstance().playSpellShotSound(); // Wizard warriors use same sound as mage towers
+                break;
+        }
     }
 
     public void update() {
