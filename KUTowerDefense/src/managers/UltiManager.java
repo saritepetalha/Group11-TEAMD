@@ -103,6 +103,7 @@ public class UltiManager {
         }
 
         startScreenShake();
+        shakeDuration = 1000; // Reset to normal earthquake duration
         AudioManager.getInstance().playSound("earthquake");
     }
 
@@ -111,6 +112,14 @@ public class UltiManager {
     private void startScreenShake() {
         earthquakeActive = true;
         shakeStartTime = System.currentTimeMillis();
+    }
+    
+    public void triggerTNTShake() {
+        // Shorter, less intense shake for TNT explosions
+        earthquakeActive = true;
+        shakeStartTime = System.currentTimeMillis();
+        shakeDuration = 300; // Shorter duration (300ms vs 1000ms)
+        System.out.println("TNT shake activated!");
     }
 
     public void applyShakeIfNeeded(Graphics g) {
