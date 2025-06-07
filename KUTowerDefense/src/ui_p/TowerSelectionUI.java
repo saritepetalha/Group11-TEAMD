@@ -4,7 +4,6 @@ import objects.Tower;
 import strategies.TargetingStrategyFactory.StrategyType;
 import scenes.Playing;
 import constants.GameDimensions;
-import constants.Constants;
 import objects.WizardWarrior;
 import objects.ArcherWarrior;
 import objects.Warrior;
@@ -27,8 +26,6 @@ public class TowerSelectionUI {
     private TheButton reviveButton;
     private TheButton spawnButton;
     private TheButton lightUpgradeButton;
-    private TheButton repairButton;
-    private TheButton boostButton;
     private CostTooltip tooltip;
 
     // UI positioning
@@ -36,15 +33,8 @@ public class TowerSelectionUI {
     private static final int BUTTON_HEIGHT = 24;
     private static final int BUTTON_SPACING = 8;
 
-    // Base repair costs for different tower types
-    private static final int ARCHER_REPAIR_COST = 20;
-    private static final int ARTILLERY_REPAIR_COST = 35;
-    private static final int MAGE_REPAIR_COST = 25;
-
     // Range indicator effects
     private long animationStartTime = System.currentTimeMillis();
-
-    private static final int BOOST_COST = 50;
 
     public TowerSelectionUI(Playing playing) {
         this.playing = playing;
@@ -70,41 +60,63 @@ public class TowerSelectionUI {
     private void createButtons() {
         if (selectedTower == null) return;
 
-        int buttonX = selectedTower.getX() + selectedTower.getWidth() + 10; // Right side for other buttons
-        int buttonY = selectedTower.getY();
+        // Position buttons near the tower
+        int buttonX = selectedTower.getX() + 70; // Offset to the right of tower
+        int buttonY = selectedTower.getY() - 10; // Slightly above tower
 
-        // Create upgrade button if tower is upgradeable
-        if (selectedTower.isUpgradeable()) {
-            upgradeButton = new TheButton("Upgrade", buttonX, buttonY, BUTTON_WIDTH, BUTTON_HEIGHT, null);
-            buttonY += BUTTON_HEIGHT + BUTTON_SPACING;
+        // Adjust position if buttons would go off-screen
+        if (buttonX + BUTTON_WIDTH > GameDimensions.GAME_WIDTH - 20) {
+            buttonX = selectedTower.getX() - BUTTON_WIDTH - 10; // Position to the left
+        }
+        if (buttonY < 20) {
+            buttonY = selectedTower.getY() + 70; // Position below tower
         }
 
-        // Create repair button if tower needs repair
-        if (selectedTower.needsRepair()) {
-            repairButton = new TheButton("Repair", buttonX, buttonY, BUTTON_WIDTH, BUTTON_HEIGHT, null);
-            buttonY += BUTTON_HEIGHT + BUTTON_SPACING;
+        if (selectedTower.isDestroyed()) {
+            reviveButton = new TheButton("Revive", buttonX, buttonY, BUTTON_WIDTH, BUTTON_HEIGHT);
+            upgradeButton = null;
+            targetingButton = null;
+            spawnButton = null;
+            lightUpgradeButton = null;
+        } else {
+            int currentButtonY = buttonY;
+            // Create upgrade button
+            upgradeButton = new TheButton("Upgrade", buttonX, currentButtonY, BUTTON_WIDTH, BUTTON_HEIGHT);
+            currentButtonY += BUTTON_HEIGHT + BUTTON_SPACING;
+
+            // Create targeting button below upgrade button
+            targetingButton = new TargetingButton("Targeting",
+                    buttonX,
+                    currentButtonY,
+                    BUTTON_WIDTH,
+                    BUTTON_HEIGHT,
+                    selectedTower);
+            currentButtonY += BUTTON_HEIGHT + BUTTON_SPACING;
+
+            // Create spawn button below targeting button, only for Archer and Mage Towers
+            // Need to check through all decorator layers to find the base tower type
+            boolean canSpawn = canTowerSpawn(selectedTower);
+            
+            if (canSpawn) {
+                spawnButton = new TheButton("Spawn",
+                        buttonX,
+                        currentButtonY,
+                        BUTTON_WIDTH,
+                        BUTTON_HEIGHT);
+                currentButtonY += BUTTON_HEIGHT + BUTTON_SPACING;        
+            } else {
+                spawnButton = null;
+            }
+ 
+            // Create light upgrade button below the last button
+            lightUpgradeButton = new TheButton("Light",
+                    buttonX,
+                    currentButtonY, // Positioned below the previous button
+                    BUTTON_WIDTH,
+                    BUTTON_HEIGHT);
+ 
+            reviveButton = null;
         }
-
-        // Create targeting button
-        targetingButton = new TargetingButton("Targeting", buttonX, buttonY, BUTTON_WIDTH, BUTTON_HEIGHT, selectedTower);
-        buttonY += BUTTON_HEIGHT + BUTTON_SPACING;
-
-        // Create spawn button if tower can spawn warriors
-        if (canTowerSpawn(selectedTower)) {
-            spawnButton = new TheButton("Spawn", buttonX, buttonY, BUTTON_WIDTH, BUTTON_HEIGHT, null);
-            buttonY += BUTTON_HEIGHT + BUTTON_SPACING;
-        }
-
-        // Create light upgrade button if it's night
-        if (playing.getWeatherManager() != null && playing.getWeatherManager().isNight()) {
-            lightUpgradeButton = new TheButton("Light", buttonX, buttonY, BUTTON_WIDTH, BUTTON_HEIGHT, null);
-        }
-
-        // Create boost button on the left side
-        int boostButtonX = selectedTower.getX() - BUTTON_WIDTH - 10; // Left side for boost button
-        boostButton = new TheButton("Boost", boostButtonX, selectedTower.getY(), BUTTON_WIDTH, BUTTON_HEIGHT, null);
-
-        reviveButton = null;
     }
 
     /**
@@ -116,8 +128,6 @@ public class TowerSelectionUI {
         reviveButton = null;
         spawnButton = null;
         lightUpgradeButton = null;
-        repairButton = null;
-        boostButton = null;
         selectedTower = null;
     }
 
@@ -176,18 +186,12 @@ public class TowerSelectionUI {
         // Draw enhanced range indicator
         drawEnhancedRangeIndicator(g2d);
 
-        // Draw tower glow
-        drawTowerGlow(g2d);
-
         // Draw buttons
         if (selectedTower.isDestroyed() && reviveButton != null) {
             drawReviveButton(g2d);
         } else {
             if (upgradeButton != null) {
                 drawUpgradeButton(g2d);
-            }
-            if (repairButton != null) {
-                drawRepairButton(g2d);
             }
             if (targetingButton != null) {
                 targetingButton.draw(g);
@@ -198,17 +202,11 @@ public class TowerSelectionUI {
             if (lightUpgradeButton != null) {
                 drawLightUpgradeButton(g2d);
             }
-            if (boostButton != null) {
-                drawBoostButton(g2d);
-            }
         }
         
         // Update and draw tooltip
         tooltip.update();
         tooltip.draw(g2d);
-
-        // Draw condition bar
-        drawConditionBar(g);
     }
 
     /**
@@ -217,17 +215,12 @@ public class TowerSelectionUI {
     private void drawEnhancedRangeIndicator(Graphics2D g2d) {
         int centerX = selectedTower.getX() + selectedTower.getWidth() / 2; // Tower center
         int centerY = selectedTower.getY() + selectedTower.getHeight() / 2;
-        float baseRange = selectedTower.getConditionBasedRange();
+        float baseRange = selectedTower.getRange();
         float effectiveRange = baseRange;
 
         // Apply weather effects to range display
         if (playing.getWeatherManager().isRaining()) {
             effectiveRange *= playing.getWeatherManager().getTowerRangeMultiplier();
-        }
-
-        // If boost is active, double the range
-        if (selectedTower.isBoostActive()) {
-            effectiveRange *= 2;
         }
 
         // Add a small buffer to account for enemy size
@@ -678,51 +671,6 @@ public class TowerSelectionUI {
         }
     }
 
-    private void drawRepairButton(Graphics2D g2d) {
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-        int repairCost = getRepairCost(selectedTower);
-        boolean canAfford = playing.getPlayerManager().getGold() >= repairCost;
-        Color bgColor = canAfford ? new Color(100, 150, 100) : new Color(100, 100, 100);
-        Color borderColor = new Color(80, 80, 80);
-        Color textColor = canAfford ? Color.WHITE : new Color(180, 180, 180);
-        g2d.setColor(bgColor);
-        g2d.fillRect(repairButton.getX(), repairButton.getY(), repairButton.getWidth(), repairButton.getHeight());
-        if (repairButton.isMouseOver() && canAfford) {
-            g2d.setColor(new Color(255, 255, 255, 50));
-            g2d.fillRect(repairButton.getX() + 1, repairButton.getY() + 1,
-                    repairButton.getWidth() - 2, repairButton.getHeight() - 2);
-        }
-        if (repairButton.isMousePressed() && canAfford) {
-            g2d.setColor(new Color(0, 0, 0, 100));
-            g2d.fillRect(repairButton.getX() + 1, repairButton.getY() + 1,
-                    repairButton.getWidth() - 2, repairButton.getHeight() - 2);
-        }
-        g2d.setColor(borderColor);
-        g2d.setStroke(new BasicStroke(1));
-        g2d.drawRect(repairButton.getX(), repairButton.getY(), repairButton.getWidth(), repairButton.getHeight());
-        g2d.setColor(textColor);
-        g2d.setFont(new Font("Monospaced", Font.BOLD, 10));
-        String text = "Repair";
-        FontMetrics fm = g2d.getFontMetrics();
-        int textX = repairButton.getX() + (repairButton.getWidth() - fm.stringWidth(text)) / 2;
-        int textY = repairButton.getY() + (repairButton.getHeight() + fm.getAscent()) / 2 - 2;
-        g2d.drawString(text, textX, textY);
-    }
-
-    private void drawBoostButton(Graphics2D g2d) {
-        boolean isBoostActive = selectedTower.isBoostActive();
-        boolean isHovered = boostButton.isMouseOver();
-        g2d.setColor(isBoostActive ? new Color(100, 100, 100) : (isHovered ? new Color(80, 80, 80) : new Color(60, 60, 60)));
-        g2d.fillRect(boostButton.getX(), boostButton.getY(), boostButton.getWidth(), boostButton.getHeight());
-        g2d.setColor(isBoostActive ? new Color(180, 180, 180) : (isHovered ? new Color(200, 200, 200) : Color.WHITE));
-        g2d.setFont(new Font("Monospaced", Font.BOLD, 10));
-        String text = isBoostActive ? "Boosted" : "Boost";
-        FontMetrics fm = g2d.getFontMetrics();
-        int textX = boostButton.getX() + (boostButton.getWidth() - fm.stringWidth(text)) / 2;
-        int textY = boostButton.getY() + (boostButton.getHeight() + fm.getAscent()) / 2;
-        g2d.drawString(text, textX, textY);
-    }
-
     /**
      * Handles mouse movement for button hover detection and tooltips
      */
@@ -807,14 +755,17 @@ public class TowerSelectionUI {
             }
         }
         
-        if (!tooltipShown && repairButton != null) {
-            boolean isHover = repairButton.getBounds().contains(mouseX, mouseY);
-            repairButton.setMouseOver(isHover);
+        if (!tooltipShown && reviveButton != null) {
+            boolean isHover = reviveButton.getBounds().contains(mouseX, mouseY);
+            reviveButton.setMouseOver(isHover);
             
             if (isHover) {
-                tooltip.show("Repair Tower", getRepairCost(selectedTower), 
-                    "Repair this tower to restore its functionality.", 
-                    playing.getPlayerManager().getGold() >= getRepairCost(selectedTower), mouseX, mouseY);
+                int reviveCost = getUpgradeCost(selectedTower);
+                boolean canAfford = playing.getPlayerManager().getGold() >= reviveCost;
+                
+                tooltip.show("Revive Tower", reviveCost, 
+                    "Bring this destroyed tower back to life with full functionality.", 
+                    canAfford, mouseX, mouseY);
                 tooltipShown = true;
             }
         }
@@ -833,75 +784,123 @@ public class TowerSelectionUI {
      * @return true if a button was clicked and handled, false otherwise
      */
     public boolean mouseClicked(int mouseX, int mouseY) {
-        if (selectedTower == null) return false;
+        boolean handled = false;
 
-        if (upgradeButton != null && upgradeButton.getBounds().contains(mouseX, mouseY)) {
-            if (playing.getPlayerManager().spendGold(getUpgradeCost(selectedTower))) {
-                Tower upgradedTower = selectedTower.upgrade();
-                playing.getTowerManager().replaceTower(selectedTower, upgradedTower);
-                setSelectedTower(upgradedTower);
+        // Revive button interaction
+        if (reviveButton != null && reviveButton.getBounds().contains(mouseX, mouseY)) {
+            int reviveCost = getUpgradeCost(selectedTower);
+            if (playing.getPlayerManager().getGold() >= reviveCost) {
+                playing.getPlayerManager().spendGold(reviveCost);
+                selectedTower.revive();
+                setSelectedTower(selectedTower); // Refresh buttons
+                playing.updateUIResources();
+                System.out.println("Tower revived!");
             }
-            return true;
+            handled = true;
         }
 
-        if (repairButton != null && repairButton.getBounds().contains(mouseX, mouseY)) {
-            int repairCost = getRepairCost(selectedTower);
-            if (playing.getPlayerManager().spendGold(repairCost)) {
-                selectedTower.repair();
-                createButtons(); // Refresh buttons
+        if (upgradeButton != null && upgradeButton.getBounds().contains(mouseX, mouseY)) {
+            if (selectedTower.isUpgradeable()) {
+                int upgradeCost = getUpgradeCost(selectedTower);
+                if (playing.getPlayerManager().getGold() >= upgradeCost) {
+                    // Spend the gold
+                    playing.getPlayerManager().spendGold(upgradeCost);
+
+                    // Handle upgrade logic
+                    Tower upgradedTower = selectedTower.upgrade();
+                    playing.getTowerManager().replaceTower(selectedTower, upgradedTower);
+
+                    // Update the selection to the new tower
+                    setSelectedTower(upgradedTower);
+
+                    // Trigger upgrade effect
+                    playing.getTowerManager().triggerUpgradeEffect(upgradedTower);
+
+                    // Update UI resources
+                    playing.updateUIResources();
+
+                    System.out.println("Tower upgraded!");
+                }
             }
-            return true;
+            handled = true;
         }
 
         if (lightUpgradeButton != null && lightUpgradeButton.getBounds().contains(mouseX, mouseY)) {
             if (playing.getTowerManager().canUpgradeWithLight(selectedTower)) {
                 int lightCost = playing.getTowerManager().getLightUpgradeCost();
-                if (playing.getPlayerManager().spendGold(lightCost)) {
-                    playing.getTowerManager().upgradeTowerWithLight(selectedTower);
-                    createButtons(); // Refresh buttons
+                if (playing.getPlayerManager().getGold() >= lightCost) {
+                    // Spend the gold
+                    playing.getPlayerManager().spendGold(lightCost);
+
+                    // Handle light upgrade logic
+                    objects.LightDecorator lightTower = playing.getTowerManager().upgradeTowerWithLight(selectedTower);
+
+                    if (lightTower != null) {
+                        // Update the selection to the new light tower
+                        setSelectedTower(lightTower);
+
+                        // Update UI resources
+                        playing.updateUIResources();
+
+                        System.out.println("Tower upgraded with light!");
+                    }
                 }
             }
-            return true;
+            handled = true;
         }
 
         if (targetingButton != null && targetingButton.getBounds().contains(mouseX, mouseY)) {
             targetingButton.cycleStrategy();
-            return true;
+            handled = true;
         }
 
         if (spawnButton != null && spawnButton.getBounds().contains(mouseX, mouseY)) {
-            // Determine warrior type
+            Warrior warriorToSpawn = null;
+
+            // Determine the base tower type by unwrapping all decorators
             Tower baseTower = selectedTower;
             while (baseTower instanceof objects.TowerDecorator) {
                 baseTower = ((objects.TowerDecorator) baseTower).decoratedTower;
             }
-            
-            Warrior warrior = null;
+
+            // Get the tower's spawn position (center of the tower)
+            int spawnX = selectedTower.getX() + selectedTower.getWidth() / 2 - 32; // Center and offset for warrior size
+            int spawnY = selectedTower.getY() + selectedTower.getHeight() / 2 - 32;
+
+            // Check the type of the base tower and create warrior for spawning
             if (baseTower instanceof objects.MageTower) {
-                warrior = new WizardWarrior(0, 0);
+                // Create wizard warrior at spawn position, target will be set during placement
+                warriorToSpawn = new WizardWarrior(spawnX, spawnY, spawnX, spawnY); // Same position initially
+                // Store spawn position for later use
+                warriorToSpawn.setX(spawnX);
+                warriorToSpawn.setY(spawnY);
             } else if (baseTower instanceof objects.ArcherTower) {
-                warrior = new ArcherWarrior(0, 0);
+                // Create archer warrior at spawn position, target will be set during placement
+                warriorToSpawn = new ArcherWarrior(spawnX, spawnY, spawnX, spawnY); // Same position initially
+                // Store spawn position for later use  
+                warriorToSpawn.setX(spawnX);
+                warriorToSpawn.setY(spawnY);
             }
-            
-            if (warrior != null && playing.getPlayerManager().spendGold(warrior.getCost()) && selectedTower.canSpawnWarrior()) {
-                playing.startWarriorPlacement(warrior);
+
+            if (warriorToSpawn != null) {
+                if (playing.getPlayerManager().getGold() >= warriorToSpawn.getCost() && selectedTower.canSpawnWarrior()) {
+                    // Set the tower reference in the warrior
+                    warriorToSpawn.setSpawnedFromTower(selectedTower);
+                    
+                    // Gold and warrior limit check successful, proceed to placement mode
+                    playing.startWarriorPlacement(warriorToSpawn);
+                } else {
+                    if (playing.getPlayerManager().getGold() < warriorToSpawn.getCost()) {
+                        System.out.println("Not enough gold to spawn warrior!");
+                    } else {
+                        System.out.println("Tower already has maximum warriors (" + selectedTower.getMaxWarriors() + ")!");
+                    }
+                }
             }
-            return true;
+            handled = true;
         }
 
-        if (boostButton != null && boostButton.getBounds().contains(mouseX, mouseY)) {
-            System.out.println("Boost button clicked.");
-            if (playing.getPlayerManager().getGold() >= BOOST_COST) {
-                System.out.println("Player has enough gold to activate boost.");
-                playing.getPlayerManager().spendGold(BOOST_COST);
-                selectedTower.activateBoost();
-            } else {
-                System.out.println("Player does not have enough gold to activate boost.");
-            }
-            return true;
-        }
-
-        return false;
+        return handled;
     }
 
     /**
@@ -924,7 +923,12 @@ public class TowerSelectionUI {
      * Helper to get upgrade cost
      */
     private int getUpgradeCost(Tower tower) {
-        return tower.getUpgradeCost();
+        switch (tower.getType()) {
+            case 0: return 75; // Archer
+            case 1: return 120; // Artillery
+            case 2: return 100; // Mage
+            default: return 100;
+        }
     }
 
     /**
@@ -942,9 +946,6 @@ public class TowerSelectionUI {
         }
         if (lightUpgradeButton != null && lightUpgradeButton.getBounds().contains(mouseX, mouseY)) {
             lightUpgradeButton.setMousePressed(true);
-        }
-        if (repairButton != null && repairButton.getBounds().contains(mouseX, mouseY)) {
-            repairButton.setMousePressed(true);
         }
     }
 
@@ -964,9 +965,6 @@ public class TowerSelectionUI {
         if (lightUpgradeButton != null) {
             lightUpgradeButton.setMousePressed(false);
         }
-        if (repairButton != null) {
-            repairButton.setMousePressed(false);
-        }
     }
 
     /**
@@ -981,63 +979,5 @@ public class TowerSelectionUI {
      */
     public boolean hasTowerSelected() {
         return selectedTower != null;
-    }
-
-    private void drawConditionBar(Graphics g) {
-        int barWidth = 64;
-        int barHeight = 4;
-        int x = selectedTower.getX();
-        int y = selectedTower.getY() - 10;
-
-        // Draw background
-        g.setColor(Color.GRAY);
-        g.fillRect(x, y, barWidth, barHeight);
-
-        // Draw condition
-        float condition = selectedTower.getCondition();
-        int conditionWidth = (int)(barWidth * (condition / 100.0f));
-        
-        // Choose color based on condition
-        if (condition > 70) {
-            g.setColor(Color.GREEN);
-        } else if (condition > 40) {
-            g.setColor(Color.YELLOW);
-        } else {
-            g.setColor(Color.RED);
-        }
-        
-        g.fillRect(x, y, conditionWidth, barHeight);
-    }
-
-    private int getRepairCost(Tower tower) {
-        int baseCost;
-        switch (tower.getType()) {
-            case Constants.Towers.ARCHER:
-                baseCost = ARCHER_REPAIR_COST;
-                break;
-            case Constants.Towers.ARTILLERY:
-                baseCost = ARTILLERY_REPAIR_COST;
-                break;
-            case Constants.Towers.MAGE:
-                baseCost = MAGE_REPAIR_COST;
-                break;
-            default:
-                baseCost = 25;
-        }
-
-        // Increase cost based on how damaged the tower is
-        float condition = tower.getCondition();
-        float damageMultiplier = 1.0f + (1.0f - (condition / 100.0f));
-        return (int)(baseCost * damageMultiplier);
-    }
-
-    private void drawTowerGlow(Graphics2D g2d) {
-        if (selectedTower.isBoostActive()) {
-            int centerX = selectedTower.getX() + selectedTower.getWidth() / 2;
-            int centerY = selectedTower.getY() + selectedTower.getHeight() / 2;
-            int glowRadius = 30;
-            g2d.setColor(new Color(255, 255, 0, 100)); // Yellow glow
-            g2d.fillOval(centerX - glowRadius, centerY - glowRadius, glowRadius * 2, glowRadius * 2);
-        }
     }
 } 

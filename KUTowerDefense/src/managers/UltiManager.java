@@ -45,6 +45,10 @@ public class UltiManager {
     private final List<LightningStrike> activeStrikes = new ArrayList<>();
     private final List<GoldFactory> goldFactories = new ArrayList<>();
 
+    private long lastFreezeUsedGameTime = -999999;
+    private final long freezeCooldownMillis = 20000; // 20 seconds cooldown
+    private final int freezeCost = 60; // Cost in gold
+    private static final int freezeDuration = 300; // 5 seconds at 60 UPS
 
     public UltiManager(Playing playing) {
         this.playing = playing;
@@ -105,8 +109,6 @@ public class UltiManager {
         startScreenShake();
         AudioManager.getInstance().playSound("earthquake");
     }
-
-
 
     private void startScreenShake() {
         earthquakeActive = true;
@@ -321,6 +323,37 @@ public class UltiManager {
         return false;
     }
 
+    public void triggerFreeze() {
+        long currentGameTime = playing.getGameTime();
+        if (currentGameTime - lastFreezeUsedGameTime < freezeCooldownMillis) {
+            System.out.println("Freeze is on cooldown!");
+            return;
+        }
+        if (playing.getPlayerManager().getGold() < freezeCost) {
+            System.out.println("Not enough gold for Freeze!");
+            return;
+        }
+        System.out.println("Freeze triggered successfully with duration: " + freezeDuration + " ticks");
+        lastFreezeUsedGameTime = currentGameTime;
+        playing.getPlayerManager().spendGold(freezeCost);
+        playing.updateUIResources();
+
+        for (Enemy enemy : playing.getEnemyManager().getEnemies()) {
+            if (enemy.isAlive()) {
+                enemy.freeze(freezeDuration);
+            }
+        }
+    }
+
+    public boolean canUseFreeze() {
+        long currentGameTime = playing.getGameTime();
+        return currentGameTime - lastFreezeUsedGameTime >= freezeCooldownMillis;
+    }
+
+    public long getLastFreezeTime() {
+        return lastFreezeUsedGameTime;
+    }
+
     private class LightningStrike {
         int x, y;
         int currentFrame = 0;
@@ -358,8 +391,6 @@ public class UltiManager {
                 g2d.drawImage(visiblePart, x - frame.getWidth() / 2, drawStartY, null);
             }
         }
-
-
     }
 }
 

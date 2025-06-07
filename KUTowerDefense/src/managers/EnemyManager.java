@@ -3,6 +3,7 @@ package managers;
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Composite;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.geom.RoundRectangle2D;
@@ -38,7 +39,7 @@ import pathfinding.TileConnectivity;
 
 public class EnemyManager {
     private Playing playing;
-    private BufferedImage[] enemyImages;
+    private static BufferedImage[] enemyImages;
     private ArrayList<Enemy> enemies = new ArrayList<>();
     private ArrayList<GridPoint> pathPoints = new ArrayList<>();
     private GridPoint startPoint, endPoint;
@@ -566,7 +567,8 @@ public class EnemyManager {
         return new int[]{scaledAnchorX, scaledAnchorY};
     }
 
-    private void drawEnemy(Enemy enemy, Graphics g){
+    private void drawEnemy(Enemy enemy, Graphics g) {
+        System.out.println("Drawing enemy ID: " + enemy.getId());
         // Calculate base index based on enemy type and get animation frame
         int baseIndex;
 
@@ -685,6 +687,16 @@ public class EnemyManager {
 
         // Health bar and effects should be drawn with the original transform (which we didn't change)
         drawHealthBar(g, enemy, drawX, drawY, drawWidth, drawHeight);
+
+        // If frozen, draw a semi-transparent ice-blue overlay
+        if (enemy.isFrozen()) {
+            Graphics2D g2d = (Graphics2D) g;
+            Composite oldComposite = g2d.getComposite();
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.4f));
+            g2d.setColor(new Color(100, 200, 255)); // ice-blue
+            g2d.fillOval(drawX, drawY, drawWidth, drawHeight);
+            g2d.setComposite(oldComposite);
+        }
     }
 
     private void drawHealthBar(Graphics g, Enemy enemy, int x, int y, int width, int height) {
@@ -951,6 +963,12 @@ public class EnemyManager {
     public void updateGameOptions(GameOptions newOptions) {
         this.gameOptions = newOptions != null ? newOptions : GameOptions.defaults();
         System.out.println("EnemyManager: Updated GameOptions reference");
+    }
+
+    public static BufferedImage getEnemyFrame(int enemyType, int animationIndex) {
+        // Assuming enemyImages is a static array or accessible in a way that allows this method to work
+        // You may need to adjust this based on how frames are stored
+        return enemyImages[enemyType * 6 + animationIndex]; // Assuming 6 frames per enemy type
     }
 }
 
