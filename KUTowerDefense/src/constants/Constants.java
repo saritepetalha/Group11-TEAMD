@@ -7,6 +7,10 @@ public class Constants {
         public static final int MAGICBOLT = 2;
         public static final int WIZARD_BOLT = 3;
 
+        // Tracking behavior settings
+        public static final float TRACKING_HIT_DISTANCE = 8.0f; // Extra distance for tracking hit detection
+        public static final float DIRECT_HIT_DISTANCE = 5.0f; // Distance for guaranteed hit when tracking
+
         // speeds (pixels per tick/frame)
         public static float getSpeed(int type) {
             switch (type) {
@@ -35,6 +39,22 @@ public class Constants {
                     return 15; // Same damage as magic bolt
             }
             return 0;
+        }
+
+        // Check if projectile type should use tracking
+        public static boolean shouldTrack(int type) {
+            switch (type) {
+                case ARROW:
+                    return true; // Arrows track for better accuracy
+                case CANNONBALL:
+                    return true; // Cannonballs track but slower
+                case MAGICBOLT:
+                    return true; // Magic bolts track
+                case WIZARD_BOLT:
+                    return true; // Wizard bolts track
+                default:
+                    return true; // Default to tracking for better gameplay
+            }
         }
     }
 

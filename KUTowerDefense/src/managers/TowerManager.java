@@ -110,18 +110,21 @@ public class TowerManager {
             Enemy target = strategy.selectTarget(enemiesInRange, tower);
 
             if (target != null) {
-                playing.shootEnemy(tower, target);
-                tower.resetCooldown();
-
-                // Windy weather effect: Archer towers have 30% chance to miss
+                // Check windy weather effect BEFORE shooting
+                boolean shouldMiss = false;
                 if (playing.getWeatherManager().isWindy() && tower.getType() == constants.Constants.Towers.ARCHER) {
                     // 30% chance to miss in windy weather
                     if (Math.random() < 0.3) {
-                        // Miss the shot - don't actually shoot
+                        shouldMiss = true;
                         System.out.println("Archer tower missed due to windy weather!");
-                        return; // Exit without shooting
                     }
                 }
+                
+                // Always shoot (for cooldown consistency), but the projectile will handle miss logic
+                playing.shootEnemy(tower, target);
+                tower.resetCooldown();
+                
+                // Note: The ProjectileManager will handle the actual miss behavior using willMiss flag
             }
         }
     }
