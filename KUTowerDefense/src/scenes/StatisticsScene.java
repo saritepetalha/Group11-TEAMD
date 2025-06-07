@@ -256,6 +256,7 @@ public class StatisticsScene extends GameScene implements SceneMethods {
         }
 
         if (backButton.getBounds().contains(x, y)) {
+            playButtonClickSound();
             GameStates.setGameState(GameStates.MENU);
         }
     }

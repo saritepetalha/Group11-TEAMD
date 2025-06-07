@@ -499,9 +499,19 @@ public class PlayingController implements Observer {
             int finalY = tileY - 8;
             pendingWarrior.setTargetDestination(tileX, finalY);
 
+            // Mark warrior as placed and start its lifetime timer
+            pendingWarrior.markAsPlaced();
+
             // Add warrior to manager (it will start running to the target)
             if (model.getTowerManager() != null) {
                 model.getTowerManager().getWarriors().add(pendingWarrior);
+            }
+
+            // Play spawn sound after placement is completed
+            if (pendingWarrior instanceof objects.WizardWarrior) {
+                managers.AudioManager.getInstance().playWizardSpawnSound();
+            } else if (pendingWarrior instanceof objects.ArcherWarrior) {
+                managers.AudioManager.getInstance().playArcherSpawnSound();
             }
 
             System.out.println("Warrior will run from (" + pendingWarrior.getSpawnX() + ", " + pendingWarrior.getSpawnY() +

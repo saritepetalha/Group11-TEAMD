@@ -60,10 +60,12 @@ public class Loaded extends GameScene implements SceneMethods {
     @Override
     public void mouseClicked(int x, int y) {
         if (backButton.getBounds().contains(x, y)) {
+            playButtonClickSound();
             game.changeGameState(MENU);
         } else {
             for (TheButton button : levelButtons) {
                 if (button.getBounds().contains(x, y)) {
+                    playButtonClickSound();
                     game.getPlaying().loadLevel(button.getText());
                     game.changeGameState(PLAYING);
                     return;

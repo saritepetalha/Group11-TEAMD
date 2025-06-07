@@ -54,6 +54,9 @@ public class  Game extends JFrame implements Runnable{
 	public Game() {
 		System.out.println("Game Starting...");
 
+		// Initialize the enhanced options system
+		helpMethods.OptionsIO.initialize();
+
 		// Quick resource test for IntelliJ debugging
 		java.net.URL resourceTest = Game.class.getResource("/UI/Save_Button_For_In_Game_Options.png");
 		if (resourceTest != null) {
@@ -116,6 +119,11 @@ public class  Game extends JFrame implements Runnable{
 				case MENU:
 					audioManager.stopWeatherSounds();
 					audioManager.playMusic("lonelyhood");
+					// If coming from playing, restore custom settings
+					if (previousState == GameStates.PLAYING || previousState == GameStates.GAME_OVER) {
+						helpMethods.OptionsIO.restoreCustomSettings();
+						System.out.println("Restored custom settings after gameplay");
+					}
 					break;
 				case PLAYING:
 					// Reset game state BEFORE making window visible to prevent black flash
@@ -384,6 +392,13 @@ public class  Game extends JFrame implements Runnable{
 			System.out.println("=== DIFFICULTY LOADING DEBUG ===");
 			System.out.println("Selected difficulty: " + difficulty);
 			
+			// Before starting gameplay, save current custom settings to preserve them
+			config.GameOptions currentSettings = helpMethods.OptionsIO.load();
+			if (currentSettings != null) {
+				helpMethods.OptionsIO.saveCustom(currentSettings);
+				System.out.println("Saved current settings as custom settings for preservation");
+			}
+			
 			if ("Easy".equals(difficulty)) {
 				gameOptions = helpMethods.OptionsIO.load("easy");
 				System.out.println("Loaded Easy difficulty. Starting gold: " + (gameOptions != null ? gameOptions.getStartingGold() : "NULL"));
@@ -394,15 +409,19 @@ public class  Game extends JFrame implements Runnable{
 				gameOptions = helpMethods.OptionsIO.load("hard");
 				System.out.println("Loaded Hard difficulty. Starting gold: " + (gameOptions != null ? gameOptions.getStartingGold() : "NULL"));
 			} else if ("Custom".equals(difficulty)) {
-				// Use current options.json (custom settings from main menu)
-				gameOptions = helpMethods.OptionsIO.load();
+				// Use custom settings from custom_options.json
+				gameOptions = helpMethods.OptionsIO.load("custom");
+				if (gameOptions == null) {
+					// Fallback to current options.json if custom doesn't exist
+					gameOptions = helpMethods.OptionsIO.load();
+				}
 				System.out.println("Loaded Custom difficulty. Starting gold: " + (gameOptions != null ? gameOptions.getStartingGold() : "NULL"));
 			}
 
 			if (gameOptions != null) {
-				// Save the difficulty options to options.json so Playing can use them
-				helpMethods.OptionsIO.save(gameOptions);
-				System.out.println("Saved difficulty settings to options.json. Starting gold: " + gameOptions.getStartingGold());
+				// Save the difficulty options temporarily for gameplay (does not overwrite custom settings)
+				helpMethods.OptionsIO.saveForGameplay(gameOptions);
+				System.out.println("Saved temporary gameplay settings to options.json. Starting gold: " + gameOptions.getStartingGold());
 				
 				// Wait a moment to ensure file I/O completes
 				try {

@@ -384,7 +384,7 @@ public class PlayingUI {
         switch (weatherType) {
             case RAINY: return "Tower Range -20%";
             case SNOWY: return "Enemy Speed -25%";
-            case WINDY: return "Archer Miss Chance +30%";
+            case WINDY: return "Archers & Archer Warriors +30% Miss";
             case CLEAR: return "No Effect";
             default: return "";
         }

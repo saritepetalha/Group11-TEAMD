@@ -122,16 +122,47 @@ public class ProjectileManager {
                 damage,
                 projType,
                 level,
-                angle
+                angle,
+                enemy  // Pass the target enemy for tracking
         );
 
-        if (playing.getWeatherManager().isWindy() &&
-                projType == Constants.Projectiles.ARROW &&
-                Math.random() < 0.3) {
-            projectile.setWillMiss(true);
+        // Handle windy weather miss chance for arrows
+        if (playing.getWeatherManager().isWindy() && projType == Constants.Projectiles.ARROW) {
+            if (Math.random() < 0.3) { // 30% miss chance in windy weather
+                projectile.setWillMiss(true);
+                // Disable tracking for missing projectiles so they fly off-target
+                projectile.disableTracking();
+                
+                // Add some randomness to trajectory for missing arrows
+                float missOffset = 60f + (float)(Math.random() * 40f); // 60-100 pixel offset
+                float missAngle = (float)(Math.random() * 2 * Math.PI); // Random direction
+                float originalSpeed = projectile.getProjectileSpeed();
+                
+                // Apply miss offset to speed
+                projectile.setSpeed(
+                    projectile.getXSpeed() + (float)Math.cos(missAngle) * missOffset * 0.1f,
+                    projectile.getYSpeed() + (float)Math.sin(missAngle) * missOffset * 0.1f
+                );
+            }
         }
 
         projectiles.add(projectile);
+        
+        // Play appropriate sound effect based on projectile type
+        switch (projType) {
+            case Constants.Projectiles.ARROW:
+                managers.AudioManager.getInstance().playArrowShotSound();
+                break;
+            case Constants.Projectiles.CANNONBALL:
+                managers.AudioManager.getInstance().playBombShotSound();
+                break;
+            case Constants.Projectiles.MAGICBOLT:
+                managers.AudioManager.getInstance().playSpellShotSound();
+                break;
+            case Constants.Projectiles.WIZARD_BOLT:
+                managers.AudioManager.getInstance().playSpellShotSound(); // Wizard warriors use same sound as mage towers
+                break;
+        }
     }
 
     public void update() {
@@ -161,6 +192,16 @@ public class ProjectileManager {
                         projectile.setHit();
                     }
                 }
+                
+                // For tracking projectiles that are very close to dead targets, mark as hit
+                if (projectile.isTracking() && projectile.getTargetEnemy() != null) {
+                    Enemy target = projectile.getTargetEnemy();
+                    if (!target.isAlive()) {
+                        // Target died, stop tracking and mark as hit to clean up
+                        projectile.disableTracking();
+                        projectile.setHit();
+                    }
+                }
 
                 // Remove projectiles that are off screen
                 if (isProjectileOffScreen(projectile)) {
@@ -172,24 +213,34 @@ public class ProjectileManager {
     }
 
     private boolean isEnemyShot(Projectile projectile) {
+        // For tracking projectiles, check primarily against their target
+        if (projectile.isTracking() && projectile.getTargetEnemy() != null) {
+            Enemy targetEnemy = projectile.getTargetEnemy();
+            if (targetEnemy.isAlive() && checkProjectileHit(projectile, targetEnemy)) {
+                // Hit the target enemy
+                targetEnemy.hurt(projectile.getDamage());
+                playing.addTotalDamage(projectile.getDamage());
+
+                // Handle enemy death
+                if (!targetEnemy.isAlive()) {
+                    playing.incrementEnemyDefeated();
+                }
+
+                // Apply special effects
+                applySpecialEffects(projectile, targetEnemy);
+                return true;
+            }
+            // If target is dead but projectile is still tracking, disable tracking
+            else if (!targetEnemy.isAlive()) {
+                projectile.disableTracking();
+            }
+        }
+        
+        // For non-tracking projectiles or as fallback, check all enemies
         for (Enemy enemy : playing.getEnemyManager().getEnemies()) {
             if (!enemy.isAlive()) continue;
 
-            // Get enemy center and hit area
-            float centerX = enemy.getSpriteCenterX();
-            float centerY = enemy.getSpriteCenterY();
-            int hitSize = getHitSize(enemy);
-
-            // Create hit area
-            Rectangle hitArea = new Rectangle(
-                    (int)centerX - hitSize/2,
-                    (int)centerY - hitSize/2,
-                    hitSize,
-                    hitSize
-            );
-
-            // Check for hit
-            if (hitArea.contains(projectile.getPos())) {
+            if (checkProjectileHit(projectile, enemy)) {
                 // Apply damage
                 enemy.hurt(projectile.getDamage());
                 playing.addTotalDamage(projectile.getDamage());
@@ -206,6 +257,35 @@ public class ProjectileManager {
             }
         }
         return false;
+    }
+
+    private boolean checkProjectileHit(Projectile projectile, Enemy enemy) {
+        // Get enemy center and hit area
+        float centerX = enemy.getSpriteCenterX();
+        float centerY = enemy.getSpriteCenterY();
+        int hitSize = getHitSize(enemy);
+
+        // Create hit area
+        Rectangle hitArea = new Rectangle(
+                (int)centerX - hitSize/2,
+                (int)centerY - hitSize/2,
+                hitSize,
+                hitSize
+        );
+
+        // For tracking projectiles, use a more generous hit detection
+        if (projectile.isTracking()) {
+            // Calculate distance between projectile and enemy center
+            float dx = projectile.getX() - centerX;
+            float dy = projectile.getY() - centerY;
+            float distance = (float) Math.sqrt(dx * dx + dy * dy);
+            
+            // Hit if within a reasonable distance (slightly larger than hitbox)
+            return distance <= (hitSize / 2.0f + Constants.Projectiles.TRACKING_HIT_DISTANCE);
+        } else {
+            // Original hit detection for non-tracking projectiles
+            return hitArea.contains(projectile.getPos());
+        }
     }
 
     private int getHitSize(Enemy enemy) {
@@ -398,5 +478,10 @@ public class ProjectileManager {
     private boolean isProjectileOffScreen(Projectile projectile) {
         Point pos = projectile.getPos();
         return pos.x < -50 || pos.x > 1024 + 50 || pos.y < -50 || pos.y > 576 + 50;
+    }
+
+    // Method to access projectiles list (used by model abstraction)
+    public ArrayList<Projectile> getProjectiles() {
+        return projectiles;
     }
 }

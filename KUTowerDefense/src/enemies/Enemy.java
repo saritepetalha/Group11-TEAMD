@@ -32,11 +32,13 @@ public abstract class Enemy {
     private int maxFrameCount = 6;   // default frame count
     protected int goldReward;
 
+    // Slow effect fields
     private boolean isSlowed = false;
     private long slowTimer = 0; // Will store remaining duration in ticks
     private float currentSlowFactor = 1.0f; // 1.0f means no slow
     public static BufferedImage snowflakeIcon = null;
 
+    // Teleport effect fields
     private boolean isTeleporting = false;
     private long teleportEffectTimer = 0;
     public static final long TELEPORT_EFFECT_DURATION = 500_000_000L; // 0.5 seconds
@@ -68,6 +70,7 @@ public abstract class Enemy {
         this.alive = alive;
     }
 
+
     // Enemy size category
     public enum Size {
         SMALL(32, 32),
@@ -87,6 +90,10 @@ public abstract class Enemy {
     }
 
     private Size size;
+    
+    // Cached values for performance optimization
+    private final int halfWidth;
+    private final int halfHeight;
 
     // Original animation speed before any multipliers are applied
     private int baseAnimationSpeed = 10;
@@ -99,21 +106,25 @@ public abstract class Enemy {
         this.speed = speed;
         this.size = size;
         this.maxFrameCount = maxFrameCount;
+        
+        // Cache half dimensions for performance
+        this.halfWidth = this.size.getWidth() / 2;
+        this.halfHeight = this.size.getHeight() / 2;
 
-        // Initialize boundary directly using Size enum properties
+        // Initialize boundary directly using cached values
         this.boundary = new Rectangle(
-                (int)this.x - this.size.getWidth() / 2,
-                (int)this.y - this.size.getHeight() / 2,
-                this.size.getWidth(),
-                this.size.getHeight()
+            (int)this.x - this.halfWidth,
+            (int)this.y - this.halfHeight,
+            this.size.getWidth(),
+            this.size.getHeight()
         );
 
         initializeHealth();
         maxHealth = health;
     }
+
     /**
-     * Reads the gold‐reward value for this enemy's type from GameOptions
-     * and applies it.
+     * Reads the gold‐reward value for this enemy's type from GameOptions and applies it.
      */
     public void updateGoldRewardFromOptions(GameOptions options) {
         if (options == null) {
@@ -153,20 +164,16 @@ public abstract class Enemy {
                 return;
             }
 
-            if (!options.getEnemyStats().containsKey(type)) {
-                System.out.println("Warning: No stats found for enemy type " + type + ", using default stats");
-                return;
-            }
-
             EnemyStats stats = options.getEnemyStats().get(type);
             if (stats == null) {
-                System.out.println("Warning: Stats are null for enemy type " + type + ", using default stats");
+                System.out.println("Warning: No stats found for enemy type " + type + ", using default stats");
                 return;
             }
 
             // Store current health percentage before updating maxHealth
             float currentHealthPercentage = getHealthBarPercentage();
             updateGoldRewardFromOptions(options);
+            
             // Apply the new stats
             this.maxHealth = stats.getHitPoints();
             // Apply the previous health percentage to the new maxHealth, clamp between 0 and maxHealth
@@ -215,26 +222,24 @@ public abstract class Enemy {
         float effSpeed = getEffectiveSpeed();
         this.x += xSpeed * effSpeed;
         this.y += ySpeed * effSpeed;
-
-        // Update direction based on movement
-        if (xSpeed != 0 || ySpeed != 0) { // Avoid division by zero if no movement
+        
+        // Update direction based on movement - optimized to avoid unnecessary calculations
+        if (xSpeed != 0 || ySpeed != 0) {
             float totalComponentSpeed = (float) Math.sqrt(xSpeed * xSpeed + ySpeed * ySpeed);
-            if (totalComponentSpeed > 0) { // Ensure totalComponentSpeed is not zero
-                this.dirX = xSpeed / totalComponentSpeed;
-                this.dirY = ySpeed / totalComponentSpeed;
+            if (totalComponentSpeed > 0.001f) { // Use small epsilon instead of exact zero check
+                float invTotalSpeed = 1.0f / totalComponentSpeed; // Multiply instead of divide
+                this.dirX = xSpeed * invTotalSpeed;
+                this.dirY = ySpeed * invTotalSpeed;
             }
-        } else {
-            // If no movement, keep previous direction or set to a default (e.g., 0,0)
-            // For now, we'll assume dirX and dirY remain as they were
         }
         updateBoundary();
     }
 
     private void updateBoundary() {
         // Boundary width and height are fixed by the size enum and set in constructor.
-        // Here, we only need to update the x, y position of the boundary.
-        boundary.x = (int)this.x - this.size.getWidth() / 2;
-        boundary.y = (int)this.y - this.size.getHeight() / 2;
+        // Here, we only need to update the x, y position of the boundary using cached values.
+        boundary.x = (int)this.x - this.halfWidth;
+        boundary.y = (int)this.y - this.halfHeight;
     }
 
     public void updateAnimationTick() {
@@ -251,51 +256,40 @@ public abstract class Enemy {
         }
     }
 
-    public int getAnimationIndex() {
-        return animationIndex;
-    }
-
-    public int getMaxFrameCount() {
-        return maxFrameCount;
-    }
-
-    public Size getSize() {
-        return size;
-    }
-
-    public float getX() {
-        return x;
-    }
-
-    public void setX(float x) {
-        this.x = x;
-    }
-
-    public float getY() {
-        return y;
-    }
-
-    public void setY(float y) {
-        this.y = y;
-    }
-
-    public Rectangle getBounds() {return boundary;}
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public int getHealth() {
-        return health;
-    }
-
-    public void setHealth(int health) {
-        this.health = health;
-    }
+    // Getters and Setters
+    public int getAnimationIndex() { return animationIndex; }
+    public int getMaxFrameCount() { return maxFrameCount; }
+    public Size getSize() { return size; }
+    public float getX() { return x; }
+    public void setX(float x) { this.x = x; }
+    public float getY() { return y; }
+    public void setY(float y) { this.y = y; }
+    public Rectangle getBounds() { return boundary; }
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
+    public int getHealth() { return health; }
+    public void setHealth(int health) { this.health = health; }
+    public boolean isAlive() { return alive; }
+    public void setAlive(boolean alive) { this.alive = alive; }
+    public int getEnemyType() { return enemyType; }
+    public float getSpeed() { return speed; }
+    public boolean hasReachedEnd() { return reachedEnd; }
+    public void setReachedEnd(boolean reachedEnd) { this.reachedEnd = reachedEnd; }
+    public int getCurrentPathIndex() { return currentPathIndex; }
+    public void setCurrentPathIndex(int currentPathIndex) { this.currentPathIndex = currentPathIndex; }
+    public float getHealthBarPercentage() { return health / (float) maxHealth; }
+    public int getGoldReward() { return goldReward; }
+    public float getDirX() { return dirX; }
+    public float getDirY() { return dirY; }
+    public void setDirection(float dirX, float dirY) { this.dirX = dirX; this.dirY = dirY; }
+    public int getWidth() { return size.getWidth(); }
+    public int getHeight() { return size.getHeight(); }
+    public boolean isSlowed() { return isSlowed; }
+    public boolean isTeleporting() { return isTeleporting; }
+    public long getTeleportEffectTimer() { return teleportEffectTimer; }
+    public boolean hasCombatSynergy() { return hasCombatSynergy; }
+    public boolean isInvisible() { return invisible; }
+    public void setInvisible(boolean invisible) { this.invisible = invisible; }
 
     public void hurt(int damage){
         this.health -= damage;
@@ -316,10 +310,9 @@ public abstract class Enemy {
         }
     }
 
-
     private void playDeathSound() {
         EnemyType type = getEnemyTypeEnum();
-        if (type == null) return; // Should not happen if enemyType is always valid
+        if (type == null) return;
 
         switch (type) {
             case TROLL:
@@ -339,23 +332,6 @@ public abstract class Enemy {
                 break;
         }
     }
-
-    public boolean isAlive() {return alive;}
-
-    public int getEnemyType() {return enemyType;}
-
-    public float getSpeed() {return speed;}
-
-    public boolean hasReachedEnd() {return reachedEnd;}
-
-    public void setReachedEnd(boolean reachedEnd) {this.reachedEnd = reachedEnd;}
-
-    public int getCurrentPathIndex() {return currentPathIndex;}
-
-    public void setCurrentPathIndex(int currentPathIndex) {this.currentPathIndex = currentPathIndex;}
-
-    public float getHealthBarPercentage() {return health / (float) maxHealth;}
-
 
     public void setAnimationSpeed(int speed) {
         this.baseAnimationSpeed = speed;
@@ -397,40 +373,16 @@ public abstract class Enemy {
         // With anchor-based positioning, the enemy's y position represents the sprite center
         return y;
     }
-    public int getGoldReward() {
-        return goldReward;
-    }
-
-    public float getDirX() {
-        return dirX;
-    }
-
-    public float getDirY() {
-        return dirY;
-    }
-
-    public int getWidth() {
-        return size.getWidth();
-    }
-
-    public int getHeight() {
-        return size.getHeight();
-    }
 
     public void applySlow(float slowFactor, int durationTicks) {
-        if (!isSlowed || slowFactor < this.currentSlowFactor) { 
-            // Apply new slow if not slowed, or if new slow is stronger
+        if (!isSlowed || slowFactor < this.currentSlowFactor) { // Apply new slow if not slowed, or if new slow is stronger
             this.isSlowed = true;
             this.currentSlowFactor = slowFactor;
             this.slowTimer = durationTicks;
             if (snowflakeIcon == null) {
                 snowflakeIcon = LoadSave.getImageFromPath("/TowerAssets/snow flake icon.png");
             }
-        } else if (slowFactor == this.currentSlowFactor) {
-            // Same strength slow - reset the timer (as requested: "4 sec count down will be reset")
-            this.slowTimer = durationTicks;
         }
-        // If new slow is weaker, ignore it (don't reset timer)
     }
 
     private void updateSlow() {
@@ -443,21 +395,12 @@ public abstract class Enemy {
         }
     }
 
-    public boolean isSlowed() { return isSlowed; }
-
     /**
      * Applies a teleport visual effect to the enemy
      */
     public void applyTeleportEffect() {
         isTeleporting = true;
         teleportEffectTimer = System.nanoTime();
-    }
-
-    /**
-     * Checks if the enemy is currently showing a teleport effect
-     */
-    public boolean isTeleporting() {
-        return isTeleporting;
     }
 
     private void updateTeleportEffect() {
@@ -503,20 +446,14 @@ public abstract class Enemy {
         }
         float effectiveSpeed = speed;
         if (hasCombatSynergy) {
-            effectiveSpeed *= 1.2f;
+
+            effectiveSpeed = (originalSpeed + synergyGoblinSpeed) * 0.5f; // Use multiplication instead of division
+
         }
         if (isSlowed) {
             effectiveSpeed *= 0.5f;
         }
         return effectiveSpeed;
-    }
-
-    /**
-     * Gets the timestamp when the teleport effect started
-     * @return The system nanotime when teleport effect was applied
-     */
-    public long getTeleportEffectTimer() {
-        return teleportEffectTimer;
     }
 
     public void applyCombatSynergy(float goblinSpeed) {
@@ -536,6 +473,7 @@ public abstract class Enemy {
             synergyGoblinSpeed = 0f;
         }
     }
+
 
     public boolean hasCombatSynergy() {
         return hasCombatSynergy;
