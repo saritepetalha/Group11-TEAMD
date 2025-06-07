@@ -20,12 +20,21 @@ import config.GameOptions;
  *  ✔ Pretty-prints JSON for humans
  *  ✔ Creates a default file on first launch
  *  ✔ Thread-safe (single Gson instance, sync around disk I/O)
+ *  ✔ Enhanced to preserve custom settings and manage difficulty separately
  */
 public final class OptionsIO {
 
-    /** Where the JSON file lives – change if you prefer another folder. */
+    /** Where the JSON files live – change if you prefer another folder. */
     private static final Path CONFIG_PATH =
             Paths.get(getOptionsDirectoryPath(), "options.json");
+    
+    /** Backup of original default settings - never modified during gameplay */
+    private static final Path DEFAULT_CONFIG_PATH =
+            Paths.get(getOptionsDirectoryPath(), "default_options.json");
+    
+    /** User's custom settings - preserved across difficulty changes */
+    private static final Path CUSTOM_CONFIG_PATH =
+            Paths.get(getOptionsDirectoryPath(), "custom_options.json");
 
     private static final Path CONFIG_DIR  = Paths.get(getOptionsDirectoryPath());
 
@@ -93,57 +102,140 @@ public final class OptionsIO {
      */
     public static GameOptions load() {
         System.out.println("OptionsIO.load(): Loading from default path: " + CONFIG_PATH.toAbsolutePath());
-        synchronized (GSON) {        // Gson is not 100 % threadsafe
-            try {
-                if (Files.notExists(CONFIG_PATH) || Files.size(CONFIG_PATH) == 0) {
-                    GameOptions defaults = GameOptions.defaults();
-                    save(defaults);  // creates folders + file
-                    System.out.println("OptionsIO.load(): Created new default options.json");
-                    return defaults;
-                }
+        return loadFromPath(CONFIG_PATH, true);
+    }
 
-                try (var reader = Files.newBufferedReader(CONFIG_PATH,
-                        StandardCharsets.UTF_8)) {
-                    GameOptions opts = GSON.fromJson(reader, GameOptions.class);
-                    if (opts == null) {
-                        // JSON was empty or only whitespace
-                        opts = GameOptions.defaults();
-                        save(opts);
-                        System.out.println("OptionsIO.load(): JSON was empty, used defaults");
-                    } else {
-                        System.out.println("OptionsIO.load(): Successfully loaded options.json. Starting gold: " + opts.getStartingGold());
-                    }
-                    return opts;
-                }
-            } catch (IOException | RuntimeException ex) {
-                System.out.println("OptionsIO.load(): Exception loading options.json: " + ex.getMessage());
-                ex.printStackTrace();
-                // Fallback – keep the game runnable even if JSON is corrupt
-                GameOptions defaults = GameOptions.defaults();
-                save(defaults);
-                return defaults;
+    /**
+     * Loads difficulty-specific options or custom options
+     * @param filename The filename (e.g., "easy", "normal", "hard", "custom")
+     * @return GameOptions or null if file doesn't exist
+     */
+    public static GameOptions load(String filename) {
+        Path path;
+        
+        // Special handling for "custom" - load from custom_options.json
+        if ("custom".equalsIgnoreCase(filename)) {
+            path = CUSTOM_CONFIG_PATH;
+            System.out.println("OptionsIO.load: Loading custom settings from: " + path.toAbsolutePath());
+        } else {
+            path = CONFIG_DIR.resolve(filename + ".json");
+            System.out.println("OptionsIO.load: Loading difficulty settings from: " + path.toAbsolutePath());
+        }
+        
+        return loadFromPath(path, false);
+    }
+
+    /**
+     * Loads the original default settings (for reset functionality)
+     * @return GameOptions with default settings
+     */
+    public static GameOptions loadDefaults() {
+        System.out.println("OptionsIO.loadDefaults(): Loading default settings from: " + DEFAULT_CONFIG_PATH.toAbsolutePath());
+        GameOptions defaults = loadFromPath(DEFAULT_CONFIG_PATH, false);
+        
+        if (defaults == null) {
+            // If default_options.json doesn't exist, create it with hardcoded defaults
+            defaults = GameOptions.defaults();
+            saveDefaults(defaults);
+            System.out.println("OptionsIO.loadDefaults(): Created default_options.json with hardcoded defaults");
+        }
+        
+        return defaults;
+    }
+
+    /**
+     * Saves user's custom settings (preserves them across difficulty changes)
+     * @param opts The custom options to save
+     */
+    public static void saveCustom(GameOptions opts) {
+        System.out.println("OptionsIO.saveCustom(): Saving custom settings to: " + CUSTOM_CONFIG_PATH.toAbsolutePath());
+        save(opts, CUSTOM_CONFIG_PATH);
+    }
+
+    /**
+     * Saves the default settings backup (should only be called once during initialization)
+     * @param opts The default options to save
+     */
+    public static void saveDefaults(GameOptions opts) {
+        synchronized (GSON) {
+            // Only save defaults if the file doesn't exist to preserve original defaults
+            if (Files.notExists(DEFAULT_CONFIG_PATH)) {
+                System.out.println("OptionsIO.saveDefaults(): Saving default settings to: " + DEFAULT_CONFIG_PATH.toAbsolutePath());
+                save(opts, DEFAULT_CONFIG_PATH);
+            } else {
+                System.out.println("OptionsIO.saveDefaults(): Default settings file already exists, not overwriting");
             }
         }
     }
 
-    public static GameOptions load(String filename) {
-        Path path = CONFIG_DIR.resolve(filename + ".json");
-        System.out.println("OptionsIO.load: Trying to load from: " + path.toAbsolutePath());
-        System.out.println("OptionsIO.load: File exists: " + Files.exists(path));
+    /**
+     * Saves options for temporary gameplay use (does NOT overwrite custom settings)
+     * This is used during gameplay when a difficulty is selected
+     * @param opts The options to use for current game session
+     */
+    public static void saveForGameplay(GameOptions opts) {
+        System.out.println("OptionsIO.saveForGameplay(): Saving temporary gameplay settings to: " + CONFIG_PATH.toAbsolutePath());
+        save(opts, CONFIG_PATH);
+    }
+
+    /**
+     * Restores custom settings to options.json (call after gameplay ends)
+     */
+    public static void restoreCustomSettings() {
+        GameOptions customSettings = load("custom");
+        if (customSettings != null) {
+            System.out.println("OptionsIO.restoreCustomSettings(): Restoring custom settings to options.json");
+            save(customSettings, CONFIG_PATH);
+        } else {
+            System.out.println("OptionsIO.restoreCustomSettings(): No custom settings found, keeping current options.json");
+        }
+    }
+
+    /**
+     * Internal helper method to load from a specific path
+     */
+    private static GameOptions loadFromPath(Path path, boolean createDefaultIfMissing) {
         synchronized (GSON) {
             try {
                 if (Files.notExists(path) || Files.size(path) == 0) {
-                    System.out.println("OptionsIO.load: File not found or empty: " + path);
-                    return null;
+                    if (createDefaultIfMissing) {
+                        GameOptions defaults = GameOptions.defaults();
+                        save(defaults, path);
+                        // Also ensure we have a backup of the defaults
+                        saveDefaults(defaults);
+                        System.out.println("OptionsIO.loadFromPath(): Created new file at: " + path);
+                        return defaults;
+                    } else {
+                        System.out.println("OptionsIO.loadFromPath(): File not found: " + path);
+                        return null;
+                    }
                 }
+
                 try (var reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
-                    GameOptions options = GSON.fromJson(reader, GameOptions.class);
-                    System.out.println("OptionsIO.load: Successfully loaded " + filename + ". Starting gold: " + (options != null ? options.getStartingGold() : "NULL"));
-                    return options;
+                    GameOptions opts = GSON.fromJson(reader, GameOptions.class);
+                    if (opts == null) {
+                        if (createDefaultIfMissing) {
+                            opts = GameOptions.defaults();
+                            save(opts, path);
+                            saveDefaults(opts);
+                            System.out.println("OptionsIO.loadFromPath(): JSON was empty, used defaults for: " + path);
+                        }
+                    } else {
+                        System.out.println("OptionsIO.loadFromPath(): Successfully loaded: " + path + ". Starting gold: " + opts.getStartingGold());
+                    }
+                    return opts;
                 }
             } catch (IOException | RuntimeException ex) {
-                System.out.println("OptionsIO.load: Exception loading " + filename + ": " + ex.getMessage());
+                System.out.println("OptionsIO.loadFromPath(): Exception loading: " + path + " - " + ex.getMessage());
                 ex.printStackTrace();
+                
+                if (createDefaultIfMissing) {
+                    // Fallback – keep the game runnable even if JSON is corrupt
+                    GameOptions defaults = GameOptions.defaults();
+                    save(defaults, path);
+                    saveDefaults(defaults);
+                    return defaults;
+                }
                 return null;
             }
         }
@@ -171,7 +263,9 @@ public final class OptionsIO {
                         StandardOpenOption.WRITE)) {
                     GSON.toJson(opts, writer);
                 }
+                System.out.println("OptionsIO.save(): Successfully saved to: " + path.toAbsolutePath());
             } catch (IOException ex) {
+                System.err.println("OptionsIO.save(): Failed to save to: " + path.toAbsolutePath());
                 ex.printStackTrace();
             }
         }
@@ -179,10 +273,35 @@ public final class OptionsIO {
 
     /**
      * Quick helper if you want a "Reset to Defaults" button.
-     * Completely overwrites the existing JSON file.
+     * Resets both options.json and custom_options.json to defaults.
      */
     public static void resetToDefaults() {
-        save(GameOptions.defaults());
+        GameOptions defaults = loadDefaults();
+        save(defaults, CONFIG_PATH);
+        save(defaults, CUSTOM_CONFIG_PATH);
+        System.out.println("OptionsIO.resetToDefaults(): Reset both options.json and custom_options.json to defaults");
+    }
+
+    /**
+     * Initializes the options system - call this once at application startup
+     * This ensures all necessary files exist and custom settings are preserved
+     */
+    public static void initialize() {
+        System.out.println("OptionsIO.initialize(): Initializing options system...");
+        
+        // Load or create default options.json
+        GameOptions currentOptions = load();
+        
+        // Ensure we have a backup of defaults
+        saveDefaults(currentOptions);
+        
+        // If custom_options.json doesn't exist, create it with current settings
+        if (Files.notExists(CUSTOM_CONFIG_PATH)) {
+            saveCustom(currentOptions);
+            System.out.println("OptionsIO.initialize(): Created custom_options.json with current settings");
+        }
+        
+        System.out.println("OptionsIO.initialize(): Options system initialized successfully");
     }
 }
 
