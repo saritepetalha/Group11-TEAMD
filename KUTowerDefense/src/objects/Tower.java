@@ -4,6 +4,9 @@ import constants.Constants;
 import enemies.Enemy;
 import strategies.TargetingStrategy;
 import strategies.FirstEnemyStrategy;
+import skills.SkillTree;
+import skills.SkillType;
+import constants.GameDimensions;
 
 import java.awt.*;
 
@@ -84,7 +87,6 @@ public abstract class Tower {
     }
 
     public abstract float getCooldown();
-    public abstract float getRange();
     public abstract int getDamage();
 
     protected void setDefaultCooldown() {
@@ -298,5 +300,15 @@ public abstract class Tower {
 
     public boolean isBoostActive() {
         return boostActive && System.currentTimeMillis() < boostEndTime;
+    }
+
+    public float getRange() {
+        float baseRange = range;
+        if (SkillTree.getInstance().isSkillSelected(SkillType.EAGLE_EYE)) {
+            float bonus = GameDimensions.TILE_DISPLAY_SIZE;
+            System.out.println("[EAGLE_EYE] Tower applies bonus range: " + baseRange + " -> " + (baseRange + bonus));
+            baseRange += bonus;
+        }
+        return baseRange;
     }
 }

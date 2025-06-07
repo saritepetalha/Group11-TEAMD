@@ -49,7 +49,8 @@ public class GameScreen extends JPanel {
 				GameStates.gameState == GameStates.INTRO ||
 				GameStates.gameState == GameStates.LOAD_GAME ||
 				GameStates.gameState == GameStates.NEW_GAME_LEVEL_SELECT ||
-				GameStates.gameState == GameStates.OPTIONS) {
+				GameStates.gameState == GameStates.OPTIONS ||
+				GameStates.gameState == GameStates.SKILL_SELECTION) {
 			size = new Dimension(GameDimensions.MAIN_MENU_SCREEN_WIDTH, GameDimensions.MAIN_MENU_SCREEN_HEIGHT);
 		} else if (GameStates.gameState == GameStates.EDIT){
 			size = new Dimension(GameDimensions.TOTAL_GAME_WIDTH, GameDimensions.GAME_HEIGHT);
@@ -72,7 +73,8 @@ public class GameScreen extends JPanel {
 		super.paintComponent(g);
 		if (GameStates.gameState != GameStates.OPTIONS &&
 				GameStates.gameState != GameStates.LOAD_GAME &&
-				GameStates.gameState != GameStates.NEW_GAME_LEVEL_SELECT) {
+				GameStates.gameState != GameStates.NEW_GAME_LEVEL_SELECT &&
+				GameStates.gameState != GameStates.SKILL_SELECTION) {
 			game.getRender().render(g);
 		}
 	}
@@ -107,6 +109,12 @@ public class GameScreen extends JPanel {
 				this.add(game.getNewGameLevelSelection(), BorderLayout.CENTER);
 			} else {
 				System.err.println("Error: NewGameLevelSelection is not a JPanel or is null!");
+			}
+		} else if (newState == GameStates.SKILL_SELECTION) {
+			if (game.getSkillSelectionScene() instanceof JPanel) {
+				this.add(game.getSkillSelectionScene(), BorderLayout.CENTER);
+			} else {
+				System.err.println("Error: SkillSelectionScene is not a JPanel or is null!");
 			}
 		}
 

@@ -21,6 +21,8 @@ import scenes.Menu;
 import scenes.Options;
 import scenes.Playing;
 import scenes.StatisticsScene;
+import scenes.SkillSelectionScene;
+import skills.SkillTree;
 
 public class  Game extends JFrame implements Runnable{
 
@@ -44,6 +46,7 @@ public class  Game extends JFrame implements Runnable{
 	private StatisticsScene statisticsScene;
 	private TileManager tileManager;
 	private GameStatsManager statsManager;
+	private SkillSelectionScene skillSelectionScene;
 
 	// State tracking for map editing context
 	private GameStates previousGameState = GameStates.MENU;
@@ -120,6 +123,12 @@ public class  Game extends JFrame implements Runnable{
 						playing.resetGameState();
 					}
 					audioManager.playRandomGameMusic();
+					break;
+				case SKILL_SELECTION:
+					// Clear any previously selected skills
+					if (skillSelectionScene != null) {
+						SkillTree.getInstance().clearSkills();
+					}
 					break;
 				case NEW_GAME_LEVEL_SELECT:
 					if (newGameLevelSelection != null) {
@@ -212,6 +221,7 @@ public class  Game extends JFrame implements Runnable{
 		newGameLevelSelection = new LevelSelectionScene(this, new levelselection.AllLevelsStrategy());
 		gameOverScene = new GameOverScene(this);
 		statisticsScene = new StatisticsScene(this);
+		skillSelectionScene = new SkillSelectionScene(this, playing);
 		tileManager = new TileManager();
 
 	}
@@ -232,6 +242,7 @@ public class  Game extends JFrame implements Runnable{
 			case EDIT:
 			case LOAD_GAME:
 			case NEW_GAME_LEVEL_SELECT:
+			case SKILL_SELECTION:
 				break;
 			case PLAYING:
 				if (playing != null) playing.update();
@@ -448,5 +459,9 @@ public class  Game extends JFrame implements Runnable{
 	public void repaintGameScreen() {
 		if (gamescreen != null)
 			gamescreen.repaint();
+	}
+
+	public SkillSelectionScene getSkillSelectionScene() {
+		return skillSelectionScene;
 	}
 }

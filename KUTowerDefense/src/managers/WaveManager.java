@@ -187,6 +187,13 @@ public class WaveManager {
         if (pendingWaveFinish) {
             if (areAllEnemiesGone()) {
                 pendingWaveFinish = false;
+                // Dalga bittiğinde faiz uygula
+                System.out.println("Wave complete - calling onWaveComplete");
+                if (playing.getController() != null) {
+                    playing.getController().getModel().onWaveComplete();
+                } else {
+                    System.out.println("Warning: Playing controller is null, cannot apply interest");
+                }
                 startInterWaveTimer();
             }
             // Don't proceed with other logic until this is resolved

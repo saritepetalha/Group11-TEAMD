@@ -1,7 +1,13 @@
 package objects;
 
 import constants.Constants;
+import constants.GameDimensions;
 import strategies.TargetingStrategy;
+import enemies.Enemy;
+import scenes.Playing;
+import skills.SkillTree;
+import skills.SkillType;
+import config.EnemyType;
 // import java.awt.image.BufferedImage; // No longer needed here
 
 public class MageTower extends Tower {
@@ -30,7 +36,13 @@ public class MageTower extends Tower {
 
     @Override
     public float getRange() {
-        return Constants.Towers.getRange(Constants.Towers.MAGE);
+        float baseRange = Constants.Towers.getRange(Constants.Towers.MAGE);
+        if (skills.SkillTree.getInstance().isSkillSelected(skills.SkillType.EAGLE_EYE)) {
+            float bonus = GameDimensions.TILE_DISPLAY_SIZE;
+            //System.out.println("[EAGLE_EYE] Mage tower applies bonus range: " + baseRange + " -> " + (baseRange + bonus));
+            baseRange += bonus;
+        }
+        return baseRange;
     }
 
     @Override
@@ -53,6 +65,20 @@ public class MageTower extends Tower {
             return new UpgradedMageTower(this);
         }
         return this; // Already upgraded
+    }
+
+    @Override
+    public void applyOnHitEffect(Enemy enemy, Playing playingScene) {
+        System.out.println("[DEBUG] MageTower.applyOnHitEffect called for enemy type: " + enemy.getEnemyTypeEnum());
+        int damage = getDamage();
+        EnemyType type = enemy.getEnemyTypeEnum();
+        if (SkillTree.getInstance().isSkillSelected(SkillType.MAGIC_PIERCING) &&
+            (type == EnemyType.KNIGHT || type == EnemyType.BARREL)) {
+            int bonusDamage = Math.round(damage * 1.2f);
+            System.out.println("[MAGIC_PIERCING] Mage tower applies bonus damage to armored enemy: " + damage + " -> " + bonusDamage);
+            damage = bonusDamage;
+        }
+        enemy.hurt(damage);
     }
 
     // public boolean isLevel2() { return isLevel2; } // No longer needed

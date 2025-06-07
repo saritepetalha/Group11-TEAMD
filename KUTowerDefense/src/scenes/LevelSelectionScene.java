@@ -1038,7 +1038,7 @@ public class LevelSelectionScene extends JPanel {
         hideDifficultyOverlay();
 
         game.startPlayingWithDifficulty(selectedLevelData, selectedOverlayData, selectedLevelName, difficulty);
-        game.changeGameState(GameStates.PLAYING);
+        game.changeGameState(GameStates.SKILL_SELECTION);
     }
 
     private void hideDifficultyOverlay() {
@@ -1071,7 +1071,7 @@ public class LevelSelectionScene extends JPanel {
         }
 
         game.startPlayingWithDifficulty(levelData, overlayData, levelName, "Normal");
-        game.changeGameState(GameStates.PLAYING);
+        game.changeGameState(GameStates.SKILL_SELECTION);
     }
 
     private void editLevel(String levelName, int[][] levelData) {
@@ -1248,5 +1248,10 @@ public class LevelSelectionScene extends JPanel {
             System.err.println("Error deleting level file " + levelName + ": " + e.getMessage());
             return false;
         }
+    }
+
+    private void startGame() {
+        // Instead of going directly to PLAYING, go to SKILL_SELECTION first
+        game.changeGameState(GameStates.SKILL_SELECTION);
     }
 }

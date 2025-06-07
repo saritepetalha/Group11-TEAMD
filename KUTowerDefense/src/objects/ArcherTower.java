@@ -1,7 +1,10 @@
 package objects;
 
 import constants.Constants;
+import constants.GameDimensions;
 import strategies.TargetingStrategy;
+import skills.SkillTree;
+import skills.SkillType;
 // import java.awt.image.BufferedImage; // No longer needed here
 
 public class ArcherTower extends Tower {
@@ -30,14 +33,24 @@ public class ArcherTower extends Tower {
 
     @Override
     public float getRange() {
-        // For level 1, return base range. Decorator will modify for level 2.
-        return Constants.Towers.getRange(Constants.Towers.ARCHER);
+        float baseRange = Constants.Towers.getRange(Constants.Towers.ARCHER);
+        if (SkillTree.getInstance().isSkillSelected(SkillType.EAGLE_EYE)) {
+            float bonus = GameDimensions.TILE_DISPLAY_SIZE;
+            //System.out.println("[EAGLE_EYE] Archer tower applies bonus range: " + baseRange + " -> " + (baseRange + bonus));
+            baseRange += bonus;
+        }
+        return baseRange;
     }
 
     @Override
     public int getDamage() {
-        // For level 1, return base damage. Decorator will modify for level 2.
-        return Constants.Towers.getStartDamage(Constants.Towers.ARCHER);
+        int baseDamage = Constants.Towers.getStartDamage(Constants.Towers.ARCHER);
+        if (SkillTree.getInstance().isSkillSelected(SkillType.SHARP_ARROW_TIPS)) {
+            int bonusDamage = Math.round(baseDamage * 1.10f);
+            //System.out.println("[SHARP_ARROW_TIPS] Archer tower applies bonus damage: " + baseDamage + " -> " + bonusDamage);
+            baseDamage = bonusDamage;
+        }
+        return baseDamage;
     }
 
     @Override

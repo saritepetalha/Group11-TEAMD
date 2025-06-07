@@ -92,6 +92,8 @@ public class PlayingController implements Observer {
         ProjectileManager projectileManager = new ProjectileManager(adapter);
         TreeInteractionManager treeInteractionManager = new TreeInteractionManager(adapter);
         FireAnimationManager fireAnimationManager = new FireAnimationManager();
+        
+        // WaveManager'ı PlayingAdapter ile oluştur
         WaveManager waveManager = new WaveManager(adapter, model.getGameOptions());
         
         // Now EnemyManager can properly access WeatherManager through adapter
@@ -828,8 +830,8 @@ public class PlayingController implements Observer {
      */
     private class PlayingAdapter extends Playing {
         public PlayingAdapter() {
-            // Use the safe constructor that doesn't create a controller
-            super(PlayingController.this.game, true); // true = isAdapter flag
+            super(PlayingController.this.game, true); // isAdapter=true
+            setController(PlayingController.this); // Set the controller using the setter method
         }
 
         @Override

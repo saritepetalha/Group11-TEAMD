@@ -2,6 +2,7 @@ package objects;
 
 import helpMethods.LoadSave;
 import java.awt.image.BufferedImage;
+import constants.GameDimensions;
 
 public class UpgradedArtilleryTower extends TowerDecorator {
     private BufferedImage sprite;
@@ -14,8 +15,13 @@ public class UpgradedArtilleryTower extends TowerDecorator {
 
     @Override
     public float getRange() {
-        // 20% larger range.
-        return decoratedTower.getRange() * 1.2f;
+        float baseRange = decoratedTower.getRange() * 1.2f;
+        if (skills.SkillTree.getInstance().isSkillSelected(skills.SkillType.EAGLE_EYE)) {
+            float bonus = GameDimensions.TILE_DISPLAY_SIZE;
+            System.out.println("[EAGLE_EYE] Upgraded Artillery tower applies bonus range: " + baseRange + " -> " + (baseRange + bonus));
+            baseRange += bonus;
+        }
+        return baseRange;
     }
 
     @Override

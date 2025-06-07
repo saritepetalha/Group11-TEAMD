@@ -184,7 +184,7 @@ public abstract class Enemy {
      * Converts the enemy's integer type to the corresponding EnemyType enum
      * @return The EnemyType enum value, or null if not found
      */
-    protected EnemyType getEnemyTypeEnum() {
+    public EnemyType getEnemyTypeEnum() {
         try {
             switch (enemyType) {
                 case GOBLIN:
@@ -550,7 +550,7 @@ public abstract class Enemy {
     }
 
     public void draw(Graphics2D g2d) {
-        System.out.println("Drawing enemy ID: " + id);
+        //System.out.println("Drawing enemy ID: " + id);
         // Draw the enemy sprite using the current animation frame
         BufferedImage sprite = getSpriteFrame(animationIndex);
         if (sprite != null) {

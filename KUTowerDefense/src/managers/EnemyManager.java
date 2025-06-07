@@ -36,6 +36,8 @@ import scenes.Playing;
 import constants.Constants;
 import pathfinding.RoadNetworkPathfinder;
 import pathfinding.TileConnectivity;
+import skills.SkillTree;
+import skills.SkillType;
 
 public class EnemyManager {
     private Playing playing;
@@ -260,6 +262,10 @@ public class EnemyManager {
         for (Enemy e : enemiesCopy) {
             if (!e.isAlive()) {
                 playing.getPlayerManager().addGold(e.getGoldReward());
+                // Plunderer bonus: Eğer skill seçiliyse +1 altın ver
+                if (SkillTree.getInstance().isSkillSelected(SkillType.PLUNDERER_BONUS)) {
+                    playing.getPlayerManager().addGold(1);
+                }
                 playing.updateUIResources();
                 System.out.println("Enemy " + e.getId() + " killed. + " + e.getGoldReward() + " gold!");
                 // 50% chance to spawn a gold bag
@@ -568,7 +574,7 @@ public class EnemyManager {
     }
 
     private void drawEnemy(Enemy enemy, Graphics g) {
-        System.out.println("Drawing enemy ID: " + enemy.getId());
+        //System.out.println("Drawing enemy ID: " + enemy.getId());
         // Calculate base index based on enemy type and get animation frame
         int baseIndex;
 
