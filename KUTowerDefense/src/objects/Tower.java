@@ -19,7 +19,7 @@ public abstract class Tower {
     // Tower condition system
     protected int usageCount = 0;
     protected float condition = 100.0f; // 100% is perfect condition
-    protected static final int MAX_USAGE_BEFORE_DEGRADATION = 1; // Number of attacks before condition starts degrading
+    protected static final int MAX_USAGE_BEFORE_DEGRADATION = 50; // Number of attacks before condition starts degrading
     protected static final float MIN_CONDITION = 20.0f; // Minimum condition before repair is required
     protected static final float CONDITION_DAMAGE_MULTIPLIER = 0.5f; // How much condition affects damage
     protected static final float CONDITION_RANGE_MULTIPLIER = 0.3f; // How much condition affects range
@@ -58,6 +58,9 @@ public abstract class Tower {
     public java.util.List<Debris> debrisList = null;
     public long debrisStartTime = 0;
     public static final int DEBRIS_DURATION_MS = 500;
+
+    private boolean boostActive = false;
+    private long boostEndTime = 0;
 
     public abstract int getType();
 
@@ -286,5 +289,14 @@ public abstract class Tower {
         int maxDistance = Math.max(deltaX, deltaY); // Chebyshev distance (allows diagonal)
 
         return maxDistance <= MAX_SPAWN_DISTANCE_TILES;
+    }
+
+    public void activateBoost() {
+        boostActive = true;
+        boostEndTime = System.currentTimeMillis() + 40000; // 40 seconds
+    }
+
+    public boolean isBoostActive() {
+        return boostActive && System.currentTimeMillis() < boostEndTime;
     }
 }

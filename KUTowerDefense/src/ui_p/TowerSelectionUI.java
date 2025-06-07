@@ -28,6 +28,7 @@ public class TowerSelectionUI {
     private TheButton spawnButton;
     private TheButton lightUpgradeButton;
     private TheButton repairButton;
+    private TheButton boostButton;
     private CostTooltip tooltip;
 
     // UI positioning
@@ -42,6 +43,8 @@ public class TowerSelectionUI {
 
     // Range indicator effects
     private long animationStartTime = System.currentTimeMillis();
+
+    private static final int BOOST_COST = 50;
 
     public TowerSelectionUI(Playing playing) {
         this.playing = playing;
@@ -67,7 +70,7 @@ public class TowerSelectionUI {
     private void createButtons() {
         if (selectedTower == null) return;
 
-        int buttonX = selectedTower.getX() + selectedTower.getWidth() + 10;
+        int buttonX = selectedTower.getX() + selectedTower.getWidth() + 10; // Right side for other buttons
         int buttonY = selectedTower.getY();
 
         // Create upgrade button if tower is upgradeable
@@ -97,6 +100,10 @@ public class TowerSelectionUI {
             lightUpgradeButton = new TheButton("Light", buttonX, buttonY, BUTTON_WIDTH, BUTTON_HEIGHT, null);
         }
 
+        // Create boost button on the left side
+        int boostButtonX = selectedTower.getX() - BUTTON_WIDTH - 10; // Left side for boost button
+        boostButton = new TheButton("Boost", boostButtonX, selectedTower.getY(), BUTTON_WIDTH, BUTTON_HEIGHT, null);
+
         reviveButton = null;
     }
 
@@ -110,6 +117,7 @@ public class TowerSelectionUI {
         spawnButton = null;
         lightUpgradeButton = null;
         repairButton = null;
+        boostButton = null;
         selectedTower = null;
     }
 
@@ -168,6 +176,9 @@ public class TowerSelectionUI {
         // Draw enhanced range indicator
         drawEnhancedRangeIndicator(g2d);
 
+        // Draw tower glow
+        drawTowerGlow(g2d);
+
         // Draw buttons
         if (selectedTower.isDestroyed() && reviveButton != null) {
             drawReviveButton(g2d);
@@ -186,6 +197,9 @@ public class TowerSelectionUI {
             }
             if (lightUpgradeButton != null) {
                 drawLightUpgradeButton(g2d);
+            }
+            if (boostButton != null) {
+                drawBoostButton(g2d);
             }
         }
         
@@ -209,6 +223,11 @@ public class TowerSelectionUI {
         // Apply weather effects to range display
         if (playing.getWeatherManager().isRaining()) {
             effectiveRange *= playing.getWeatherManager().getTowerRangeMultiplier();
+        }
+
+        // If boost is active, double the range
+        if (selectedTower.isBoostActive()) {
+            effectiveRange *= 2;
         }
 
         // Add a small buffer to account for enemy size
@@ -690,6 +709,20 @@ public class TowerSelectionUI {
         g2d.drawString(text, textX, textY);
     }
 
+    private void drawBoostButton(Graphics2D g2d) {
+        boolean isBoostActive = selectedTower.isBoostActive();
+        boolean isHovered = boostButton.isMouseOver();
+        g2d.setColor(isBoostActive ? new Color(100, 100, 100) : (isHovered ? new Color(80, 80, 80) : new Color(60, 60, 60)));
+        g2d.fillRect(boostButton.getX(), boostButton.getY(), boostButton.getWidth(), boostButton.getHeight());
+        g2d.setColor(isBoostActive ? new Color(180, 180, 180) : (isHovered ? new Color(200, 200, 200) : Color.WHITE));
+        g2d.setFont(new Font("Monospaced", Font.BOLD, 10));
+        String text = isBoostActive ? "Boosted" : "Boost";
+        FontMetrics fm = g2d.getFontMetrics();
+        int textX = boostButton.getX() + (boostButton.getWidth() - fm.stringWidth(text)) / 2;
+        int textY = boostButton.getY() + (boostButton.getHeight() + fm.getAscent()) / 2;
+        g2d.drawString(text, textX, textY);
+    }
+
     /**
      * Handles mouse movement for button hover detection and tooltips
      */
@@ -856,6 +889,18 @@ public class TowerSelectionUI {
             return true;
         }
 
+        if (boostButton != null && boostButton.getBounds().contains(mouseX, mouseY)) {
+            System.out.println("Boost button clicked.");
+            if (playing.getPlayerManager().getGold() >= BOOST_COST) {
+                System.out.println("Player has enough gold to activate boost.");
+                playing.getPlayerManager().spendGold(BOOST_COST);
+                selectedTower.activateBoost();
+            } else {
+                System.out.println("Player does not have enough gold to activate boost.");
+            }
+            return true;
+        }
+
         return false;
     }
 
@@ -984,5 +1029,15 @@ public class TowerSelectionUI {
         float condition = tower.getCondition();
         float damageMultiplier = 1.0f + (1.0f - (condition / 100.0f));
         return (int)(baseCost * damageMultiplier);
+    }
+
+    private void drawTowerGlow(Graphics2D g2d) {
+        if (selectedTower.isBoostActive()) {
+            int centerX = selectedTower.getX() + selectedTower.getWidth() / 2;
+            int centerY = selectedTower.getY() + selectedTower.getHeight() / 2;
+            int glowRadius = 30;
+            g2d.setColor(new Color(255, 255, 0, 100)); // Yellow glow
+            g2d.fillOval(centerX - glowRadius, centerY - glowRadius, glowRadius * 2, glowRadius * 2);
+        }
     }
 } 
