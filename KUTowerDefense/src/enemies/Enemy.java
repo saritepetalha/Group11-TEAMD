@@ -270,7 +270,6 @@ public abstract class Enemy {
     public int getHealth() { return health; }
     public void setHealth(int health) { this.health = health; }
     public boolean isAlive() { return alive; }
-    public void setAlive(boolean alive) { this.alive = alive; }
     public int getEnemyType() { return enemyType; }
     public float getSpeed() { return speed; }
     public boolean hasReachedEnd() { return reachedEnd; }
@@ -474,18 +473,6 @@ public abstract class Enemy {
         }
     }
 
-
-    public boolean hasCombatSynergy() {
-        return hasCombatSynergy;
-    }
-
-    public boolean isInvisible() {
-        return invisible;
-    }
-
-    public void setInvisible(boolean invisible) {
-        this.invisible = invisible;
-    }
 
     public void draw(Graphics2D g2d) {
         //System.out.println("Drawing enemy ID: " + id);
