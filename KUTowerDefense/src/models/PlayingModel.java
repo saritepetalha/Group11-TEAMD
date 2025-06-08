@@ -16,6 +16,7 @@ import managers.*;
 import objects.*;
 import skills.SkillTree;
 import stats.GameStatsRecord;
+import ui_p.ConfettiAnimation;
 import ui_p.DeadTree;
 import ui_p.LiveTree;
 import ui_p.MineableStone;
@@ -23,7 +24,7 @@ import ui_p.MineableStone;
 /**
  * PlayingModel - Contains all game state data and business logic
  * Part of the MVC architecture for the Playing scene
- * 
+ *
  * Responsibilities:
  * - Manage game state (paused, speed, victory/defeat conditions)
  * - Manage game resources and statistics
@@ -32,7 +33,7 @@ import ui_p.MineableStone;
  */
 @SuppressWarnings("deprecation")
 public class PlayingModel extends Observable implements GameContext {
-    
+
     // Core game state
     private boolean gamePaused = false;
     private boolean gameSpeedIncreased = false;
@@ -40,7 +41,7 @@ public class PlayingModel extends Observable implements GameContext {
     private float gameSpeedMultiplier = 1.0f;
     private boolean gameOverHandled = false;
     private boolean victoryHandled = false;
-    
+
     // Map data
     private int[][] level;
     private int[][] overlay;
@@ -48,10 +49,10 @@ public class PlayingModel extends Observable implements GameContext {
     private int[][] originalOverlayData;
     private String currentMapName = "defaultlevel";
     private String currentDifficulty = "Normal";
-    
+
     // Game options and configuration
     private GameOptions gameOptions;
-    
+
     // Game statistics
     private int totalEnemiesSpawned = 0;
     private int enemiesReachedEnd = 0;
@@ -60,11 +61,11 @@ public class PlayingModel extends Observable implements GameContext {
     private int timePlayedInSeconds = 0;
     private int updateCounter = 0;
     private long gameTimeMillis = 0;
-    
+
     // Castle health
     private int castleMaxHealth;
     private int castleCurrentHealth;
-    
+
     // Game entities (these will be managed by the controllers)
     private List<DeadTree> deadTrees;
     private List<LiveTree> liveTrees;
@@ -72,7 +73,12 @@ public class PlayingModel extends Observable implements GameContext {
     private Tower displayedTower;
     private DeadTree selectedDeadTree;
     private Warrior pendingWarriorPlacement = null;
-    
+
+    // if no enemy is dead, but still victory, blow the confetti at the center of game screen
+    private ui_p.ConfettiAnimation victoryConfetti = null;
+    private int lastEnemyDeathX = GameDimensions.GAME_WIDTH/2;
+    private int lastEnemyDeathY = GameDimensions.GAME_HEIGHT/2;
+
     // Manager references (to be injected by controller)
     private WaveManager waveManager;
     private TowerManager towerManager;
@@ -87,10 +93,10 @@ public class PlayingModel extends Observable implements GameContext {
     private TreeInteractionManager treeInteractionManager;
     private GameStateManager gameStateManager;
     private StoneMiningManager stoneMiningManager;
-    
+
     // Initialization flag
     private boolean isFirstReset = true;
-    
+
     public PlayingModel() {
         this.tileManager = new TileManager();
         this.gameOptions = loadOptionsOrDefault();
@@ -101,7 +107,7 @@ public class PlayingModel extends Observable implements GameContext {
         // Initialize stone mining manager
         stoneMiningManager = StoneMiningManager.getInstance(this);
     }
-    
+
     public PlayingModel(TileManager tileManager) {
         this.tileManager = tileManager;
         this.gameOptions = loadOptionsOrDefault();
@@ -109,7 +115,7 @@ public class PlayingModel extends Observable implements GameContext {
         loadDefaultLevel();
         // Managers will be initialized by the controller
     }
-    
+
     public PlayingModel(TileManager tileManager, int[][] customLevel, int[][] customOverlay) {
         this.tileManager = tileManager;
         this.level = customLevel;
@@ -120,7 +126,7 @@ public class PlayingModel extends Observable implements GameContext {
         this.gameStateManager = new GameStateManager();
         // Managers will be initialized by the controller
     }
-    
+
     private GameOptions loadOptionsOrDefault() {
         GameOptions loadedOptions = OptionsIO.load();
         if (loadedOptions == null) {
@@ -130,7 +136,7 @@ public class PlayingModel extends Observable implements GameContext {
         System.out.println("PlayingModel: Successfully loaded GameOptions.");
         return loadedOptions;
     }
-    
+
     private void loadDefaultLevel() {
         int[][] lvl = LoadSave.getLevelData("defaultlevel");
         if (lvl == null) {
@@ -155,7 +161,7 @@ public class PlayingModel extends Observable implements GameContext {
         overlay[4][15] = 2;
         this.originalOverlayData = deepCopy2DArray(this.overlay);
     }
-    
+
     private int[][] deepCopy2DArray(int[][] source) {
         if (source == null) return null;
         int[][] destination = new int[source.length][];
@@ -166,15 +172,15 @@ public class PlayingModel extends Observable implements GameContext {
         }
         return destination;
     }
-    
+
     /**
      * Initialize managers - called by the controller
      */
     public void initializeManagers(WaveManager waveManager, TowerManager towerManager,
-                                 PlayerManager playerManager, ProjectileManager projectileManager,
-                                 EnemyManager enemyManager, UltiManager ultiManager,
-                                 WeatherManager weatherManager, FireAnimationManager fireAnimationManager,
-                                 GoldBagManager goldBagManager, TreeInteractionManager treeInteractionManager) {
+                                   PlayerManager playerManager, ProjectileManager projectileManager,
+                                   EnemyManager enemyManager, UltiManager ultiManager,
+                                   WeatherManager weatherManager, FireAnimationManager fireAnimationManager,
+                                   GoldBagManager goldBagManager, TreeInteractionManager treeInteractionManager) {
         this.waveManager = waveManager;
         this.towerManager = towerManager;
         this.playerManager = playerManager;
@@ -185,10 +191,10 @@ public class PlayingModel extends Observable implements GameContext {
         this.fireAnimationManager = fireAnimationManager;
         this.goldBagManager = goldBagManager;
         this.treeInteractionManager = treeInteractionManager;
-        
+
         this.castleMaxHealth = calculateCastleMaxHealth();
         this.castleCurrentHealth = castleMaxHealth;
-        
+
         // Initialize tree lists
         if (towerManager != null) {
             if (towerManager.findDeadTrees(level) != null)
@@ -196,11 +202,11 @@ public class PlayingModel extends Observable implements GameContext {
             if (towerManager.findLiveTrees(level) != null)
                 liveTrees = towerManager.findLiveTrees(level);
         }
-        
+
         setChanged();
         notifyObservers("managersInitialized");
     }
-    
+
     /**
      * Main game update method - called every frame by controller
      */
@@ -211,12 +217,12 @@ public class PlayingModel extends Observable implements GameContext {
         setChanged();
         notifyObservers("gameUpdated");
     }
-    
+
     private boolean managersInitialized() {
-        return waveManager != null && enemyManager != null && towerManager != null && 
-               playerManager != null && projectileManager != null;
+        return waveManager != null && enemyManager != null && towerManager != null &&
+                playerManager != null && projectileManager != null;
     }
-    
+
     private void updateGame() {
         long delta = (long)(16 * gameSpeedMultiplier);
         gameTimeMillis += delta;
@@ -237,8 +243,14 @@ public class PlayingModel extends Observable implements GameContext {
             if (waveManager.isThereMoreWaves()) {
                 // Just let WaveManager handle the wave timing and progression
             } else if (waveManager.isAllWavesFinished()) {
-                // Only trigger victory if all waves are processed and finished
-                handleVictory();
+                // Last wave completed, all enemies dead - trigger confetti first if not already triggered
+                if (victoryConfetti == null) {
+                    triggerVictoryConfetti();
+                }
+                // Then handle victory after confetti is finished
+                if (victoryConfetti != null && victoryConfetti.isFinished()) {
+                    handleVictory();
+                }
             }
         }
 
@@ -256,19 +268,24 @@ public class PlayingModel extends Observable implements GameContext {
             stoneMiningManager.update();
         }
 
+        // Update victory confetti animation
+        if (victoryConfetti != null) {
+            victoryConfetti.update();
+        }
+
         updateCounter++;
         if (updateCounter >= 60) {
             timePlayedInSeconds++;
             updateCounter = 0;
         }
-        
+
         setChanged();
         notifyObservers("resourcesUpdated");
     }
-    
+
     private boolean isAllEnemiesDead() {
         if (waveManager == null || enemyManager == null) return false;
-        
+
         // Check if the current wave is finished according to WaveManager
         boolean waveFinished = waveManager.isWaveFinished();
 
@@ -290,7 +307,7 @@ public class PlayingModel extends Observable implements GameContext {
 
         return false; // Current wave is not yet finished
     }
-    
+
     private void handleVictory() {
         // Prevent multiple calls to handleVictory
         if (victoryHandled || !waveManager.isAllWavesFinished() || !playerManager.isAlive()) return;
@@ -305,11 +322,11 @@ public class PlayingModel extends Observable implements GameContext {
 
         // play the specific victory sound
         AudioManager.getInstance().playSound("win4");
-        
+
         setChanged();
         notifyObservers("victory");
     }
-    
+
     private void handleGameOver() {
         // Prevent multiple calls to handleGameOver
         if (gameOverHandled) return;
@@ -327,25 +344,25 @@ public class PlayingModel extends Observable implements GameContext {
 
         // stop any ongoing waves/spawning
         if (enemyManager != null) enemyManager.getEnemies().clear();
-        
+
         setChanged();
         notifyObservers("gameOver");
     }
-    
+
     // Game state control methods
     public void togglePause() {
         gamePaused = !gamePaused;
         setChanged();
         notifyObservers("pauseToggled");
     }
-    
+
     public void toggleFastForward() {
         gameSpeedIncreased = !gameSpeedIncreased;
         gameSpeedMultiplier = gameSpeedIncreased ? 2.0f : 1.0f;
         setChanged();
         notifyObservers("speedToggled");
     }
-    
+
     public void toggleOptionsMenu() {
         optionsMenuOpen = !optionsMenuOpen;
         if (optionsMenuOpen) {
@@ -354,45 +371,62 @@ public class PlayingModel extends Observable implements GameContext {
         setChanged();
         notifyObservers("optionsToggled");
     }
-    
+
     private int calculateCastleMaxHealth() {
         if (waveManager != null) {
             return waveManager.getWaveCount() * 100;
         }
         return 500; // Default value
     }
-    
+
     // GameContext interface implementation
     @Override
     public EnemyManager getEnemyManager() { return enemyManager; }
-    
+
     @Override
     public WeatherManager getWeatherManager() { return weatherManager; }
-    
+
     @Override
     public PlayerManager getPlayerManager() { return playerManager; }
-    
+
     @Override
     public TowerManager getTowerManager() { return towerManager; }
-    
+
     @Override
     public GoldBagManager getGoldBagManager() { return goldBagManager; }
-    
+
     @Override
     public UltiManager getUltiManager() { return ultiManager; }
-    
+
     @Override
     public void incrementEnemyDefeated() {
         enemyDefeated++;
         setChanged();
         notifyObservers("enemyDefeated");
     }
-    
+
+    /**
+     * Called when an enemy dies - tracks location for potential confetti
+     */
+    public void enemyDiedAt(int x, int y) {
+        incrementEnemyDefeated();
+        // Always update last death location (the final one will be used for confetti)
+        lastEnemyDeathX = x;
+        lastEnemyDeathY = y;
+    }
+
+    /**
+     * Triggers the victory confetti animation at the last enemy death location
+     */
+    private void triggerVictoryConfetti() {
+        victoryConfetti = new ui_p.ConfettiAnimation(lastEnemyDeathX, lastEnemyDeathY);
+    }
+
     @Override
     public void addTotalDamage(int damage) {
         totalDamage += damage;
     }
-    
+
     @Override
     public void enemyReachedEnd(Enemy enemy) {
         System.out.println("Enemy reached end: " + enemy.getId());
@@ -406,11 +440,11 @@ public class PlayingModel extends Observable implements GameContext {
                 handleGameOver();
             }
         }
-        
+
         setChanged();
         notifyObservers("enemyReachedEnd");
     }
-    
+
     @Override
     public void spawnEnemy(int enemyType) {
         if (enemyType != -1 && enemyManager != null) {
@@ -421,37 +455,37 @@ public class PlayingModel extends Observable implements GameContext {
             System.out.println("Invalid enemy type (-1) received, skipping spawn");
         }
     }
-    
+
     @Override
     public boolean isGamePaused() { return gamePaused; }
-    
+
     @Override
     public float getGameSpeedMultiplier() { return gameSpeedMultiplier; }
-    
+
     @Override
     public long getGameTime() { return gameTimeMillis; }
-    
+
     @Override
     public int[][] getLevel() { return level; }
-    
+
     @Override
     public int[][] getOverlay() { return overlay; }
-    
+
     // Basic getters and setters
     public boolean isGameSpeedIncreased() { return gameSpeedIncreased; }
     public boolean isOptionsMenuOpen() { return optionsMenuOpen; }
     public boolean isGameOverHandled() { return gameOverHandled; }
     public boolean isVictoryHandled() { return victoryHandled; }
-    
+
     public String getCurrentMapName() { return currentMapName; }
     public String getCurrentDifficulty() { return currentDifficulty; }
-    
-    public void setCurrentMapName(String mapName) { 
+
+    public void setCurrentMapName(String mapName) {
         this.currentMapName = mapName;
         setChanged();
         notifyObservers("mapNameChanged");
     }
-    
+
     public void setCurrentDifficulty(String difficulty) {
         if (difficulty == null) {
             this.currentDifficulty = "Normal";
@@ -471,7 +505,7 @@ public class PlayingModel extends Observable implements GameContext {
         setChanged();
         notifyObservers("difficultyChanged");
     }
-    
+
     // Manager getters
     public WaveManager getWaveManager() { return waveManager; }
     public TileManager getTileManager() { return tileManager; }
@@ -479,54 +513,54 @@ public class PlayingModel extends Observable implements GameContext {
     public FireAnimationManager getFireAnimationManager() { return fireAnimationManager; }
     public TreeInteractionManager getTreeInteractionManager() { return treeInteractionManager; }
     public GameStateManager getGameStateManager() { return gameStateManager; }
-    
+
     // Statistics getters
     public int getTotalEnemiesSpawned() { return totalEnemiesSpawned; }
     public int getEnemiesReachedEnd() { return enemiesReachedEnd; }
     public int getEnemyDefeated() { return enemyDefeated; }
     public int getTotalDamage() { return totalDamage; }
     public int getTimePlayedInSeconds() { return timePlayedInSeconds; }
-    
+
     // Entity getters
     public List<DeadTree> getDeadTrees() { return deadTrees; }
     public List<LiveTree> getLiveTrees() { return liveTrees; }
     public Tower getDisplayedTower() { return displayedTower; }
     public DeadTree getSelectedDeadTree() { return selectedDeadTree; }
     public Warrior getPendingWarriorPlacement() { return pendingWarriorPlacement; }
-    
-    public void setDisplayedTower(Tower tower) { 
+
+    public void setDisplayedTower(Tower tower) {
         this.displayedTower = tower;
         setChanged();
         notifyObservers("towerSelected");
     }
-    
-    public void setSelectedDeadTree(DeadTree deadTree) { 
+
+    public void setSelectedDeadTree(DeadTree deadTree) {
         this.selectedDeadTree = deadTree;
         setChanged();
         notifyObservers("deadTreeSelected");
     }
-    
+
     public void setWeatherManager(WeatherManager weatherManager) {
         this.weatherManager = weatherManager;
         setChanged();
         notifyObservers("weatherManagerSet");
     }
-    
+
     public GameOptions getGameOptions() {
         return gameOptions;
     }
-    
+
     public String getWaveStatus() {
         if (waveManager == null) return "Loading...";
         int currentWave = waveManager.getWaveIndex() + 1;
         String stateInfo = waveManager.getCurrentStateInfo();
         return "Wave " + currentWave + "\n" + stateInfo;
     }
-    
+
     public boolean isAllWavesFinished() {
         return waveManager != null && waveManager.isAllWavesFinished();
     }
-    
+
     public void reloadGameOptions() {
         try {
             // Load fresh options
@@ -544,7 +578,7 @@ public class PlayingModel extends Observable implements GameContext {
             e.printStackTrace();
         }
     }
-    
+
     public GameStatsRecord createGameStatsRecord(boolean victory) {
         return new GameStatsRecord(
                 currentMapName, victory,
@@ -557,15 +591,15 @@ public class PlayingModel extends Observable implements GameContext {
                 timePlayedInSeconds
         );
     }
-    
-    public void setPendingWarriorPlacement(Warrior warrior) { 
+
+    public void setPendingWarriorPlacement(Warrior warrior) {
         this.pendingWarriorPlacement = warrior;
         setChanged();
         notifyObservers("pendingWarriorPlacement");
     }
-    
+
     // ================ GAME STATE MANAGEMENT ================
-    
+
     /**
      * Save the current game state to a file
      * @param filename The name of the save file
@@ -579,7 +613,7 @@ public class PlayingModel extends Observable implements GameContext {
             if (!saveDir.exists()) {
                 saveDir.mkdirs();
             }
-            
+
             java.io.File saveFile = new java.io.File(saveDir, filename + ".save");
             try (java.io.ObjectOutputStream oos = new java.io.ObjectOutputStream(
                     new java.io.FileOutputStream(saveFile))) {
@@ -593,7 +627,7 @@ public class PlayingModel extends Observable implements GameContext {
             return false;
         }
     }
-    
+
     /**
      * Load a game state from a file
      * @param filename The name of the save file
@@ -606,7 +640,7 @@ public class PlayingModel extends Observable implements GameContext {
                 System.err.println("Save file not found: " + saveFile.getAbsolutePath());
                 return false;
             }
-            
+
             try (java.io.ObjectInputStream ois = new java.io.ObjectInputStream(
                     new java.io.FileInputStream(saveFile))) {
                 GameSaveData saveData = (GameSaveData) ois.readObject();
@@ -622,7 +656,7 @@ public class PlayingModel extends Observable implements GameContext {
             return false;
         }
     }
-    
+
     /**
      * Reset the game state to initial conditions
      */
@@ -632,7 +666,7 @@ public class PlayingModel extends Observable implements GameContext {
             this.gameOptions = loadOptionsOrDefault();
             System.out.println("=== RESET GAME STATE DEBUG ===");
             System.out.println("Reloaded GameOptions. Starting gold: " + gameOptions.getStartingGold());
-            
+
             // Reset game state flags
             gamePaused = false;
             gameSpeedIncreased = false;
@@ -640,7 +674,7 @@ public class PlayingModel extends Observable implements GameContext {
             gameSpeedMultiplier = 1.0f;
             gameOverHandled = false;
             victoryHandled = false;
-            
+
             // Reset statistics
             totalEnemiesSpawned = 0;
             enemiesReachedEnd = 0;
@@ -649,10 +683,10 @@ public class PlayingModel extends Observable implements GameContext {
             timePlayedInSeconds = 0;
             updateCounter = 0;
             gameTimeMillis = 0;
-            
+
             // Reset castle health
             castleCurrentHealth = castleMaxHealth;
-            
+
             // Reset level data to original state
             if (originalLevelData != null) {
                 level = deepCopy2DArray(originalLevelData);
@@ -660,12 +694,12 @@ public class PlayingModel extends Observable implements GameContext {
             if (originalOverlayData != null) {
                 overlay = deepCopy2DArray(originalOverlayData);
             }
-            
+
             // Reset UI selections
             displayedTower = null;
             selectedDeadTree = null;
             pendingWarriorPlacement = null;
-            
+
             // Reset managers if they exist
             if (managersInitialized()) {
                 // Reset player manager resources
@@ -673,15 +707,15 @@ public class PlayingModel extends Observable implements GameContext {
                     int startingGold = (gameOptions != null) ? gameOptions.getStartingGold() : 100;
                     int startingHealth = (gameOptions != null) ? gameOptions.getStartingPlayerHP() : castleMaxHealth;
                     int startingShield = (gameOptions != null) ? gameOptions.getStartingShield() : castleMaxHealth;
-                    
+
                     playerManager.setGold(startingGold);
                     playerManager.setHealth(startingHealth);
                     playerManager.setShield(startingShield);
-                    
-                    System.out.println("Reset player values to difficulty settings: Gold=" + startingGold + 
-                                     ", Health=" + startingHealth + ", Shield=" + startingShield);
+
+                    System.out.println("Reset player values to difficulty settings: Gold=" + startingGold +
+                            ", Health=" + startingHealth + ", Shield=" + startingShield);
                 }
-                
+
                 // Clear manager states
                 if (enemyManager != null) {
                     enemyManager.clearEnemies();
@@ -709,40 +743,40 @@ public class PlayingModel extends Observable implements GameContext {
                         // Method doesn't exist, skip
                     }
                 }
-                
+
                 // Reinitialize trees from reset level
                 if (towerManager != null) {
                     deadTrees = towerManager.findDeadTrees(level);
                     liveTrees = towerManager.findLiveTrees(level);
                 }
             }
-            
+
             // Ekonomi skilleri için başlangıç bonusunu uygula
             initializeGame();
-            
+
             setChanged();
             notifyObservers("gameStateReset");
-            
+
             System.out.println("Game state reset successfully");
         } catch (Exception e) {
             System.err.println("Failed to reset game state: " + e.getMessage());
             e.printStackTrace();
         }
     }
-    
+
     /**
      * Create a GameSaveData object representing the current game state
      */
     private GameSaveData createGameSaveData() {
         GameSaveData saveData = new GameSaveData();
-        
+
         // Core game state
         saveData.setGamePaused(gamePaused);
         saveData.setGameSpeedIncreased(gameSpeedIncreased);
         saveData.setGameSpeedMultiplier(gameSpeedMultiplier);
         saveData.setCurrentMapName(currentMapName);
         saveData.setCurrentDifficulty(currentDifficulty);
-        
+
         // Game statistics
         saveData.setTotalEnemiesSpawned(totalEnemiesSpawned);
         saveData.setEnemiesReachedEnd(enemiesReachedEnd);
@@ -750,50 +784,50 @@ public class PlayingModel extends Observable implements GameContext {
         saveData.setTotalDamage(totalDamage);
         saveData.setTimePlayedInSeconds(timePlayedInSeconds);
         saveData.setGameTimeMillis(gameTimeMillis);
-        
+
         // Castle health
         saveData.setCastleMaxHealth(castleMaxHealth);
         saveData.setCastleCurrentHealth(castleCurrentHealth);
-        
+
         // Level data
         saveData.setLevel(deepCopy2DArray(level));
         saveData.setOverlay(deepCopy2DArray(overlay));
-        
+
         // Manager states (if managers are available) - basic version
         if (managersInitialized()) {
             // Save only basic state information
             saveData.setPlayerData(createPlayerSaveData());
             saveData.setWaveData(createWaveSaveData());
         }
-        
+
         return saveData;
     }
-    
+
     /**
      * Create simple player save data
      */
     private Object createPlayerSaveData() {
         if (playerManager == null) return null;
-        
+
         java.util.Map<String, Object> playerData = new java.util.HashMap<>();
         playerData.put("gold", playerManager.getGold());
         playerData.put("health", playerManager.getHealth());
         playerData.put("shield", playerManager.getShield());
         return playerData;
     }
-    
+
     /**
      * Create simple wave save data
      */
     private Object createWaveSaveData() {
         if (waveManager == null) return null;
-        
+
         java.util.Map<String, Object> waveData = new java.util.HashMap<>();
         waveData.put("currentWaveIndex", waveManager.getWaveIndex());
         // Note: Additional wave state can be added when methods are available
         return waveData;
     }
-    
+
     /**
      * Apply loaded game state data to the current game
      */
@@ -804,7 +838,7 @@ public class PlayingModel extends Observable implements GameContext {
         gameSpeedMultiplier = saveData.getGameSpeedMultiplier();
         currentMapName = saveData.getCurrentMapName();
         currentDifficulty = saveData.getCurrentDifficulty();
-        
+
         // Game statistics
         totalEnemiesSpawned = saveData.getTotalEnemiesSpawned();
         enemiesReachedEnd = saveData.getEnemiesReachedEnd();
@@ -812,11 +846,11 @@ public class PlayingModel extends Observable implements GameContext {
         totalDamage = saveData.getTotalDamage();
         timePlayedInSeconds = saveData.getTimePlayedInSeconds();
         gameTimeMillis = saveData.getGameTimeMillis();
-        
+
         // Castle health
         castleMaxHealth = saveData.getCastleMaxHealth();
         castleCurrentHealth = saveData.getCastleCurrentHealth();
-        
+
         // Level data
         if (saveData.getLevel() != null) {
             level = deepCopy2DArray(saveData.getLevel());
@@ -824,8 +858,8 @@ public class PlayingModel extends Observable implements GameContext {
         if (saveData.getOverlay() != null) {
             overlay = deepCopy2DArray(saveData.getOverlay());
         }
-        
-        // Apply manager states (if managers are available) - basic version  
+
+        // Apply manager states (if managers are available) - basic version
         if (managersInitialized()) {
             if (saveData.getPlayerData() != null) {
                 applyPlayerSaveData(saveData.getPlayerData());
@@ -835,14 +869,14 @@ public class PlayingModel extends Observable implements GameContext {
             }
         }
     }
-    
+
     /**
      * Apply player save data
      */
     @SuppressWarnings("unchecked")
     private void applyPlayerSaveData(Object playerDataObj) {
         if (playerManager == null || playerDataObj == null) return;
-        
+
         try {
             java.util.Map<String, Object> playerData = (java.util.Map<String, Object>) playerDataObj;
             if (playerData.containsKey("gold")) {
@@ -858,14 +892,14 @@ public class PlayingModel extends Observable implements GameContext {
             System.err.println("Failed to apply player save data: " + e.getMessage());
         }
     }
-    
+
     /**
-     * Apply wave save data  
+     * Apply wave save data
      */
     @SuppressWarnings("unchecked")
     private void applyWaveSaveData(Object waveDataObj) {
         if (waveManager == null || waveDataObj == null) return;
-        
+
         try {
             java.util.Map<String, Object> waveData = (java.util.Map<String, Object>) waveDataObj;
             // Wave manager state restoration can be implemented based on available methods
@@ -875,9 +909,9 @@ public class PlayingModel extends Observable implements GameContext {
             System.err.println("Failed to apply wave save data: " + e.getMessage());
         }
     }
-    
+
     // ================ PROJECTILE MANAGER ABSTRACTION ================
-    
+
     /**
      * Create a new projectile - abstracted method for clean MVC separation
      * @param shooter The object shooting the projectile (Tower or Warrior)
@@ -890,7 +924,7 @@ public class PlayingModel extends Observable implements GameContext {
             notifyObservers("projectileCreated");
         }
     }
-    
+
     /**
      * Clear all projectiles from the game
      */
@@ -901,7 +935,7 @@ public class PlayingModel extends Observable implements GameContext {
             notifyObservers("projectillesCleared");
         }
     }
-    
+
     /**
      * Get the current number of active projectiles
      * @return Number of active projectiles
@@ -921,7 +955,7 @@ public class PlayingModel extends Observable implements GameContext {
         }
         return 0;
     }
-    
+
     /**
      * Check if there are any active projectiles
      * @return true if there are active projectiles, false otherwise
@@ -970,5 +1004,19 @@ public class PlayingModel extends Observable implements GameContext {
         } else {
             System.out.println("PlayerManager is null, cannot calculate interest");
         }
+    }
+
+    /**
+     * Get the current victory confetti animation (for rendering)
+     */
+    public ui_p.ConfettiAnimation getVictoryConfetti() {
+        return victoryConfetti;
+    }
+
+    /**
+     * Check if confetti animation is finished
+     */
+    public boolean isConfettiFinished() {
+        return victoryConfetti == null || victoryConfetti.isFinished();
     }
 } 

@@ -54,7 +54,7 @@ public class PlayingView implements Observer {
 
     // Spawn point indicator for warrior placement
     private BufferedImage spawnPointIndicator;
-    
+
     // Tooltip for warrior information
     private ui_p.CostTooltip warriorTooltip;
 
@@ -65,7 +65,7 @@ public class PlayingView implements Observer {
         // Initialize UI components that handle rendering
         initializeUIComponents();
         loadSpawnPointIndicator();
-        
+
         // Initialize warrior tooltip
         this.warriorTooltip = new ui_p.CostTooltip();
 
@@ -324,7 +324,7 @@ public class PlayingView implements Observer {
             }
         }
     }
-    
+
     /**
      * Handles mouse movement for tree button tooltips
      */
@@ -336,7 +336,7 @@ public class PlayingView implements Observer {
                 deadTree.handleMouseHover(mouseX, mouseY, model);
             }
         }
-        
+
         // Handle live tree tooltips  
         List<LiveTree> liveTrees = model.getLiveTrees();
         if (liveTrees != null) {
@@ -345,7 +345,7 @@ public class PlayingView implements Observer {
             }
         }
     }
-    
+
     /**
      * Handles warrior hover detection and tooltip display
      */
@@ -355,36 +355,36 @@ public class PlayingView implements Observer {
         }
 
         boolean hoveredWarrior = false;
-        
+
         // Check each warrior for hover
         for (objects.Warrior warrior : model.getTowerManager().getWarriors()) {
             if (isMouseOverWarrior(warrior, mouseX, mouseY)) {
                 // Show warrior tooltip
                 String warriorName = getWarriorClassName(warrior);
                 String description = getWarriorDescription(warrior);
-                
+
                 warriorTooltip.showSimple(warriorName, description, mouseX, mouseY);
                 hoveredWarrior = true;
                 break; // Only show one tooltip at a time
             }
         }
-        
+
         // Hide tooltip if not hovering any warrior
         if (!hoveredWarrior) {
             warriorTooltip.hide();
         }
-        
+
         // Update tooltip animation
         warriorTooltip.update();
     }
-    
+
     /**
      * Checks if mouse is over a warrior (using smaller, more precise hitbox)
      */
     private boolean isMouseOverWarrior(objects.Warrior warrior, int mouseX, int mouseY) {
         int warriorCenterX = warrior.getX() + 32; // Center of the 64x64 tile
         int warriorCenterY = warrior.getY() + 32;
-        
+
         // Use smaller, more precise hitbox (about 60% of sprite size)
         int hitboxWidth, hitboxHeight;
         if (warrior instanceof objects.WizardWarrior) {
@@ -394,15 +394,15 @@ public class PlayingView implements Observer {
             hitboxWidth = 50;  // Reduced from 84
             hitboxHeight = 50; // Reduced from 84
         }
-        
+
         // Center the hitbox on the warrior
         int hitboxX = warriorCenterX - hitboxWidth / 2;
         int hitboxY = warriorCenterY - hitboxHeight / 2;
-        
+
         return mouseX >= hitboxX && mouseX <= hitboxX + hitboxWidth &&
-               mouseY >= hitboxY && mouseY <= hitboxY + hitboxHeight;
+                mouseY >= hitboxY && mouseY <= hitboxY + hitboxHeight;
     }
-    
+
     /**
      * Gets the warrior class name for tooltip
      */
@@ -414,7 +414,7 @@ public class PlayingView implements Observer {
         }
         return "Warrior";
     }
-    
+
     /**
      * Gets warrior description with time remaining for tooltip
      */
@@ -439,6 +439,11 @@ public class PlayingView implements Observer {
         // Draw fire animations
         if (model.getFireAnimationManager() != null) {
             model.getFireAnimationManager().draw(g);
+        }
+
+        // Draw victory confetti animation
+        if (model.getVictoryConfetti() != null) {
+            model.getVictoryConfetti().draw(g);
         }
     }
 
@@ -477,7 +482,7 @@ public class PlayingView implements Observer {
         if (model.getUltiManager() != null && model.getUltiManager().isWaitingForLightningTarget()) {
             drawLightningTargetingMessage(g);
         }
-        
+
         // Draw warrior tooltip (rendered on top of everything)
         if (warriorTooltip != null) {
             warriorTooltip.draw((Graphics2D) g);
@@ -686,15 +691,15 @@ public class PlayingView implements Observer {
         if (spawnTower != null) {
             g2d.setColor(new Color(100, 149, 237, 30)); // Light blue with transparency
             g2d.setStroke(new BasicStroke(2f));
-            
+
             // Calculate range area (3 tiles = 3 * 64 pixels)
             int rangeInPixels = 3 * GameDimensions.TILE_DISPLAY_SIZE;
             int centerX = spawnTower.getX() + spawnTower.getWidth() / 2;
             int centerY = spawnTower.getY() + spawnTower.getHeight() / 2;
-            
+
             // Draw range circle
-            g2d.drawOval(centerX - rangeInPixels, centerY - rangeInPixels, 
-                        rangeInPixels * 2, rangeInPixels * 2);
+            g2d.drawOval(centerX - rangeInPixels, centerY - rangeInPixels,
+                    rangeInPixels * 2, rangeInPixels * 2);
         }
 
         // Draw blue squares on all valid placement tiles

@@ -197,17 +197,16 @@ public class WaveManager {
 
                 // Check if this was the last wave
                 if (waveIndex + 1 >= waves.size()) {
-                    // Last wave completed - start 1.5 second victory delay
-                    System.out.println("Last wave completed - starting 1.5s victory delay!");
+                    waveIndex++;
                     waitingForNextWave = true;
-                    waveTimerActive = true;
-                    interWaveTick = 0;
-                    interWaveTickLimit = 90; // 1.5 seconds at 60 FPS
+                    waveTimerActive = false;
+                    System.out.println("Final wave processing complete. Game victory is imminent.");
                 } else {
                     // Not the last wave - start the inter-wave timer as usual
                     startInterWaveTimer();
                 }
             }
+            // Don't proceed with other logic until this is resolved
             return;
         }
 

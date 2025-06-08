@@ -55,6 +55,7 @@ public class AssetsLoader {
     public BufferedImage saveButtonImg;
     public BufferedImage pickaxeButtonImg;
     public BufferedImage[] pickaxeAnimationFrames;
+    public BufferedImage[] confettiAnimationFrames;
     public java.awt.Cursor customHandCursor;
     public java.awt.Cursor customNormalCursor;
 
@@ -100,6 +101,7 @@ public class AssetsLoader {
         loadLightningAssets();
         loadSaveButtonImage();
         loadPickaxeAssets();
+        loadConfettiAssets();
         loadHandCursor();
         loadNormalCursor();
     }
@@ -413,6 +415,36 @@ public class AssetsLoader {
             }
         } catch (IOException e) {
             System.err.println("❌ Error loading pickaxe animation: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void loadConfettiAssets() {
+        try (InputStream is = LoadSave.class.getResourceAsStream("/UI/Confetti.png")) {
+            if (is != null) {
+                BufferedImage spriteSheet = ImageIO.read(is);
+
+                final int cols = 8;
+                final int rows = 8;
+                final int frameCount = cols * rows;
+                final int frameWidth = spriteSheet.getWidth() / cols;
+                final int frameHeight = spriteSheet.getHeight() / rows;
+
+                confettiAnimationFrames = new BufferedImage[frameCount];
+
+                int frameIndex = 0;
+                for (int row = 0; row < rows; row++) {
+                    for (int col = 0; col < cols; col++) {
+                        confettiAnimationFrames[frameIndex] = spriteSheet.getSubimage(
+                                col * frameWidth, row * frameHeight, frameWidth, frameHeight);
+                        frameIndex++;
+                    }
+                }
+            } else {
+                System.err.println("❌ Confetti animation not found: /UI/Confetti.png");
+            }
+        } catch (IOException e) {
+            System.err.println("❌ Error loading confetti animation: " + e.getMessage());
             e.printStackTrace();
         }
     }
