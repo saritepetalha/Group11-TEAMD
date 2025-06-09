@@ -16,6 +16,7 @@ public class StatisticsScene extends GameScene implements SceneMethods {
     private List<GameStatsRecord> stats;
     private int selectedIndex = -1;
     private TheButton backButton;
+    private TheButton replayButton;
     private int scrollOffset = 0;
     private final int cardHeight = 120;
     private final int spacing = 20;
@@ -32,6 +33,7 @@ public class StatisticsScene extends GameScene implements SceneMethods {
         int x = 400;
         int y = 400;
         backButton = new TheButton("Back", x, y, buttonWidth, buttonHeight);
+        replayButton = new TheButton("Watch Replay", x, y - 60, buttonWidth, buttonHeight);
         bg = LoadSave.getImageFromPath("/KuTowerDefence1.jpg");
 
         game.getStatsManager().loadFromFiles();
@@ -198,6 +200,7 @@ public class StatisticsScene extends GameScene implements SceneMethods {
 
             drawDetails(g, selected, detailX, detailY);
 
+            replayButton.drawStyled(g);
         }
 
         backButton.drawStyled(g);
@@ -228,9 +231,6 @@ public class StatisticsScene extends GameScene implements SceneMethods {
         }
     }
 
-
-
-
     @Override
     public void mouseClicked(int x, int y) {
         int cardX = 40;
@@ -259,13 +259,20 @@ public class StatisticsScene extends GameScene implements SceneMethods {
             playButtonClickSound();
             GameStates.setGameState(GameStates.MENU);
         }
+
+        if (selectedIndex >= 0 && replayButton.getBounds().contains(x, y)) {
+            playButtonClickSound();
+            // TODO: Start replay
+            System.out.println("Starting replay for game " + selectedIndex);
+        }
     }
-
-
 
     @Override
     public void mouseMoved(int x, int y) {
         backButton.setMouseOver(backButton.getBounds().contains(x, y));
+        if (selectedIndex >= 0) {
+            replayButton.setMouseOver(replayButton.getBounds().contains(x, y));
+        }
     }
 
     @Override
@@ -343,6 +350,4 @@ public class StatisticsScene extends GameScene implements SceneMethods {
         scrollOffset += scrollAmount;
         scrollOffset = Math.max(0, Math.min(scrollOffset, maxScrollOffset));
     }
-
-
 }

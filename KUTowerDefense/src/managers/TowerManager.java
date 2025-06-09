@@ -24,6 +24,8 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import main.Game;
+import constants.Constants;
 
 public class TowerManager {
     private Playing playing;
@@ -915,6 +917,34 @@ public class TowerManager {
         towerTNTCounts.clear();
 
         System.out.println("TowerManager cleared: " + warriors.size() + " warriors, " + tntWarriors.size() + " TNT warriors, reset all tower warrior counts");
+    }
+
+    public boolean placeTower(int x, int y) {
+        // Check if the position is valid
+        if (!isValidPosition(x, y)) {
+            return false;
+        }
+
+        // Create a new archer tower at the specified position
+        Tower tower = new objects.ArcherTower(x, y);
+        towers.add(tower);
+        return true;
+    }
+
+    private boolean isValidPosition(int x, int y) {
+        // Check if position is within game bounds
+        if (x < 0 || x >= Constants.SCREEN_WIDTH || y < 0 || y >= Constants.SCREEN_HEIGHT) {
+            return false;
+        }
+        
+        // Check if position is already occupied by another tower
+        for (Tower tower : towers) {
+            if (tower.getX() == x && tower.getY() == y) {
+                return false;
+            }
+        }
+        
+        return true;
     }
 }
 

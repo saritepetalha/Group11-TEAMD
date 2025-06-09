@@ -1,6 +1,10 @@
 package constants;
 
 public class Constants {
+    // Screen dimensions
+    public static final int SCREEN_WIDTH = 1280;
+    public static final int SCREEN_HEIGHT = 720;
+
     public static class Projectiles {
         public static final int ARROW = 0;
         public static final int CANNONBALL = 1;

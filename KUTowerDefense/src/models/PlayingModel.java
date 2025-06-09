@@ -1041,4 +1041,12 @@ public class PlayingModel extends Observable implements GameContext {
         return victoryConfetti;
     }
 
+    public boolean isGameOver() {
+        return gameOverHandled;
+    }
+
+    public boolean isVictory() {
+        return victoryHandled;
+    }
+
 } 

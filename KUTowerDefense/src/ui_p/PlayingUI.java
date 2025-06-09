@@ -12,6 +12,8 @@ import java.awt.RadialGradientPaint;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Shape;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
@@ -1565,4 +1567,43 @@ public class PlayingUI {
         this.currentDifficulty = difficulty;
     }
 
+    public void mouseClicked(MouseEvent e) {
+        // Handle mouse click events
+    }
+
+    public void mousePressed(MouseEvent e) {
+        // Handle mouse press events
+    }
+
+    public void mouseReleased(MouseEvent e) {
+        // Handle mouse release events
+    }
+
+    public void mouseEntered(MouseEvent e) {
+        // Handle mouse enter events
+    }
+
+    public void mouseExited(MouseEvent e) {
+        // Handle mouse exit events
+    }
+
+    public void mouseDragged(MouseEvent e) {
+        // Handle mouse drag events
+    }
+
+    public void mouseMoved(MouseEvent e) {
+        // Handle mouse move events
+    }
+
+    public void keyTyped(KeyEvent e) {
+        // Handle key typed events
+    }
+
+    public void keyPressed(KeyEvent e) {
+        // Handle key press events
+    }
+
+    public void keyReleased(KeyEvent e) {
+        // Handle key release events
+    }
 }

@@ -5,6 +5,7 @@ import java.util.Observable;
 import java.util.Observer;
 
 import config.GameOptions;
+import constants.Constants;
 import constants.GameDimensions;
 import enemies.Enemy;
 import helpMethods.OptionsIO;
@@ -14,9 +15,18 @@ import models.PlayingModel;
 import objects.Tower;
 import objects.Warrior;
 import scenes.Playing;
+import scenes.GameOverScene;
+import stats.GameAction;
 import stats.GameStatsRecord;
+import stats.ReplayRecord;
+import stats.ReplayManager;
 import ui_p.DeadTree;
 import views.PlayingView;
+import ui_p.PlayingUI;
+import ui_p.PlayingMouseListener;
+import ui_p.PlayingKeyListener;
+import ui_p.PlayingMouseMotionListener;
+import ui_p.PlayingMouseWheelListener;
 
 /**
  * PlayingController - Handles input and coordinates between Model and View
@@ -35,6 +45,11 @@ public class PlayingController implements Observer {
     private PlayingModel model;
     private PlayingView view;
     private Game game;
+    private PlayingUI playingUI;
+    private PlayingMouseListener playingMouseListener;
+    private PlayingKeyListener playingKeyListener;
+    private PlayingMouseMotionListener playingMouseMotionListener;
+    private PlayingMouseWheelListener playingMouseWheelListener;
 
     // Managers that need special handling or aren't part of the model
     private AudioManager audioManager;
@@ -49,6 +64,9 @@ public class PlayingController implements Observer {
 
         initializeManagersForModel();
         audioManager = AudioManager.getInstance();
+
+        // Start replay recording
+        ReplayManager.getInstance().startNewReplay();
     }
 
     public PlayingController(Game game, managers.TileManager tileManager) {
@@ -60,6 +78,9 @@ public class PlayingController implements Observer {
 
         initializeManagersForModel();
         audioManager = AudioManager.getInstance();
+
+        // Start replay recording
+        ReplayManager.getInstance().startNewReplay();
     }
 
     public PlayingController(Game game, managers.TileManager tileManager, int[][] customLevel, int[][] customOverlay) {
@@ -71,6 +92,9 @@ public class PlayingController implements Observer {
 
         initializeManagersForModel();
         audioManager = AudioManager.getInstance();
+
+        // Start replay recording
+        ReplayManager.getInstance().startNewReplay();
     }
 
     /**
@@ -762,20 +786,13 @@ public class PlayingController implements Observer {
 
     @Override
     public void update(Observable o, Object arg) {
-        // Handle model state changes
-        String notification = (String) arg;
-        switch (notification) {
-            case "victory":
-                handleVictory();
-                break;
-            case "gameOver":
+        if (o instanceof PlayingModel) {
+            PlayingModel model = (PlayingModel) o;
+            if (model.isGameOver()) {
                 handleGameOver();
-                break;
-            case "managersInitialized":
-                // Managers are now ready
-                startEnemySpawning();
-                break;
-            // Add more cases as needed
+            } else if (model.isVictory()) {
+                handleVictory();
+            }
         }
     }
 
@@ -783,6 +800,21 @@ public class PlayingController implements Observer {
         GameStatsRecord record = model.createGameStatsRecord(true);
         game.getStatsManager().addRecord(record);
         game.getStatsManager().saveToFile(record);
+
+        // Save replay
+        ReplayRecord replay = ReplayManager.getInstance().getCurrentReplay();
+        if (replay != null) {
+            replay.setMapName(model.getCurrentMapName());
+            replay.setVictory(true);
+            replay.setGoldEarned(model.getPlayerManager() != null ? model.getPlayerManager().getTotalGoldEarned() : 0);
+            replay.setEnemiesSpawned(model.getTotalEnemiesSpawned());
+            replay.setEnemiesReachedEnd(model.getEnemiesReachedEnd());
+            replay.setTowersBuilt(model.getTowerManager() != null ? model.getTowerManager().getTowers().size() : 0);
+            replay.setEnemyDefeated(model.getEnemyDefeated());
+            replay.setTotalDamage(model.getTotalDamage());
+            replay.setTimePlayed(model.getTimePlayedInSeconds());
+            ReplayManager.getInstance().saveReplay();
+        }
 
         game.getGameOverScene().setStats(
                 true,
@@ -802,6 +834,21 @@ public class PlayingController implements Observer {
         GameStatsRecord record = model.createGameStatsRecord(false);
         game.getStatsManager().addRecord(record);
         game.getStatsManager().saveToFile(record);
+
+        // Save replay
+        ReplayRecord replay = ReplayManager.getInstance().getCurrentReplay();
+        if (replay != null) {
+            replay.setMapName(model.getCurrentMapName());
+            replay.setVictory(false);
+            replay.setGoldEarned(model.getPlayerManager() != null ? model.getPlayerManager().getTotalGoldEarned() : 0);
+            replay.setEnemiesSpawned(model.getTotalEnemiesSpawned());
+            replay.setEnemiesReachedEnd(model.getEnemiesReachedEnd());
+            replay.setTowersBuilt(model.getTowerManager() != null ? model.getTowerManager().getTowers().size() : 0);
+            replay.setEnemyDefeated(model.getEnemyDefeated());
+            replay.setTotalDamage(model.getTotalDamage());
+            replay.setTimePlayed(model.getTimePlayedInSeconds());
+            ReplayManager.getInstance().saveReplay();
+        }
 
         game.getGameOverScene().setStats(
                 false,
@@ -960,16 +1007,83 @@ public class PlayingController implements Observer {
     }
 
     private void handleWarriorPlacement(int x, int y) {
-        boolean placed = tryPlaceWarrior(x, y);
-        if (placed) {
+        if (tryPlaceWarrior(x, y)) {
+            handleGoldSpent(model.getPendingWarriorPlacement().getCost());
             model.setPendingWarriorPlacement(null);
         }
     }
 
     private void handleGoldFactoryPlacement(int x, int y) {
-        boolean placed = model.getUltiManager().tryPlaceGoldFactory(x, y);
-        if (!placed) {
-            // If placement failed, keep factory selected for another try
+        if (model.getUltiManager() != null && model.getUltiManager().tryPlaceGoldFactory(x, y)) {
+            handleUltimateUsed("Gold Factory");
+            model.getUltiManager().deselectGoldFactory();
         }
+    }
+
+    private void handleTowerPlacement(int x, int y) {
+        if (model.getTowerManager() != null && model.getTowerManager().placeTower(x, y)) {
+            handleGoldSpent(50); // Base tower cost
+            handleTowerPlacement(x, y);
+        }
+    }
+
+    private void handleEnemySpawned(Enemy enemy) {
+        ReplayManager.getInstance().addAction(new GameAction(
+            GameAction.ActionType.ENEMY_SPAWNED,
+            model.getTimePlayedInSeconds(),
+            (int) enemy.getX(),
+            (int) enemy.getY(),
+            "Enemy spawned: " + enemy.getEnemyType()
+        ));
+    }
+
+    private void handleEnemyDefeated(Enemy enemy) {
+        ReplayManager.getInstance().addAction(new GameAction(
+            GameAction.ActionType.ENEMY_DEFEATED,
+            model.getTimePlayedInSeconds(),
+            (int) enemy.getX(),
+            (int) enemy.getY(),
+            "Enemy defeated: " + enemy.getEnemyType()
+        ));
+    }
+
+    private void handleEnemyReachedEnd(Enemy enemy) {
+        ReplayManager.getInstance().addAction(new GameAction(
+            GameAction.ActionType.ENEMY_REACHED_END,
+            model.getTimePlayedInSeconds(),
+            (int) enemy.getX(),
+            (int) enemy.getY(),
+            "Enemy reached end: " + enemy.getEnemyType()
+        ));
+    }
+
+    private void handleGoldEarned(int amount) {
+        ReplayManager.getInstance().addAction(new GameAction(
+            GameAction.ActionType.GOLD_EARNED,
+            model.getTimePlayedInSeconds(),
+            0,
+            0,
+            "Gold earned: " + amount
+        ));
+    }
+
+    private void handleGoldSpent(int amount) {
+        ReplayManager.getInstance().addAction(new GameAction(
+            GameAction.ActionType.GOLD_SPENT,
+            model.getTimePlayedInSeconds(),
+            0,
+            0,
+            "Gold spent: " + amount
+        ));
+    }
+
+    private void handleUltimateUsed(String ultimateType) {
+        ReplayManager.getInstance().addAction(new GameAction(
+            GameAction.ActionType.ULTIMATE_USED,
+            model.getTimePlayedInSeconds(),
+            0,
+            0,
+            "Ultimate used: " + ultimateType
+        ));
     }
 } 
