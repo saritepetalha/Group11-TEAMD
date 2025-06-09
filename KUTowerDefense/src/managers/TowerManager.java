@@ -455,6 +455,16 @@ public class TowerManager {
         }
     }
 
+    // Method to remove a tower (e.g., when selling)
+    public void removeTower(Tower tower) {
+        boolean removed = towers.remove(tower);
+        if (removed) {
+            System.out.println("Tower removed successfully");
+        } else {
+            System.err.println("Error: Tower not found in list for removal.");
+        }
+    }
+
     // Inner class for upgrade visual effect
     private static class TowerUpgradeEffect {
         private final int x, y;

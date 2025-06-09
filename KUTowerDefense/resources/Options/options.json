@@ -59,81 +59,9 @@
       "groups": [
         {
           "composition": {
-            "GOBLIN": 8
+            "GOBLIN": 1
           },
           "intraEnemyDelay": 0.5
-        }
-      ],
-      "intraGroupDelay": 0.0
-    },
-    {
-      "groups": [
-        {
-          "composition": {
-            "GOBLIN": 8
-          },
-          "intraEnemyDelay": 0.5
-        },
-        {
-          "composition": {
-            "GOBLIN": 5,
-            "KNIGHT": 2
-          },
-          "intraEnemyDelay": 0.4
-        }
-      ],
-      "intraGroupDelay": 1.5
-    },
-    {
-      "groups": [
-        {
-          "composition": {
-            "GOBLIN": 12,
-            "BARREL": 4
-          },
-          "intraEnemyDelay": 0.4
-        },
-        {
-          "composition": {
-            "KNIGHT": 4,
-            "TNT": 3
-          },
-          "intraEnemyDelay": 0.3
-        }
-      ],
-      "intraGroupDelay": 2.0
-    },
-    {
-      "groups": [
-        {
-          "composition": {
-            "GOBLIN": 15,
-            "KNIGHT": 6,
-            "BARREL": 3
-          },
-          "intraEnemyDelay": 0.3
-        },
-        {
-          "composition": {
-            "TNT": 5,
-            "TROLL": 2
-          },
-          "intraEnemyDelay": 0.25
-        }
-      ],
-      "intraGroupDelay": 2.5
-    },
-    {
-      "groups": [
-        {
-          "composition": {
-            "GOBLIN": 20,
-            "KNIGHT": 8,
-            "BARREL": 6,
-            "TNT": 4,
-            "TROLL": 3
-          },
-          "intraEnemyDelay": 0.2
         }
       ],
       "intraGroupDelay": 0.0

@@ -26,6 +26,7 @@ public class TowerSelectionUI {
     private TheButton reviveButton;
     private TheButton spawnButton;
     private TheButton lightUpgradeButton;
+    private TheButton sellButton;
     private CostTooltip tooltip;
 
     // UI positioning
@@ -78,6 +79,7 @@ public class TowerSelectionUI {
             targetingButton = null;
             spawnButton = null;
             lightUpgradeButton = null;
+            sellButton = null;
         } else {
             int currentButtonY = buttonY;
             // Create upgrade button
@@ -96,25 +98,33 @@ public class TowerSelectionUI {
             // Create spawn button below targeting button, only for Archer and Mage Towers
             // Need to check through all decorator layers to find the base tower type
             boolean canSpawn = canTowerSpawn(selectedTower);
-            
+
             if (canSpawn) {
                 spawnButton = new TheButton("Spawn",
                         buttonX,
                         currentButtonY,
                         BUTTON_WIDTH,
                         BUTTON_HEIGHT);
-                currentButtonY += BUTTON_HEIGHT + BUTTON_SPACING;        
+                currentButtonY += BUTTON_HEIGHT + BUTTON_SPACING;
             } else {
                 spawnButton = null;
             }
- 
+
             // Create light upgrade button below the last button
             lightUpgradeButton = new TheButton("Light",
                     buttonX,
                     currentButtonY, // Positioned below the previous button
                     BUTTON_WIDTH,
                     BUTTON_HEIGHT);
- 
+            currentButtonY += BUTTON_HEIGHT + BUTTON_SPACING;
+
+            // Create sell button below light upgrade button
+            sellButton = new TheButton("Sell",
+                    buttonX,
+                    currentButtonY,
+                    BUTTON_WIDTH,
+                    BUTTON_HEIGHT);
+
             reviveButton = null;
         }
     }
@@ -128,6 +138,7 @@ public class TowerSelectionUI {
         reviveButton = null;
         spawnButton = null;
         lightUpgradeButton = null;
+        sellButton = null;
         selectedTower = null;
     }
 
@@ -202,8 +213,11 @@ public class TowerSelectionUI {
             if (lightUpgradeButton != null) {
                 drawLightUpgradeButton(g2d);
             }
+            if (sellButton != null) {
+                drawSellButton(g2d);
+            }
         }
-        
+
         // Update and draw tooltip
         tooltip.update();
         tooltip.draw(g2d);
@@ -537,10 +551,10 @@ public class TowerSelectionUI {
             boolean canSpawnTNT = playing.getTowerManager().canSpawnTNTWarrior(selectedTower);
             spawnCost = 75; // TNT warrior cost
             canAfford = playing.getPlayerManager().getGold() >= spawnCost && canSpawnTNT;
-            
+
             // Simple button text without count (count will be shown in tooltip)
             text = "TNT";
-            
+
             if (canAfford) {
                 bgColor = spawnButton.isMouseOver() ? new Color(170, 120, 70) : new Color(150, 100, 50);
                 textColor = Color.WHITE;
@@ -551,7 +565,7 @@ public class TowerSelectionUI {
         if (tempWarrior != null) {
             spawnCost = tempWarrior.getCost();
             canAfford = playing.getPlayerManager().getGold() >= spawnCost && selectedTower.canSpawnWarrior();
-            
+
             if (canAfford) {
                 // Use same color scheme as TNT button for consistency
                 bgColor = spawnButton.isMouseOver() ? new Color(170, 120, 70) : new Color(150, 100, 50);
@@ -562,12 +576,12 @@ public class TowerSelectionUI {
         } else {
             // This case (spawn button for non-spawnable tower) should ideally not happen
             // if createButtons() logic is correct. Default colors are already set.
-             canAfford = false; 
+            canAfford = false;
         }
 
         g2d.setColor(bgColor);
         g2d.fillRect(spawnButton.getX(), spawnButton.getY(), spawnButton.getWidth(), spawnButton.getHeight());
-        
+
         // Hover and Press effects (only if affordable)
         if (canAfford) {
             if (spawnButton.isMouseOver()) {
@@ -585,7 +599,7 @@ public class TowerSelectionUI {
         g2d.setColor(borderColor);
         g2d.setStroke(new BasicStroke(1));
         g2d.drawRect(spawnButton.getX(), spawnButton.getY(), spawnButton.getWidth(), spawnButton.getHeight());
-        
+
         g2d.setColor(textColor);
         g2d.setFont(new Font("Monospaced", Font.BOLD, 10));
         FontMetrics fm = g2d.getFontMetrics();
@@ -594,7 +608,7 @@ public class TowerSelectionUI {
         g2d.drawString(text, textX, textY);
 
         // If not affordable, draw X overlay
-        if (!canAfford && tempWarrior != null) { 
+        if (!canAfford && tempWarrior != null) {
             g2d.setColor(new Color(200, 0, 0, 180));
             g2d.setStroke(new BasicStroke(2));
             g2d.drawLine(spawnButton.getX() + 4, spawnButton.getY() + 4,
@@ -603,6 +617,52 @@ public class TowerSelectionUI {
             g2d.drawLine(spawnButton.getX() + spawnButton.getWidth() - 4, spawnButton.getY() + 4,
                     spawnButton.getX() + 4, spawnButton.getY() + spawnButton.getHeight() - 4);
         }
+    }
+
+    /**
+     * Draws the sell button with pixel art styling
+     */
+    private void drawSellButton(Graphics2D g2d) {
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+
+        int sellPrice = getSellPrice(selectedTower);
+        Color bgColor = new Color(200, 100, 100); // Red color for sell
+        Color borderColor = new Color(80, 80, 80);
+        Color textColor = Color.WHITE;
+
+        // Button background
+        g2d.setColor(bgColor);
+        g2d.fillRect(sellButton.getX(), sellButton.getY(),
+                sellButton.getWidth(), sellButton.getHeight());
+
+        // Hover effect
+        if (sellButton.isMouseOver()) {
+            g2d.setColor(new Color(255, 255, 255, 50));
+            g2d.fillRect(sellButton.getX() + 1, sellButton.getY() + 1,
+                    sellButton.getWidth() - 2, sellButton.getHeight() - 2);
+        }
+
+        // Press effect
+        if (sellButton.isMousePressed()) {
+            g2d.setColor(new Color(0, 0, 0, 100));
+            g2d.fillRect(sellButton.getX() + 1, sellButton.getY() + 1,
+                    sellButton.getWidth() - 2, sellButton.getHeight() - 2);
+        }
+
+        // Border
+        g2d.setColor(borderColor);
+        g2d.setStroke(new BasicStroke(1));
+        g2d.drawRect(sellButton.getX(), sellButton.getY(),
+                sellButton.getWidth(), sellButton.getHeight());
+
+        // Text
+        g2d.setColor(textColor);
+        g2d.setFont(new Font("Monospaced", Font.BOLD, 10));
+        String text = "Sell";
+        FontMetrics fm = g2d.getFontMetrics();
+        int textX = sellButton.getX() + (sellButton.getWidth() - fm.stringWidth(text)) / 2;
+        int textY = sellButton.getY() + (sellButton.getHeight() + fm.getAscent()) / 2;
+        g2d.drawString(text, textX, textY);
     }
 
     /**
@@ -690,39 +750,39 @@ public class TowerSelectionUI {
      */
     public void mouseMoved(int mouseX, int mouseY) {
         boolean tooltipShown = false;
-        
+
         if (upgradeButton != null) {
             boolean isHover = upgradeButton.getBounds().contains(mouseX, mouseY);
             upgradeButton.setMouseOver(isHover);
-            
+
             if (isHover) {
                 boolean canUpgrade = selectedTower.isUpgradeable();
                 int upgradeCost = getUpgradeCost(selectedTower);
                 boolean canAfford = canUpgrade && playing.getPlayerManager().getGold() >= upgradeCost;
-                
-                String description = canUpgrade ? 
-                    "Upgrade this tower to increase its damage and capabilities." :
-                    "This tower is already at maximum level.";
-                
+
+                String description = canUpgrade ?
+                        "Upgrade this tower to increase its damage and capabilities." :
+                        "This tower is already at maximum level.";
+
                 tooltip.show("Upgrade Tower", canUpgrade ? upgradeCost : 0, description, canAfford, mouseX, mouseY);
                 tooltipShown = true;
             }
         }
-        
+
         if (!tooltipShown && spawnButton != null) {
             boolean isHover = spawnButton.getBounds().contains(mouseX, mouseY);
             spawnButton.setMouseOver(isHover);
-            
+
             if (isHover) {
                 // Determine warrior type and cost
                 Tower baseTower = selectedTower;
                 while (baseTower instanceof objects.TowerDecorator) {
                     baseTower = ((objects.TowerDecorator) baseTower).decoratedTower;
                 }
-                
+
                 Warrior tempWarrior = null;
                 String description = "";
-                
+
                 if (baseTower instanceof objects.MageTower) {
                     tempWarrior = new WizardWarrior(0, 0);
                     description = "Spawn a Wizard Warrior that can cast spells and fight enemies.";
@@ -733,76 +793,90 @@ public class TowerSelectionUI {
                     // TNT warrior logic - different from regular warriors
                     int spawnCost = 75;
                     boolean canAfford = playing.getPlayerManager().getGold() >= spawnCost && playing.getTowerManager().canSpawnTNTWarrior(selectedTower);
-                    
+
                     String spawnDescription = "Deploy a TNT Warrior that runs to the closest enemy and explodes, " +
                             "dealing area damage. Destroys level 1 towers within 3 tiles with 75% chance. " +
                             "No time limit. Maximum 2 per tower.";
-                    
+
                     int currentTNT = playing.getTowerManager().getTNTWarriorCount(selectedTower);
                     String spawnTitle = String.format("Spawn TNT Warrior (%d/2)", currentTNT);
-                    
+
                     tooltip.show(spawnTitle, spawnCost, spawnDescription, canAfford, mouseX, mouseY);
                     tooltipShown = true;
                     return; // Skip the regular warrior logic below
                 }
-                
+
                 if (tempWarrior != null) {
                     int spawnCost = tempWarrior.getCost();
                     boolean canAfford = playing.getPlayerManager().getGold() >= spawnCost && selectedTower.canSpawnWarrior();
-                    
+
                     // Create a well-formatted description for the spawn button
-                    String spawnDescription = 
-                        "Deploy a warrior to fight enemies. Warriors have a 30-second lifetime. " +
-                        "Can only spawn within 3 tiles of this tower.";
-                    
+                    String spawnDescription =
+                            "Deploy a warrior to fight enemies. Warriors have a 30-second lifetime. " +
+                                    "Can only spawn within 3 tiles of this tower.";
+
                     // Enhanced title with warrior count
-                    String spawnTitle = String.format("Spawn Warrior (%d/%d)", 
-                        selectedTower.getCurrentWarriors(), 
-                        selectedTower.getMaxWarriors());
-                    
+                    String spawnTitle = String.format("Spawn Warrior (%d/%d)",
+                            selectedTower.getCurrentWarriors(),
+                            selectedTower.getMaxWarriors());
+
                     tooltip.show(spawnTitle, spawnCost, spawnDescription, canAfford, mouseX, mouseY);
                     tooltipShown = true;
                 }
             }
         }
-        
+
         if (!tooltipShown && lightUpgradeButton != null) {
             boolean isHover = lightUpgradeButton.getBounds().contains(mouseX, mouseY);
             lightUpgradeButton.setMouseOver(isHover);
-            
+
             if (isHover) {
                 boolean canUpgrade = playing.getTowerManager().canUpgradeWithLight(selectedTower);
                 int lightCost = playing.getTowerManager().getLightUpgradeCost();
                 boolean canAfford = canUpgrade && playing.getPlayerManager().getGold() >= lightCost;
-                
-                String description = canUpgrade ? 
-                    "Add light enhancement to make this tower damage nearby enemies with light." :
-                    "This tower already has light enhancement.";
-                
+
+                String description = canUpgrade ?
+                        "Add light enhancement to make this tower damage nearby enemies with light." :
+                        "This tower already has light enhancement.";
+
                 tooltip.show("Light Enhancement", canUpgrade ? lightCost : 0, description, canAfford, mouseX, mouseY);
                 tooltipShown = true;
             }
         }
-        
-        if (!tooltipShown && reviveButton != null) {
-            boolean isHover = reviveButton.getBounds().contains(mouseX, mouseY);
-            reviveButton.setMouseOver(isHover);
-            
+
+        if (!tooltipShown && sellButton != null) {
+            boolean isHover = sellButton.getBounds().contains(mouseX, mouseY);
+            sellButton.setMouseOver(isHover);
+
             if (isHover) {
-                int reviveCost = getUpgradeCost(selectedTower);
-                boolean canAfford = playing.getPlayerManager().getGold() >= reviveCost;
-                
-                tooltip.show("Revive Tower", reviveCost, 
-                    "Bring this destroyed tower back to life with full functionality.", 
-                    canAfford, mouseX, mouseY);
+                int sellPrice = getSellPrice(selectedTower);
+
+                tooltip.show("Sell Tower", sellPrice,
+                        "Sell this tower to get gold back. You will receive 60% of your total investment.",
+                        true, mouseX, mouseY);
                 tooltipShown = true;
             }
         }
-        
+
+        if (!tooltipShown && reviveButton != null) {
+            boolean isHover = reviveButton.getBounds().contains(mouseX, mouseY);
+            reviveButton.setMouseOver(isHover);
+
+            if (isHover) {
+                int reviveCost = getUpgradeCost(selectedTower);
+                boolean canAfford = playing.getPlayerManager().getGold() >= reviveCost;
+
+                tooltip.show("Revive Tower", reviveCost,
+                        "Bring this destroyed tower back to life with full functionality.",
+                        canAfford, mouseX, mouseY);
+                tooltipShown = true;
+            }
+        }
+
         if (targetingButton != null) {
             targetingButton.setMouseOver(targetingButton.getBounds().contains(mouseX, mouseY));
         }
-        
+
         if (!tooltipShown) {
             tooltip.hide();
         }
@@ -878,6 +952,25 @@ public class TowerSelectionUI {
             handled = true;
         }
 
+        if (sellButton != null && sellButton.getBounds().contains(mouseX, mouseY)) {
+            int sellPrice = getSellPrice(selectedTower);
+
+            // Give player the gold
+            playing.getPlayerManager().addGold(sellPrice);
+
+            // Remove the tower
+            playing.getTowerManager().removeTower(selectedTower);
+
+            // Clear selection
+            setSelectedTower(null);
+
+            // Update UI resources
+            playing.updateUIResources();
+
+            System.out.println("Tower sold for " + sellPrice + " gold!");
+            handled = true;
+        }
+
         if (targetingButton != null && targetingButton.getBounds().contains(mouseX, mouseY)) {
             targetingButton.cycleStrategy();
             handled = true;
@@ -903,15 +996,15 @@ public class TowerSelectionUI {
                 // Store spawn position for later use
                 warriorToSpawn.setX(spawnX);
                 warriorToSpawn.setY(spawnY);
-                
+
                 // Don't play spawn sound here - will be played after placement is completed
             } else if (baseTower instanceof objects.ArcherTower) {
                 // Create archer warrior at spawn position, target will be set during placement
                 warriorToSpawn = new ArcherWarrior(spawnX, spawnY, spawnX, spawnY); // Same position initially
-                // Store spawn position for later use  
+                // Store spawn position for later use
                 warriorToSpawn.setX(spawnX);
                 warriorToSpawn.setY(spawnY);
-                
+
                 // Don't play spawn sound here - will be played after placement is completed
             } else if (baseTower instanceof objects.ArtilleryTower) {
                 // TNT warriors work differently - spawn directly without placement
@@ -936,7 +1029,7 @@ public class TowerSelectionUI {
                 if (playing.getPlayerManager().getGold() >= warriorToSpawn.getCost() && selectedTower.canSpawnWarrior()) {
                     // Set the tower reference in the warrior
                     warriorToSpawn.setSpawnedFromTower(selectedTower);
-                    
+
                     // Gold and warrior limit check successful, proceed to placement mode
                     playing.startWarriorPlacement(warriorToSpawn);
                 } else {
@@ -959,16 +1052,16 @@ public class TowerSelectionUI {
      */
     private boolean canTowerSpawn(Tower tower) {
         Tower currentTower = tower;
-        
+
         // Unwrap all decorator layers to find the base tower
         while (currentTower instanceof objects.TowerDecorator) {
             currentTower = ((objects.TowerDecorator) currentTower).decoratedTower;
         }
-        
+
         // Check if the base tower is an Archer, Mage, or Artillery tower
-        return currentTower instanceof objects.ArcherTower || 
-               currentTower instanceof objects.MageTower ||
-               currentTower instanceof objects.ArtilleryTower;
+        return currentTower instanceof objects.ArcherTower ||
+                currentTower instanceof objects.MageTower ||
+                currentTower instanceof objects.ArtilleryTower;
     }
 
     /**
@@ -981,6 +1074,35 @@ public class TowerSelectionUI {
             case 2: return 100; // Mage
             default: return 100;
         }
+    }
+
+    /**
+     * Helper to get sell price (60% of build cost + upgrades)
+     */
+    private int getSellPrice(Tower tower) {
+        int baseCost = 0;
+        int upgradeCost = 0;
+
+        // Get base build cost
+        switch (tower.getType()) {
+            case 0: baseCost = 50; break; // Archer base cost
+            case 1: baseCost = 80; break; // Artillery base cost
+            case 2: baseCost = 70; break; // Mage base cost
+            default: baseCost = 50;
+        }
+
+        // Add cost for upgrades
+        if (tower.getLevel() == 2) {
+            upgradeCost = getUpgradeCost(tower);
+        }
+
+        // Add cost for light upgrade if present
+        if (tower instanceof objects.LightDecorator) {
+            upgradeCost += playing.getTowerManager().getLightUpgradeCost();
+        }
+
+        // Return 60% of total investment
+        return (int) ((baseCost + upgradeCost) * 0.6);
     }
 
     /**
@@ -999,6 +1121,9 @@ public class TowerSelectionUI {
         if (lightUpgradeButton != null && lightUpgradeButton.getBounds().contains(mouseX, mouseY)) {
             lightUpgradeButton.setMousePressed(true);
         }
+        if (sellButton != null && sellButton.getBounds().contains(mouseX, mouseY)) {
+            sellButton.setMousePressed(true);
+        }
     }
 
     /**
@@ -1016,6 +1141,9 @@ public class TowerSelectionUI {
         }
         if (lightUpgradeButton != null) {
             lightUpgradeButton.setMousePressed(false);
+        }
+        if (sellButton != null) {
+            sellButton.setMousePressed(false);
         }
     }
 
