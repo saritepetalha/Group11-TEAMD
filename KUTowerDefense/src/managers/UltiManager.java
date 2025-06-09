@@ -78,6 +78,10 @@ public class UltiManager {
         for (Enemy enemy : playing.getEnemyManager().getEnemies()) {
             if (enemy.isAlive()) {
                 enemy.hurt(finalEarthquakeDamage, true);
+                // Track death location for confetti if enemy died from earthquake
+                if (!enemy.isAlive() && playing.getController() != null && playing.getController().getModel() != null) {
+                    playing.getController().getModel().enemyDiedAt((int)enemy.getX(), (int)enemy.getY());
+                }
             }
         }
 
@@ -122,7 +126,7 @@ public class UltiManager {
         earthquakeActive = true;
         shakeStartTime = System.currentTimeMillis();
     }
-    
+
     public void triggerTNTShake() {
         // Shorter, less intense shake for TNT explosions
         earthquakeActive = true;
@@ -211,7 +215,7 @@ public class UltiManager {
             long cooldown = getEffectiveLightningCooldown();
             System.out.println("[BATTLE_READINESS] Lightning cooldown reduced: " + lightningCooldownMillis + " -> " + cooldown);
         }
-        
+
         if (playing.getPlayerManager().getGold() < lightningCost) {
             System.out.println("Not enough gold for Lightning Strike!");
             waitingForLightningTarget = false; // Exit targeting mode
@@ -233,6 +237,10 @@ public class UltiManager {
                 }
                 else{
                     enemy.hurt(lightningDamage, true);
+                }
+                // Track death location for confetti if enemy died from lightning
+                if (!enemy.isAlive() && playing.getController() != null && playing.getController().getModel() != null) {
+                    playing.getController().getModel().enemyDiedAt((int)enemy.getX(), (int)enemy.getY());
                 }
             }
         }
@@ -274,20 +282,20 @@ public class UltiManager {
     public boolean isLightningPlaying() {
         return !activeStrikes.isEmpty();
     }
-    
+
     // Getter methods for cooldown calculations
     public long getLastEarthquakeTime() {
         return lastEarthquakeUsedGameTime;
     }
-    
+
     public long getLastLightningTime() {
         return lastLightningUsedGameTime;
     }
-    
+
     public long getLastGoldFactoryTime() {
         return lastGoldFactoryUsedGameTime;
     }
-    
+
     public boolean hasActiveGoldFactory() {
         return !goldFactories.isEmpty();
     }
@@ -427,6 +435,28 @@ public class UltiManager {
             cooldown = Math.round(lightningCooldownMillis * 0.8f);
         }
         return cooldown;
+    }
+
+    /**
+     * Reset all UltiManager state for game restart
+     */
+    public void reset() {
+        // Reset cooldown times to very old values (so all abilities are ready)
+        lastEarthquakeUsedGameTime = -999999L;
+        lastLightningUsedGameTime = -999999L;
+        lastGoldFactoryUsedGameTime = -999999L;
+        lastFreezeUsedGameTime = -999999L;
+
+        goldFactories.clear();
+        activeStrikes.clear();
+
+        waitingForLightningTarget = false;
+        goldFactorySelected = false;
+
+        earthquakeActive = false;
+        shakeStartTime = 0;
+        shakeOffsetX = 0;
+        shakeOffsetY = 0;
     }
 
     private class LightningStrike {

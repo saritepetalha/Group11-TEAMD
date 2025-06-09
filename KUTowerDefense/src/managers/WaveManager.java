@@ -194,7 +194,17 @@ public class WaveManager {
                 } else {
                     System.out.println("Warning: Playing controller is null, cannot apply interest");
                 }
-                startInterWaveTimer();
+
+                // Check if this was the last wave
+                if (waveIndex + 1 >= waves.size()) {
+                    waveIndex++;
+                    waitingForNextWave = true;
+                    waveTimerActive = false;
+                    System.out.println("Final wave processing complete. Game victory is imminent.");
+                } else {
+                    // Not the last wave - start the inter-wave timer as usual
+                    startInterWaveTimer();
+                }
             }
             // Don't proceed with other logic until this is resolved
             return;
@@ -211,7 +221,7 @@ public class WaveManager {
                     if (waveIndex < waves.size()) {
                         prepareNextWave();
                     } else {
-                        System.out.println("All waves completed - update loop.");
+                        System.out.println("Victory delay completed - all waves finished!");
                         waitingForNextWave = true;
                     }
                 }
@@ -375,6 +385,7 @@ public class WaveManager {
         waitingForNextGroup = false;
         waitingForNextEnemy = false;
         waveTimerActive = false;
+        pendingWaveFinish = false;
         interWaveTick = 0;
         groupDelayTick = 0;
         enemyDelayTick = 0;

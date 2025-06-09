@@ -118,6 +118,10 @@ public class  Game extends JFrame implements Runnable{
 			switch (newState) {
 				case MENU:
 					audioManager.stopWeatherSounds();
+					// Stop all sounds when coming from game over to ensure clean transition
+					if (previousState == GameStates.GAME_OVER) {
+						audioManager.stopAllSounds();
+					}
 					audioManager.playMusic("lonelyhood");
 					// If coming from playing, restore custom settings
 					if (previousState == GameStates.PLAYING || previousState == GameStates.GAME_OVER) {
@@ -391,14 +395,14 @@ public class  Game extends JFrame implements Runnable{
 		try {
 			System.out.println("=== DIFFICULTY LOADING DEBUG ===");
 			System.out.println("Selected difficulty: " + difficulty);
-			
+
 			// Before starting gameplay, save current custom settings to preserve them
 			config.GameOptions currentSettings = helpMethods.OptionsIO.load();
 			if (currentSettings != null) {
 				helpMethods.OptionsIO.saveCustom(currentSettings);
 				System.out.println("Saved current settings as custom settings for preservation");
 			}
-			
+
 			if ("Easy".equals(difficulty)) {
 				gameOptions = helpMethods.OptionsIO.load("easy");
 				System.out.println("Loaded Easy difficulty. Starting gold: " + (gameOptions != null ? gameOptions.getStartingGold() : "NULL"));
@@ -422,14 +426,14 @@ public class  Game extends JFrame implements Runnable{
 				// Save the difficulty options temporarily for gameplay (does not overwrite custom settings)
 				helpMethods.OptionsIO.saveForGameplay(gameOptions);
 				System.out.println("Saved temporary gameplay settings to options.json. Starting gold: " + gameOptions.getStartingGold());
-				
+
 				// Wait a moment to ensure file I/O completes
 				try {
 					Thread.sleep(100);
 				} catch (InterruptedException e) {
 					Thread.currentThread().interrupt();
 				}
-				
+
 				// Verify the save worked
 				config.GameOptions verifyOptions = helpMethods.OptionsIO.load();
 				System.out.println("Verification: Reloaded options.json. Starting gold: " + verifyOptions.getStartingGold());
@@ -446,7 +450,7 @@ public class  Game extends JFrame implements Runnable{
 		this.playing.setCurrentMapName(mapName);
 		// Set the difficulty in the Playing scene (this will also update PlayingUI)
 		this.playing.setCurrentDifficulty(difficulty);
-		
+
 		// Force reload of GameOptions after setting difficulty to ensure it takes effect
 		if (this.playing != null) {
 			this.playing.reloadGameOptions();
@@ -456,6 +460,8 @@ public class  Game extends JFrame implements Runnable{
 
 	public void resetGameWithSameLevel() {
 		if (playing != null) {
+			AudioManager.getInstance().stopAllSounds();
+
 			playing.resetGameState();
 			GameStates.setGameState(GameStates.PLAYING);
 
@@ -467,6 +473,8 @@ public class  Game extends JFrame implements Runnable{
 
 			pack();
 			setLocationRelativeTo(null);
+
+			AudioManager.getInstance().playRandomGameMusic();
 		}
 	}
 	public GameStatsManager getStatsManager() {

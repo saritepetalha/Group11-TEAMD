@@ -132,22 +132,22 @@ public class ProjectileManager {
                 projectile.setWillMiss(true);
                 // Disable tracking for missing projectiles so they fly off-target
                 projectile.disableTracking();
-                
+
                 // Add some randomness to trajectory for missing arrows
                 float missOffset = 60f + (float)(Math.random() * 40f); // 60-100 pixel offset
                 float missAngle = (float)(Math.random() * 2 * Math.PI); // Random direction
                 float originalSpeed = projectile.getProjectileSpeed();
-                
+
                 // Apply miss offset to speed
                 projectile.setSpeed(
-                    projectile.getXSpeed() + (float)Math.cos(missAngle) * missOffset * 0.1f,
-                    projectile.getYSpeed() + (float)Math.sin(missAngle) * missOffset * 0.1f
+                        projectile.getXSpeed() + (float)Math.cos(missAngle) * missOffset * 0.1f,
+                        projectile.getYSpeed() + (float)Math.sin(missAngle) * missOffset * 0.1f
                 );
             }
         }
 
         projectiles.add(projectile);
-        
+
         // Play appropriate sound effect based on projectile type
         switch (projType) {
             case Constants.Projectiles.ARROW:
@@ -192,7 +192,7 @@ public class ProjectileManager {
                         projectile.setHit();
                     }
                 }
-                
+
                 // For tracking projectiles that are very close to dead targets, mark as hit
                 if (projectile.isTracking() && projectile.getTargetEnemy() != null) {
                     Enemy target = projectile.getTargetEnemy();
@@ -223,7 +223,12 @@ public class ProjectileManager {
 
                 // Handle enemy death
                 if (!targetEnemy.isAlive()) {
-                    playing.incrementEnemyDefeated();
+                    if (playing.getController() != null && playing.getController().getModel() != null) {
+                        // Use new method to track death location for confetti
+                        playing.getController().getModel().enemyDiedAt((int)targetEnemy.getX(), (int)targetEnemy.getY());
+                    } else {
+                        playing.incrementEnemyDefeated();
+                    }
                 }
 
                 // Apply special effects
@@ -235,7 +240,7 @@ public class ProjectileManager {
                 projectile.disableTracking();
             }
         }
-        
+
         // For non-tracking projectiles or as fallback, check all enemies
         for (Enemy enemy : playing.getEnemyManager().getEnemies()) {
             if (!enemy.isAlive()) continue;
@@ -247,7 +252,12 @@ public class ProjectileManager {
 
                 // Handle enemy death
                 if (!enemy.isAlive()) {
-                    playing.incrementEnemyDefeated();
+                    if (playing.getController() != null && playing.getController().getModel() != null) {
+                        // Use new method to track death location for confetti
+                        playing.getController().getModel().enemyDiedAt((int)enemy.getX(), (int)enemy.getY());
+                    } else {
+                        playing.incrementEnemyDefeated();
+                    }
                 }
 
                 // Apply special effects
@@ -279,7 +289,7 @@ public class ProjectileManager {
             float dx = projectile.getX() - centerX;
             float dy = projectile.getY() - centerY;
             float distance = (float) Math.sqrt(dx * dx + dy * dy);
-            
+
             // Hit if within a reasonable distance (slightly larger than hitbox)
             return distance <= (hitSize / 2.0f + Constants.Projectiles.TRACKING_HIT_DISTANCE);
         } else {
@@ -414,32 +424,32 @@ public class ProjectileManager {
     private void drawUpgradedMagicBolt(Projectile projectile, Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        
+
         int centerX = (int)projectile.getPos().x;
         int centerY = (int)projectile.getPos().y;
-        
+
         // Create a completely new purple magic bolt instead of layering on the blue one
-        
+
         // Outer purple glow
         g2d.setColor(new Color(138, 43, 226, 80)); // Purple with transparency
         g2d.fillOval(centerX - 10, centerY - 10, 20, 20);
-        
+
         // Middle purple core
         g2d.setColor(new Color(148, 0, 211, 160)); // Darker purple, more opaque
         g2d.fillOval(centerX - 6, centerY - 6, 12, 12);
-        
+
         // Inner bright purple core
         g2d.setColor(new Color(186, 85, 211, 220)); // Medium purple
         g2d.fillOval(centerX - 4, centerY - 4, 8, 8);
-        
+
         // Central bright core
         g2d.setColor(new Color(255, 255, 255, 200)); // Bright white center
         g2d.fillOval(centerX - 2, centerY - 2, 4, 4);
-        
+
         // Add trailing sparkles
         g2d.setColor(new Color(200, 162, 200, 120));
         g2d.fillOval(centerX - 1, centerY - 1, 2, 2);
-        
+
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
     }
 

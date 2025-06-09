@@ -30,7 +30,7 @@ public class AudioManager {
     // Loaded clips
     private Map<String, Clip> musicClips = new HashMap<>();
     private Map<String, Clip> soundClips = new HashMap<>();
-    
+
     // Track currently playing spawn sounds to stop them when needed
     private Map<String, Clip> currentlyPlayingSpawnSounds = new HashMap<>();
 
@@ -135,12 +135,12 @@ public class AudioManager {
         loadSound("lightning", "lightning_audio.wav");
         loadSound("coin_drop", "coin_drop.wav");
         loadSound("explosion_tnt", "explosionTNT.wav");
-        
+
         // Warrior spawn sounds
         loadSound("archer_spawn", "archerSpawn.wav");
         loadSound("wizard_spawn", "wizardSpawn.wav");
         loadSound("tnt_spawn", "tntSpawn.wav");
-        
+
         // Tower and warrior attack sounds
         loadSound("arrow_shot", "arrowShot.wav");
         loadSound("spell_shot", "spellShot.wav");
@@ -184,29 +184,29 @@ public class AudioManager {
 
             BufferedInputStream bis = new BufferedInputStream(is);
             AudioInputStream originalStream = AudioSystem.getAudioInputStream(bis);
-            
+
             // Check if we need to convert the audio format
             AudioFormat originalFormat = originalStream.getFormat();
             AudioFormat targetFormat = null;
-            
+
             // Convert problematic formats to PCM_SIGNED 16-bit which is better supported
             if (originalFormat.getEncoding() == AudioFormat.Encoding.PCM_FLOAT ||
-                originalFormat.getSampleSizeInBits() == 24 ||
-                originalFormat.getSampleSizeInBits() > 16) {
-                
+                    originalFormat.getSampleSizeInBits() == 24 ||
+                    originalFormat.getSampleSizeInBits() > 16) {
+
                 System.out.println("Converting audio format for: " + name + " from " + originalFormat);
-                
+
                 targetFormat = new AudioFormat(
-                    AudioFormat.Encoding.PCM_SIGNED,
-                    originalFormat.getSampleRate(),
-                    16, // Convert to 16-bit
-                    originalFormat.getChannels(),
-                    originalFormat.getChannels() * 2, // 2 bytes per sample
-                    originalFormat.getSampleRate(),
-                    false // little endian
+                        AudioFormat.Encoding.PCM_SIGNED,
+                        originalFormat.getSampleRate(),
+                        16, // Convert to 16-bit
+                        originalFormat.getChannels(),
+                        originalFormat.getChannels() * 2, // 2 bytes per sample
+                        originalFormat.getSampleRate(),
+                        false // little endian
                 );
             }
-            
+
             AudioInputStream audioStream;
             if (targetFormat != null && AudioSystem.isConversionSupported(targetFormat, originalFormat)) {
                 audioStream = AudioSystem.getAudioInputStream(targetFormat, originalStream);
@@ -223,18 +223,18 @@ public class AudioManager {
 
         } catch (Exception e) {
             System.err.println("Failed to load sound: " + name + " - " + e.getMessage());
-            
+
             // Try alternative approach for problematic files
-            if (e.getMessage().contains("not supported") || 
-                e.getMessage().contains("PCM_FLOAT") || 
-                e.getMessage().contains("24 bit") ||
-                e.getMessage().contains("3 bytes/frame")) {
+            if (e.getMessage().contains("not supported") ||
+                    e.getMessage().contains("PCM_FLOAT") ||
+                    e.getMessage().contains("24 bit") ||
+                    e.getMessage().contains("3 bytes/frame")) {
                 System.out.println("Attempting alternative load method for: " + name);
                 loadSoundAlternative(name, filename);
             }
         }
     }
-    
+
     /**
      * Alternative loading method for problematic audio files
      */
@@ -249,18 +249,18 @@ public class AudioManager {
 
             BufferedInputStream bis = new BufferedInputStream(is);
             AudioInputStream originalStream = AudioSystem.getAudioInputStream(bis);
-            
+
             // Force conversion to a widely supported format
             AudioFormat targetFormat = new AudioFormat(
-                AudioFormat.Encoding.PCM_SIGNED,
-                22050, // Standard sample rate
-                16,    // 16-bit
-                1,     // Mono
-                2,     // 2 bytes per sample
-                22050, // Frame rate same as sample rate
-                false  // Little endian
+                    AudioFormat.Encoding.PCM_SIGNED,
+                    22050, // Standard sample rate
+                    16,    // 16-bit
+                    1,     // Mono
+                    2,     // 2 bytes per sample
+                    22050, // Frame rate same as sample rate
+                    false  // Little endian
             );
-            
+
             if (AudioSystem.isConversionSupported(targetFormat, originalStream.getFormat())) {
                 AudioInputStream convertedStream = AudioSystem.getAudioInputStream(targetFormat, originalStream);
                 Clip clip = AudioSystem.getClip();
@@ -270,7 +270,7 @@ public class AudioManager {
             } else {
                 System.err.println("Audio conversion not supported for: " + name);
             }
-            
+
         } catch (Exception e) {
             System.err.println("Alternative load failed for " + name + ": " + e.getMessage());
         }
@@ -348,7 +348,7 @@ public class AudioManager {
             clip.start();
         }
     }
-    
+
     /**
      * Play a sound that can overlap with itself (multiple instances can play simultaneously)
      * This creates a new Clip instance each time to allow overlapping playback
@@ -356,7 +356,7 @@ public class AudioManager {
     public void playOverlappingSound(String name) {
         playOverlappingSound(name, 1.0f); // Full volume by default
     }
-    
+
     /**
      * Play a sound that can overlap with itself with custom volume
      * @param name The sound name
@@ -370,25 +370,25 @@ public class AudioManager {
             try {
                 // Create a new clip instance from the original
                 Clip newClip = AudioSystem.getClip();
-                
+
                 // We need to get the audio data from the original clip
                 // Since we can't easily extract it, we'll load it fresh from resources
                 loadAndPlayFreshClip(name, volumeMultiplier);
-                
+
             } catch (Exception e) {
                 // Fallback to regular playSound if something goes wrong
                 playSound(name);
             }
         }
     }
-    
+
     /**
      * Load and play a fresh clip instance for overlapping sounds
      */
     private void loadAndPlayFreshClip(String name) {
         loadAndPlayFreshClip(name, 1.0f); // Default full volume
     }
-    
+
     /**
      * Load and play a fresh clip instance for overlapping sounds with custom volume
      */
@@ -396,32 +396,32 @@ public class AudioManager {
         try {
             String filename = getSoundFilename(name);
             if (filename == null) return;
-            
+
             String fullPath = SFX_PATH + filename;
             InputStream is = getClass().getResourceAsStream(fullPath);
             if (is == null) return;
 
             BufferedInputStream bis = new BufferedInputStream(is);
             AudioInputStream originalStream = AudioSystem.getAudioInputStream(bis);
-            
+
             // Apply same format conversion as in loadSound method
             AudioFormat originalFormat = originalStream.getFormat();
             AudioInputStream audioStream = originalStream;
-            
+
             if (originalFormat.getEncoding() == AudioFormat.Encoding.PCM_FLOAT ||
-                originalFormat.getSampleSizeInBits() == 24 ||
-                originalFormat.getSampleSizeInBits() > 16) {
-                
+                    originalFormat.getSampleSizeInBits() == 24 ||
+                    originalFormat.getSampleSizeInBits() > 16) {
+
                 AudioFormat targetFormat = new AudioFormat(
-                    AudioFormat.Encoding.PCM_SIGNED,
-                    originalFormat.getSampleRate(),
-                    16,
-                    originalFormat.getChannels(),
-                    originalFormat.getChannels() * 2,
-                    originalFormat.getSampleRate(),
-                    false
+                        AudioFormat.Encoding.PCM_SIGNED,
+                        originalFormat.getSampleRate(),
+                        16,
+                        originalFormat.getChannels(),
+                        originalFormat.getChannels() * 2,
+                        originalFormat.getSampleRate(),
+                        false
                 );
-                
+
                 if (AudioSystem.isConversionSupported(targetFormat, originalFormat)) {
                     audioStream = AudioSystem.getAudioInputStream(targetFormat, originalStream);
                 }
@@ -430,28 +430,28 @@ public class AudioManager {
             Clip clip = AudioSystem.getClip();
             clip.open(audioStream);
             setClipVolume(clip, soundVolume * volumeMultiplier);
-            
+
             // Auto-close the clip when it finishes playing
             clip.addLineListener(event -> {
                 if (event.getType() == LineEvent.Type.STOP) {
                     clip.close();
                 }
             });
-            
+
             clip.start();
-            
+
         } catch (Exception e) {
             // Silent fallback - just don't play the sound
         }
     }
-    
+
     /**
      * Get the filename for a sound name (reverse lookup)
      */
     private String getSoundFilename(String name) {
         switch (name) {
             case "arrow_shot": return "arrowShot.wav";
-            case "spell_shot": return "spellShot.wav"; 
+            case "spell_shot": return "spellShot.wav";
             case "bomb_shot": return "bombShot.wav";
             case "archer_spawn": return "archerSpawn.wav";
             case "wizard_spawn": return "wizardSpawn.wav";
@@ -577,15 +577,15 @@ public class AudioManager {
     public void playRandomVictorySound() {
         if (soundMuted) return;
 
-        int random = this.random.nextInt(4) + 1;
-        String soundName = "victory" + random;
+        int random = this.random.nextInt(5) + 1; // Random number from 1 to 5
+        String soundName = "win" + random;
         playSound(soundName);
     }
 
     public void playRandomLoseSound() {
         if (soundMuted) return;
 
-        int random = this.random.nextInt(4) + 1;
+        int random = this.random.nextInt(5) + 1; // Random number from 1 to 5
         String soundName = "lose" + random;
         playSound(soundName);
     }
@@ -644,15 +644,15 @@ public class AudioManager {
     public void playTNTSpawnSound() {
         playSpawnSound("tnt_spawn");
     }
-    
+
     public void playArrowShotSound() {
         playOverlappingSound("arrow_shot");
     }
-    
+
     public void playSpellShotSound() {
         playOverlappingSound("spell_shot");
     }
-    
+
     public void playBombShotSound() {
         playOverlappingSound("bomb_shot", 0.35f); // Slightly reduced volume
     }
@@ -697,16 +697,16 @@ public class AudioManager {
         if (clip != null) {
             // Stop any currently playing spawn sound of this type
             stopSpawnSound(name);
-            
+
             setClipVolume(clip, soundVolume);
             clip.setFramePosition(0);
             clip.start();
-            
+
             // Track this as a currently playing spawn sound
             currentlyPlayingSpawnSounds.put(name, clip);
         }
     }
-    
+
     /**
      * Stop a specific spawn sound if it's currently playing
      */
@@ -717,7 +717,7 @@ public class AudioManager {
             currentlyPlayingSpawnSounds.remove(name);
         }
     }
-    
+
     /**
      * Stop all currently playing spawn sounds
      */
