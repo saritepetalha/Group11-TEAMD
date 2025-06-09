@@ -16,7 +16,6 @@ import managers.*;
 import objects.*;
 import skills.SkillTree;
 import stats.GameStatsRecord;
-import ui_p.ConfettiAnimation;
 import ui_p.DeadTree;
 import ui_p.LiveTree;
 import ui_p.MineableStone;
@@ -74,10 +73,10 @@ public class PlayingModel extends Observable implements GameContext {
     private DeadTree selectedDeadTree;
     private Warrior pendingWarriorPlacement = null;
 
-    // if no enemy is dead, but still victory, blow the confetti at the center of game screen
+    // Victory confetti animation
     private ui_p.ConfettiAnimation victoryConfetti = null;
-    private int lastEnemyDeathX = GameDimensions.GAME_WIDTH/2;
-    private int lastEnemyDeathY = GameDimensions.GAME_HEIGHT/2;
+    private int lastEnemyDeathX = -1;
+    private int lastEnemyDeathY = -1;
 
     // Manager references (to be injected by controller)
     private WaveManager waveManager;
@@ -320,8 +319,8 @@ public class PlayingModel extends Observable implements GameContext {
         // Delete the save file
         if (gameStateManager != null) gameStateManager.deleteSaveFile(currentMapName);
 
-        // play the specific victory sound
-        AudioManager.getInstance().playSound("win4");
+        // play a random victory sound
+        AudioManager.getInstance().playRandomVictorySound();
 
         setChanged();
         notifyObservers("victory");
@@ -339,8 +338,8 @@ public class PlayingModel extends Observable implements GameContext {
         // Delete the save file
         if (gameStateManager != null) gameStateManager.deleteSaveFile(currentMapName);
 
-        // Play the specific lose sound
-        AudioManager.getInstance().playSound("lose5");
+        // Play a random lose sound
+        AudioManager.getInstance().playRandomLoseSound();
 
         // stop any ongoing waves/spawning
         if (enemyManager != null) enemyManager.getEnemies().clear();
@@ -419,7 +418,12 @@ public class PlayingModel extends Observable implements GameContext {
      * Triggers the victory confetti animation at the last enemy death location
      */
     private void triggerVictoryConfetti() {
-        victoryConfetti = new ui_p.ConfettiAnimation(lastEnemyDeathX, lastEnemyDeathY);
+        if (lastEnemyDeathX >= 0 && lastEnemyDeathY >= 0) {
+            victoryConfetti = new ui_p.ConfettiAnimation(lastEnemyDeathX, lastEnemyDeathY);
+            System.out.println("🎉 Victory confetti triggered at (" + lastEnemyDeathX + ", " + lastEnemyDeathY + ")!");
+        } else {
+            System.out.println("❌ Cannot trigger confetti - no enemy death location recorded!");
+        }
     }
 
     @Override

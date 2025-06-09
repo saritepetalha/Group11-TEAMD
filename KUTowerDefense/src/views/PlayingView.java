@@ -8,8 +8,6 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.RadialGradientPaint;
-import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
@@ -18,7 +16,6 @@ import java.util.Observable;
 import java.util.Observer;
 
 import constants.GameDimensions;
-import enemies.Enemy;
 import helpMethods.BorderImageRotationGenerator;
 import managers.SnowTransitionManager;
 import models.PlayingModel;
@@ -122,8 +119,8 @@ public class PlayingView implements Observer {
 
         // Draw the game world
         drawTiles(g);
-        drawEnemies(g);
         drawTowers(g);
+        drawEnemies(g);
         drawProjectiles(g);
         drawEffects(g);
 

@@ -39,7 +39,7 @@ public class Menu extends GameScene implements SceneMethods {
 
         playButton = new TheButton("New Game", centerX, centerY - buttonHeight, buttonWidth, buttonHeight);
         loadGameButton = new TheButton("Load Game", centerX, centerY, buttonWidth, buttonHeight);
-        mapEditorButton = new TheButton("Edit Mode", centerX, centerY + buttonHeight, buttonWidth, buttonHeight);
+        mapEditorButton = new TheButton("Map Editor", centerX, centerY + buttonHeight, buttonWidth, buttonHeight);
         optionButton = new TheButton("Options", centerX, centerY + buttonHeight*2, buttonWidth, buttonHeight);
         statsButton = new TheButton("View Stats", centerX, centerY + buttonHeight*3, buttonWidth, buttonHeight);
         exitButton = new TheButton("Quit", centerX, centerY + buttonHeight*4, buttonWidth, buttonHeight);
