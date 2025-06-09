@@ -57,15 +57,6 @@ public class  Game extends JFrame implements Runnable{
 		// Initialize the enhanced options system
 		helpMethods.OptionsIO.initialize();
 
-		// Quick resource test for IntelliJ debugging
-		java.net.URL resourceTest = Game.class.getResource("/UI/Save_Button_For_In_Game_Options.png");
-		if (resourceTest != null) {
-			System.out.println("✅ Save button resource found at: " + resourceTest);
-		} else {
-			System.err.println("❌ Save button resource NOT found!");
-			System.err.println("   This indicates a classpath/resource issue in IntelliJ");
-		}
-
 		this.tileManager = new TileManager();
 
 		setDefaultCloseOperation(EXIT_ON_CLOSE);

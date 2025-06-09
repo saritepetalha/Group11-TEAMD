@@ -56,7 +56,7 @@ public class PlayingUI {
     private TheButton lightningButton;
     private TheButton goldFactoryButton;
     private TheButton freezeButton;
-    
+
     // Tooltip system
     private CostTooltip tooltip;
 
@@ -199,7 +199,10 @@ public class PlayingUI {
                 !playing.isOptionsMenuOpen() && !playing.isGamePaused()) {
             drawGoldFactoryPreview((Graphics2D) g);
         }
-        
+
+        // Update tooltip content if needed for cooldown timers
+        updateTooltipContent();
+
         // Update and draw tooltip
         tooltip.update();
         tooltip.draw((Graphics2D) g);
@@ -536,8 +539,9 @@ public class PlayingUI {
 
         boolean isEarthquakeCooldown = (button == earthquakeButton && !playing.getUltiManager().canUseEarthquake());
         boolean isLightningCooldown = (button == lightningButton && !playing.getUltiManager().canUseLightning());
+        boolean isFreezeCooldown = (button == freezeButton && !playing.getUltiManager().canUseFreeze());
         boolean isGoldFactoryUnavailable = false;
-        
+
         if (button == goldFactoryButton) {
             // Check if gold factory can be used (handles cooldown AND active factory check)
             boolean canUse = playing.getUltiManager().canUseGoldFactory();
@@ -546,7 +550,7 @@ public class PlayingUI {
             long currentGameTime = playing.getGameTime();
             long timeSinceLastUse = currentGameTime - playing.getUltiManager().getLastGoldFactoryTime();
             boolean cooldownReady = timeSinceLastUse >= 30000;
-            
+
 
             isGoldFactoryUnavailable = !canUse || !canAfford;
         }
@@ -555,7 +559,7 @@ public class PlayingUI {
         g2d.drawImage(normalImg, x, y, width, height, null);
 
         // Handle different visual states - show pressed/grayed state for unavailable buttons
-        if (isEarthquakeCooldown || isLightningCooldown || isGoldFactoryUnavailable || button.isMousePressed()) {
+        if (isEarthquakeCooldown || isLightningCooldown || isFreezeCooldown || isGoldFactoryUnavailable || button.isMousePressed()) {
             g2d.drawImage(pressedImg, x, y, width, height, null);
         } else if (button.isMouseOver()) {
             long currentTime = System.currentTimeMillis();
@@ -565,9 +569,10 @@ public class PlayingUI {
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
 
             // Only show glow effect for buttons that are actually usable
-            if ((button == earthquakeButton && !isEarthquakeCooldown) || 
-                (button == lightningButton && !isLightningCooldown) || 
-                (button == goldFactoryButton && !isGoldFactoryUnavailable)) {
+            if ((button == earthquakeButton && !isEarthquakeCooldown) ||
+                    (button == lightningButton && !isLightningCooldown) ||
+                    (button == freezeButton && !isFreezeCooldown) ||
+                    (button == goldFactoryButton && !isGoldFactoryUnavailable)) {
                 g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha * 0.6f));
                 g2d.setColor(new Color(255, 255, 255, 100));
                 g2d.setStroke(new BasicStroke(3f));
@@ -1065,43 +1070,16 @@ public class PlayingUI {
         // Check ultimate buttons for hover and show tooltips
         if (isMouseOverButton(earthquakeButton, mouseX, mouseY)) {
             earthquakeButton.setMouseOver(true);
-            boolean canUse = playing.getUltiManager().canUseEarthquake();
-            boolean canAfford = playing.getPlayerManager().getGold() >= 50;
-            long remainingCooldown = canUse ? 0 : 15000 - (playing.getGameTime() - playing.getUltiManager().getLastEarthquakeTime());
-            tooltip.showUltimate("Earthquake", 50, 
-                "Deals 20 damage to all enemies. 50% chance to destroy level 1 towers.",
-                canAfford, !canUse, remainingCooldown, mouseX, mouseY);
+            showEarthquakeTooltip(mouseX, mouseY);
         } else if (isMouseOverButton(lightningButton, mouseX, mouseY)) {
             lightningButton.setMouseOver(true);
-            boolean canUse = playing.getUltiManager().canUseLightning();
-            boolean canAfford = playing.getPlayerManager().getGold() >= 75;
-            long remainingCooldown = canUse ? 0 : 20000 - (playing.getGameTime() - playing.getUltiManager().getLastLightningTime());
-            tooltip.showUltimate("Lightning Strike", 75,
-                "Deals 80 damage to enemies in a large radius. Click to target.",
-                canAfford, !canUse, remainingCooldown, mouseX, mouseY);
+            showLightningTooltip(mouseX, mouseY);
         } else if (isMouseOverButton(goldFactoryButton, mouseX, mouseY)) {
             goldFactoryButton.setMouseOver(true);
-            boolean canUse = playing.getUltiManager().canUseGoldFactory();
-            boolean canAfford = playing.getPlayerManager().getGold() >= 100;
-            boolean hasActiveFactory = playing.getUltiManager().hasActiveGoldFactory();
-            
-            String description;
-            if (hasActiveFactory) {
-                description = "Only one Gold Factory allowed at a time. Destroy existing factory first.";
-            } else {
-                description = "Produces gold bags over time. Place on grass tiles only.";
-            }
-            
-            long remainingCooldown = 0;
-            if (!canUse && !hasActiveFactory) {
-                remainingCooldown = 30000 - (playing.getGameTime() - playing.getUltiManager().getLastGoldFactoryTime());
-            }
-            
-            tooltip.showUltimate("Gold Factory", 100, description,
-                canAfford && !hasActiveFactory, !canUse, remainingCooldown, mouseX, mouseY);
+            showGoldFactoryTooltip(mouseX, mouseY);
         } else if (isMouseOverButton(freezeButton, mouseX, mouseY)) {
             freezeButton.setMouseOver(true);
-            tooltip.showUltimate("Freeze", 0, "Freezes enemies temporarily.", true, false, 0, mouseX, mouseY);
+            showFreezeTooltip(mouseX, mouseY);
         } else {
             // Hide tooltip if not hovering over any button
             tooltip.hide();
@@ -1111,6 +1089,74 @@ public class PlayingUI {
     private boolean isMouseOverButton(TheButton button, int mouseX, int mouseY) {
         return (mouseX >= button.getX() && mouseX <= button.getX() + button.getWidth() &&
                 mouseY >= button.getY() && mouseY <= button.getY() + button.getHeight());
+    }
+
+    /**
+     * Updates tooltip content for buttons with cooldowns to ensure real-time countdown
+     */
+    private void updateTooltipContent() {
+        if (!tooltip.isVisible()) return;
+
+        // Check if mouse is still over ultimate buttons and update tooltip with current cooldown
+        if (isMouseOverButton(earthquakeButton, mouseX, mouseY)) {
+            showEarthquakeTooltip(mouseX, mouseY);
+        } else if (isMouseOverButton(lightningButton, mouseX, mouseY)) {
+            showLightningTooltip(mouseX, mouseY);
+        } else if (isMouseOverButton(goldFactoryButton, mouseX, mouseY)) {
+            showGoldFactoryTooltip(mouseX, mouseY);
+        } else if (isMouseOverButton(freezeButton, mouseX, mouseY)) {
+            showFreezeTooltip(mouseX, mouseY);
+        }
+    }
+
+    /**
+     * Helper methods for ultimate tooltips to avoid code duplication
+     */
+    private void showEarthquakeTooltip(int mouseX, int mouseY) {
+        boolean canUse = playing.getUltiManager().canUseEarthquake();
+        boolean canAfford = playing.getPlayerManager().getGold() >= 50;
+        long remainingCooldown = canUse ? 0 : 15000 - (playing.getGameTime() - playing.getUltiManager().getLastEarthquakeTime());
+        tooltip.showUltimate("Earthquake", 50,
+                "Deals 20 damage to all enemies. 50% chance to destroy level 1 towers.",
+                canAfford, !canUse, remainingCooldown, mouseX, mouseY);
+    }
+
+    private void showLightningTooltip(int mouseX, int mouseY) {
+        boolean canUse = playing.getUltiManager().canUseLightning();
+        boolean canAfford = playing.getPlayerManager().getGold() >= 75;
+        long remainingCooldown = canUse ? 0 : 20000 - (playing.getGameTime() - playing.getUltiManager().getLastLightningTime());
+        tooltip.showUltimate("Lightning Strike", 75,
+                "Deals 80 damage to enemies in a large radius. Click to target.",
+                canAfford, !canUse, remainingCooldown, mouseX, mouseY);
+    }
+
+    private void showGoldFactoryTooltip(int mouseX, int mouseY) {
+        boolean canUse = playing.getUltiManager().canUseGoldFactory();
+        boolean canAfford = playing.getPlayerManager().getGold() >= 100;
+        boolean hasActiveFactory = playing.getUltiManager().hasActiveGoldFactory();
+
+        String description;
+        if (hasActiveFactory) {
+            description = "Only one Gold Factory allowed at a time. Destroy existing factory first.";
+        } else {
+            description = "Produces gold bags over time. Place on grass tiles only.";
+        }
+
+        long remainingCooldown = 0;
+        if (!canUse && !hasActiveFactory) {
+            remainingCooldown = 30000 - (playing.getGameTime() - playing.getUltiManager().getLastGoldFactoryTime());
+        }
+
+        tooltip.showUltimate("Gold Factory", 100, description,
+                canAfford && !hasActiveFactory, !canUse, remainingCooldown, mouseX, mouseY);
+    }
+
+    private void showFreezeTooltip(int mouseX, int mouseY) {
+        boolean canUse = playing.getUltiManager().canUseFreeze();
+        boolean canAfford = playing.getPlayerManager().getGold() >= 60;
+        long remainingCooldown = canUse ? 0 : 20000 - (playing.getGameTime() - playing.getUltiManager().getLastFreezeTime());
+        tooltip.showUltimate("Freeze", 60, "Freezes all enemies for 5 seconds.",
+                canAfford, !canUse, remainingCooldown, mouseX, mouseY);
     }
 
     public void mousePressed(int mouseX, int mouseY) {
@@ -1305,8 +1351,17 @@ public class PlayingUI {
         }
 
         if (freezeButton != null && freezeButton.getBounds().contains(mouseX, mouseY)) {
-            System.out.println("Freeze button clicked");
-            playing.getUltiManager().triggerFreeze();
+            if (playing.getUltiManager().canUseFreeze()) {
+                if (playing.getPlayerManager().getGold() >= 60) { // freezeCost
+                    AudioManager.getInstance().playButtonClickSound();
+                    toggleButtonState(freezeButton);
+                    playing.getUltiManager().triggerFreeze();
+                } else {
+                    System.out.println("Not enough gold for Freeze!");
+                }
+            } else {
+                System.out.println("Freeze is on cooldown!");
+            }
             return;
         }
     }
