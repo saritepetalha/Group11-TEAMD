@@ -12,6 +12,9 @@ import java.awt.*;
 import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
 import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.ArrayList;
 
 public class StatisticsScene extends GameScene implements SceneMethods {
 
@@ -41,6 +44,17 @@ public class StatisticsScene extends GameScene implements SceneMethods {
         game.getStatsManager().loadFromFiles();
 
         this.stats = game.getStatsManager().getRecords();
+
+        // Filter out duplicate records
+        Set<String> uniqueStats = new HashSet<>();
+        List<GameStatsRecord> filteredStats = new ArrayList<>();
+        for (GameStatsRecord record : this.stats) {
+            String key = record.getMapName() + "-" + record.getGold() + "-" + record.getEnemiesSpawned() + "-" + record.getTowersBuilt() + "-" + record.getTimePlayed() + "-" + record.isVictory();
+            if (uniqueStats.add(key)) {
+                filteredStats.add(record);
+            }
+        }
+        this.stats = filteredStats;
     }
 
     private void drawCard(Graphics g, GameStatsRecord record, int x, int y, int width, int height, boolean selected) {
