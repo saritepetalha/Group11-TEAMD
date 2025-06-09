@@ -31,18 +31,8 @@ public class StatisticsScene extends GameScene implements SceneMethods {
     private int dragStartY = 0;
     private int dragStartScrollOffset = 0;
 
-    public StatisticsScene(Game game) {
-        super(game);
-        int buttonWidth = 180;
-        int buttonHeight = 50;
-        int x = 400;
-        int y = 400;
-        backButton = new TheButton("Back", x, y, buttonWidth, buttonHeight);
-        replayButton = new TheButton("Watch Replay", x, y - 60, buttonWidth, buttonHeight);
-        bg = LoadSave.getImageFromPath("/KuTowerDefence1.jpg");
-
+    private void refreshStats() {
         game.getStatsManager().loadFromFiles();
-
         this.stats = game.getStatsManager().getRecords();
 
         // Filter out duplicate records
@@ -55,6 +45,18 @@ public class StatisticsScene extends GameScene implements SceneMethods {
             }
         }
         this.stats = filteredStats;
+    }
+
+    public StatisticsScene(Game game) {
+        super(game);
+        int buttonWidth = 180;
+        int buttonHeight = 50;
+        int x = 400;
+        int y = 400;
+        backButton = new TheButton("Back", x, y, buttonWidth, buttonHeight);
+        replayButton = new TheButton("Watch Replay", x, y - 60, buttonWidth, buttonHeight);
+        bg = LoadSave.getImageFromPath("/KuTowerDefence1.jpg");
+        refreshStats();
     }
 
     private void drawCard(Graphics g, GameStatsRecord record, int x, int y, int width, int height, boolean selected) {
@@ -177,6 +179,7 @@ public class StatisticsScene extends GameScene implements SceneMethods {
 
     @Override
     public void render(Graphics g) {
+        refreshStats();
         g.setColor(Color.BLACK);
         g.fillRect(0, 0, 1024, 768);
         Graphics2D g2d = (Graphics2D) g.create();
