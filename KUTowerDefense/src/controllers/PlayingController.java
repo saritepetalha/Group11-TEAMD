@@ -3,6 +3,7 @@ package controllers;
 import java.awt.event.MouseWheelEvent;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.List;
 
 import config.GameOptions;
 import constants.Constants;
@@ -53,6 +54,10 @@ public class PlayingController implements Observer {
 
     // Managers that need special handling or aren't part of the model
     private AudioManager audioManager;
+
+    private boolean isReplayMode = false;
+    private int currentActionIndex = 0;
+    private long replayStartTime = 0;
 
     public PlayingController(Game game) {
         this.game = game;
@@ -146,13 +151,18 @@ public class PlayingController implements Observer {
      * Main update method - called every frame
      */
     public void update() {
-        model.update();
+        if (isReplayMode) {
+            updateReplay();
+        } else {
+            // Normal game update logic
+            model.update();
 
-        if (model.getStoneMiningManager() != null) {
-            model.getStoneMiningManager().update();
+            if (model.getStoneMiningManager() != null) {
+                model.getStoneMiningManager().update();
+            }
+
+            checkButtonStates();
         }
-
-        checkButtonStates();
     }
 
     /**
@@ -1085,5 +1095,72 @@ public class PlayingController implements Observer {
             0,
             "Ultimate used: " + ultimateType
         ));
+    }
+
+    public void startReplay() {
+        ReplayRecord replay = ReplayManager.getInstance().getCurrentReplay();
+        if (replay != null) {
+            isReplayMode = true;
+            currentActionIndex = 0;
+            replayStartTime = System.currentTimeMillis();
+            // Reset game state
+            model.resetGameState();
+            // Set map name and other initial state
+            model.setCurrentMapName(replay.getMapName());
+        }
+    }
+
+    private void updateReplay() {
+        ReplayRecord replay = ReplayManager.getInstance().getCurrentReplay();
+        if (replay == null) {
+            isReplayMode = false;
+            return;
+        }
+
+        long currentTime = System.currentTimeMillis() - replayStartTime;
+        List<GameAction> actions = replay.getActions();
+
+        // Process all actions that should have occurred by now
+        while (currentActionIndex < actions.size()) {
+            GameAction action = actions.get(currentActionIndex);
+            if (action.getGameTime() <= currentTime) {
+                processReplayAction(action);
+                currentActionIndex++;
+            } else {
+                break;
+            }
+        }
+
+        // Check if replay is finished
+        if (currentActionIndex >= actions.size()) {
+            isReplayMode = false;
+            main.GameStates.gameState = main.GameStates.MENU;
+        }
+    }
+
+    private void processReplayAction(GameAction action) {
+        switch (action.getType()) {
+            case TOWER_PLACED:
+                model.getTowerManager().placeTower(action.getX(), action.getY());
+                break;
+            case ENEMY_SPAWNED:
+                // TODO: Spawn enemy at the specified position
+                break;
+            case ENEMY_DEFEATED:
+                // TODO: Handle enemy defeat
+                break;
+            case ENEMY_REACHED_END:
+                // TODO: Handle enemy reaching end
+                break;
+            case GOLD_EARNED:
+                model.getPlayerManager().addGold(Integer.parseInt(action.getData()));
+                break;
+            case GOLD_SPENT:
+                model.getPlayerManager().spendGold(Integer.parseInt(action.getData()));
+                break;
+            case ULTIMATE_USED:
+                // TODO: Handle ultimate ability usage
+                break;
+        }
     }
 } 

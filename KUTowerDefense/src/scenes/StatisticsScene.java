@@ -3,7 +3,9 @@ package scenes;
 import helpMethods.LoadSave;
 import main.Game;
 import main.GameStates;
+import managers.ReplayManager;
 import stats.GameStatsRecord;
+import stats.ReplayRecord;
 import ui_p.TheButton;
 
 import java.awt.*;
@@ -233,37 +235,51 @@ public class StatisticsScene extends GameScene implements SceneMethods {
 
     @Override
     public void mouseClicked(int x, int y) {
+        if (backButton.getBounds().contains(x, y)) {
+            GameStates.gameState = GameStates.MENU;
+        }
+
+        if (selectedIndex >= 0 && selectedIndex < stats.size()) {
+            if (replayButton.getBounds().contains(x, y)) {
+                GameStatsRecord selectedRecord = stats.get(selectedIndex);
+                // Load all replays and find the one with matching stats
+                List<ReplayRecord> replays = ReplayManager.getInstance().loadAllReplays();
+                ReplayRecord matchingReplay = null;
+                
+                for (ReplayRecord replay : replays) {
+                    if (replay.getMapName().equals(selectedRecord.getMapName()) &&
+                        replay.getTimePlayed() == selectedRecord.getTimePlayed() &&
+                        replay.isVictory() == selectedRecord.isVictory()) {
+                        matchingReplay = replay;
+                        break;
+                    }
+                }
+                
+                if (matchingReplay != null) {
+                    ReplayManager.getInstance().setCurrentReplay(matchingReplay);
+                    GameStates.gameState = GameStates.PLAYING;
+                    // Start the replay
+                    game.getPlaying().getController().startReplay();
+                } else {
+                    System.err.println("No matching replay found for the selected game");
+                }
+            }
+        }
+
+        // Handle card selection
         int cardX = 40;
         int cardYStart = 100;
         int cardWidth = 300;
         int cardHeight = 120;
         int spacing = 20;
 
-        // Only check for card clicks if the click is within the scrollable area
-        if (x >= cardX && x <= cardX + cardWidth && y >= cardYStart && y <= cardYStart + visibleAreaHeight) {
-            for (int i = 0; i < stats.size(); i++) {
-                int cardY = cardYStart + i * (cardHeight + spacing) - scrollOffset;
-
-                // Only check cards that are visible within the clipped area
-                if (cardY + cardHeight >= cardYStart && cardY <= cardYStart + visibleAreaHeight) {
-                    Rectangle cardBounds = new Rectangle(cardX, cardY, cardWidth, cardHeight);
-                    if (cardBounds.contains(x, y)) {
-                        selectedIndex = i;
-                        return;
-                    }
-                }
+        for (int i = 0; i < stats.size(); i++) {
+            int cardY = cardYStart + i * (cardHeight + spacing) - scrollOffset;
+            Rectangle cardBounds = new Rectangle(cardX, cardY, cardWidth, cardHeight);
+            if (cardBounds.contains(x, y)) {
+                selectedIndex = i;
+                break;
             }
-        }
-
-        if (backButton.getBounds().contains(x, y)) {
-            playButtonClickSound();
-            GameStates.setGameState(GameStates.MENU);
-        }
-
-        if (selectedIndex >= 0 && replayButton.getBounds().contains(x, y)) {
-            playButtonClickSound();
-            // TODO: Start replay
-            System.out.println("Starting replay for game " + selectedIndex);
         }
     }
 
