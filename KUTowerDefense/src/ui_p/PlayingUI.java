@@ -139,11 +139,11 @@ public class PlayingUI {
                 AssetsLoader.getInstance().lightningButtonNormal
         );
 
-        // Freeze button (use earthquake icon for now)
+        // Freeze button
         freezeButton = new TheButton("Freeze",
                 startX - 5 * (ultiButtonSize + buttonSpacing), startY,
                 ultiButtonSize, ultiButtonSize,
-                AssetsLoader.getInstance().earthquakeButtonImg // placeholder icon
+                AssetsLoader.getInstance().freezeButtonNormal
         );
 
         backOptionsButton = new TheButton("Back",
@@ -524,13 +524,13 @@ public class PlayingUI {
                 AssetsLoader.getInstance().lightningButtonHover,
                 AssetsLoader.getInstance().lightningButtonPressed);
 
-        // Draw freeze button (use earthquake hover/pressed for now)
+        // Draw freeze button
         drawControlButton(g2d, freezeButton,
                 startX - 5 * (ultiButtonSize + buttonSpacing), startY,
                 ultiButtonSize, ultiButtonSize,
-                AssetsLoader.getInstance().earthquakeButtonImg,
-                AssetsLoader.getInstance().earthquakeButtonHoverImg,
-                AssetsLoader.getInstance().earthquakeButtonPressedImg);
+                AssetsLoader.getInstance().freezeButtonNormal,
+                AssetsLoader.getInstance().freezeButtonHover,
+                AssetsLoader.getInstance().freezeButtonPressed);
     }
 
 

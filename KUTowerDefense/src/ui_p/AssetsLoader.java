@@ -58,6 +58,9 @@ public class AssetsLoader {
     public BufferedImage[] confettiAnimationFrames;
     public java.awt.Cursor customHandCursor;
     public java.awt.Cursor customNormalCursor;
+    public BufferedImage freezeButtonNormal;
+    public BufferedImage freezeButtonHover;
+    public BufferedImage freezeButtonPressed;
 
     // Private constructor
     private AssetsLoader() {
@@ -98,6 +101,7 @@ public class AssetsLoader {
         loadEarthquakeButtonImages();
         loadLightningButtonImages();
         loadGoldFactoryButtonImages();
+        loadFreezeButtonImages();
         loadLightningAssets();
         loadSaveButtonImage();
         loadPickaxeAssets();
@@ -354,6 +358,12 @@ public class AssetsLoader {
         goldFactoryButtonHover = goldFactoryButtonNormal;
         goldFactoryButtonPressed = loadImage("/UI/goldBagFactoryButtonPressed.png");
         goldFactorySprite = loadImage("/TowerAssets/goldBagFactory.png");
+    }
+
+    private void loadFreezeButtonImages() {
+        freezeButtonNormal = loadImage("/UI/freeze_button.png");
+        freezeButtonHover = loadImage("/UI/freeze_button_hover.png");
+        freezeButtonPressed = loadImage("/UI/freeze_button_pressed.png");
     }
 
     private void loadLightningAssets() {
