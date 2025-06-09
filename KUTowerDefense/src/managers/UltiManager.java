@@ -437,6 +437,28 @@ public class UltiManager {
         return cooldown;
     }
 
+    /**
+     * Reset all UltiManager state for game restart
+     */
+    public void reset() {
+        // Reset cooldown times to very old values (so all abilities are ready)
+        lastEarthquakeUsedGameTime = -999999L;
+        lastLightningUsedGameTime = -999999L;
+        lastGoldFactoryUsedGameTime = -999999L;
+        lastFreezeUsedGameTime = -999999L;
+
+        goldFactories.clear();
+        activeStrikes.clear();
+
+        waitingForLightningTarget = false;
+        goldFactorySelected = false;
+
+        earthquakeActive = false;
+        shakeStartTime = 0;
+        shakeOffsetX = 0;
+        shakeOffsetY = 0;
+    }
+
     private class LightningStrike {
         int x, y;
         int currentFrame = 0;

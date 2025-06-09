@@ -359,4 +359,26 @@ public class WeatherManager {
     public void setTowerManager(TowerManager towerManager) {
         this.towerManager = towerManager;
     }
+
+    /**
+     * Reset weather manager state for game restart
+     */
+    public void reset() {
+        stopAllWeatherSounds();
+
+        dayTime = 0;
+        nightIntensity = 0.0f;
+        lastNightState = false;
+
+        WeatherType[] weatherTypes = {WeatherType.CLEAR, WeatherType.RAINY, WeatherType.SNOWY, WeatherType.WINDY};
+        currentWeather = weatherTypes[random.nextInt(weatherTypes.length)];
+        lastWeather = null;
+
+        weatherParticles.clear();
+        initializeWeatherParticles();
+
+        startWeatherSound();
+
+        System.out.println("WeatherManager reset: weather=" + currentWeather + ", day/night cycle reset");
+    }
 }

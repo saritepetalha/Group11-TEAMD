@@ -272,4 +272,29 @@ public class StoneMiningManager {
         }
     }
 
-} 
+    /**
+     * Reset stone mining manager state for game restart
+     */
+    public void reset() {
+        isMiningInProgress = false;
+        currentMiningTile = null;
+        showButton = false;
+        mineButton = null;
+        currentFrame = 0;
+        animationTick = 0;
+        miningTickCounter = 0;
+        miningProgress = 0f;
+        miningStartTime = 0;
+
+        if (miningTimer != null) {
+            miningTimer.stop();
+            miningTimer = null;
+        }
+        if (miningAnimationTimer != null) {
+            miningAnimationTimer.stop();
+            miningAnimationTimer = null;
+        }
+
+    }
+
+}

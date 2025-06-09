@@ -35,4 +35,11 @@ public class FireAnimationManager {
             animation.draw(g);
         }
     }
+
+    /**
+     * Clear all fire animations for game restart
+     */
+    public void clear() {
+        animations.clear();
+    }
 }

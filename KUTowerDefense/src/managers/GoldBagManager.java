@@ -48,4 +48,11 @@ public class GoldBagManager {
         }
         return null;
     }
-} 
+
+    /**
+     * Clear all gold bags for game restart
+     */
+    public void clear() {
+        goldBags.clear();
+    }
+}

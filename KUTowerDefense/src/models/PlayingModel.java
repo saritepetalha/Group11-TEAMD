@@ -1,5 +1,8 @@
 package models;
 
+import static constants.GameDimensions.GAME_HEIGHT;
+import static constants.GameDimensions.GAME_WIDTH;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -704,6 +707,11 @@ public class PlayingModel extends Observable implements GameContext {
             selectedDeadTree = null;
             pendingWarriorPlacement = null;
 
+            // Reset victory confetti animation
+            victoryConfetti = null;
+            lastEnemyDeathX = GAME_WIDTH/2;
+            lastEnemyDeathY = GAME_HEIGHT/2;
+
             // Reset managers if they exist
             if (managersInitialized()) {
                 // Reset player manager resources
@@ -723,32 +731,48 @@ public class PlayingModel extends Observable implements GameContext {
                 // Clear manager states
                 if (enemyManager != null) {
                     enemyManager.clearEnemies();
+                    System.out.println("Enemy manager cleared");
                 }
                 if (projectileManager != null) {
                     projectileManager.clearProjectiles();
+                    System.out.println("Projectile manager cleared");
                 }
                 if (waveManager != null) {
-                    System.out.println("Wave manager reset - full implementation pending");
+                    waveManager.resetWaveManager();
+                    System.out.println("Wave manager reset successfully");
                 }
                 if (towerManager != null) {
                     towerManager.clearTowers();
-                    try {
-                        java.lang.reflect.Method clearWarriorsMethod = towerManager.getClass().getMethod("clearWarriors");
-                        clearWarriorsMethod.invoke(towerManager);
-                    } catch (Exception e) {
-                        // Method doesn't exist, skip
-                    }
-                }
-                if (goldBagManager != null) {
-                    try {
-                        java.lang.reflect.Method clearMethod = goldBagManager.getClass().getMethod("clear");
-                        clearMethod.invoke(goldBagManager);
-                    } catch (Exception e) {
-                        // Method doesn't exist, skip
-                    }
+                    towerManager.clearWarriors();
+                    System.out.println("Tower manager and warriors cleared");
                 }
 
-                // Reinitialize trees from reset level
+                if (ultiManager != null) {
+                    ultiManager.reset();
+                    System.out.println("Ultimate manager reset successfully");
+                }
+
+                if (goldBagManager != null) {
+                    goldBagManager.clear();
+                    System.out.println("Gold bag manager cleared");
+                }
+
+                if (fireAnimationManager != null) {
+                    fireAnimationManager.clear();
+                    System.out.println("Fire animation manager cleared");
+                }
+
+                if (weatherManager != null) {
+                    weatherManager.reset();
+                    System.out.println("Weather manager reset");
+                }
+
+
+                if (stoneMiningManager != null) {
+                    stoneMiningManager.reset();
+                    System.out.println("Stone mining manager reset");
+                }
+
                 if (towerManager != null) {
                     deadTrees = towerManager.findDeadTrees(level);
                     liveTrees = towerManager.findLiveTrees(level);
@@ -1017,10 +1041,4 @@ public class PlayingModel extends Observable implements GameContext {
         return victoryConfetti;
     }
 
-    /**
-     * Check if confetti animation is finished
-     */
-    public boolean isConfettiFinished() {
-        return victoryConfetti == null || victoryConfetti.isFinished();
-    }
 } 
