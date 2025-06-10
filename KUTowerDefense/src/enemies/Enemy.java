@@ -24,6 +24,7 @@ public abstract class Enemy {
     protected boolean alive = true;
     protected float dirX = 0;        // direction X component
     protected float dirY = 0;        // direction Y component
+    protected static managers.EnemyManager enemyManager;
 
     // for animation of enemies' walking
     private int animationIndex = 0;
@@ -65,11 +66,6 @@ public abstract class Enemy {
 
     private boolean isFrozen = false;
     private long freezeTimer = 0; // Will store remaining duration in ticks
-
-    public void setAlive(boolean alive) {
-        this.alive = alive;
-    }
-
 
     // Enemy size category
     public enum Size {
@@ -121,6 +117,19 @@ public abstract class Enemy {
 
         initializeHealth();
         maxHealth = health;
+    }
+
+    public Enemy(int x, int y, int enemyType) {
+        this.x = x;
+        this.y = y;
+        this.enemyType = enemyType;
+        this.health = 100;
+        this.maxHealth = 100;
+        this.speed = 1;
+        this.alive = true;
+        this.size = Size.SMALL;
+        this.halfWidth = size.getWidth() / 2;
+        this.halfHeight = size.getHeight() / 2;
     }
 
     /**
@@ -295,6 +304,15 @@ public abstract class Enemy {
         if(health <= 0) {
             playDeathSound();
             alive = false;
+            // Record enemy death action
+            if (enemyManager != null) {
+                String details = String.format("Enemy defeated: %s at (%d,%d)", getEnemyType(), (int)getX(), (int)getY());
+                managers.ReplayManager.getInstance().addAction(new stats.GameAction(
+                    stats.GameAction.ActionType.ENEMY_DEFEATED,
+                    details,
+                    (int)enemyManager.getPlaying().getTimePlayedInSeconds()
+                ));
+            }
         }
     }
 
@@ -306,6 +324,15 @@ public abstract class Enemy {
         if (health <= 0) {
             playDeathSound();
             alive = false;
+            // Record enemy death action
+            if (enemyManager != null) {
+                String details = String.format("Enemy defeated: %s at (%d,%d)", getEnemyType(), (int)getX(), (int)getY());
+                managers.ReplayManager.getInstance().addAction(new stats.GameAction(
+                    stats.GameAction.ActionType.ENEMY_DEFEATED,
+                    details,
+                    (int)enemyManager.getPlaying().getTimePlayedInSeconds()
+                ));
+            }
         }
     }
 
@@ -508,5 +535,13 @@ public abstract class Enemy {
     // Default implementation that returns null. Subclasses can override if needed.
     protected BufferedImage getSpriteFrame(int animationIndex) {
         return null;
+    }
+
+    public static void setEnemyManager(managers.EnemyManager manager) {
+        enemyManager = manager;
+    }
+
+    public static managers.EnemyManager getEnemyManager() {
+        return enemyManager;
     }
 }

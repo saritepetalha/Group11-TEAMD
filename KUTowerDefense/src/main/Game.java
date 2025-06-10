@@ -6,6 +6,8 @@ import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JFrame;
 
@@ -23,6 +25,10 @@ import scenes.Playing;
 import scenes.StatisticsScene;
 import scenes.SkillSelectionScene;
 import skills.SkillTree;
+import stats.ReplayRecord;
+import stats.ReplayManager;
+import stats.GameAction;
+import models.PlayingModel;
 
 public class  Game extends JFrame implements Runnable{
 
@@ -50,6 +56,12 @@ public class  Game extends JFrame implements Runnable{
 
 	// State tracking for map editing context
 	private GameStates previousGameState = GameStates.MENU;
+
+	private boolean isReplayMode = false;
+	private int currentActionIndex = 0;
+	private long replayStartTime = 0;
+	private List<GameAction> replayActions = new ArrayList<>();
+	private PlayingModel model;
 
 	public Game() {
 		System.out.println("Game Starting...");
@@ -257,6 +269,7 @@ public class  Game extends JFrame implements Runnable{
 			case SKILL_SELECTION:
 				break;
 			case PLAYING:
+			case REPLAY:
 				if (playing != null) playing.update();
 				break;
 			case GAME_OVER:
@@ -490,5 +503,32 @@ public class  Game extends JFrame implements Runnable{
 
 	public SkillSelectionScene getSkillSelectionScene() {
 		return skillSelectionScene;
+	}
+
+	public void adjustScreenForGameState() {
+		if (gamescreen != null) {
+			gamescreen.setPanelSize();
+			this.pack(); // JFrame yeniden boyutlanması için
+		} else {
+			System.err.println("gamescreen is null!");
+		}
+	}
+
+	public void startReplay() {
+		ReplayRecord replay = ReplayManager.getInstance().getCurrentReplay();
+		if (replay != null) {
+			isReplayMode = true;
+			currentActionIndex = 0;
+			replayStartTime = System.currentTimeMillis();
+			// Reset game state
+			model.resetGameState();
+			// Set map name and other initial state
+			model.setCurrentMapName(replay.getMapName());
+			// Populate replayActions list
+			replayActions.clear();
+			replayActions.addAll(replay.getActions());
+			// Adjust screen size for replay
+			adjustScreenForGameState();
+		}
 	}
 }

@@ -1119,59 +1119,57 @@ public class PlayingView implements Observer {
         public managers.FireAnimationManager getFireAnimationManager() { return model.getFireAnimationManager(); }
 
         @Override
-        public int[][] getOverlay() { return model.getOverlay(); }
+        public int getTimePlayedInSeconds() { return model.getTimePlayedInSeconds(); }
 
         @Override
         public long getGameTime() { return model.getGameTime(); }
 
         @Override
-        public String getCurrentMapName() { return model.getCurrentMapName(); }
+        public void updateUIResources() { model.updateUIResources(); }
 
         @Override
-        public String getCurrentDifficulty() { return model.getCurrentDifficulty(); }
+        public void modifyTile(int x, int y, String type) { model.modifyTile(x, y, type); }
 
         @Override
-        public boolean isAllWavesFinished() { return model.isAllWavesFinished(); }
+        public void enemyReachedEnd(enemies.Enemy enemy) { model.enemyReachedEnd(enemy); }
 
         @Override
-        public config.GameOptions getGameOptions() { return model.getGameOptions(); }
+        public void spawnEnemy(int enemyType) { model.spawnEnemy(enemyType); }
 
-        // Override tree-related methods
+        @Override
+        public void startWarriorPlacement(objects.Warrior warrior) { model.setPendingWarriorPlacement(warrior); }
+
+        @Override
+        public void shootEnemy(Object shooter, enemies.Enemy enemy) { model.shootEnemy(shooter, enemy); }
+
+        @Override
+        public void incrementEnemyDefeated() { model.incrementEnemyDefeated(); }
+
+        @Override
+        public void addTotalDamage(int damage) { model.addTotalDamage(damage); }
+
+        @Override
+        public void enemyDiedAt(int x, int y) { model.enemyDiedAt(x, y); }
+
+        @Override
+        public void setDisplayedTower(objects.Tower tower) { model.setDisplayedTower(tower); }
+
+        @Override
+        public void setSelectedDeadTree(ui_p.DeadTree deadTree) { model.setSelectedDeadTree(deadTree); }
+
         @Override
         public java.util.List<ui_p.DeadTree> getDeadTrees() { return model.getDeadTrees(); }
 
         @Override
         public java.util.List<ui_p.LiveTree> getLiveTrees() { return model.getLiveTrees(); }
 
-        // Override methods that are called by UI components
         @Override
-        public void startWarriorPlacement(Warrior warrior) {
-            // Handle directly through model
-            model.setPendingWarriorPlacement(warrior);
-            // Clear tower selection
-            model.setDisplayedTower(null);
-            System.out.println("Warrior placement mode started for: " + warrior.getClass().getSimpleName());
-        }
+        public objects.Tower getDisplayedTower() { return model.getDisplayedTower(); }
 
         @Override
-        public void modifyTile(int x, int y, String tile) {
-            // Handle tile modification directly through model (same logic as Playing.java)
-            x /= 64;
-            y /= 64;
+        public ui_p.DeadTree getSelectedDeadTree() { return model.getSelectedDeadTree(); }
 
-            int[][] level = model.getLevel();
-            if (level == null) return;
-
-            if (tile.equals("ARCHER")) {
-                level[y][x] = 26;
-            } else if (tile.equals("MAGE")) {
-                level[y][x] = 20;
-            } else if (tile.equals("ARTILERRY")) {
-                level[y][x] = 21;
-            } else if (tile.equals("DEADTREE")) {
-                level[y][x] = 15;
-            }
-            System.out.println("Tile modified at (" + x + ", " + y + ") to: " + tile);
-        }
+        @Override
+        public config.GameOptions getGameOptions() { return model.getGameOptions(); }
     }
 } 

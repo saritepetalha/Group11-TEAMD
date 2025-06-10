@@ -274,7 +274,8 @@ public class StatisticsScene extends GameScene implements SceneMethods {
                 
                 if (matchingReplay != null) {
                     ReplayManager.getInstance().setCurrentReplay(matchingReplay);
-                    GameStates.gameState = GameStates.PLAYING;
+                    GameStates.gameState = GameStates.REPLAY;
+                    game.adjustScreenForGameState();
                     // Start the replay
                     game.getPlaying().getController().startReplay();
                 } else {

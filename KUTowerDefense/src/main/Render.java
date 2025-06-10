@@ -21,6 +21,7 @@ public class Render {
                 game.getMenu().render(g);
                 break;
             case PLAYING:
+            case REPLAY:
                 if (game.getPlaying() != null) {
                     game.getPlaying().render(g);
                 }

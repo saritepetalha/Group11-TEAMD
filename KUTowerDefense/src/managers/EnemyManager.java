@@ -39,6 +39,7 @@ import pathfinding.RoadNetworkPathfinder;
 import pathfinding.TileConnectivity;
 import skills.SkillTree;
 import skills.SkillType;
+import stats.GameAction;
 
 public class EnemyManager {
     // Performance constants
@@ -61,6 +62,8 @@ public class EnemyManager {
     private Map<Enemy, Long> enemySpawnTimes;
     private RoadNetworkPathfinder pathfinder;
     private int[][] tileData; // Store tile data for curve detection
+    private float lastEnemyDeathX = 0;
+    private float lastEnemyDeathY = 0;
 
     public EnemyManager(Playing playing, int[][] overlayData, int [][] tileData, GameOptions options) {
         this.playing = playing;
@@ -289,6 +292,8 @@ public class EnemyManager {
 
             if (e.hasReachedEnd()) {
                 playing.enemyReachedEnd(e);
+                // Record enemy reaching end action
+                recordEnemyReachedEnd(e);
                 enemiesToRemove.add(e);
                 continue;
             }
@@ -316,7 +321,6 @@ public class EnemyManager {
                 }
             }
         }
-
 
         int x = spawnPoint.getX() * tileSize + tileSize / 2;
         int y = spawnPoint.getY() * tileSize + tileSize / 2;
@@ -361,6 +365,13 @@ public class EnemyManager {
             long spawnTime = System.currentTimeMillis();
             enemySpawnTimes.put(enemy, spawnTime);
 
+            // Record enemy spawn action
+            String details = String.format("Enemy spawned: %s at (%d,%d)", enemy.getEnemyTypeEnum(), x, y);
+            managers.ReplayManager.getInstance().addAction(new stats.GameAction(
+                stats.GameAction.ActionType.ENEMY_SPAWNED,
+                details,
+                (int)playing.getTimePlayedInSeconds()
+            ));
         }
     }
 
@@ -1852,6 +1863,103 @@ public class EnemyManager {
         // Assuming enemyImages is a static array or accessible in a way that allows this method to work
         // You may need to adjust this based on how frames are stored
         return enemyImages[enemyType * 6 + animationIndex]; // Assuming 6 frames per enemy type
+    }
+
+    public Playing getPlaying() {
+        return playing;
+    }
+
+    public void spawnEnemy(int x, int y) {
+        Enemy enemy = new Goblin(x, y, getNextEnemyID());
+        applyOptionsToEnemy(enemy);
+        initializeEnemyDirection(enemy);
+        addEnemy(enemy);
+        String details = String.format("Enemy spawned: %s at (%d,%d)", enemy.getEnemyTypeEnum(), x, y);
+        ReplayManager.getInstance().addAction(new GameAction(
+            GameAction.ActionType.ENEMY_SPAWNED,
+            details,
+            (int)playing.getTimePlayedInSeconds()
+        ));
+    }
+
+    public void enemyDefeated(int x, int y) {
+        for (Enemy e : enemies) {
+            if (e.getX() == x && e.getY() == y) {
+                enemies.remove(e);
+                break;
+            }
+        }
+    }
+
+    public void enemyReachedEnd(int x, int y) {
+        for (Enemy e : enemies) {
+            if (e.getX() == x && e.getY() == y) {
+                enemies.remove(e);
+                break;
+            }
+        }
+    }
+
+    public void reset() {
+        enemies.clear();
+        lastEnemyDeathX = 0;
+        lastEnemyDeathY = 0;
+    }
+
+    private void recordEnemyReachedEnd(Enemy enemy) {
+        String details = String.format("Enemy reached end: %s at (%.0f,%.0f)", 
+            enemy.getEnemyType(), enemy.getX(), enemy.getY());
+        ReplayManager.getInstance().addAction(new GameAction(
+            GameAction.ActionType.ENEMY_REACHED_END,
+            details,
+            (int)playing.getTimePlayedInSeconds()
+        ));
+    }
+
+    private void recordEnemyDefeated(Enemy enemy) {
+        String details = String.format("Enemy defeated: %s at (%.0f,%.0f)", 
+            enemy.getEnemyType(), enemy.getX(), enemy.getY());
+        ReplayManager.getInstance().addAction(new GameAction(
+            GameAction.ActionType.ENEMY_DEFEATED,
+            details,
+            (int)playing.getTimePlayedInSeconds()
+        ));
+    }
+
+    public void spawnEnemy(int x, int y, String enemyType) {
+        Enemy enemy = null;
+        switch(enemyType) {
+            case "GOBLIN":
+                enemy = new Goblin(x, y, getNextEnemyID());
+                break;
+            case "KNIGHT":
+                enemy = new Knight(x, y, getNextEnemyID());
+                break;
+            case "TNT":
+                enemy = new TNT(x, y, getNextEnemyID());
+                break;
+            case "BARREL":
+                enemy = new Barrel(x, y, getNextEnemyID());
+                break;
+            case "TROLL":
+                enemy = new Troll(x, y, getNextEnemyID());
+                break;
+            default:
+                System.out.println("Unknown enemy type: " + enemyType);
+                return;
+        }
+
+        if (enemy != null) {
+            applyOptionsToEnemy(enemy);
+            initializeEnemyDirection(enemy);
+            addEnemy(enemy);
+            String details = String.format("Enemy spawned: %s at (%d,%d)", enemy.getEnemyTypeEnum(), x, y);
+            ReplayManager.getInstance().addAction(new GameAction(
+                GameAction.ActionType.ENEMY_SPAWNED,
+                details,
+                (int)playing.getTimePlayedInSeconds()
+            ));
+        }
     }
 
 }

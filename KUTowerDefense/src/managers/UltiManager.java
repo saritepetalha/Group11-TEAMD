@@ -7,6 +7,7 @@ import scenes.Playing;
 import ui_p.AssetsLoader;
 import skills.SkillTree;
 import skills.SkillType;
+import stats.GameAction;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -84,6 +85,9 @@ public class UltiManager {
                 }
             }
         }
+
+        // Record ultimate usage
+        recordUltimateUsed("EARTHQUAKE");
 
         // Counter effect: 50% chance to destroy level 1 towers
         for (objects.Tower tower : playing.getTowerManager().getTowers()) {
@@ -226,6 +230,9 @@ public class UltiManager {
         playing.updateUIResources();
         lastLightningUsedGameTime = playing.getGameTime();
         waitingForLightningTarget = false;
+
+        // Record ultimate usage
+        recordUltimateUsed("LIGHTNING");
 
         for (Enemy enemy : playing.getEnemyManager().getEnemies()) {
             if (!enemy.isAlive()) continue;
@@ -410,6 +417,9 @@ public class UltiManager {
                 enemy.freeze(freezeDuration);
             }
         }
+
+        // Record ultimate usage
+        recordUltimateUsed("FREEZE");
     }
 
     private long getEffectiveFreezeCooldown() {
@@ -441,22 +451,37 @@ public class UltiManager {
      * Reset all UltiManager state for game restart
      */
     public void reset() {
-        // Reset cooldown times to very old values (so all abilities are ready)
-        lastEarthquakeUsedGameTime = -999999L;
-        lastLightningUsedGameTime = -999999L;
-        lastGoldFactoryUsedGameTime = -999999L;
-        lastFreezeUsedGameTime = -999999L;
-
-        goldFactories.clear();
         activeStrikes.clear();
-
-        waitingForLightningTarget = false;
-        goldFactorySelected = false;
-
-        earthquakeActive = false;
-        shakeStartTime = 0;
         shakeOffsetX = 0;
         shakeOffsetY = 0;
+        lastFreezeUsedGameTime = -999999L;
+        goldFactories.clear();
+        waitingForLightningTarget = false;
+        goldFactorySelected = false;
+        earthquakeActive = false;
+        shakeStartTime = 0;
+        shakeDuration = 1000;
+    }
+
+    public void useUltimate(String ultimateType) {
+        switch (ultimateType) {
+            case "EARTHQUAKE":
+                triggerEarthquake();
+                break;
+            case "LIGHTNING":
+                triggerLightning();
+                break;
+            case "FREEZE":
+                triggerFreeze();
+                break;
+        }
+    }
+
+    private void triggerLightning() {
+        // Create a new lightning strike at a random position
+        int x = (int) (Math.random() * 640);
+        int y = (int) (Math.random() * 480);
+        activeStrikes.add(new LightningStrike(x, y));
     }
 
     private class LightningStrike {
@@ -496,6 +521,15 @@ public class UltiManager {
                 g2d.drawImage(visiblePart, x - frame.getWidth() / 2, drawStartY, null);
             }
         }
+    }
+
+    private void recordUltimateUsed(String ultimateType) {
+        String details = String.format("Ultimate used: %s", ultimateType);
+        ReplayManager.getInstance().addAction(new GameAction(
+            GameAction.ActionType.ULTIMATE_USED,
+            details,
+            (int)playing.getTimePlayedInSeconds()
+        ));
     }
 }
 

@@ -3,6 +3,7 @@ import config.GameOptions;
 import static constants.Constants.Player.MAX_HEALTH;
 import static constants.Constants.Player.MAX_SHIELD;
 import helpMethods.OptionsIO;
+import stats.GameAction;
 
 public class PlayerManager {
     private int gold;
@@ -10,6 +11,7 @@ public class PlayerManager {
     private int shield;
     private GameOptions gameOptions;
     private int totalGoldEarned;
+    private scenes.Playing playing;
 
     public PlayerManager(GameOptions options) {
         this.gameOptions = options;
@@ -36,16 +38,24 @@ public class PlayerManager {
     }
 
     public void addGold(int amount) {
-        this.gold += amount;
-        this.totalGoldEarned += amount;
+        gold += amount;
+        totalGoldEarned += amount;
+        String details = String.format("Gold earned: %d", amount);
+        ReplayManager.getInstance().addAction(new GameAction(
+            GameAction.ActionType.GOLD_EARNED,
+            details,
+            (int)playing.getTimePlayedInSeconds()
+        ));
     }
 
-    public boolean spendGold(int amount) {
-        if (gold >= amount) {
-            gold -= amount;
-            return true;
-        }
-        return false;
+    public void spendGold(int amount) {
+        gold -= amount;
+        String details = String.format("Gold spent: %d", amount);
+        ReplayManager.getInstance().addAction(new GameAction(
+            GameAction.ActionType.GOLD_SPENT,
+            details,
+            (int)playing.getTimePlayedInSeconds()
+        ));
     }
 
     public void takeDamage(int damage) {
@@ -169,5 +179,20 @@ public class PlayerManager {
             return gameOptions.getStartingPlayerHP();
         }
         return MAX_HEALTH; // Fallback to constant
+    }
+
+    public void setPlaying(scenes.Playing playing) {
+        this.playing = playing;
+    }
+
+    public scenes.Playing getPlaying() {
+        return playing;
+    }
+
+    public void reset() {
+        gold = 100;
+        health = 100;
+        shield = 0;
+        totalGoldEarned = 0;
     }
 }

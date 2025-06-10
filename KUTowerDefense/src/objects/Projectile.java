@@ -28,6 +28,8 @@ public class Projectile {
     private long lastFrameTime = System.nanoTime();
     private long animationDelay = 100_000_000;
 
+    private int speed;
+
     public Projectile(float x, float y, float xSpeed, float ySpeed, int id, int damage, int projectileType, int level) {
         this.x = x;
         this.y = y;
@@ -53,6 +55,15 @@ public class Projectile {
         this(x, y, xSpeed, ySpeed, id, damage, projectileType, level, rotationAngle);
         this.targetEnemy = targetEnemy;
         this.isTracking = (targetEnemy != null); // Enable tracking if target is provided
+    }
+
+    public Projectile(int x, int y, int damage, enemies.Enemy target) {
+        this.x = x;
+        this.y = y;
+        this.damage = damage;
+        this.targetEnemy = target;
+        this.speed = 2;
+        this.active = true;
     }
 
     public void move() {

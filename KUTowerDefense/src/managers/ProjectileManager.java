@@ -494,4 +494,18 @@ public class ProjectileManager {
     public ArrayList<Projectile> getProjectiles() {
         return projectiles;
     }
+
+    public void createProjectile(Object shooter, enemies.Enemy enemy) {
+        if (shooter instanceof objects.Tower) {
+            objects.Tower tower = (objects.Tower) shooter;
+            projectiles.add(new objects.Projectile(tower.getX(), tower.getY(), tower.getDamage(), enemy));
+        } else if (shooter instanceof objects.Warrior) {
+            objects.Warrior warrior = (objects.Warrior) shooter;
+            projectiles.add(new objects.Projectile(warrior.getX(), warrior.getY(), warrior.getDamage(), enemy));
+        }
+    }
+
+    public void reset() {
+        projectiles.clear();
+    }
 }

@@ -12,7 +12,8 @@ public enum GameStates {
     SKILL_SELECTION,
     QUIT,
     GAME_OVER,
-    STATISTICS;
+    STATISTICS,
+    REPLAY;
 
     public static GameStates gameState = GameStates.INTRO;
     public static void setGameState(GameStates gameState) {

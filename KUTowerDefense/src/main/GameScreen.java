@@ -54,7 +54,7 @@ public class GameScreen extends JPanel {
 			size = new Dimension(GameDimensions.MAIN_MENU_SCREEN_WIDTH, GameDimensions.MAIN_MENU_SCREEN_HEIGHT);
 		} else if (GameStates.gameState == GameStates.EDIT){
 			size = new Dimension(GameDimensions.TOTAL_GAME_WIDTH, GameDimensions.GAME_HEIGHT);
-		} else if (GameStates.gameState == GameStates.PLAYING){
+		} else if (GameStates.gameState == GameStates.PLAYING || GameStates.gameState == GameStates.REPLAY){
 			size = new Dimension(GameDimensions.GAME_WIDTH, GameDimensions.GAME_HEIGHT);
 		}
 		else if (GameStates.gameState == GameStates.GAME_OVER) {

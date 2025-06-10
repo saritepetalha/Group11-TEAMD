@@ -6,6 +6,7 @@ import main.Game;
 import managers.*;
 import javax.swing.JPanel;
 import controllers.PlayingController;
+import java.awt.Dimension;
 
 /**
  * Playing - Thin wrapper around PlayingController for MVC architecture
@@ -19,10 +20,15 @@ import controllers.PlayingController;
 public class Playing extends GameScene implements SceneMethods {
 
     private PlayingController controller;
+    private boolean isReplayMode = false;
+    private long replayStartTime = 0;
+    private int currentActionIndex = 0;
+    private JPanel gamePanel;
 
     public Playing(Game game, JPanel gamePanel) {
         super(game);
         this.controller = new PlayingController(game);
+        this.gamePanel = gamePanel;
     }
 
     public Playing(Game game) {
@@ -325,5 +331,41 @@ public class Playing extends GameScene implements SceneMethods {
     public void onWaveComplete() {
         System.out.println("Playing.onWaveComplete called - controller is " + (controller != null ? "not null" : "null"));
         if (controller != null) controller.getModel().onWaveComplete();
+    }
+
+    public int getTimePlayedInSeconds() {
+        return controller.getModel().getTimePlayedInSeconds();
+    }
+
+    public void enemyDiedAt(int x, int y) {
+        if (controller != null) controller.getModel().enemyDiedAt(x, y);
+    }
+
+    public void startReplay() {
+        isReplayMode = true;
+        replayStartTime = System.currentTimeMillis();
+        currentActionIndex = 0;
+        
+        // Set the same size as the game screen using the game panel
+        if (gamePanel != null) {
+            gamePanel.setPreferredSize(new Dimension(640, 480));
+            gamePanel.setSize(640, 480);
+            gamePanel.revalidate();
+            gamePanel.repaint();
+        }
+        
+        // Reset game state
+        resetGame();
+        
+        // Start replay in the controller
+        if (controller != null) {
+            controller.startReplay();
+        }
+    }
+
+    private void resetGame() {
+        if (controller != null) {
+            controller.resetGame();
+        }
     }
 }

@@ -946,6 +946,10 @@ public class TowerManager {
         
         return true;
     }
+
+    public void reset() {
+        towers.clear();
+    }
 }
 
 

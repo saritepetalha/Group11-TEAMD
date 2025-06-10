@@ -4,6 +4,7 @@ import java.awt.event.MouseWheelEvent;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.List;
+import java.util.ArrayList;
 
 import config.GameOptions;
 import constants.Constants;
@@ -20,7 +21,6 @@ import scenes.GameOverScene;
 import stats.GameAction;
 import stats.GameStatsRecord;
 import stats.ReplayRecord;
-import stats.ReplayManager;
 import ui_p.DeadTree;
 import views.PlayingView;
 import ui_p.PlayingUI;
@@ -58,10 +58,12 @@ public class PlayingController implements Observer {
     private boolean isReplayMode = false;
     private int currentActionIndex = 0;
     private long replayStartTime = 0;
+    private List<GameAction> replayActions = new ArrayList<>();
 
     public PlayingController(Game game) {
         this.game = game;
         this.model = new PlayingModel();
+        this.model.setPlaying(game.getPlaying());
         this.view = new PlayingView(model);
 
         // Observe model changes to handle game state transitions
@@ -77,6 +79,7 @@ public class PlayingController implements Observer {
     public PlayingController(Game game, managers.TileManager tileManager) {
         this.game = game;
         this.model = new PlayingModel(tileManager);
+        this.model.setPlaying(game.getPlaying());
         this.view = new PlayingView(model);
 
         this.model.addObserver(this);
@@ -109,7 +112,7 @@ public class PlayingController implements Observer {
         // For now, we'll create managers using the PlayingAdapter pattern
         // In a full refactor, these would be updated to work directly with the model
 
-        PlayingAdapter adapter = new PlayingAdapter();
+        PlayingAdapter adapter = new PlayingAdapter(model);
 
         // Create WeatherManager first and inject it into model immediately
         // so other managers can access it during their initialization
@@ -133,6 +136,7 @@ public class PlayingController implements Observer {
         weatherManager.setTowerManager(towerManager);
 
         PlayerManager playerManager = new PlayerManager(model.getGameOptions());
+        playerManager.setPlaying(game.getPlaying());
         UltiManager ultiManager = new UltiManager(adapter);
         GoldBagManager goldBagManager = new GoldBagManager();
 
@@ -151,8 +155,10 @@ public class PlayingController implements Observer {
      * Main update method - called every frame
      */
     public void update() {
+        System.out.println("PlayingController.update() called, isReplayMode=" + isReplayMode);
         if (isReplayMode) {
             updateReplay();
+            model.update();
         } else {
             // Normal game update logic
             model.update();
@@ -177,6 +183,8 @@ public class PlayingController implements Observer {
         // Handle warrior placement
         if (model.getPendingWarriorPlacement() != null) {
             handleWarriorPlacement(x, y);
+            // Warrior yerleştirme aksiyonu kaydı
+            recordWarriorPlaced(x, y);
             return;
         }
 
@@ -211,11 +219,15 @@ public class PlayingController implements Observer {
         // Handle dead trees
         if (model.getDeadTrees() != null && model.getTreeInteractionManager() != null) {
             model.getTreeInteractionManager().handleDeadTreeInteraction(x, y);
+            // Ağaç aksiyonu kaydı
+            recordTreeAction(x, y, "DEADTREE");
         }
 
         // Handle live trees
         if (model.getLiveTrees() != null && model.getTreeInteractionManager() != null) {
             model.getTreeInteractionManager().handleLiveTreeInteraction(x, y);
+            // Ağaç aksiyonu kaydı
+            recordTreeAction(x, y, "LIVETREE");
         }
 
         // Gold bag collection
@@ -224,6 +236,8 @@ public class PlayingController implements Observer {
             if (collectedBag != null) {
                 if (model.getPlayerManager() != null) {
                     model.getPlayerManager().addGold(collectedBag.getGoldAmount());
+                    // Gold bag toplama aksiyonu kaydı
+                    recordGoldBagCollected(x, y, collectedBag.getGoldAmount());
                 }
             }
         }
@@ -896,49 +910,36 @@ public class PlayingController implements Observer {
      * In a full refactor, managers would be updated to work directly with the controller/model
      */
     private class PlayingAdapter extends Playing {
-        public PlayingAdapter() {
+        private final PlayingModel model;
+
+        public PlayingAdapter(PlayingModel model) {
             super(PlayingController.this.game, true); // isAdapter=true
-            setController(PlayingController.this); // Set the controller using the setter method
+            this.model = model;
         }
-
-        @Override
-        public EnemyManager getEnemyManager() { return model.getEnemyManager(); }
-
-        @Override
-        public WeatherManager getWeatherManager() { return model.getWeatherManager(); }
-
-        @Override
-        public PlayerManager getPlayerManager() { return model.getPlayerManager(); }
-
-        @Override
-        public TowerManager getTowerManager() { return model.getTowerManager(); }
-
-        @Override
-        public GoldBagManager getGoldBagManager() { return model.getGoldBagManager(); }
-
-        @Override
-        public UltiManager getUltiManager() { return model.getUltiManager(); }
-
-        @Override
-        public void incrementEnemyDefeated() { model.incrementEnemyDefeated(); }
-
-        @Override
-        public void addTotalDamage(int damage) { model.addTotalDamage(damage); }
-
-        @Override
-        public void enemyReachedEnd(Enemy enemy) { model.enemyReachedEnd(enemy); }
-
-        @Override
-        public void spawnEnemy(int enemyType) { model.spawnEnemy(enemyType); }
 
         @Override
         public boolean isGamePaused() { return model.isGamePaused(); }
 
         @Override
+        public boolean isOptionsMenuOpen() { return model.isOptionsMenuOpen(); }
+
+        @Override
         public float getGameSpeedMultiplier() { return model.getGameSpeedMultiplier(); }
 
         @Override
-        public long getGameTime() { return model.getGameTime(); }
+        public String getWaveStatus() { return model.getWaveStatus(); }
+
+        @Override
+        public managers.WeatherManager getWeatherManager() { return model.getWeatherManager(); }
+
+        @Override
+        public managers.TileManager getTileManager() { return model.getTileManager(); }
+
+        @Override
+        public managers.PlayerManager getPlayerManager() { return model.getPlayerManager(); }
+
+        @Override
+        public managers.UltiManager getUltiManager() { return model.getUltiManager(); }
 
         @Override
         public int[][] getLevel() { return model.getLevel(); }
@@ -947,79 +948,81 @@ public class PlayingController implements Observer {
         public int[][] getOverlay() { return model.getOverlay(); }
 
         @Override
-        public void startWarriorPlacement(Warrior warrior) {
-            // Instead of calling controller (which is null), handle directly
-            model.setPendingWarriorPlacement(warrior);
-            // Clear tower selection
-            model.setDisplayedTower(null);
-            System.out.println("Warrior placement mode started for: " + warrior.getClass().getSimpleName());
-        }
-
-        @Override
-        public void shootEnemy(Object shooter, Enemy enemy) {
-            // Use the abstracted method instead of direct manager access
-            createProjectile(shooter, enemy);
-        }
-
-        // Override additional methods that might be called by managers
-        @Override
         public managers.WaveManager getWaveManager() { return model.getWaveManager(); }
 
         @Override
-        public managers.TileManager getTileManager() { return model.getTileManager(); }
+        public managers.EnemyManager getEnemyManager() { return model.getEnemyManager(); }
+
+        @Override
+        public managers.TowerManager getTowerManager() { return model.getTowerManager(); }
+
+        @Override
+        public managers.GoldBagManager getGoldBagManager() { return model.getGoldBagManager(); }
 
         @Override
         public managers.FireAnimationManager getFireAnimationManager() { return model.getFireAnimationManager(); }
 
         @Override
-        public String getCurrentMapName() { return model.getCurrentMapName(); }
+        public int getTimePlayedInSeconds() { return model.getTimePlayedInSeconds(); }
 
         @Override
-        public String getCurrentDifficulty() { return model.getCurrentDifficulty(); }
+        public long getGameTime() { return model.getGameTime(); }
 
         @Override
-        public boolean isAllWavesFinished() { return model.isAllWavesFinished(); }
+        public void updateUIResources() { model.updateUIResources(); }
 
         @Override
-        public config.GameOptions getGameOptions() { return model.getGameOptions(); }
+        public void modifyTile(int x, int y, String type) { model.modifyTile(x, y, type); }
 
         @Override
-        public String getWaveStatus() { return model.getWaveStatus(); }
+        public void enemyReachedEnd(enemies.Enemy enemy) { model.enemyReachedEnd(enemy); }
 
-        // Override tree-related methods
+        @Override
+        public void spawnEnemy(int enemyType) { model.spawnEnemy(enemyType); }
+
+        @Override
+        public void startWarriorPlacement(objects.Warrior warrior) { model.setPendingWarriorPlacement(warrior); }
+
+        @Override
+        public void shootEnemy(Object shooter, enemies.Enemy enemy) { model.shootEnemy(shooter, enemy); }
+
+        @Override
+        public void incrementEnemyDefeated() { model.incrementEnemyDefeated(); }
+
+        @Override
+        public void addTotalDamage(int damage) { model.addTotalDamage(damage); }
+
+        @Override
+        public void enemyDiedAt(int x, int y) { model.enemyDiedAt(x, y); }
+
+        @Override
+        public void setDisplayedTower(objects.Tower tower) { model.setDisplayedTower(tower); }
+
+        @Override
+        public void setSelectedDeadTree(ui_p.DeadTree deadTree) { model.setSelectedDeadTree(deadTree); }
+
         @Override
         public java.util.List<ui_p.DeadTree> getDeadTrees() { return model.getDeadTrees(); }
 
         @Override
         public java.util.List<ui_p.LiveTree> getLiveTrees() { return model.getLiveTrees(); }
 
-        // Override methods that are called by UI components
         @Override
-        public void modifyTile(int x, int y, String tile) {
-            // Handle tile modification directly through model (same logic as Playing.java)
-            x /= 64;
-            y /= 64;
+        public objects.Tower getDisplayedTower() { return model.getDisplayedTower(); }
 
-            int[][] level = model.getLevel();
-            if (level == null) return;
+        @Override
+        public ui_p.DeadTree getSelectedDeadTree() { return model.getSelectedDeadTree(); }
 
-            if (tile.equals("ARCHER")) {
-                level[y][x] = 26;
-            } else if (tile.equals("MAGE")) {
-                level[y][x] = 20;
-            } else if (tile.equals("ARTILERRY")) {
-                level[y][x] = 21;
-            } else if (tile.equals("DEADTREE")) {
-                level[y][x] = 15;
-            }
-            System.out.println("Tile modified at (" + x + ", " + y + ") to: " + tile);
-        }
+        @Override
+        public config.GameOptions getGameOptions() { return model.getGameOptions(); }
     }
 
     private void handleWarriorPlacement(int x, int y) {
         if (tryPlaceWarrior(x, y)) {
             handleGoldSpent(model.getPendingWarriorPlacement().getCost());
             model.setPendingWarriorPlacement(null);
+            // Warrior yerleştirme aksiyonu kaydı
+            recordWarriorPlaced(x, y);
         }
     }
 
@@ -1027,140 +1030,283 @@ public class PlayingController implements Observer {
         if (model.getUltiManager() != null && model.getUltiManager().tryPlaceGoldFactory(x, y)) {
             handleUltimateUsed("Gold Factory");
             model.getUltiManager().deselectGoldFactory();
+            // Gold factory placement aksiyonu kaydı
+            recordUltimateUsed("Gold Factory");
         }
     }
 
     private void handleTowerPlacement(int x, int y) {
-        if (model.getTowerManager() != null && model.getTowerManager().placeTower(x, y)) {
-            handleGoldSpent(50); // Base tower cost
-            handleTowerPlacement(x, y);
-        }
+        recordTowerPlaced(x, y);
     }
 
     private void handleEnemySpawned(Enemy enemy) {
-        ReplayManager.getInstance().addAction(new GameAction(
-            GameAction.ActionType.ENEMY_SPAWNED,
-            model.getTimePlayedInSeconds(),
-            (int) enemy.getX(),
-            (int) enemy.getY(),
-            "Enemy spawned: " + enemy.getEnemyType()
-        ));
+        recordEnemySpawned(enemy.getX(), enemy.getY());
     }
 
     private void handleEnemyDefeated(Enemy enemy) {
-        ReplayManager.getInstance().addAction(new GameAction(
-            GameAction.ActionType.ENEMY_DEFEATED,
-            model.getTimePlayedInSeconds(),
-            (int) enemy.getX(),
-            (int) enemy.getY(),
-            "Enemy defeated: " + enemy.getEnemyType()
-        ));
+        recordEnemyDefeated(enemy.getX(), enemy.getY());
     }
 
     private void handleEnemyReachedEnd(Enemy enemy) {
-        ReplayManager.getInstance().addAction(new GameAction(
-            GameAction.ActionType.ENEMY_REACHED_END,
-            model.getTimePlayedInSeconds(),
-            (int) enemy.getX(),
-            (int) enemy.getY(),
-            "Enemy reached end: " + enemy.getEnemyType()
-        ));
+        recordEnemyReachedEnd(enemy.getX(), enemy.getY());
     }
 
     private void handleGoldEarned(int amount) {
-        ReplayManager.getInstance().addAction(new GameAction(
-            GameAction.ActionType.GOLD_EARNED,
-            model.getTimePlayedInSeconds(),
-            0,
-            0,
-            "Gold earned: " + amount
-        ));
+        recordGoldEarned(amount);
     }
 
     private void handleGoldSpent(int amount) {
-        ReplayManager.getInstance().addAction(new GameAction(
-            GameAction.ActionType.GOLD_SPENT,
-            model.getTimePlayedInSeconds(),
-            0,
-            0,
-            "Gold spent: " + amount
-        ));
+        model.getPlayerManager().spendGold(amount);
+        recordGoldSpent(amount);
     }
 
     private void handleUltimateUsed(String ultimateType) {
+        recordUltimateUsed(ultimateType);
+    }
+
+    public void recordTowerPlaced(int x, int y) {
+        String details = String.format("Tower placed: ARCHER at (%d,%d)", x, y);
+        ReplayManager.getInstance().addAction(new GameAction(
+            GameAction.ActionType.TOWER_PLACED,
+            details,
+            (int)model.getTimePlayedInSeconds(),
+            model.getGameTime()
+        ));
+    }
+
+    private void recordEnemySpawned(float x, float y) {
+        String details = String.format("Enemy spawned: NORMAL at (%.0f,%.0f)", x, y);
+        ReplayManager.getInstance().addAction(new GameAction(
+            GameAction.ActionType.ENEMY_SPAWNED,
+            details,
+            (int)model.getTimePlayedInSeconds(),
+            model.getGameTime()
+        ));
+    }
+
+    private void recordEnemyDefeated(float x, float y) {
+        String details = String.format("Enemy defeated: NORMAL at (%.0f,%.0f)", x, y);
+        ReplayManager.getInstance().addAction(new GameAction(
+            GameAction.ActionType.ENEMY_DEFEATED,
+            details,
+            (int)model.getTimePlayedInSeconds(),
+            model.getGameTime()
+        ));
+    }
+
+    private void recordEnemyReachedEnd(float x, float y) {
+        String details = String.format("Enemy reached end: NORMAL at (%.0f,%.0f)", x, y);
+        ReplayManager.getInstance().addAction(new GameAction(
+            GameAction.ActionType.ENEMY_REACHED_END,
+            details,
+            (int)model.getTimePlayedInSeconds(),
+            model.getGameTime()
+        ));
+    }
+
+    private void recordGoldEarned(int amount) {
+        String details = String.format("Gold earned: %d", amount);
+        ReplayManager.getInstance().addAction(new GameAction(
+            GameAction.ActionType.GOLD_EARNED,
+            details,
+            (int)model.getTimePlayedInSeconds(),
+            model.getGameTime()
+        ));
+    }
+
+    private void recordGoldSpent(int amount) {
+        String details = String.format("Gold spent: %d", amount);
+        ReplayManager.getInstance().addAction(new GameAction(
+            GameAction.ActionType.GOLD_SPENT,
+            details,
+            (int)model.getTimePlayedInSeconds(),
+            model.getGameTime()
+        ));
+    }
+
+    private void recordUltimateUsed(String ultimateType) {
+        String details = String.format("Ultimate used: %s", ultimateType);
         ReplayManager.getInstance().addAction(new GameAction(
             GameAction.ActionType.ULTIMATE_USED,
-            model.getTimePlayedInSeconds(),
-            0,
-            0,
-            "Ultimate used: " + ultimateType
+            details,
+            (int)model.getTimePlayedInSeconds(),
+            model.getGameTime()
         ));
     }
 
     public void startReplay() {
         ReplayRecord replay = ReplayManager.getInstance().getCurrentReplay();
         if (replay != null) {
+            System.out.println("Replay starting, actions count: " + replay.getActions().size());
             isReplayMode = true;
             currentActionIndex = 0;
             replayStartTime = System.currentTimeMillis();
             // Reset game state
             model.resetGameState();
+            model.setTimePlayedInSeconds(0);
             // Set map name and other initial state
             model.setCurrentMapName(replay.getMapName());
+            // Populate replayActions list
+            replayActions.clear();
+            replayActions.addAll(replay.getActions());
         }
     }
 
     private void updateReplay() {
-        ReplayRecord replay = ReplayManager.getInstance().getCurrentReplay();
-        if (replay == null) {
-            isReplayMode = false;
-            return;
-        }
-
-        long currentTime = System.currentTimeMillis() - replayStartTime;
-        List<GameAction> actions = replay.getActions();
-
-        // Process all actions that should have occurred by now
-        while (currentActionIndex < actions.size()) {
-            GameAction action = actions.get(currentActionIndex);
-            if (action.getGameTime() <= currentTime) {
-                processReplayAction(action);
-                currentActionIndex++;
+        while (!replayActions.isEmpty()) {
+            GameAction nextAction = replayActions.get(0);
+            if (nextAction.getGameTimeMillis() <= model.getGameTime()) {
+                System.out.println("updateReplay: Executing action " + nextAction.getActionType() + " at gameTimeMillis=" + model.getGameTime());
+                processReplayAction(nextAction);
+                replayActions.remove(0);
             } else {
-                break;
+                break; // Sıradaki aksiyonun zamanı henüz gelmedi
             }
-        }
-
-        // Check if replay is finished
-        if (currentActionIndex >= actions.size()) {
-            isReplayMode = false;
-            main.GameStates.gameState = main.GameStates.MENU;
         }
     }
 
     private void processReplayAction(GameAction action) {
-        switch (action.getType()) {
+        String details = action.getDetails();
+        switch (action.getActionType()) {
             case TOWER_PLACED:
-                model.getTowerManager().placeTower(action.getX(), action.getY());
+                // Parse coordinates from details string
+                String[] towerParts = details.split("at \\(|,|\\)");
+                if (towerParts.length >= 3) {
+                    int x = Integer.parseInt(towerParts[1].trim());
+                    int y = Integer.parseInt(towerParts[2].trim());
+                    placeTower(x, y);
+                }
                 break;
             case ENEMY_SPAWNED:
-                // TODO: Spawn enemy at the specified position
+                // Parse enemy type and coordinates from details string
+                String[] spawnParts = details.split(": | at \\(|,|\\)");
+                if (spawnParts.length >= 4) {
+                    String enemyType = spawnParts[1].trim();
+                    int x = Integer.parseInt(spawnParts[2].trim());
+                    int y = Integer.parseInt(spawnParts[3].trim());
+                    spawnEnemy(x, y, enemyType);
+                }
                 break;
             case ENEMY_DEFEATED:
-                // TODO: Handle enemy defeat
+                // Parse coordinates from details string
+                String[] defeatParts = details.split("at \\(|,|\\)");
+                if (defeatParts.length >= 3) {
+                    int x = Integer.parseInt(defeatParts[1].trim());
+                    int y = Integer.parseInt(defeatParts[2].trim());
+                    enemyDefeated(x, y);
+                }
                 break;
             case ENEMY_REACHED_END:
-                // TODO: Handle enemy reaching end
+                // Parse coordinates from details string
+                String[] endParts = details.split("at \\(|,|\\)");
+                if (endParts.length >= 3) {
+                    int x = Integer.parseInt(endParts[1].trim());
+                    int y = Integer.parseInt(endParts[2].trim());
+                    enemyReachedEnd(x, y);
+                }
                 break;
             case GOLD_EARNED:
-                model.getPlayerManager().addGold(Integer.parseInt(action.getData()));
+                // Parse gold amount from details string
+                String[] goldParts = details.split(": ");
+                if (goldParts.length >= 2) {
+                    int amount = Integer.parseInt(goldParts[1].trim());
+                    addGold(amount);
+                }
                 break;
             case GOLD_SPENT:
-                model.getPlayerManager().spendGold(Integer.parseInt(action.getData()));
+                // Parse gold amount from details string
+                String[] spendParts = details.split(": ");
+                if (spendParts.length >= 2) {
+                    int amount = Integer.parseInt(spendParts[1].trim());
+                    spendGold(amount);
+                }
                 break;
             case ULTIMATE_USED:
-                // TODO: Handle ultimate ability usage
+                // Parse ultimate type from details string
+                String[] ultimateParts = details.split(": ");
+                if (ultimateParts.length >= 2) {
+                    String ultimateType = ultimateParts[1].trim();
+                    useUltimate(ultimateType);
+                }
+                break;
+            default:
+                // Skip other action types
                 break;
         }
+    }
+
+    private void placeTower(int x, int y) {
+        if (model.getTowerManager().placeTower(x, y)) {
+            recordTowerPlaced(x, y);
+        }
+    }
+
+    private void spawnEnemy(int x, int y, String enemyType) {
+        model.getEnemyManager().spawnEnemy(x, y, enemyType);
+    }
+
+    private void enemyDefeated(int x, int y) {
+        model.getEnemyManager().enemyDefeated(x, y);
+        recordEnemyDefeated(x, y);
+    }
+
+    private void enemyReachedEnd(int x, int y) {
+        model.getEnemyManager().enemyReachedEnd(x, y);
+        recordEnemyReachedEnd(x, y);
+    }
+
+    private void addGold(int amount) {
+        model.getPlayerManager().addGold(amount);
+        recordGoldEarned(amount);
+    }
+
+    private void spendGold(int amount) {
+        model.getPlayerManager().spendGold(amount);
+        recordGoldSpent(amount);
+    }
+
+    private void useUltimate(String ultimateType) {
+        model.getUltiManager().useUltimate(ultimateType);
+        recordUltimateUsed(ultimateType);
+    }
+
+    public void resetGame() {
+        model.resetGame();
+        replayActions.clear();
+        currentActionIndex = 0;
+        replayStartTime = 0;
+    }
+
+    public boolean isReplayMode() {
+        return isReplayMode;
+    }
+
+    // Yeni aksiyon kayıt fonksiyonları
+    private void recordWarriorPlaced(int x, int y) {
+        String details = String.format("Warrior placed at (%d,%d)", x, y);
+        ReplayManager.getInstance().addAction(new GameAction(
+            GameAction.ActionType.WARRIOR_SPAWNED,
+            details,
+            (int)model.getTimePlayedInSeconds(),
+            model.getGameTime()
+        ));
+    }
+    public void recordTreeAction(int x, int y, String type) {
+        String details = String.format("Tree action: %s at (%d,%d)", type, x, y);
+        ReplayManager.getInstance().addAction(new GameAction(
+            GameAction.ActionType.TREE_BURNED,
+            details,
+            (int)model.getTimePlayedInSeconds(),
+            model.getGameTime()
+        ));
+    }
+    private void recordGoldBagCollected(int x, int y, int amount) {
+        String details = String.format("Gold bag collected at (%d,%d) amount: %d", x, y, amount);
+        ReplayManager.getInstance().addAction(new GameAction(
+            GameAction.ActionType.GOLD_BAG_DROPPED,
+            details,
+            (int)model.getTimePlayedInSeconds(),
+            model.getGameTime()
+        ));
     }
 } 

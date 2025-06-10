@@ -22,6 +22,7 @@ import stats.GameStatsRecord;
 import ui_p.DeadTree;
 import ui_p.LiveTree;
 import ui_p.MineableStone;
+import scenes.Playing;
 
 /**
  * PlayingModel - Contains all game state data and business logic
@@ -98,6 +99,8 @@ public class PlayingModel extends Observable implements GameContext {
 
     // Initialization flag
     private boolean isFirstReset = true;
+
+    private scenes.Playing playing;
 
     public PlayingModel() {
         this.tileManager = new TileManager();
@@ -330,6 +333,10 @@ public class PlayingModel extends Observable implements GameContext {
     }
 
     private void handleGameOver() {
+        if (playing != null && playing.getController() != null && playing.getController().isReplayMode()) {
+            System.out.println("Replay mode: GameOver check skipped.");
+            return;
+        }
         // Prevent multiple calls to handleGameOver
         if (gameOverHandled) return;
 
@@ -786,6 +793,7 @@ public class PlayingModel extends Observable implements GameContext {
             notifyObservers("gameStateReset");
 
             System.out.println("Game state reset successfully");
+            System.out.println("resetGameState: health=" + (playerManager != null ? playerManager.getHealth() : "null") + ", gold=" + (playerManager != null ? playerManager.getGold() : "null"));
         } catch (Exception e) {
             System.err.println("Failed to reset game state: " + e.getMessage());
             e.printStackTrace();
@@ -1047,6 +1055,62 @@ public class PlayingModel extends Observable implements GameContext {
 
     public boolean isVictory() {
         return victoryHandled;
+    }
+
+    public void setPlaying(scenes.Playing playing) {
+        this.playing = playing;
+    }
+
+    public scenes.Playing getPlaying() {
+        return playing;
+    }
+
+    public void updateUIResources() {
+        setChanged();
+        notifyObservers("resourcesUpdated");
+    }
+
+    public void modifyTile(int x, int y, String tile) {
+        x /= 64;
+        y /= 64;
+
+        if (level == null) return;
+
+        if (tile.equals("ARCHER")) {
+            level[y][x] = 26;
+        } else if (tile.equals("MAGE")) {
+            level[y][x] = 20;
+        } else if (tile.equals("ARTILERRY")) {
+            level[y][x] = 21;
+        } else if (tile.equals("DEADTREE")) {
+            level[y][x] = 15;
+        }
+        System.out.println("Tile modified at (" + x + ", " + y + ") to: " + tile);
+    }
+
+    public void shootEnemy(Object shooter, enemies.Enemy enemy) {
+        if (projectileManager != null) {
+            projectileManager.newProjectile(shooter, enemy);
+        }
+    }
+
+    public void resetGame() {
+        // Reset all managers
+        if (enemyManager != null) enemyManager.reset();
+        if (towerManager != null) towerManager.reset();
+        if (projectileManager != null) projectileManager.reset();
+        if (playerManager != null) playerManager.reset();
+        if (ultiManager != null) ultiManager.reset();
+        if (treeInteractionManager != null) treeInteractionManager.reset();
+        
+        // Reset game state
+        timePlayedInSeconds = 0;
+        gamePaused = false;
+        gameSpeedMultiplier = 1;
+    }
+
+    public void setTimePlayedInSeconds(int time) {
+        this.timePlayedInSeconds = time;
     }
 
 } 
