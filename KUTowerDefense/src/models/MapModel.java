@@ -82,6 +82,11 @@ public class MapModel {
     public boolean isValidTilePlacement(int x, int y, Tile tile) {
         if (!isWithinBounds(x, y)) return false;
 
+        // Check if trying to place on walls or gates - not allowed
+        if (level[y][x] == WALL_ID || level[y][x] == GATE_ID) {
+            return false;
+        }
+
         if (tile.getId() == -1 || tile.getId() == -2) { // Start/End points
             // Check if it's on edge and on a road tile
             return isOnMapEdge(x, y) && isRoadTile(level[y][x]);
@@ -129,33 +134,26 @@ public class MapModel {
     }
 
     private PlacementResult placeEndPoint(int x, int y) {
-        // First check if it's on a road tile (highest priority)
         if (!isRoadTile(level[y][x])) {
             return PlacementResult.invalid("End point must be placed on a road tile!");
         }
 
-        // Then check if it's on the edge
         if (!isOnMapEdge(x, y)) {
             return PlacementResult.invalid("End point must be placed on the edge of the map!");
         }
 
-        // Only check for objects on edge if the basic requirements are met
         if (hasObjectsOnEdge(x, y)) {
             return PlacementResult.invalid("Warning: Objects on this edge will be removed when placing the end point!");
         }
 
-        // Store previous end point location for wall cleanup
         int[] prevEndPoint = findOverlayPosition(END_POINT);
 
-        // Clear existing end points
         clearOverlayType(END_POINT);
 
-        // Remove previous walls if they existed
         if (prevEndPoint != null) {
             clearWallsAndGate(prevEndPoint[0], prevEndPoint[1]);
         }
 
-        // Place new end point
         overlayData[y][x] = END_POINT;
         addWallsAndGateAroundEndPoint(x, y);
 
@@ -435,6 +433,11 @@ public class MapModel {
     }
 
     private String getPlacementErrorMessage(int x, int y, Tile tile) {
+        // Check for walls/gates first - applies to all tiles
+        if (level[y][x] == WALL_ID || level[y][x] == GATE_ID) {
+            return "Cannot place tiles on walls or gates!";
+        }
+
         if (tile.getId() == -1) {
             if (!isRoadTile(level[y][x])) {
                 return "Start point must be placed on a road tile!";
