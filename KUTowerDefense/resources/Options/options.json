@@ -59,12 +59,15 @@
       "groups": [
         {
           "composition": {
+
             "GOBLIN": 6
+
           },
           "intraEnemyDelay": 0.8
         }
       ],
       "intraGroupDelay": 0.0
+
     },
     {
       "groups": [
