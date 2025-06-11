@@ -74,6 +74,16 @@ public class SkillSelectionScene extends JPanel {
         // Alt panel ve buton
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 40, 20));
         bottomPanel.setOpaque(false);
+        
+        JButton backButton = new JButton("Back");
+        backButton.setFont(new Font("Arial", Font.BOLD, 22));
+        backButton.setBackground(Color.LIGHT_GRAY);
+        backButton.setForeground(Color.BLACK);
+        backButton.setFocusPainted(false);
+        backButton.setPreferredSize(new Dimension(180, 60));
+        backButton.addActionListener(e -> game.changeGameState(main.GameStates.MENU));
+        bottomPanel.add(backButton);
+        
         startGameButton = new JButton("Start Game");
         startGameButton.setFont(new Font("Arial", Font.BOLD, 22));
         startGameButton.setBackground(Color.GREEN);
