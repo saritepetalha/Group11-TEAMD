@@ -1055,36 +1055,36 @@ public class PlayingUI {
         // check which button is hovered
         if (isMouseOverButton(fastForwardButton, mouseX, mouseY)) {
             fastForwardButton.setMouseOver(true);
-            playing.getGame().setCursor(AssetsLoader.getInstance().customHandCursor);
+            if (playing.getGame() != null) playing.getGame().setCursor(AssetsLoader.getInstance().customHandCursor);
         } else if (isMouseOverButton(pauseButton, mouseX, mouseY)) {
             pauseButton.setMouseOver(true);
-            playing.getGame().setCursor(AssetsLoader.getInstance().customHandCursor);
+            if (playing.getGame() != null) playing.getGame().setCursor(AssetsLoader.getInstance().customHandCursor);
         } else if (isMouseOverButton(optionsButton, mouseX, mouseY)) {
             optionsButton.setMouseOver(true);
-            playing.getGame().setCursor(AssetsLoader.getInstance().customHandCursor);
+            if (playing.getGame() != null) playing.getGame().setCursor(AssetsLoader.getInstance().customHandCursor);
         } else if (isMouseOverButton(backOptionsButton, mouseX, mouseY)) {
             backOptionsButton.setMouseOver(true);
-            playing.getGame().setCursor(AssetsLoader.getInstance().customHandCursor);
+            if (playing.getGame() != null) playing.getGame().setCursor(AssetsLoader.getInstance().customHandCursor);
         } else if (isMouseOverButton(saveButton, mouseX, mouseY)) {
             saveButton.setMouseOver(true);
-            playing.getGame().setCursor(AssetsLoader.getInstance().customHandCursor);
+            if (playing.getGame() != null) playing.getGame().setCursor(AssetsLoader.getInstance().customHandCursor);
         } else if (!musicDropdownOpen && isMouseOverButton(mainMenuButton, mouseX, mouseY)) {
             mainMenuButton.setMouseOver(true);
-            playing.getGame().setCursor(AssetsLoader.getInstance().customHandCursor);
+            if (playing.getGame() != null) playing.getGame().setCursor(AssetsLoader.getInstance().customHandCursor);
         } else if (isMouseOverButton(earthquakeButton, mouseX, mouseY)) {
             earthquakeButton.setMouseOver(true);
-            playing.getGame().setCursor(AssetsLoader.getInstance().customHandCursor);
+            if (playing.getGame() != null) playing.getGame().setCursor(AssetsLoader.getInstance().customHandCursor);
         } else if (isMouseOverButton(lightningButton, mouseX, mouseY)) {
             lightningButton.setMouseOver(true);
-            playing.getGame().setCursor(AssetsLoader.getInstance().customHandCursor);
+            if (playing.getGame() != null) playing.getGame().setCursor(AssetsLoader.getInstance().customHandCursor);
         } else if (isMouseOverButton(goldFactoryButton, mouseX, mouseY)) {
             goldFactoryButton.setMouseOver(true);
-            playing.getGame().setCursor(AssetsLoader.getInstance().customHandCursor);
+            if (playing.getGame() != null) playing.getGame().setCursor(AssetsLoader.getInstance().customHandCursor);
         } else if (isMouseOverButton(freezeButton, mouseX, mouseY)) {
             freezeButton.setMouseOver(true);
-            playing.getGame().setCursor(AssetsLoader.getInstance().customHandCursor);
+            if (playing.getGame() != null) playing.getGame().setCursor(AssetsLoader.getInstance().customHandCursor);
         } else {
-            playing.getGame().setCursor(AssetsLoader.getInstance().customNormalCursor);
+            if (playing.getGame() != null) playing.getGame().setCursor(AssetsLoader.getInstance().customNormalCursor);
         }
 
         // Check ultimate buttons for hover and show tooltips
