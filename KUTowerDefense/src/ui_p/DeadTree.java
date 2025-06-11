@@ -1,6 +1,7 @@
 package ui_p;
 
 import helpMethods.LoadSave;
+import ui_p.AssetsLoader;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -50,21 +51,16 @@ public class DeadTree {
 
     private void drawButtonWithHover(Graphics g, TheButton button, int index) {
         if (button.isMouseOver()) {
-            // Try to use a hover asset if available, otherwise draw a highlight
-            BufferedImage hoverImg = null;
-            try {
-                hoverImg = helpMethods.LoadSave.getImageFromPath("/UI/buttonHoveredAssets/tree_hover_" + index + ".png");
-            } catch (Exception e) { hoverImg = null; }
-            if (hoverImg != null) {
-                g.drawImage(hoverImg, button.getX(), button.getY(), button.getWidth(), button.getHeight(), null);
-            } else {
-                Graphics2D g2d = (Graphics2D) g;
-                g2d.setColor(new Color(255,255,200,80));
-                g2d.fillRect(button.getX(), button.getY(), button.getWidth(), button.getHeight());
-            }
-        } else {
-            button.draw(g);
+            Graphics2D g2d = (Graphics2D) g;
+            long currentTime = System.currentTimeMillis();
+            float alpha = (float) (0.5f + 0.5f * Math.sin(currentTime * 0.003));
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+            g2d.setColor(new Color(255, 255, 255, 100));
+            g2d.setStroke(new BasicStroke(3f));
+            g2d.drawRoundRect(button.getX() - 2, button.getY() - 2, button.getWidth() + 4, button.getHeight() + 4, 8, 8);
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
         }
+        button.draw(g);
     }
 
     public static void loadButtonImageFile() {
