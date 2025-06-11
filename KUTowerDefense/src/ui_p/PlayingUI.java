@@ -1340,8 +1340,9 @@ public class PlayingUI {
             if (playing.getUltiManager().canUseEarthquake()) {
                 if (playing.getPlayerManager().getGold() >= 50) { // earthquakeCost
                     AudioManager.getInstance().playButtonClickSound();
-                    toggleButtonState(earthquakeButton);
+                    earthquakeButton.setMousePressed(true);
                     playing.getUltiManager().triggerEarthquake();
+                    earthquakeButton.setMousePressed(false);
                 } else {
                     System.out.println("Not enough gold for Earthquake!");
                 }
@@ -1356,7 +1357,9 @@ public class PlayingUI {
                 playing.getUltiManager().setWaitingForLightningTarget(false);
             } else if (playing.getUltiManager().canUseLightning()) {
                 if (playing.getPlayerManager().getGold() >= 75) {
+                    lightningButton.setMousePressed(true);
                     playing.getUltiManager().setWaitingForLightningTarget(true);
+                    lightningButton.setMousePressed(false);
                 } else {
                     System.out.println("Not enough gold for Lightning Strike!");
                 }
@@ -1370,8 +1373,9 @@ public class PlayingUI {
             if (playing.getUltiManager().canUseFreeze()) {
                 if (playing.getPlayerManager().getGold() >= 60) { // freezeCost
                     AudioManager.getInstance().playButtonClickSound();
-                    toggleButtonState(freezeButton);
+                    freezeButton.setMousePressed(true);
                     playing.getUltiManager().triggerFreeze();
+                    freezeButton.setMousePressed(false);
                 } else {
                     System.out.println("Not enough gold for Freeze!");
                 }
