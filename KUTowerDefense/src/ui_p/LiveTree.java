@@ -41,8 +41,21 @@ public class LiveTree {
 
     public void draw(Graphics g) {
         if (showChoices){
-            fireButton.draw(g);
-            
+            if (fireButton.isMouseOver()) {
+                BufferedImage hoverImg = null;
+                try {
+                    hoverImg = helpMethods.LoadSave.getImageFromPath("/UI/buttonHoveredAssets/fire_hover.png");
+                } catch (Exception e) { hoverImg = null; }
+                if (hoverImg != null) {
+                    g.drawImage(hoverImg, fireButton.getX(), fireButton.getY(), fireButton.getWidth(), fireButton.getHeight(), null);
+                } else {
+                    Graphics2D g2d = (Graphics2D) g;
+                    g2d.setColor(new Color(255,100,100,80));
+                    g2d.fillRect(fireButton.getX(), fireButton.getY(), fireButton.getWidth(), fireButton.getHeight());
+                }
+            } else {
+                fireButton.draw(g);
+            }
             // Update and draw tooltip
             tooltip.update();
             tooltip.draw((Graphics2D) g);
@@ -87,5 +100,9 @@ public class LiveTree {
         } else {
             tooltip.hide();
         }
+    }
+
+    public void mouseMoved(int mouseX, int mouseY) {
+        fireButton.setMouseOver(fireButton.getBounds().contains(mouseX, mouseY));
     }
 }

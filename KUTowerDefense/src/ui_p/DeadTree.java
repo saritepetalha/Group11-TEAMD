@@ -39,13 +39,31 @@ public class DeadTree {
 
     public void draw(Graphics g) {
         if (showChoices){
-            mageButton.draw(g);
-            archerButton.draw(g);
-            artilleryButton.draw(g);
-            
+            drawButtonWithHover(g, mageButton, 0);
+            drawButtonWithHover(g, archerButton, 1);
+            drawButtonWithHover(g, artilleryButton, 2);
             // Update and draw tooltip
             tooltip.update();
             tooltip.draw((Graphics2D) g);
+        }
+    }
+
+    private void drawButtonWithHover(Graphics g, TheButton button, int index) {
+        if (button.isMouseOver()) {
+            // Try to use a hover asset if available, otherwise draw a highlight
+            BufferedImage hoverImg = null;
+            try {
+                hoverImg = helpMethods.LoadSave.getImageFromPath("/UI/buttonHoveredAssets/tree_hover_" + index + ".png");
+            } catch (Exception e) { hoverImg = null; }
+            if (hoverImg != null) {
+                g.drawImage(hoverImg, button.getX(), button.getY(), button.getWidth(), button.getHeight(), null);
+            } else {
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setColor(new Color(255,255,200,80));
+                g2d.fillRect(button.getX(), button.getY(), button.getWidth(), button.getHeight());
+            }
+        } else {
+            button.draw(g);
         }
     }
 
@@ -141,5 +159,11 @@ public class DeadTree {
         } else {
             tooltip.hide();
         }
+    }
+
+    public void mouseMoved(int mouseX, int mouseY) {
+        mageButton.setMouseOver(mageButton.getBounds().contains(mouseX, mouseY));
+        archerButton.setMouseOver(archerButton.getBounds().contains(mouseX, mouseY));
+        artilleryButton.setMouseOver(artilleryButton.getBounds().contains(mouseX, mouseY));
     }
 }
