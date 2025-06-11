@@ -217,8 +217,8 @@ public class ProjectileManager {
         if (projectile.isTracking() && projectile.getTargetEnemy() != null) {
             Enemy targetEnemy = projectile.getTargetEnemy();
             if (targetEnemy.isAlive() && checkProjectileHit(projectile, targetEnemy)) {
-                // Hit the target enemy
-                targetEnemy.hurt(projectile.getDamage());
+                // Hit the target enemy - use GRASP Information Expert pattern
+                applyProjectileDamage(projectile, targetEnemy);
                 playing.addTotalDamage(projectile.getDamage());
 
                 // Handle enemy death
@@ -246,8 +246,8 @@ public class ProjectileManager {
             if (!enemy.isAlive()) continue;
 
             if (checkProjectileHit(projectile, enemy)) {
-                // Apply damage
-                enemy.hurt(projectile.getDamage());
+                // Apply damage using GRASP Information Expert pattern
+                applyProjectileDamage(projectile, enemy);
                 playing.addTotalDamage(projectile.getDamage());
 
                 // Handle enemy death
@@ -493,5 +493,34 @@ public class ProjectileManager {
     // Method to access projectiles list (used by model abstraction)
     public ArrayList<Projectile> getProjectiles() {
         return projectiles;
+    }
+
+    /**
+     * GRASP Information Expert: Apply projectile damage using the Enemy's damage calculation
+     * Determines the appropriate damage type based on projectile type
+     */
+    private void applyProjectileDamage(Projectile projectile, Enemy enemy) {
+        int damage = projectile.getDamage();
+        enemies.Enemy.DamageType damageType = getDamageTypeFromProjectile(projectile);
+
+        // Let the enemy (Information Expert) calculate and apply the damage
+        enemy.takeDamage(damage, damageType);
+    }
+
+    /**
+     * GRASP Information Expert: Determine damage type based on projectile characteristics
+     */
+    private enemies.Enemy.DamageType getDamageTypeFromProjectile(Projectile projectile) {
+        switch (projectile.getProjectileType()) {
+            case constants.Constants.Projectiles.ARROW:
+                return enemies.Enemy.DamageType.PHYSICAL;
+            case constants.Constants.Projectiles.MAGICBOLT:
+            case constants.Constants.Projectiles.WIZARD_BOLT:
+                return enemies.Enemy.DamageType.MAGICAL;
+            case constants.Constants.Projectiles.CANNONBALL:
+                return enemies.Enemy.DamageType.EXPLOSIVE;
+            default:
+                return enemies.Enemy.DamageType.PHYSICAL; // Default fallback
+        }
     }
 }

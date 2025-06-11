@@ -32,6 +32,26 @@ public abstract class Enemy {
     private int maxFrameCount = 6;   // default frame count
     protected int goldReward;
 
+    // GRASP Information Expert: Damage calculation and resistance properties
+    // The Enemy knows best about its own resistances and vulnerabilities
+    protected float physicalResistance = 0.0f;    // 0.0 = no resistance, 0.5 = 50% resistance
+    protected float magicalResistance = 0.0f;     // 0.0 = no resistance, 0.5 = 50% resistance
+    protected float explosiveResistance = 0.0f;   // 0.0 = no resistance, 0.5 = 50% resistance
+    protected float ultimateResistance = 0.0f;    // 0.0 = no resistance, 0.5 = 50% resistance
+
+    // Damage vulnerabilities (values > 1.0 mean extra damage)
+    protected float physicalVulnerability = 1.0f;  // 1.0 = normal, 1.5 = 50% extra damage
+    protected float magicalVulnerability = 1.0f;   // 1.0 = normal, 1.5 = 50% extra damage
+    protected float explosiveVulnerability = 1.0f; // 1.0 = normal, 1.5 = 50% extra damage
+
+    // Damage type enumeration for Information Expert pattern
+    public enum DamageType {
+        PHYSICAL,    // From archer towers, warriors
+        MAGICAL,     // From mage towers
+        EXPLOSIVE,   // From artillery towers, TNT
+        ULTIMATE     // From ultimate abilities (earthquake, lightning, etc.)
+    }
+
     // Slow effect fields
     private boolean isSlowed = false;
     private long slowTimer = 0; // Will store remaining duration in ticks
@@ -90,7 +110,7 @@ public abstract class Enemy {
     }
 
     private Size size;
-    
+
     // Cached values for performance optimization
     private final int halfWidth;
     private final int halfHeight;
@@ -106,21 +126,24 @@ public abstract class Enemy {
         this.speed = speed;
         this.size = size;
         this.maxFrameCount = maxFrameCount;
-        
+
         // Cache half dimensions for performance
         this.halfWidth = this.size.getWidth() / 2;
         this.halfHeight = this.size.getHeight() / 2;
 
         // Initialize boundary directly using cached values
         this.boundary = new Rectangle(
-            (int)this.x - this.halfWidth,
-            (int)this.y - this.halfHeight,
-            this.size.getWidth(),
-            this.size.getHeight()
+                (int)this.x - this.halfWidth,
+                (int)this.y - this.halfHeight,
+                this.size.getWidth(),
+                this.size.getHeight()
         );
 
         initializeHealth();
         maxHealth = health;
+
+        // GRASP Information Expert: Initialize resistances based on enemy type
+        initializeResistances();
     }
 
     /**
@@ -173,7 +196,7 @@ public abstract class Enemy {
             // Store current health percentage before updating maxHealth
             float currentHealthPercentage = getHealthBarPercentage();
             updateGoldRewardFromOptions(options);
-            
+
             // Apply the new stats
             this.maxHealth = stats.getHitPoints();
             // Apply the previous health percentage to the new maxHealth, clamp between 0 and maxHealth
@@ -222,7 +245,7 @@ public abstract class Enemy {
         float effSpeed = getEffectiveSpeed();
         this.x += xSpeed * effSpeed;
         this.y += ySpeed * effSpeed;
-        
+
         // Update direction based on movement - optimized to avoid unnecessary calculations
         if (xSpeed != 0 || ySpeed != 0) {
             float totalComponentSpeed = (float) Math.sqrt(xSpeed * xSpeed + ySpeed * ySpeed);
@@ -290,23 +313,213 @@ public abstract class Enemy {
     public boolean isInvisible() { return invisible; }
     public void setInvisible(boolean invisible) { this.invisible = invisible; }
 
-    public void hurt(int damage){
-        this.health -= damage;
-        if(health <= 0) {
+    /**
+     * GRASP Information Expert: Calculate actual damage after applying resistances
+     * The Enemy is the expert on its own resistance values and damage calculation
+     * @param rawDamage The base damage before resistances
+     * @param damageType The type of damage being dealt
+     * @return The actual damage after resistances are applied
+     */
+    public int calculateActualDamage(int rawDamage, DamageType damageType) {
+        if (rawDamage <= 0) return 0;
+
+        float resistance = getResistanceForDamageType(damageType);
+        float vulnerability = getVulnerabilityForDamageType(damageType);
+
+        // Apply resistance first (reduces damage)
+        float damageAfterResistance = rawDamage * (1.0f - resistance);
+
+        // Then apply vulnerability (can increase damage)
+        float finalDamage = damageAfterResistance * vulnerability;
+
+        // Ensure minimum damage of 1 if raw damage was > 0
+        int actualDamage = Math.max(1, Math.round(finalDamage));
+
+        // Log damage calculation for debugging
+        if (resistance > 0 || vulnerability != 1.0f) {
+            System.out.println("Enemy " + getEnemyTypeEnum() + " took " + actualDamage +
+                    " " + damageType + " damage (raw: " + rawDamage +
+                    ", resistance: " + (resistance * 100) + "%" +
+                    ", vulnerability: " + (vulnerability * 100) + "%)");
+        }
+
+        return actualDamage;
+    }
+
+    /**
+     * GRASP Information Expert: Get resistance value for specific damage type
+     */
+    private float getResistanceForDamageType(DamageType damageType) {
+        switch (damageType) {
+            case PHYSICAL: return physicalResistance;
+            case MAGICAL: return magicalResistance;
+            case EXPLOSIVE: return explosiveResistance;
+            case ULTIMATE: return ultimateResistance;
+            default: return 0.0f;
+        }
+    }
+
+    /**
+     * GRASP Information Expert: Get vulnerability value for specific damage type
+     */
+    private float getVulnerabilityForDamageType(DamageType damageType) {
+        switch (damageType) {
+            case PHYSICAL: return physicalVulnerability;
+            case MAGICAL: return magicalVulnerability;
+            case EXPLOSIVE: return explosiveVulnerability;
+            case ULTIMATE: return 1.0f; // Ultimate abilities ignore vulnerabilities
+            default: return 1.0f;
+        }
+    }
+
+    /**
+     * GRASP Information Expert: Debug method to display damage calculations
+     * Demonstrates how the Enemy calculates its own damage based on its properties
+     */
+    public void demonstrateDamageCalculation() {
+        System.out.println("=== GRASP Information Expert Pattern Demonstration ===");
+        System.out.println("Enemy Type: " + getEnemyTypeEnum());
+        System.out.println("Health: " + health + "/" + maxHealth);
+
+        // Test different damage types
+        int testDamage = 100;
+        for (DamageType type : DamageType.values()) {
+            int actualDamage = calculateActualDamage(testDamage, type);
+            float resistance = getResistanceForDamageType(type);
+            float vulnerability = getVulnerabilityForDamageType(type);
+
+            System.out.println(type + " Damage: " + testDamage + " -> " + actualDamage +
+                    " (Resistance: " + (resistance * 100) + "%, " +
+                    "Vulnerability: " + (vulnerability * 100) + "%)");
+        }
+        System.out.println("====================================================");
+    }
+
+    /**
+     * GRASP Information Expert: Apply damage with type-specific resistances
+     * This replaces the old hurt() method with intelligent damage calculation
+     */
+    public void takeDamage(int rawDamage, DamageType damageType) {
+        takeDamage(rawDamage, damageType, false);
+    }
+
+    /**
+     * GRASP Information Expert: Apply damage with optional invisibility bypass
+     */
+    public void takeDamage(int rawDamage, DamageType damageType, boolean ignoreInvisibility) {
+        // Check invisibility for Goblin enemies
+        if (!ignoreInvisibility && enemyType == Constants.Enemies.GOBLIN && invisible) {
+            System.out.println("Attack missed invisible Goblin!");
+            return;
+        }
+
+        // Calculate actual damage using Information Expert pattern
+        int actualDamage = calculateActualDamage(rawDamage, damageType);
+
+        // Apply the calculated damage
+        this.health -= actualDamage;
+
+        // Handle death
+        if (health <= 0) {
             playDeathSound();
             alive = false;
         }
     }
 
+    /**
+     * GRASP Information Expert: Initialize resistance values based on enemy type
+     * Each enemy type has different resistance characteristics
+     */
+    protected void initializeResistances() {
+        switch (enemyType) {
+            case KNIGHT:
+                // Knights have strong physical resistance but are vulnerable to magic
+                physicalResistance = 0.3f;     // 30% physical resistance
+                magicalVulnerability = 1.2f;   // 20% extra magical damage
+                explosiveResistance = 0.1f;    // 10% explosive resistance
+                break;
+
+            case TROLL:
+                // Trolls are very tough with general resistance but slow
+                physicalResistance = 0.2f;     // 20% physical resistance
+                magicalResistance = 0.2f;      // 20% magical resistance
+                explosiveResistance = 0.4f;    // 40% explosive resistance (thick skin)
+                ultimateResistance = 0.1f;     // 10% ultimate resistance
+                break;
+
+            case GOBLIN:
+                // Goblins are nimble but fragile, vulnerable to explosives
+                explosiveVulnerability = 1.3f; // 30% extra explosive damage
+                break;
+
+            case BARREL:
+                // Barrels are explosive containers, very vulnerable to fire/explosive
+                explosiveVulnerability = 1.5f; // 50% extra explosive damage
+                magicalVulnerability = 1.2f;   // 20% extra magical damage (fire)
+                break;
+
+            case TNT:
+                // TNT is extremely volatile
+                explosiveVulnerability = 2.0f; // 100% extra explosive damage
+                physicalResistance = 0.1f;     // 10% physical resistance (hard shell)
+                break;
+
+            default:
+                // Default values (already set in field declarations)
+                break;
+        }
+    }
+
+    /**
+     * GRASP Information Expert: Check if enemy has any significant resistances
+     */
+    public boolean hasResistances() {
+        return physicalResistance > 0 || magicalResistance > 0 ||
+                explosiveResistance > 0 || ultimateResistance > 0;
+    }
+
+    /**
+     * GRASP Information Expert: Check if enemy has any vulnerabilities
+     */
+    public boolean hasVulnerabilities() {
+        return physicalVulnerability > 1.0f || magicalVulnerability > 1.0f ||
+                explosiveVulnerability > 1.0f;
+    }
+
+    // GRASP Information Expert: Getter methods for resistance values
+    public float getPhysicalResistance() { return physicalResistance; }
+    public float getMagicalResistance() { return magicalResistance; }
+    public float getExplosiveResistance() { return explosiveResistance; }
+    public float getUltimateResistance() { return ultimateResistance; }
+
+    // GRASP Information Expert: Getter methods for vulnerability values
+    public float getPhysicalVulnerability() { return physicalVulnerability; }
+    public float getMagicalVulnerability() { return magicalVulnerability; }
+    public float getExplosiveVulnerability() { return explosiveVulnerability; }
+
+    // GRASP Information Expert: Setter methods for dynamic resistance changes
+    public void setPhysicalResistance(float resistance) {
+        this.physicalResistance = Math.max(0.0f, Math.min(0.9f, resistance));
+    }
+    public void setMagicalResistance(float resistance) {
+        this.magicalResistance = Math.max(0.0f, Math.min(0.9f, resistance));
+    }
+    public void setExplosiveResistance(float resistance) {
+        this.explosiveResistance = Math.max(0.0f, Math.min(0.9f, resistance));
+    }
+    public void setUltimateResistance(float resistance) {
+        this.ultimateResistance = Math.max(0.0f, Math.min(0.9f, resistance));
+    }
+
+    // Legacy hurt methods - now delegate to the new takeDamage methods
+    @Deprecated
+    public void hurt(int damage){
+        takeDamage(damage, DamageType.PHYSICAL);
+    }
+
+    @Deprecated
     public void hurt(int damage, boolean ignoreInvisibility) {
-        if (!ignoreInvisibility && enemyType == Constants.Enemies.GOBLIN && invisible) {
-            return;
-        }
-        this.health -= damage;
-        if (health <= 0) {
-            playDeathSound();
-            alive = false;
-        }
+        takeDamage(damage, DamageType.PHYSICAL, ignoreInvisibility);
     }
 
     private void playDeathSound() {

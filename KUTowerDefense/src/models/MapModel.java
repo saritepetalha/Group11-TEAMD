@@ -3,6 +3,7 @@ package models;
 import static constants.Constants.PathPoints.*;
 import helpMethods.LoadSave;
 import managers.TileManager;
+import models.PathValidator;
 import objects.Tile;
 import observers.MapChangeObserver;
 import observers.MapChangeType;
@@ -459,6 +460,14 @@ public class MapModel {
     }
 
     // Save/Load operations
+    /**
+     * Validates the map before saving
+     * @return ValidationResult indicating if the map is valid for saving
+     */
+    public PathValidator.ValidationResult validateBeforeSave() {
+        return PathValidator.validatePath(level, overlayData);
+    }
+
     public void saveLevel(String filename) {
         LoadSave.saveLevel(filename, level);
         LoadSave.saveOverlay(filename, overlayData);

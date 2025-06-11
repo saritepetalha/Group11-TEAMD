@@ -21,12 +21,15 @@ import views.PlayingView;
 /**
  * PlayingController - Handles input and coordinates between Model and View
  * Part of the MVC architecture for the Playing scene
+ * Now implements GRASP Controller pattern by delegating specific interactions
+ * to specialized controllers
  *
  * Responsibilities:
  * - Handle all user input (mouse, keyboard)
  * - Coordinate between Model and View
  * - Initialize and manage game managers
  * - Handle game flow control (pause, speed, options)
+ * - Delegate to specialized controllers (Ultimate, Mining, Tree)
  * - Manage tower/warrior placement and interactions
  */
 @SuppressWarnings("deprecation")
@@ -36,6 +39,11 @@ public class PlayingController implements Observer {
     private PlayingView view;
     private Game game;
 
+    // Specialized GRASP Controllers
+    private UltimateController ultimateController;
+    private MiningController miningController;
+    private TreeController treeController;
+
     // Managers that need special handling or aren't part of the model
     private AudioManager audioManager;
 
@@ -43,6 +51,9 @@ public class PlayingController implements Observer {
         this.game = game;
         this.model = new PlayingModel();
         this.view = new PlayingView(model);
+
+        // Initialize specialized controllers
+        initializeControllers();
 
         // Observe model changes to handle game state transitions
         this.model.addObserver(this);
@@ -56,6 +67,9 @@ public class PlayingController implements Observer {
         this.model = new PlayingModel(tileManager);
         this.view = new PlayingView(model);
 
+        // Initialize specialized controllers
+        initializeControllers();
+
         this.model.addObserver(this);
 
         initializeManagersForModel();
@@ -67,10 +81,22 @@ public class PlayingController implements Observer {
         this.model = new PlayingModel(tileManager, customLevel, customOverlay);
         this.view = new PlayingView(model);
 
+        // Initialize specialized controllers
+        initializeControllers();
+
         this.model.addObserver(this);
 
         initializeManagersForModel();
         audioManager = AudioManager.getInstance();
+    }
+
+    /**
+     * Initialize specialized GRASP controllers
+     */
+    private void initializeControllers() {
+        this.ultimateController = new UltimateController(model);
+        this.miningController = new MiningController(model);
+        this.treeController = new TreeController(model);
     }
 
     /**
@@ -85,17 +111,17 @@ public class PlayingController implements Observer {
         // Create WeatherManager first and inject it into model immediately
         // so other managers can access it during their initialization
         WeatherManager weatherManager = new WeatherManager();
-        
+
         // Inject WeatherManager into model first so adapter can return it
         model.setWeatherManager(weatherManager);
-        
+
         ProjectileManager projectileManager = new ProjectileManager(adapter);
         TreeInteractionManager treeInteractionManager = new TreeInteractionManager(adapter);
         FireAnimationManager fireAnimationManager = new FireAnimationManager();
-        
+
         // WaveManager'ı PlayingAdapter ile oluştur
         WaveManager waveManager = new WaveManager(adapter, model.getGameOptions());
-        
+
         // Now EnemyManager can properly access WeatherManager through adapter
         EnemyManager enemyManager = new EnemyManager(adapter, model.getOverlay(), model.getLevel(), model.getGameOptions());
         TowerManager towerManager = new TowerManager(adapter);
@@ -124,9 +150,8 @@ public class PlayingController implements Observer {
     public void update() {
         model.update();
 
-        if (model.getStoneMiningManager() != null) {
-            model.getStoneMiningManager().update();
-        }
+        // Delegate mining updates to MiningController
+        miningController.update();
 
         checkButtonStates();
     }
@@ -146,9 +171,8 @@ public class PlayingController implements Observer {
             return;
         }
 
-        // Handle gold factory placement
-        if (model.getUltiManager() != null && model.getUltiManager().isGoldFactorySelected()) {
-            handleGoldFactoryPlacement(x, y);
+        // Delegate ultimate ability interactions to UltimateController
+        if (ultimateController.handleMouseClick(x, y)) {
             return;
         }
 
@@ -158,7 +182,26 @@ public class PlayingController implements Observer {
             return;
         }
 
-        // Clear current selection first
+        // Gold bag collection - check BEFORE clearing selections
+        if (model.getGoldBagManager() != null) {
+            var collectedBag = model.getGoldBagManager().tryCollect(x, y);
+            if (collectedBag != null) {
+                if (model.getPlayerManager() != null) {
+                    model.getPlayerManager().addGold(collectedBag.getGoldAmount());
+                    // Directly call view's updateUIResources method to refresh gold display
+                    view.update(model, "resourcesUpdated");
+                    System.out.println("💰 Gold bag collected! +" + collectedBag.getGoldAmount() + " gold");
+                }
+                return; // Exit early if gold bag was collected
+            }
+        }
+
+        // Check mining interactions BEFORE clearing selections
+        if (miningController.handleMouseClick(x, y)) {
+            return; // Exit early if mining handled the click
+        }
+
+        // Clear current selection after checking gold bags and mining
         clearCurrentSelection();
 
         // Handle tower selection
@@ -174,124 +217,52 @@ public class PlayingController implements Observer {
             }
         }
 
-        // Handle dead trees
-        if (model.getDeadTrees() != null && model.getTreeInteractionManager() != null) {
-            model.getTreeInteractionManager().handleDeadTreeInteraction(x, y);
-        }
-
-        // Handle live trees
-        if (model.getLiveTrees() != null && model.getTreeInteractionManager() != null) {
-            model.getTreeInteractionManager().handleLiveTreeInteraction(x, y);
-        }
-
-        // Gold bag collection
-        if (model.getGoldBagManager() != null) {
-            var collectedBag = model.getGoldBagManager().tryCollect(x, y);
-            if (collectedBag != null) {
-                if (model.getPlayerManager() != null) {
-                    model.getPlayerManager().addGold(collectedBag.getGoldAmount());
-                }
-            }
-        }
-
-        // Handle stone mining
-        if (model.getStoneMiningManager() != null) {
-            // Check if mine button was clicked
-            if (model.getStoneMiningManager().getMineButton() != null &&
-                    model.getStoneMiningManager().getMineButton().getBounds().contains(x, y)) {
-                // Mine button click is handled
-            } else {
-                // Check if stone tile was clicked
-                int tileX = x / GameDimensions.TILE_DISPLAY_SIZE;
-                int tileY = y / GameDimensions.TILE_DISPLAY_SIZE;
-                if (tileX >= 0 && tileX < model.getLevel()[0].length &&
-                        tileY >= 0 && tileY < model.getLevel().length) {
-                    int tileId = model.getLevel()[tileY][tileX];
-                    if (tileId == 19 || tileId == 23) {
-                        model.getStoneMiningManager().handleStoneClick(new objects.Tile(tileX, tileY, tileId));
-                    }
-                }
-            }
+        // Delegate tree interactions to TreeController
+        if (treeController.handleMouseClick(x, y)) {
+            return;
         }
     }
 
     public void mouseMoved(int x, int y) {
-        // Handle stone mining manager mouse events
-        if (model.getStoneMiningManager() != null) {
-            model.getStoneMiningManager().mouseMoved(x, y);
-        }
+        // Delegate mining manager mouse events to MiningController
+        miningController.handleMouseMoved(x, y);
 
-        // Handle tooltips for tree buttons
-        view.handleMouseMovedForTooltips(x, y);
-        
+        // Delegate tree interactions to TreeController for tooltips
+        treeController.handleMouseMoved(x, y);
+
         view.mouseMoved(x, y);
     }
 
     public void mousePressed(int x, int y) {
-        // Handle lightning targeting
-        if (model.getUltiManager() != null && model.getUltiManager().isWaitingForLightningTarget()) {
-            model.getUltiManager().triggerLightningAt(x, y);
+        // Delegate ultimate ability targeting to UltimateController
+        if (ultimateController.handleMousePressed(x, y)) {
             return;
         }
 
-        if (model.getStoneMiningManager() != null &&
-                model.getStoneMiningManager().getMineButton() != null &&
-                model.getStoneMiningManager().getMineButton().getBounds().contains(x, y)) {
-            model.getStoneMiningManager().mousePressed(x, y);
-        }
-
-        // Handle stone mining
-        if (model.getStoneMiningManager() != null) {
-            int tileX = x / GameDimensions.TILE_DISPLAY_SIZE;
-            int tileY = y / GameDimensions.TILE_DISPLAY_SIZE;
-            if (tileX >= 0 && tileX < model.getLevel()[0].length &&
-                    tileY >= 0 && tileY < model.getLevel().length) {
-                int tileId = model.getLevel()[tileY][tileX];
-                if (tileId == 19 || tileId == 23) {
-                    model.getStoneMiningManager().handleStoneClick(new objects.Tile(tileX, tileY, tileId));
-                } else {
-                    model.getStoneMiningManager().clearMiningButton();
-                }
-            }
-        }
-
-        // Handle stone mining manager mouse events
-        if (model.getStoneMiningManager() != null) {
-            model.getStoneMiningManager().mousePressed(x, y);
+        // Delegate mining interactions to MiningController
+        if (miningController.handleMousePressed(x, y)) {
+            // Mining controller handled the event
         }
 
         // Handle warrior placement
         if (model.getPendingWarriorPlacement() != null) {
             // Handle warrior placement in mouseClicked
-
-        }
-
-        // Handle gold factory placement
-        if (model.getUltiManager() != null && model.getUltiManager().isGoldFactorySelected()) {
-            // Handle gold factory placement in mouseClicked
-
         }
 
         // Handle tower selection
         if (model.getTowerManager() != null) {
             // Tower selection is handled in mouseClicked
-
         }
 
-        // Handle tree interactions
-        if (model.getTreeInteractionManager() != null) {
-            model.getTreeInteractionManager().handleDeadTreeInteraction(x, y);
-            model.getTreeInteractionManager().handleLiveTreeInteraction(x, y);
-        }
+        // Delegate tree interactions to TreeController
+        treeController.handleMousePressed(x, y);
 
         view.mousePressed(x, y);
     }
 
     public void mouseReleased(int x, int y) {
-        // Handle stone mining manager mouse events
-        if (model.getStoneMiningManager() != null) {
-            model.getStoneMiningManager().mouseReleased(x, y);
-        }
+        // Delegate mining manager mouse events to MiningController
+        miningController.handleMouseReleased(x, y);
 
         view.mouseReleased(x, y);
     }
@@ -316,17 +287,8 @@ public class PlayingController implements Observer {
             cancelled = true;
         }
 
-        // Cancel lightning targeting
-        if (model.getUltiManager() != null && model.getUltiManager().isWaitingForLightningTarget()) {
-            model.getUltiManager().setWaitingForLightningTarget(false);
-            System.out.println("⚡ Lightning strike targeting cancelled by right-click!");
-            cancelled = true;
-        }
-
-        // Cancel gold factory placement
-        if (model.getUltiManager() != null && model.getUltiManager().isGoldFactorySelected()) {
-            model.getUltiManager().deselectGoldFactory();
-            System.out.println("🏭 Gold factory placement cancelled by right-click!");
+        // Delegate ultimate ability cancellation to UltimateController
+        if (ultimateController.handleRightMouseClick(x, y)) {
             cancelled = true;
         }
 
@@ -347,31 +309,14 @@ public class PlayingController implements Observer {
             somethingWasCleared = true;
         }
 
-        // Clear dead tree selection
-        if (model.getSelectedDeadTree() != null) {
-            model.getSelectedDeadTree().setShowChoices(false);
-            model.setSelectedDeadTree(null);
+        // Delegate tree selections clearing to TreeController
+        if (treeController.hasActiveTreeChoices()) {
+            treeController.clearTreeSelections();
             somethingWasCleared = true;
         }
 
-        // Clear ALL dead tree choices (brute force - clear everything)
-        if (model.getDeadTrees() != null) {
-            for (var deadTree : model.getDeadTrees()) {
-                deadTree.setShowChoices(false);
-            }
-        }
-
-        // Clear ALL live tree choices (brute force - clear everything)
-        if (model.getLiveTrees() != null) {
-            for (var liveTree : model.getLiveTrees()) {
-                liveTree.setShowChoices(false);
-            }
-        }
-
-        // Clear stone mining selection
-        if (model.getStoneMiningManager() != null) {
-            model.getStoneMiningManager().clearMiningButton();
-        }
+        // Delegate mining selection clearing to MiningController
+        miningController.clearMiningOperations();
 
         if (somethingWasCleared) {
             System.out.println("🗙 Previous selection cleared");
@@ -551,19 +496,19 @@ public class PlayingController implements Observer {
     private boolean isWarriorAt(int x, int y) {
         if (model.getTowerManager() == null) return false;
 
-        // Convert the placement coordinates to tile coordinates 
+        // Convert the placement coordinates to tile coordinates
         int placementTileC = x / GameDimensions.TILE_DISPLAY_SIZE;
         int placementTileR = y / GameDimensions.TILE_DISPLAY_SIZE;
 
         for (Warrior warrior : model.getTowerManager().getWarriors()) {
             // Skip warriors that are returning to tower (about to be removed)
             if (warrior.isReturning()) continue;
-            
+
             // Get the tile that this warrior will occupy
             // Need to account for the -8 offset applied to warrior Y position
             int warriorTargetTileC = warrior.getTargetX() / GameDimensions.TILE_DISPLAY_SIZE;
             int warriorTargetTileR = (warrior.getTargetY() + 8) / GameDimensions.TILE_DISPLAY_SIZE; // Add back the offset
-            
+
             // Check if same tile
             if (warriorTargetTileC == placementTileC && warriorTargetTileR == placementTileR) {
                 return true;
@@ -823,7 +768,12 @@ public class PlayingController implements Observer {
         }
     }
 
-    // Getters for external access (if needed)
+    // Getter methods for the specialized controllers
+    public UltimateController getUltimateController() { return ultimateController; }
+    public MiningController getMiningController() { return miningController; }
+    public TreeController getTreeController() { return treeController; }
+
+    // Existing getters
     public PlayingModel getModel() { return model; }
     public PlayingView getView() { return view; }
 

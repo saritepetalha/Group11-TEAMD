@@ -7,11 +7,13 @@ import helpMethods.LevelBuilder;
 import main.Game;
 import managers.TileManager;
 import models.MapModel;
+import models.PathValidator;
 import objects.Tile;
 import objects.Tower;
 import ui_p.EditTiles;
 import views.MapView;
 
+import javax.swing.*;
 import java.awt.*;
 
 /**
@@ -147,7 +149,18 @@ public class MapEditing extends GameScene implements SceneMethods {
     }
 
     public void saveLevel(String filename) {
-        mapModel.saveLevel(filename);
+        // Use validation like the MVC controller
+        PathValidator.ValidationResult validationResult = mapModel.validateBeforeSave();
+
+        if (!validationResult.isValid()) {
+            // Show validation error popup
+            JOptionPane.showMessageDialog(owner, validationResult.getErrorMessage(), "Map Save Error", JOptionPane.WARNING_MESSAGE);
+        } else {
+            // Save the map if validation passes
+            mapModel.saveLevel(filename);
+            // Show success message
+            JOptionPane.showMessageDialog(owner, "Map saved successfully!", "Save Successful", JOptionPane.INFORMATION_MESSAGE);
+        }
     }
 
     public void setDrawSelected(boolean drawSelected) {

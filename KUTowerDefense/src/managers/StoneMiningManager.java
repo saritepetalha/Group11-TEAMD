@@ -69,7 +69,9 @@ public class StoneMiningManager {
     }
 
     public void handleStoneClick(Tile tile) {
-        if (isMiningInProgress) return;
+        if (isMiningInProgress) {
+            return;
+        }
 
         // Show or hide button depending on tile ID
         if (tile.getId() == 19 || tile.getId() == 23) {
