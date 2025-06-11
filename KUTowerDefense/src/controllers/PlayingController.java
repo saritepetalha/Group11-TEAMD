@@ -182,7 +182,21 @@ public class PlayingController implements Observer {
             return;
         }
 
-        // Clear current selection first
+        // Gold bag collection - check BEFORE clearing selections
+        if (model.getGoldBagManager() != null) {
+            var collectedBag = model.getGoldBagManager().tryCollect(x, y);
+            if (collectedBag != null) {
+                if (model.getPlayerManager() != null) {
+                    model.getPlayerManager().addGold(collectedBag.getGoldAmount());
+                    // Directly call view's updateUIResources method to refresh gold display
+                    view.update(model, "resourcesUpdated");
+                    System.out.println("💰 Gold bag collected! +" + collectedBag.getGoldAmount() + " gold");
+                }
+                return; // Exit early if gold bag was collected
+            }
+        }
+
+        // Clear current selection after checking gold bags
         clearCurrentSelection();
 
         // Handle tower selection
@@ -201,16 +215,6 @@ public class PlayingController implements Observer {
         // Delegate tree interactions to TreeController
         if (treeController.handleMouseClick(x, y)) {
             return;
-        }
-
-        // Gold bag collection
-        if (model.getGoldBagManager() != null) {
-            var collectedBag = model.getGoldBagManager().tryCollect(x, y);
-            if (collectedBag != null) {
-                if (model.getPlayerManager() != null) {
-                    model.getPlayerManager().addGold(collectedBag.getGoldAmount());
-                }
-            }
         }
 
         // Delegate mining interactions to MiningController

@@ -188,29 +188,10 @@ public class UltimateController {
             return false;
         }
 
-        // Convert pixel coordinates to tile coordinates
-        int tileX = x / GameDimensions.TILE_DISPLAY_SIZE;
-        int tileY = y / GameDimensions.TILE_DISPLAY_SIZE;
-
-        // Validate tile coordinates
-        if (tileX < 0 || tileX >= model.getLevel()[0].length ||
-                tileY < 0 || tileY >= model.getLevel().length) {
-            return false;
-        }
-
-        // Check if it's a grass tile (ID 5)
-        int tileId = model.getLevel()[tileY][tileX];
-        if (tileId != 5) {
-            System.out.println("Gold Factory can only be placed on grass tiles!");
-            return false;
-        }
-
-        // Try to place the factory
-        boolean success = model.getUltiManager().tryPlaceGoldFactory(tileX, tileY);
+        // Pixel coordinates are already provided, pass them directly to tryPlaceGoldFactory
+        // The UltiManager will handle the coordinate conversion internally
+        boolean success = model.getUltiManager().tryPlaceGoldFactory(x, y);
         if (success) {
-            // Deduct gold and deselect factory
-            model.getPlayerManager().spendGold(100);
-            model.getUltiManager().deselectGoldFactory();
             System.out.println("🏭 Gold Factory placed successfully!");
             return true;
         }
