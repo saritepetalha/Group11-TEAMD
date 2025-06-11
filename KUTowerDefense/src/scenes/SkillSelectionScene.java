@@ -89,9 +89,9 @@ public class SkillSelectionScene extends JPanel {
 
         int buttonY = 20;
         int backButtonWidth = 180, backButtonHeight = 60;
-        int startButtonWidth = 220, startButtonHeight = 60;
-        int backButtonX = 1280/2 - backButtonWidth - 40;
-        int startButtonX = 1280/2 + 40;
+        int startButtonWidth = 250, startButtonHeight = 60;
+        int backButtonX = 1280/2 - backButtonWidth - 300;
+        int startButtonX = 1280/2 - 260;
 
         backButtonStyled = new TheButton("Back", backButtonX, buttonY, backButtonWidth, backButtonHeight);
         startGameButtonStyled = new TheButton("Start Game", startButtonX, buttonY, startButtonWidth, startButtonHeight);
