@@ -336,25 +336,7 @@ public class GameOptionsUI extends JPanel {
         backButton.addActionListener(e -> {
             AudioManager.getInstance().playButtonClickSound();
             if (this.game != null) {
-                // Save options before returning to menu
-                try {
-                    saveOptions();
-                    this.game.changeGameState(GameStates.MENU);
-                } catch (Exception ex) {
-                    // If saving fails, still allow returning to menu but show warning
-                    JLabel warningLabel = new JLabel("Warning: Settings not saved due to errors.");
-                    warningLabel.setFont(FontLoader.loadMedodicaFont(14f));
-                    warningLabel.setForeground(new Color(180, 120, 0));
-                    JOptionPane.showMessageDialog(this, warningLabel, "Warning", JOptionPane.WARNING_MESSAGE);
-
-                    int result = JOptionPane.showConfirmDialog(this,
-                            "Continue without saving?", "Return to Menu",
-                            JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-
-                    if (result == JOptionPane.YES_OPTION) {
-                        this.game.changeGameState(GameStates.MENU);
-                    }
-                }
+                this.game.changeGameState(GameStates.MENU);
             } else {
                 JLabel errorLabel = new JLabel("Cannot return to menu: Game context not available.");
                 errorLabel.setFont(FontLoader.loadMedodicaFont(14f));
