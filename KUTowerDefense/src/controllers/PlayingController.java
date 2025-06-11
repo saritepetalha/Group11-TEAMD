@@ -196,7 +196,12 @@ public class PlayingController implements Observer {
             }
         }
 
-        // Clear current selection after checking gold bags
+        // Check mining interactions BEFORE clearing selections
+        if (miningController.handleMouseClick(x, y)) {
+            return; // Exit early if mining handled the click
+        }
+
+        // Clear current selection after checking gold bags and mining
         clearCurrentSelection();
 
         // Handle tower selection
@@ -216,9 +221,6 @@ public class PlayingController implements Observer {
         if (treeController.handleMouseClick(x, y)) {
             return;
         }
-
-        // Delegate mining interactions to MiningController
-        miningController.handleMouseClick(x, y);
     }
 
     public void mouseMoved(int x, int y) {
