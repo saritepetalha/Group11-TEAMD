@@ -114,6 +114,13 @@ public class MapEditing extends GameScene implements SceneMethods {
         // Delegate rendering to MVC view
         mapView.render(g);
         editTiles.draw(g);
+
+        // Set cursor based on edit tiles hover
+        if (editTiles != null && editTiles.isMouseOver()) {
+            setHandCursor();
+        } else {
+            setNormalCursor();
+        }
     }
 
     // Legacy API methods - delegate to MVC components

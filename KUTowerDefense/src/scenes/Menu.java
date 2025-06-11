@@ -75,12 +75,22 @@ public class Menu extends GameScene implements SceneMethods {
         Font buttonFont = new Font("MV Boli",Font.PLAIN,45);
         g.setFont(buttonFont);
 
-        playButton.drawStyled(g);
-        loadGameButton.drawStyled(g);
-        mapEditorButton.drawStyled(g);
-        optionButton.drawStyled(g);
-        statsButton.drawStyled(g);
-        exitButton.drawStyled(g);
+        playButton.draw(g);
+        loadGameButton.draw(g);
+        mapEditorButton.draw(g);
+        optionButton.draw(g);
+        statsButton.draw(g);
+        exitButton.draw(g);
+
+        // Set cursor based on button hover
+        if (playButton.isMouseOver() || loadGameButton.isMouseOver() || 
+            mapEditorButton.isMouseOver() || optionButton.isMouseOver() || 
+            statsButton.isMouseOver() || exitButton.isMouseOver() || 
+            musicButton.isMouseOver()) {
+            setHandCursor();
+        } else {
+            setNormalCursor();
+        }
     }
 
     private void drawMusicButton(Graphics g) {

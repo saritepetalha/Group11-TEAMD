@@ -219,6 +219,36 @@ public class TheButton {
 
     public void setMouseOver(boolean mouseOver) {
         this.mouseOver = mouseOver;
+        // Set cursor based on mouse over state
+        if (mouseOver) {
+            java.awt.Component parent = getParentComponent();
+            if (parent != null) {
+                parent.setCursor(AssetsLoader.getInstance().customHandCursor);
+            }
+        } else {
+            java.awt.Component parent = getParentComponent();
+            if (parent != null) {
+                parent.setCursor(AssetsLoader.getInstance().customNormalCursor);
+            }
+        }
+    }
+
+    private java.awt.Component getParentComponent() {
+        // Try to get the parent component that contains this button
+        // This is a best-effort approach since we don't have direct access to the parent
+        java.awt.Component[] components = java.awt.Window.getWindows();
+        for (java.awt.Component window : components) {
+            if (window.isVisible() && window instanceof java.awt.Container) {
+                java.awt.Container container = (java.awt.Container) window;
+                java.awt.Component[] children = container.getComponents();
+                for (java.awt.Component child : children) {
+                    if (child.getBounds().contains(x, y)) {
+                        return child;
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     public boolean isMouseOver() {
