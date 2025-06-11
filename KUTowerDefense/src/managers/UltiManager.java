@@ -77,7 +77,8 @@ public class UltiManager {
 
         for (Enemy enemy : playing.getEnemyManager().getEnemies()) {
             if (enemy.isAlive()) {
-                enemy.hurt(finalEarthquakeDamage, true);
+                // Use GRASP Information Expert pattern - let Enemy calculate ultimate damage
+                enemy.takeDamage(finalEarthquakeDamage, enemies.Enemy.DamageType.ULTIMATE, true);
                 // Track death location for confetti if enemy died from earthquake
                 if (!enemy.isAlive() && playing.getController() != null && playing.getController().getModel() != null) {
                     playing.getController().getModel().enemyDiedAt((int)enemy.getX(), (int)enemy.getY());
@@ -232,12 +233,12 @@ public class UltiManager {
             float dx = enemy.getX() - x;
             float dy = enemy.getY() - y;
             if (Math.sqrt(dx * dx + dy * dy) <= lightningRadius) {
+                // Use GRASP Information Expert pattern for lightning damage
+                int finalLightningDamage = lightningDamage;
                 if(playing.getWeatherManager().isRaining()) {
-                    enemy.hurt((int)(lightningDamage * 1.25f), true);
+                    finalLightningDamage = (int)(lightningDamage * 1.25f);
                 }
-                else{
-                    enemy.hurt(lightningDamage, true);
-                }
+                enemy.takeDamage(finalLightningDamage, enemies.Enemy.DamageType.ULTIMATE, true);
                 // Track death location for confetti if enemy died from lightning
                 if (!enemy.isAlive() && playing.getController() != null && playing.getController().getModel() != null) {
                     playing.getController().getModel().enemyDiedAt((int)enemy.getX(), (int)enemy.getY());
