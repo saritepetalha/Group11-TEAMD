@@ -233,7 +233,7 @@ public class PlayingModel extends Observable implements GameContext {
         if (waveManager != null) waveManager.update();
         if (projectileManager != null) projectileManager.update();
         if (fireAnimationManager != null) fireAnimationManager.update();
-        if (ultiManager != null) ultiManager.update(gameTimeMillis);
+        if (ultiManager != null) ultiManager.update(gameTimeMillis, gameSpeedMultiplier);
         if (weatherManager != null) weatherManager.update(deltaTimeSeconds);
 
         if (tileManager != null && weatherManager != null) {

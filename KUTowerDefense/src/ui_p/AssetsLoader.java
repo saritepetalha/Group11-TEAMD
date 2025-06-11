@@ -54,6 +54,7 @@ public class AssetsLoader {
     public BufferedImage[] lightningFrames;
     public BufferedImage saveButtonImg;
     public BufferedImage pickaxeButtonImg;
+    public BufferedImage pickaxeButtonHover;
     public BufferedImage[] pickaxeAnimationFrames;
     public BufferedImage[] confettiAnimationFrames;
     public java.awt.Cursor customHandCursor;
@@ -407,18 +408,17 @@ public class AssetsLoader {
     private void loadPickaxeAssets() {
         // Load pickaxe button image
         pickaxeButtonImg = loadImage("/UI/pickaxeButton.png");
-
+        // Load pickaxe hover image
+        pickaxeButtonHover = loadImage("/UI/pickaxeButtonHover.png");
         // Load pickaxe animation frames
         try (InputStream is = LoadSave.class.getResourceAsStream("/Effects/Crush_Side-Sheet.png")) {
             if (is != null) {
                 BufferedImage spriteSheet = ImageIO.read(is);
                 final int frameCount = 8;
                 pickaxeAnimationFrames = new BufferedImage[frameCount];
-
                 for (int i = 0; i < frameCount; i++) {
                     pickaxeAnimationFrames[i] = spriteSheet.getSubimage(i * 64, 0, 64, 64);
                 }
-
                 System.out.println("✅ Pickaxe animation loaded with " + frameCount + " frames.");
             } else {
                 System.err.println("❌ Pickaxe animation not found: /Effects/Crush_Side-Sheet.png");

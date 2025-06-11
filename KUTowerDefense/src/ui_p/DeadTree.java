@@ -1,6 +1,7 @@
 package ui_p;
 
 import helpMethods.LoadSave;
+import ui_p.AssetsLoader;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -39,14 +40,27 @@ public class DeadTree {
 
     public void draw(Graphics g) {
         if (showChoices){
-            mageButton.draw(g);
-            archerButton.draw(g);
-            artilleryButton.draw(g);
-            
+            drawButtonWithHover(g, mageButton, 0);
+            drawButtonWithHover(g, archerButton, 1);
+            drawButtonWithHover(g, artilleryButton, 2);
             // Update and draw tooltip
             tooltip.update();
             tooltip.draw((Graphics2D) g);
         }
+    }
+
+    private void drawButtonWithHover(Graphics g, TheButton button, int index) {
+        if (button.isMouseOver()) {
+            Graphics2D g2d = (Graphics2D) g;
+            long currentTime = System.currentTimeMillis();
+            float alpha = (float) (0.5f + 0.5f * Math.sin(currentTime * 0.003));
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+            g2d.setColor(new Color(255, 255, 255, 100));
+            g2d.setStroke(new BasicStroke(3f));
+            g2d.drawRoundRect(button.getX() - 2, button.getY() - 2, button.getWidth() + 4, button.getHeight() + 4, 8, 8);
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
+        }
+        button.draw(g);
     }
 
     public static void loadButtonImageFile() {
@@ -141,5 +155,11 @@ public class DeadTree {
         } else {
             tooltip.hide();
         }
+    }
+
+    public void mouseMoved(int mouseX, int mouseY) {
+        mageButton.setMouseOver(mageButton.getBounds().contains(mouseX, mouseY));
+        archerButton.setMouseOver(archerButton.getBounds().contains(mouseX, mouseY));
+        artilleryButton.setMouseOver(artilleryButton.getBounds().contains(mouseX, mouseY));
     }
 }

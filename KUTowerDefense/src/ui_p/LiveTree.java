@@ -2,6 +2,7 @@ package ui_p;
 
 import constants.GameDimensions;
 import helpMethods.LoadSave;
+import ui_p.AssetsLoader;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -41,8 +42,17 @@ public class LiveTree {
 
     public void draw(Graphics g) {
         if (showChoices){
+            if (fireButton.isMouseOver()) {
+                Graphics2D g2d = (Graphics2D) g;
+                long currentTime = System.currentTimeMillis();
+                float alpha = (float) (0.5f + 0.5f * Math.sin(currentTime * 0.003));
+                g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+                g2d.setColor(new Color(255, 255, 255, 100));
+                g2d.setStroke(new BasicStroke(3f));
+                g2d.drawRoundRect(fireButton.getX() - 2, fireButton.getY() - 2, fireButton.getWidth() + 4, fireButton.getHeight() + 4, 8, 8);
+                g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
+            }
             fireButton.draw(g);
-            
             // Update and draw tooltip
             tooltip.update();
             tooltip.draw((Graphics2D) g);
@@ -87,5 +97,9 @@ public class LiveTree {
         } else {
             tooltip.hide();
         }
+    }
+
+    public void mouseMoved(int mouseX, int mouseY) {
+        fireButton.setMouseOver(fireButton.getBounds().contains(mouseX, mouseY));
     }
 }

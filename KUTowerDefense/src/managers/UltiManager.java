@@ -250,24 +250,19 @@ public class UltiManager {
         AudioManager.getInstance().playSound("lightning");
     }
 
-    public void update(long gameTime) {
+    public void update(long gameTimeMillis, float gameSpeedMultiplier) {
         activeStrikes.removeIf(LightningStrike::isFinished);
         for (LightningStrike strike : activeStrikes) {
-            strike.update(gameTime);
+            strike.update(gameTimeMillis);
         }
 
-        // Update gold factories
-        Iterator<GoldFactory> factoryIterator = goldFactories.iterator();
-        while (factoryIterator.hasNext()) {
-            GoldFactory factory = factoryIterator.next();
-            factory.update();
-            if (factory.isDestroyed()) {
-                factoryIterator.remove();
-            }
+        // Update gold factories with speed multiplier
+        for (GoldFactory factory : goldFactories) {
+            factory.update(gameSpeedMultiplier);
         }
     }
 
-    public void draw(Graphics g) {
+    public void draw(Graphics g, float gameSpeedMultiplier) {
         Graphics2D g2d = (Graphics2D) g;
         for (LightningStrike strike : activeStrikes) {
             strike.draw(g2d);
@@ -276,7 +271,7 @@ public class UltiManager {
         // Draw gold factories - create defensive copy to avoid ConcurrentModificationException
         List<GoldFactory> factoriesCopy = new ArrayList<>(goldFactories);
         for (GoldFactory factory : factoriesCopy) {
-            factory.draw(g);
+            factory.draw(g, gameSpeedMultiplier);
         }
     }
 

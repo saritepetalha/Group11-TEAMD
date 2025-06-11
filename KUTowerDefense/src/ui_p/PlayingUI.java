@@ -1055,30 +1055,46 @@ public class PlayingUI {
         // check which button is hovered
         if (isMouseOverButton(fastForwardButton, mouseX, mouseY)) {
             fastForwardButton.setMouseOver(true);
+            if (playing.getGame() != null) playing.getGame().setCursor(AssetsLoader.getInstance().customHandCursor);
         } else if (isMouseOverButton(pauseButton, mouseX, mouseY)) {
             pauseButton.setMouseOver(true);
+            if (playing.getGame() != null) playing.getGame().setCursor(AssetsLoader.getInstance().customHandCursor);
         } else if (isMouseOverButton(optionsButton, mouseX, mouseY)) {
             optionsButton.setMouseOver(true);
+            if (playing.getGame() != null) playing.getGame().setCursor(AssetsLoader.getInstance().customHandCursor);
         } else if (isMouseOverButton(backOptionsButton, mouseX, mouseY)) {
             backOptionsButton.setMouseOver(true);
+            if (playing.getGame() != null) playing.getGame().setCursor(AssetsLoader.getInstance().customHandCursor);
         } else if (isMouseOverButton(saveButton, mouseX, mouseY)) {
             saveButton.setMouseOver(true);
+            if (playing.getGame() != null) playing.getGame().setCursor(AssetsLoader.getInstance().customHandCursor);
         } else if (!musicDropdownOpen && isMouseOverButton(mainMenuButton, mouseX, mouseY)) {
             mainMenuButton.setMouseOver(true);
+            if (playing.getGame() != null) playing.getGame().setCursor(AssetsLoader.getInstance().customHandCursor);
+        } else if (isMouseOverButton(earthquakeButton, mouseX, mouseY)) {
+            earthquakeButton.setMouseOver(true);
+            if (playing.getGame() != null) playing.getGame().setCursor(AssetsLoader.getInstance().customHandCursor);
+        } else if (isMouseOverButton(lightningButton, mouseX, mouseY)) {
+            lightningButton.setMouseOver(true);
+            if (playing.getGame() != null) playing.getGame().setCursor(AssetsLoader.getInstance().customHandCursor);
+        } else if (isMouseOverButton(goldFactoryButton, mouseX, mouseY)) {
+            goldFactoryButton.setMouseOver(true);
+            if (playing.getGame() != null) playing.getGame().setCursor(AssetsLoader.getInstance().customHandCursor);
+        } else if (isMouseOverButton(freezeButton, mouseX, mouseY)) {
+            freezeButton.setMouseOver(true);
+            if (playing.getGame() != null) playing.getGame().setCursor(AssetsLoader.getInstance().customHandCursor);
+        } else {
+            if (playing.getGame() != null) playing.getGame().setCursor(AssetsLoader.getInstance().customNormalCursor);
         }
 
         // Check ultimate buttons for hover and show tooltips
         if (isMouseOverButton(earthquakeButton, mouseX, mouseY)) {
-            earthquakeButton.setMouseOver(true);
             showEarthquakeTooltip(mouseX, mouseY);
         } else if (isMouseOverButton(lightningButton, mouseX, mouseY)) {
-            lightningButton.setMouseOver(true);
             showLightningTooltip(mouseX, mouseY);
         } else if (isMouseOverButton(goldFactoryButton, mouseX, mouseY)) {
-            goldFactoryButton.setMouseOver(true);
             showGoldFactoryTooltip(mouseX, mouseY);
         } else if (isMouseOverButton(freezeButton, mouseX, mouseY)) {
-            freezeButton.setMouseOver(true);
             showFreezeTooltip(mouseX, mouseY);
         } else {
             // Hide tooltip if not hovering over any button
@@ -1324,8 +1340,9 @@ public class PlayingUI {
             if (playing.getUltiManager().canUseEarthquake()) {
                 if (playing.getPlayerManager().getGold() >= 50) { // earthquakeCost
                     AudioManager.getInstance().playButtonClickSound();
-                    toggleButtonState(earthquakeButton);
+                    earthquakeButton.setMousePressed(true);
                     playing.getUltiManager().triggerEarthquake();
+                    earthquakeButton.setMousePressed(false);
                 } else {
                     System.out.println("Not enough gold for Earthquake!");
                 }
@@ -1340,7 +1357,9 @@ public class PlayingUI {
                 playing.getUltiManager().setWaitingForLightningTarget(false);
             } else if (playing.getUltiManager().canUseLightning()) {
                 if (playing.getPlayerManager().getGold() >= 75) {
+                    lightningButton.setMousePressed(true);
                     playing.getUltiManager().setWaitingForLightningTarget(true);
+                    lightningButton.setMousePressed(false);
                 } else {
                     System.out.println("Not enough gold for Lightning Strike!");
                 }
@@ -1354,8 +1373,9 @@ public class PlayingUI {
             if (playing.getUltiManager().canUseFreeze()) {
                 if (playing.getPlayerManager().getGold() >= 60) { // freezeCost
                     AudioManager.getInstance().playButtonClickSound();
-                    toggleButtonState(freezeButton);
+                    freezeButton.setMousePressed(true);
                     playing.getUltiManager().triggerFreeze();
+                    freezeButton.setMousePressed(false);
                 } else {
                     System.out.println("Not enough gold for Freeze!");
                 }

@@ -81,6 +81,16 @@ public class Menu extends GameScene implements SceneMethods {
         optionButton.drawStyled(g);
         statsButton.drawStyled(g);
         exitButton.drawStyled(g);
+
+        // Set cursor based on button hover
+        if (playButton.isMouseOver() || loadGameButton.isMouseOver() || 
+            mapEditorButton.isMouseOver() || optionButton.isMouseOver() || 
+            statsButton.isMouseOver() || exitButton.isMouseOver() || 
+            musicButton.isMouseOver()) {
+            setHandCursor();
+        } else {
+            setNormalCursor();
+        }
     }
 
     private void drawMusicButton(Graphics g) {

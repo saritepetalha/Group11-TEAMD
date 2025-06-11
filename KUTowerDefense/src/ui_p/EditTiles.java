@@ -663,6 +663,13 @@ public class EditTiles extends Bar {
         }
     }
 
+    public boolean isMouseOver() {
+        return backMenu.isMouseOver() || draw.isMouseOver() || erase.isMouseOver() || 
+               fill.isMouseOver() || trash.isMouseOver() || save.isMouseOver() || 
+               startPoint.isMouseOver() || endPoint.isMouseOver() || 
+               tilesButtons.stream().anyMatch(TheButton::isMouseOver);
+    }
+
     public String getCurrentMode() {
         return currentMode;
     }

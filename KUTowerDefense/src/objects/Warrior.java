@@ -140,8 +140,12 @@ public abstract class Warrior {
         // Check if lifetime has expired and warrior should return to tower
         // Only start checking lifetime after warrior has been placed
         long currentTime = System.currentTimeMillis();
-        if (isPlaced && currentTime - placementTime > LIFETIME_MILLIS && !isReturning) {
-            startReturningToTower();
+        if (isPlaced && !isReturning) {
+            // Use a virtual placement time that advances faster with gameSpeedMultiplier
+            float elapsed = (currentTime - placementTime) * gameSpeedMultiplier;
+            if (elapsed > LIFETIME_MILLIS) {
+                startReturningToTower();
+            }
         }
 
         // Update based on current state
@@ -532,12 +536,14 @@ public abstract class Warrior {
     /**
      * Get lifetime percentage (1.0 = full lifetime, 0.0 = expired)
      */
-    public float getLifetimePercentage() {
+    public float getLifetimePercentage(float gameSpeedMultiplier) {
         if (!isPlaced) {
             return 1.0f; // Full lifetime if not placed yet
         }
-        long remaining = getRemainingLifetime();
-        return (float) remaining / LIFETIME_MILLIS;
+        long currentTime = System.currentTimeMillis();
+        float elapsed = (currentTime - placementTime) * gameSpeedMultiplier;
+        float remaining = Math.max(0, LIFETIME_MILLIS - elapsed);
+        return remaining / LIFETIME_MILLIS;
     }
     
     /**
@@ -551,10 +557,10 @@ public abstract class Warrior {
     /**
      * Draw lifetime bar above the warrior (similar to GoldFactory)
      */
-    public void drawLifetimeBar(Graphics g) {
+    public void drawLifetimeBar(Graphics g, float gameSpeedMultiplier) {
         if (isReturning || !isPlaced) return; // Don't show lifetime bar when returning or not placed yet
 
-        float lifePercentage = getLifetimePercentage();
+        float lifePercentage = getLifetimePercentage(gameSpeedMultiplier);
 
         int barWidth = getWidth() / 2; // Make bar much smaller (32 pixels instead of 64)
         int barHeight = 4; // Make bar very thin

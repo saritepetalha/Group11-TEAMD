@@ -2,6 +2,7 @@ package ui_p;
 
 import constants.GameDimensions;
 import helpMethods.LoadSave;
+import ui_p.AssetsLoader;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -15,6 +16,7 @@ public class MineableStone {
     private TheButton mineButton;
     private static BufferedImage buttonSheetImg;
     private BufferedImage mineButtonImage;
+    private BufferedImage mineButtonHoverImage;
 
     public MineableStone(int x, int y) {
         this.x = x;
@@ -28,12 +30,28 @@ public class MineableStone {
                 GameDimensions.TILE_DISPLAY_SIZE,
                 GameDimensions.TILE_DISPLAY_SIZE
         );
-
+        // Try to load hover image from AssetsLoader (if available)
+        mineButtonHoverImage = null;
+        try {
+            mineButtonHoverImage = helpMethods.LoadSave.getImageFromPath("/UI/buttonHoveredAssets/mine_hover.png");
+        } catch (Exception e) {
+            mineButtonHoverImage = null;
+        }
         mineButton = new TheButton("Mine", x + 16, y - size, size, size, mineButtonImage);
     }
 
     public void draw(Graphics g) {
         if (showChoices) {
+            if (mineButton.isMouseOver()) {
+                Graphics2D g2d = (Graphics2D) g;
+                long currentTime = System.currentTimeMillis();
+                float alpha = (float) (0.5f + 0.5f * Math.sin(currentTime * 0.003));
+                g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+                g2d.setColor(new Color(255, 255, 255, 100));
+                g2d.setStroke(new BasicStroke(3f));
+                g2d.drawRoundRect(mineButton.getX() - 2, mineButton.getY() - 2, mineButton.getWidth() + 4, mineButton.getHeight() + 4, 8, 8);
+                g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
+            }
             mineButton.draw(g);
         }
     }
@@ -69,6 +87,12 @@ public class MineableStone {
             buttonSheetImg = ImageIO.read(is);
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    public void mouseMoved(int mouseX, int mouseY) {
+        if (mineButton != null) {
+            mineButton.setMouseOver(mineButton.getBounds().contains(mouseX, mouseY));
         }
     }
 }

@@ -173,7 +173,7 @@ public class TowerManager {
         return towerImages;
     }
 
-    public void draw(Graphics g) {
+    public void draw(Graphics g, float gameSpeedMultiplier) {
         boolean isNight = playing.getWeatherManager() != null && playing.getWeatherManager().isNight();
         Graphics2D g2d = (Graphics2D) g;
 
@@ -208,45 +208,17 @@ public class TowerManager {
                         }
                     }
                 }
-
                 if (spriteToDraw != null) {
-                    int x = tower.getX(); // Use original tower for position
+                    int x = tower.getX();
                     int y = tower.getY();
-                    int w = 64, h = 64;
-                    if (tower.isDestroyed()) {
-                        g.drawImage(spriteToDraw, x, y, 56, 56, null);
-                        // Draw and update debris (existing logic for daytime)
-                        if (tower.debrisList != null) {
-                            long now = System.currentTimeMillis();
-                            float dt = 1.0f;
-                            java.util.Iterator<objects.Tower.Debris> it_debris = tower.debrisList.iterator();
-                            while (it_debris.hasNext()) {
-                                objects.Tower.Debris d = it_debris.next();
-                                d.x += d.vx * dt;
-                                d.y += d.vy * dt;
-                                d.vy += 0.2f * dt;
-                                d.age++;
-                                d.alpha = 1f - (float)d.age / d.lifetime;
-                                if (d.age > d.lifetime) it_debris.remove();
-                                else {
-                                    g.setColor(new java.awt.Color(d.color, true));
-                                    ((java.awt.Graphics2D)g).setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, Math.max(0f, d.alpha)));
-                                    g.fillRect((int)d.x, (int)d.y, d.size, d.size);
-                                    ((java.awt.Graphics2D)g).setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, 1f));
-                                }
-                            }
-                            if (tower.debrisList.isEmpty() || now - tower.debrisStartTime > objects.Tower.DEBRIS_DURATION_MS) {
-                                tower.debrisList = null;
-                            }
-                        }
-                    } else {
-                        g.drawImage(spriteToDraw, x, y, w, h, null);
-                    }
+                    int w = tower.getWidth();
+                    int h = tower.getHeight();
+                    g.drawImage(spriteToDraw, x, y, w, h, null);
                 }
             }
         }
         // Draw warriors
-        drawWarriors(g);
+        drawWarriors(g, gameSpeedMultiplier);
         // Draw upgrade effects (these are general visual effects, not tied to day/night sprites)
         Graphics2D g2d_effects = (Graphics2D) g;
         Iterator<TowerUpgradeEffect> it = upgradeEffects.iterator();
@@ -613,7 +585,7 @@ public class TowerManager {
         return adjustedDistance < effectiveRange && canTarget;
     }
 
-    public void drawWarriors(Graphics g) {
+    public void drawWarriors(Graphics g, float gameSpeedMultiplier) {
         for (Warrior warrior : warriors) {
             BufferedImage[] frames = warrior.getAnimationFrames();
             if (frames != null && frames.length > 0) {
@@ -627,36 +599,27 @@ public class TowerManager {
                         // Determine sprite dimensions and scaling based on warrior type
                         int drawWidth, drawHeight;
                         if (warrior instanceof WizardWarrior) {
-                            // Wizard sprites are 231x190, scale down but make them larger than before
-                            drawWidth = 92;  // Increased from 80
-                            drawHeight = 76; // Increased from 65
-                            // Center horizontally and position closer to bottom
+                            drawWidth = 92;
+                            drawHeight = 76;
                             x += (64 - drawWidth) / 2;
-                            y += (64 - drawHeight) + 12; // Moved 8 pixels closer to bottom
+                            y += (64 - drawHeight) + 12;
                         } else {
-                            // Archer sprites are 100x100, make them larger
-                            drawWidth = 84;  // Increased from 64
-                            drawHeight = 84; // Increased from 64
-                            // Center horizontally and position closer to bottom
+                            drawWidth = 84;
+                            drawHeight = 84;
                             x += (64 - drawWidth) / 2;
-                            y += (64 - drawHeight) + 20; // Moved 6 pixels closer to bottom
+                            y += (64 - drawHeight) + 20;
                         }
 
-                        // Handle sprite mirroring based on facing direction
                         if (warrior.isFacingLeft()) {
-                            // Draw the sprite mirrored horizontally by using negative width
-                            // and adjusting the x-coordinate accordingly
                             g.drawImage(sprite, x + drawWidth, y, -drawWidth, drawHeight, null);
                         } else {
-                            // Normal drawing for facing right
                             g.drawImage(sprite, x, y, drawWidth, drawHeight, null);
                         }
                     }
                 }
             }
-
-            // Draw lifetime bar for the warrior
-            warrior.drawLifetimeBar(g);
+            // Draw lifetime bar for the warrior with speed multiplier
+            warrior.drawLifetimeBar(g, gameSpeedMultiplier);
         }
 
         // Draw TNT warriors

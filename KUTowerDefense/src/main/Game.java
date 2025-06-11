@@ -123,8 +123,8 @@ public class  Game extends JFrame implements Runnable{
 						audioManager.stopAllSounds();
 					}
 					audioManager.playMusic("lonelyhood");
-					// If coming from playing, restore custom settings
-					if (previousState == GameStates.PLAYING || previousState == GameStates.GAME_OVER) {
+					// Only restore custom settings if coming from game over
+					if (previousState == GameStates.GAME_OVER) {
 						helpMethods.OptionsIO.restoreCustomSettings();
 						System.out.println("Restored custom settings after gameplay");
 					}
