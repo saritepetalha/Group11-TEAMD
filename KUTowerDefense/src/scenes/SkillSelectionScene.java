@@ -4,6 +4,7 @@ import main.Game;
 import main.GameStates;
 import skills.SkillType;
 import skills.SkillTree;
+import ui_p.TheButton;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -30,8 +31,10 @@ public class SkillSelectionScene extends JPanel {
     private final Playing playing;
     private final Game game;
     private final JPanel contentPanel;
-    private final JButton startGameButton;
+    private final TheButton startGameButtonStyled;
     private BufferedImage backgroundImg;
+    private TheButton backButtonStyled;
+    private JPanel styledButtonPanel;
 
     public SkillSelectionScene(Game game, Playing playing) {
         this.game = game;
@@ -72,27 +75,80 @@ public class SkillSelectionScene extends JPanel {
         add(scrollPane, BorderLayout.CENTER);
 
         // Alt panel ve buton
-        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 40, 20));
-        bottomPanel.setOpaque(false);
-        
-        JButton backButton = new JButton("Back");
-        backButton.setFont(new Font("Arial", Font.BOLD, 22));
-        backButton.setBackground(Color.LIGHT_GRAY);
-        backButton.setForeground(Color.BLACK);
-        backButton.setFocusPainted(false);
-        backButton.setPreferredSize(new Dimension(180, 60));
-        backButton.addActionListener(e -> game.changeGameState(main.GameStates.MENU));
-        bottomPanel.add(backButton);
-        
-        startGameButton = new JButton("Start Game");
-        startGameButton.setFont(new Font("Arial", Font.BOLD, 22));
-        startGameButton.setBackground(Color.GREEN);
-        startGameButton.setForeground(Color.BLACK);
-        startGameButton.setFocusPainted(false);
-        startGameButton.setPreferredSize(new Dimension(220, 60));
-        startGameButton.addActionListener(e -> startGame());
-        bottomPanel.add(startGameButton);
-        add(bottomPanel, BorderLayout.SOUTH);
+        styledButtonPanel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                if (backButtonStyled != null) backButtonStyled.drawStyled(g);
+                if (startGameButtonStyled != null) startGameButtonStyled.drawStyled(g);
+            }
+        };
+        styledButtonPanel.setOpaque(false);
+        styledButtonPanel.setPreferredSize(new Dimension(1280, 100));
+        styledButtonPanel.setLayout(null);
+
+        int buttonY = 20;
+        int backButtonWidth = 180, backButtonHeight = 60;
+        int startButtonWidth = 220, startButtonHeight = 60;
+        int backButtonX = 1280/2 - backButtonWidth - 40;
+        int startButtonX = 1280/2 + 40;
+
+        backButtonStyled = new TheButton("Back", backButtonX, buttonY, backButtonWidth, backButtonHeight);
+        startGameButtonStyled = new TheButton("Start Game", startButtonX, buttonY, startButtonWidth, startButtonHeight);
+
+        styledButtonPanel.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mousePressed(java.awt.event.MouseEvent e) {
+                if (backButtonStyled.getBounds().contains(e.getX(), e.getY())) {
+                    backButtonStyled.setMousePressed(true);
+                    styledButtonPanel.repaint();
+                } else if (startGameButtonStyled.getBounds().contains(e.getX(), e.getY())) {
+                    startGameButtonStyled.setMousePressed(true);
+                    styledButtonPanel.repaint();
+                }
+            }
+            @Override
+            public void mouseReleased(java.awt.event.MouseEvent e) {
+                if (backButtonStyled.isMousePressed() && backButtonStyled.getBounds().contains(e.getX(), e.getY())) {
+                    backButtonStyled.setMousePressed(false);
+                    game.changeGameState(main.GameStates.MENU);
+                } else if (startGameButtonStyled.isMousePressed() && startGameButtonStyled.getBounds().contains(e.getX(), e.getY())) {
+                    startGameButtonStyled.setMousePressed(false);
+                    startGame();
+                }
+                backButtonStyled.setMousePressed(false);
+                startGameButtonStyled.setMousePressed(false);
+                styledButtonPanel.repaint();
+            }
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent e) {
+                backButtonStyled.setMouseOver(false);
+                startGameButtonStyled.setMouseOver(false);
+                styledButtonPanel.repaint();
+            }
+        });
+        styledButtonPanel.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+            @Override
+            public void mouseMoved(java.awt.event.MouseEvent e) {
+                boolean repaint = false;
+                if (backButtonStyled.getBounds().contains(e.getX(), e.getY())) {
+                    if (!backButtonStyled.isMouseOver()) repaint = true;
+                    backButtonStyled.setMouseOver(true);
+                } else {
+                    if (backButtonStyled.isMouseOver()) repaint = true;
+                    backButtonStyled.setMouseOver(false);
+                }
+                if (startGameButtonStyled.getBounds().contains(e.getX(), e.getY())) {
+                    if (!startGameButtonStyled.isMouseOver()) repaint = true;
+                    startGameButtonStyled.setMouseOver(true);
+                } else {
+                    if (startGameButtonStyled.isMouseOver()) repaint = true;
+                    startGameButtonStyled.setMouseOver(false);
+                }
+                if (repaint) styledButtonPanel.repaint();
+            }
+        });
+        add(styledButtonPanel, BorderLayout.SOUTH);
 
         // Mouse eventleri
         contentPanel.addMouseListener(new java.awt.event.MouseAdapter() {
