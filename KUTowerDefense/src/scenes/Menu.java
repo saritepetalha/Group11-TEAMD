@@ -75,12 +75,12 @@ public class Menu extends GameScene implements SceneMethods {
         Font buttonFont = new Font("MV Boli",Font.PLAIN,45);
         g.setFont(buttonFont);
 
-        playButton.draw(g);
-        loadGameButton.draw(g);
-        mapEditorButton.draw(g);
-        optionButton.draw(g);
-        statsButton.draw(g);
-        exitButton.draw(g);
+        playButton.drawStyled(g);
+        loadGameButton.drawStyled(g);
+        mapEditorButton.drawStyled(g);
+        optionButton.drawStyled(g);
+        statsButton.drawStyled(g);
+        exitButton.drawStyled(g);
 
         // Set cursor based on button hover
         if (playButton.isMouseOver() || loadGameButton.isMouseOver() || 
