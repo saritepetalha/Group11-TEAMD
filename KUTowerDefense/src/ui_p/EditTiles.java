@@ -10,6 +10,7 @@ import constants.GameDimensions;
 import controllers.MapController;
 import main.Game;
 import managers.AudioManager;
+import models.PathValidator;
 import scenes.MapEditing;
 import objects.Tile;
 import javax.swing.*;
@@ -192,8 +193,16 @@ public class EditTiles extends Bar {
 
     private void saveLevel(String levelName){
         if (mapController != null) {
-            mapController.saveLevel(levelName);
+            PathValidator.ValidationResult result = mapController.saveLevel(levelName);
+            if (!result.isValid()) {
+                // Show validation error popup
+                JOptionPane.showMessageDialog(owner, result.getErrorMessage(), "Map Save Error", JOptionPane.WARNING_MESSAGE);
+            } else {
+                // Show success message
+                JOptionPane.showMessageDialog(owner, "Map saved successfully!", "Save Successful", JOptionPane.INFORMATION_MESSAGE);
+            }
         } else if (mapEditing != null) {
+            // MapEditing now handles its own validation and success/error messages
             mapEditing.saveLevel(levelName);
         }
     }
