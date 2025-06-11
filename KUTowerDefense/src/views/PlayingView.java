@@ -267,7 +267,7 @@ public class PlayingView implements Observer {
     private void drawEnemies(Graphics g) {
         // Draw ultimates effects
         if (model.getUltiManager() != null) {
-            model.getUltiManager().draw(g);
+            model.getUltiManager().draw(g, model.getGameSpeedMultiplier());
         }
 
         // Draw enemies

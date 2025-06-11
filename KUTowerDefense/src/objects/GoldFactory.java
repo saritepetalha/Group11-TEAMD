@@ -19,6 +19,8 @@ public class GoldFactory {
     private GoldBagManager goldBagManager;
     private boolean destroyed = false;
     private Random random = new Random();
+    private float lifetimeProgress = 0f;
+    private float spawnProgress = 0f;
 
     // Adjacent tile offsets: up, down, left, right
     private static final int[][] ADJACENT_OFFSETS = {
@@ -36,21 +38,23 @@ public class GoldFactory {
         this.creationTime = System.currentTimeMillis();
     }
 
-    public void update() {
+    public void update(float gameSpeedMultiplier) {
         if (destroyed) return;
 
         long currentTime = System.currentTimeMillis();
-        
-        // Check if factory has expired
-        if (currentTime - creationTime > LIFETIME_MILLIS) {
+        // Simulate faster lifetime and spawn at higher speed
+        float delta = 16f * gameSpeedMultiplier; // assuming 60 UPS
+        lifetimeProgress += delta;
+        spawnProgress += delta;
+
+        if (lifetimeProgress >= LIFETIME_MILLIS) {
             destroyed = true;
             return;
         }
 
-        // Spawn gold bags every 4 seconds
-        if (currentTime - lastSpawnTime >= SPAWN_INTERVAL_MILLIS) {
+        if (spawnProgress >= SPAWN_INTERVAL_MILLIS) {
             spawnRandomGoldBag();
-            lastSpawnTime = currentTime;
+            spawnProgress = 0f;
         }
     }
 
@@ -70,7 +74,7 @@ public class GoldFactory {
         goldBagManager.spawnGoldBag(spawnX, spawnY, MIN_GOLD, MAX_GOLD);
     }
 
-    public void draw(Graphics g) {
+    public void draw(Graphics g, float gameSpeedMultiplier) {
         if (destroyed) return;
 
         BufferedImage factorySprite = AssetsLoader.getInstance().goldFactorySprite;
@@ -93,13 +97,13 @@ public class GoldFactory {
             g2d.drawString(text, textX, textY);
         }
         
-        // Draw lifetime indicator
-        drawLifetimeBar(g);
+        // Draw lifetime indicator with speed multiplier
+        drawLifetimeBar(g, gameSpeedMultiplier);
     }
 
-    private void drawLifetimeBar(Graphics g) {
+    private void drawLifetimeBar(Graphics g, float gameSpeedMultiplier) {
         long currentTime = System.currentTimeMillis();
-        float timeElapsed = currentTime - creationTime;
+        float timeElapsed = (currentTime - creationTime) * gameSpeedMultiplier;
         float timeRemaining = LIFETIME_MILLIS - timeElapsed;
         float lifePercentage = Math.max(0, timeRemaining / LIFETIME_MILLIS);
 

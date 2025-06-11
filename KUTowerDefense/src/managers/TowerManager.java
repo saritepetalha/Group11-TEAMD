@@ -246,7 +246,7 @@ public class TowerManager {
             }
         }
         // Draw warriors
-        drawWarriors(g);
+        drawWarriors(g, 1.0f);
         // Draw upgrade effects (these are general visual effects, not tied to day/night sprites)
         Graphics2D g2d_effects = (Graphics2D) g;
         Iterator<TowerUpgradeEffect> it = upgradeEffects.iterator();
@@ -613,7 +613,7 @@ public class TowerManager {
         return adjustedDistance < effectiveRange && canTarget;
     }
 
-    public void drawWarriors(Graphics g) {
+    public void drawWarriors(Graphics g, float gameSpeedMultiplier) {
         for (Warrior warrior : warriors) {
             BufferedImage[] frames = warrior.getAnimationFrames();
             if (frames != null && frames.length > 0) {
@@ -627,36 +627,27 @@ public class TowerManager {
                         // Determine sprite dimensions and scaling based on warrior type
                         int drawWidth, drawHeight;
                         if (warrior instanceof WizardWarrior) {
-                            // Wizard sprites are 231x190, scale down but make them larger than before
-                            drawWidth = 92;  // Increased from 80
-                            drawHeight = 76; // Increased from 65
-                            // Center horizontally and position closer to bottom
+                            drawWidth = 92;
+                            drawHeight = 76;
                             x += (64 - drawWidth) / 2;
-                            y += (64 - drawHeight) + 12; // Moved 8 pixels closer to bottom
+                            y += (64 - drawHeight) + 12;
                         } else {
-                            // Archer sprites are 100x100, make them larger
-                            drawWidth = 84;  // Increased from 64
-                            drawHeight = 84; // Increased from 64
-                            // Center horizontally and position closer to bottom
+                            drawWidth = 84;
+                            drawHeight = 84;
                             x += (64 - drawWidth) / 2;
-                            y += (64 - drawHeight) + 20; // Moved 6 pixels closer to bottom
+                            y += (64 - drawHeight) + 20;
                         }
 
-                        // Handle sprite mirroring based on facing direction
                         if (warrior.isFacingLeft()) {
-                            // Draw the sprite mirrored horizontally by using negative width
-                            // and adjusting the x-coordinate accordingly
                             g.drawImage(sprite, x + drawWidth, y, -drawWidth, drawHeight, null);
                         } else {
-                            // Normal drawing for facing right
                             g.drawImage(sprite, x, y, drawWidth, drawHeight, null);
                         }
                     }
                 }
             }
-
-            // Draw lifetime bar for the warrior
-            warrior.drawLifetimeBar(g);
+            // Draw lifetime bar for the warrior with speed multiplier
+            warrior.drawLifetimeBar(g, gameSpeedMultiplier);
         }
 
         // Draw TNT warriors
