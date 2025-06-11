@@ -1,0 +1,11 @@
+{
+  "mapName": "full_map",
+  "victory": false,
+  "gold": 2380,
+  "enemiesSpawned": 80,
+  "enemiesReachedEnd": 40,
+  "towersBuilt": 4,
+  "enemyDefeated": 2,
+  "totalDamage": 1968,
+  "timePlayedInSeconds": 151
+}
