@@ -279,7 +279,7 @@ public class PlayingView implements Observer {
     private void drawTowers(Graphics g) {
         // Draw towers
         if (model.getTowerManager() != null) {
-            model.getTowerManager().draw(g);
+            model.getTowerManager().draw(g, model.getGameSpeedMultiplier());
         }
 
         // Draw tower buttons (dead trees)
