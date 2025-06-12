@@ -470,9 +470,33 @@ public class TowerManager {
     public void removeTower(Tower tower) {
         boolean removed = towers.remove(tower);
         if (removed) {
-            System.out.println("Tower removed successfully");
+            // Reset the tile data back to grass where the tower was located
+            resetTileToGrass(tower);
+            System.out.println("Tower removed successfully and tile reset to grass");
         } else {
             System.err.println("Error: Tower not found in list for removal.");
+        }
+    }
+
+    /**
+     * Resets the tile at the tower's position back to grass (ID 5)
+     */
+    private void resetTileToGrass(Tower tower) {
+        if (tower == null || playing == null) return;
+
+        // Convert tower pixel coordinates to tile coordinates
+        int tileX = tower.getX() / GameDimensions.TILE_DISPLAY_SIZE;
+        int tileY = tower.getY() / GameDimensions.TILE_DISPLAY_SIZE;
+
+        // Get the level data
+        int[][] level = playing.getLevel();
+        if (level == null) return;
+
+        // Check bounds
+        if (tileY >= 0 && tileY < level.length && tileX >= 0 && tileX < level[0].length) {
+            // Reset to grass tile (ID 5)
+            level[tileY][tileX] = 5;
+            System.out.println("Reset tile at (" + tileX + ", " + tileY + ") to grass");
         }
     }
 
