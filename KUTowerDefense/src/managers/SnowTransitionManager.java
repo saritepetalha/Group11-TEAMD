@@ -101,9 +101,16 @@ public class SnowTransitionManager {
             return originalSprite;
         }
 
+        // Special handling for grass tile
         if (tileId == 5) {
             return getSnowGrassSprite();
         }
+
+        // Special handling for four-way road tile (ID 32)
+        if (tileId == 32) {
+            return getFourWayRoadSnowSprite();
+        }
+
         BufferedImage snowSprite = null;
 
         if (currentState == SnowState.TRANSITIONING || currentState == SnowState.MEDIUM_SNOW) {
@@ -128,6 +135,21 @@ public class SnowTransitionManager {
         }
 
         return snowGrass;
+    }
+
+    /**
+     * Gets the snowy four-way road sprite based on current snow state
+     */
+    private BufferedImage getFourWayRoadSnowSprite() {
+        BufferedImage snowFourWay = null;
+
+        if (currentState == SnowState.TRANSITIONING || currentState == SnowState.MEDIUM_SNOW) {
+            snowFourWay = spriteCache.get("medium_fourway");
+        } else if (currentState == SnowState.FULL_SNOW) {
+            snowFourWay = spriteCache.get("full_fourway");
+        }
+
+        return snowFourWay;
     }
 
     /**
