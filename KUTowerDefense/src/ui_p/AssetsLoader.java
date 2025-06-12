@@ -62,6 +62,7 @@ public class AssetsLoader {
     public BufferedImage freezeButtonNormal;
     public BufferedImage freezeButtonHover;
     public BufferedImage freezeButtonPressed;
+    public BufferedImage poisonTowerImg;
 
     // Private constructor
     private AssetsLoader() {
@@ -109,6 +110,7 @@ public class AssetsLoader {
         loadConfettiAssets();
         loadHandCursor();
         loadNormalCursor();
+        loadPoisonTowerAsset();
     }
 
     private void loadButtonImageFile() {
@@ -496,6 +498,13 @@ public class AssetsLoader {
             System.err.println("Error loading normal cursor from /UI/01.png: " + e.getMessage());
             e.printStackTrace();
             customNormalCursor = java.awt.Cursor.getDefaultCursor();
+        }
+    }
+
+    private void loadPoisonTowerAsset() {
+        poisonTowerImg = loadImage("/TowerAssets/PoisonTower.png");
+        if (poisonTowerImg == null) {
+            System.err.println("Warning: Failed to load PoisonTower.png");
         }
     }
 }

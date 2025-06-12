@@ -6,6 +6,7 @@ import helpMethods.LoadSave;
 import objects.ArcherTower;
 import objects.ArtilleryTower;
 import objects.MageTower;
+import objects.PoisonTower;
 import objects.Tower;
 import objects.TowerDecorator;
 import strategies.TargetingStrategy;
@@ -43,26 +44,31 @@ public class TowerManager {
 
     private void loadTowerImages() {
         BufferedImage tilesetImage = LoadSave.getSpriteAtlas();
-        towerImages = new BufferedImage[3];
+        towerImages = new BufferedImage[4];
         // Load from correct positions in tileset
         towerImages[0] = tilesetImage.getSubimage(2 * 64, 6 * 64, 64, 64); // Archer Tower (row 6, col 2)
         towerImages[1] = tilesetImage.getSubimage(0 * 64, 5 * 64, 64, 64); // Artillery Tower (row 5, col 0)
         towerImages[2] = tilesetImage.getSubimage(1 * 64, 5 * 64, 64, 64); // Mage Tower (row 5, col 1)
+        towerImages[3] = LoadSave.getImageFromPath("/TowerAssets/PoisonTower.png"); // Poison Tower from asset
 
         // Load night mode sprites
-        nightTowerImages = new BufferedImage[3];
-        nightUpTowerImages = new BufferedImage[3];
+        nightTowerImages = new BufferedImage[4];
+        nightUpTowerImages = new BufferedImage[4];
         BufferedImage nightImg = LoadSave.getImageFromPath("/TowerAssets/towerNight.png");
         BufferedImage nightUpImg = LoadSave.getImageFromPath("/TowerAssets/towerUpNight.png");
         if (nightImg != null) {
             for (int i = 0; i < 3; i++) {
                 nightTowerImages[i] = nightImg.getSubimage(i * 384, 0, 384, 384);
             }
+            // For poison tower, reuse mage tower night sprite for now
+            nightTowerImages[3] = nightTowerImages[2];
         }
         if (nightUpImg != null) {
             for (int i = 0; i < 3; i++) {
                 nightUpTowerImages[i] = nightUpImg.getSubimage(i * 384, 0, 384, 384);
             }
+            // For poison tower, reuse mage tower night sprite for now
+            nightUpTowerImages[3] = nightUpTowerImages[2];
         }
     }
 
@@ -111,6 +117,21 @@ public class TowerManager {
 
         // Use the tower's targeting strategy to select the best target
         if (!enemiesInRange.isEmpty()) {
+            // Special handling for PoisonTower - it attacks ALL enemies in range, not just one
+            if (tower.getType() == constants.Constants.Towers.POISON) {
+                // PoisonTower attacks ALL enemies in range directly
+                tower.incrementUsage(); // Increment usage count when tower attacks
+                tower.resetCooldown();
+
+                // Apply poison effect to all enemies in range
+                for (Enemy target : enemiesInRange) {
+                    tower.applyOnHitEffect(target, playing);
+                }
+
+                System.out.println("Poison Tower attacked " + enemiesInRange.size() + " enemies in range");
+                return;
+            }
+
             TargetingStrategy strategy = tower.getTargetingStrategy();
             Enemy target = strategy.selectTarget(enemiesInRange, tower);
 
@@ -205,6 +226,8 @@ public class TowerManager {
                             spriteToDraw = towerImages[1];
                         } else if (towerForDaySpriteLookup instanceof objects.MageTower) {
                             spriteToDraw = towerImages[2];
+                        } else if (towerForDaySpriteLookup instanceof objects.PoisonTower) {
+                            spriteToDraw = towerImages[3];
                         }
                     }
                 }
@@ -214,6 +237,14 @@ public class TowerManager {
                     int w = tower.getWidth();
                     int h = tower.getHeight();
                     g.drawImage(spriteToDraw, x, y, w, h, null);
+
+                    // Draw green smoke effect for poison towers
+                    if (tower instanceof objects.PoisonTower) {
+                        objects.PoisonTower poisonTower = (objects.PoisonTower) tower;
+                        if (poisonTower.isShowingSmokeEffect()) {
+                            drawPoisonSmokeEffect(g, poisonTower);
+                        }
+                    }
                 }
             }
         }
@@ -301,6 +332,7 @@ public class TowerManager {
                 if (fundamentalTypeProvider instanceof objects.ArtilleryTower) typeIdx = 0;
                 else if (fundamentalTypeProvider instanceof objects.MageTower) typeIdx = 1;
                 else if (fundamentalTypeProvider instanceof objects.ArcherTower) typeIdx = 2;
+                else if (fundamentalTypeProvider instanceof objects.PoisonTower) typeIdx = 3;
 
                 if (typeIdx != -1) {
                     // Determine if we should use the upgraded night sprite.
@@ -326,6 +358,8 @@ public class TowerManager {
                             spriteToDraw = towerImages[1];
                         } else if (fundamentalTypeProvider instanceof objects.MageTower) {
                             spriteToDraw = towerImages[2];
+                        } else if (fundamentalTypeProvider instanceof objects.PoisonTower) {
+                            spriteToDraw = towerImages[3];
                         }
                     }
                 }
@@ -403,6 +437,10 @@ public class TowerManager {
     // Method to build tower with custom targeting strategy
     public void buildArtilleryTower(int x, int y, TargetingStrategy targetingStrategy) {
         towers.add(new ArtilleryTower(x, y, targetingStrategy));
+    }
+
+    public void buildPoisonTower(int x, int y) {
+        towers.add(new PoisonTower(x, y));
     }
 
     public ArrayList<Tower> getTowers() {return towers;}
@@ -845,6 +883,8 @@ public class TowerManager {
                 return config.TowerType.ARTILLERY;
             case constants.Constants.Towers.MAGE:
                 return config.TowerType.MAGE;
+            case constants.Constants.Towers.POISON:
+                return null; // No config for poison tower yet
             default:
                 return null;
         }
@@ -888,6 +928,38 @@ public class TowerManager {
         towerTNTCounts.clear();
 
         System.out.println("TowerManager cleared: " + warriors.size() + " warriors, " + tntWarriors.size() + " TNT warriors, reset all tower warrior counts");
+    }
+
+    /**
+     * Draw green smoke effect around poison tower when it attacks
+     */
+    private void drawPoisonSmokeEffect(Graphics g, objects.PoisonTower poisonTower) {
+        Graphics2D g2d = (Graphics2D) g.create();
+
+        float progress = poisonTower.getSmokeEffectProgress();
+        float alpha = progress * 0.6f;
+
+        Color smokeColor = new Color(0, 255, 0, (int)(alpha * 255));
+        g2d.setColor(smokeColor);
+
+        g2d.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, alpha));
+
+        int centerX = poisonTower.getX() + poisonTower.getWidth() / 2;
+        int centerY = poisonTower.getY() + poisonTower.getHeight() / 2;
+
+        for (int i = 0; i < 3; i++) {
+            int radius = (int)(20 + i * 15 + (1.0f - progress) * 20); // Expanding smoke
+            int smokeX = centerX - radius;
+            int smokeY = centerY - radius;
+            int diameter = radius * 2;
+
+            float ringAlpha = alpha * (0.8f - i * 0.2f);
+            g2d.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, ringAlpha));
+
+            g2d.fillOval(smokeX, smokeY, diameter, diameter);
+        }
+
+        g2d.dispose();
     }
 }
 

@@ -268,6 +268,8 @@ public class TNTWarrior {
                                 tower.setDestroyedSprite(helpMethods.LoadSave.getImageFromPath("/TowerAssets/Tower_bomb_destroyed.png"));
                             } else if (tower instanceof objects.ArcherTower) {
                                 tower.setDestroyedSprite(helpMethods.LoadSave.getImageFromPath("/TowerAssets/Tower_archer_destroyed.png"));
+                            } else if (tower instanceof objects.PoisonTower) {
+                                tower.setDestroyedSprite(helpMethods.LoadSave.getImageFromPath("/TowerAssets/Tower_poison_destroyed.png"));
                             }
                             // Spawn debris effect - exact same as earthquake
                             java.util.List<objects.Tower.Debris> debris = new java.util.ArrayList<>();

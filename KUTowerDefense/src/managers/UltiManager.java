@@ -97,6 +97,8 @@ public class UltiManager {
                         tower.setDestroyedSprite(LoadSave.getImageFromPath("/TowerAssets/Tower_bomb_destroyed.png"));
                     } else if (tower instanceof objects.ArcherTower) {
                         tower.setDestroyedSprite(LoadSave.getImageFromPath("/TowerAssets/Tower_archer_destroyed.png"));
+                    } else if (tower instanceof objects.PoisonTower) {
+                        tower.setDestroyedSprite(LoadSave.getImageFromPath("/TowerAssets/Tower_poison_destroyed.png"));
                     }
                     // Spawn debris effect
                     java.util.List<objects.Tower.Debris> debris = new java.util.ArrayList<>();

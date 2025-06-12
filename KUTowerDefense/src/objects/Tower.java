@@ -158,6 +158,8 @@ public abstract class Tower {
                 return ARTILLERY_DEGRADATION_RATE;
             case Constants.Towers.MAGE:
                 return MAGE_DEGRADATION_RATE;
+            case Constants.Towers.POISON:
+                return 0.6f; // Poison towers degrade moderately due to toxic materials
             default:
                 return 0.5f; // Default degradation rate
         }

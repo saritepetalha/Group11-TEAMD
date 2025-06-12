@@ -27,6 +27,7 @@ public class TowerSelectionUI {
     private TheButton spawnButton;
     private TheButton lightUpgradeButton;
     private TheButton sellButton;
+    private TheButton toxicBlastButton;
     private CostTooltip tooltip;
 
     // UI positioning
@@ -56,7 +57,7 @@ public class TowerSelectionUI {
     }
 
     /**
-     * Creates the upgrade and targeting buttons for the selected tower
+     * Creates buttons for the selected tower
      */
     private void createButtons() {
         if (selectedTower == null) return;
@@ -73,6 +74,9 @@ public class TowerSelectionUI {
             buttonY = selectedTower.getY() + 70; // Position below tower
         }
 
+        // Check if this is a poison tower
+        boolean isPoisonTower = selectedTower.getType() == constants.Constants.Towers.POISON;
+
         if (selectedTower.isDestroyed()) {
             reviveButton = new TheButton("Revive", buttonX, buttonY, BUTTON_WIDTH, BUTTON_HEIGHT);
             upgradeButton = null;
@@ -80,7 +84,26 @@ public class TowerSelectionUI {
             spawnButton = null;
             lightUpgradeButton = null;
             sellButton = null;
+            toxicBlastButton = null;
+        } else if (isPoisonTower) {
+            // Special handling for poison towers - only show Toxic Blast and Sell buttons
+            int currentButtonY = buttonY;
+
+            // Create toxic blast button
+            toxicBlastButton = new TheButton("Toxic Blast", buttonX, currentButtonY, BUTTON_WIDTH, BUTTON_HEIGHT);
+            currentButtonY += BUTTON_HEIGHT + BUTTON_SPACING;
+
+            // Create sell button below toxic blast button
+            sellButton = new TheButton("Sell", buttonX, currentButtonY, BUTTON_WIDTH, BUTTON_HEIGHT);
+
+            // Clear other buttons for poison towers
+            upgradeButton = null;
+            targetingButton = null;
+            spawnButton = null;
+            lightUpgradeButton = null;
+            reviveButton = null;
         } else {
+            // Regular tower handling (non-poison)
             int currentButtonY = buttonY;
             // Create upgrade button
             upgradeButton = new TheButton("Upgrade", buttonX, currentButtonY, BUTTON_WIDTH, BUTTON_HEIGHT);
@@ -126,6 +149,7 @@ public class TowerSelectionUI {
                     BUTTON_HEIGHT);
 
             reviveButton = null;
+            toxicBlastButton = null;
         }
     }
 
@@ -139,6 +163,7 @@ public class TowerSelectionUI {
         spawnButton = null;
         lightUpgradeButton = null;
         sellButton = null;
+        toxicBlastButton = null;
         selectedTower = null;
     }
 
@@ -215,6 +240,9 @@ public class TowerSelectionUI {
             }
             if (sellButton != null) {
                 drawSellButton(g2d);
+            }
+            if (toxicBlastButton != null) {
+                drawToxicBlastButton(g2d);
             }
         }
 
@@ -666,6 +694,92 @@ public class TowerSelectionUI {
     }
 
     /**
+     * Draws the toxic blast button for poison towers
+     */
+    private void drawToxicBlastButton(Graphics2D g2d) {
+        if (toxicBlastButton == null) return;
+
+        // Get button position
+        int buttonX = toxicBlastButton.getX();
+        int buttonY = toxicBlastButton.getY();
+
+        // Check if this is a poison tower and if the ability can be used
+        boolean canUseAbility = false;
+        int abilityCost = 50; // Default cost
+        long remainingCooldown = 0;
+
+        if (selectedTower instanceof objects.PoisonTower) {
+            objects.PoisonTower poisonTower = (objects.PoisonTower) selectedTower;
+            canUseAbility = poisonTower.canUseSpecialAbility();
+            abilityCost = poisonTower.getSpecialAbilityCost();
+            remainingCooldown = poisonTower.getSpecialAbilityRemainingCooldown();
+        }
+
+        // Check if player has enough gold
+        boolean hasEnoughGold = playing.getPlayerManager().getGold() >= abilityCost;
+        boolean isEnabled = canUseAbility && hasEnoughGold;
+
+        // Determine button state colors
+        Color backgroundColor;
+        Color borderColor;
+        Color textColor;
+
+        if (toxicBlastButton.isMousePressed()) {
+            backgroundColor = new Color(40, 80, 40, 200);
+            borderColor = new Color(60, 120, 60);
+            textColor = Color.WHITE;
+        } else if (toxicBlastButton.isMouseOver()) {
+            backgroundColor = new Color(60, 120, 60, 180);
+            borderColor = new Color(80, 160, 80);
+            textColor = Color.WHITE;
+        } else if (isEnabled) {
+            backgroundColor = new Color(50, 100, 50, 160);
+            borderColor = new Color(70, 140, 70);
+            textColor = Color.WHITE;
+        } else {
+            backgroundColor = new Color(60, 60, 60, 120);
+            borderColor = new Color(80, 80, 80);
+            textColor = new Color(150, 150, 150);
+        }
+
+        // Draw button background
+        g2d.setColor(backgroundColor);
+        g2d.fillRoundRect(buttonX, buttonY, BUTTON_WIDTH, BUTTON_HEIGHT, 8, 8);
+
+        // Draw button border
+        g2d.setColor(borderColor);
+        g2d.setStroke(new BasicStroke(2));
+        g2d.drawRoundRect(buttonX, buttonY, BUTTON_WIDTH, BUTTON_HEIGHT, 8, 8);
+
+        // Draw button text
+        g2d.setColor(textColor);
+        g2d.setFont(new Font("Arial", Font.BOLD, 9));
+        FontMetrics fm = g2d.getFontMetrics();
+
+        String buttonText = "Toxic Blast";
+        if (!canUseAbility && remainingCooldown > 0) {
+            // Show cooldown remaining
+            long seconds = remainingCooldown / 1000;
+            buttonText = "CD: " + seconds + "s";
+        }
+
+        int textX = buttonX + (BUTTON_WIDTH - fm.stringWidth(buttonText)) / 2;
+        int textY = buttonY + (BUTTON_HEIGHT - fm.getHeight()) / 2 + fm.getAscent();
+        g2d.drawString(buttonText, textX, textY);
+
+        // Draw cost indicator
+        String costText = abilityCost + "g";
+        g2d.setFont(new Font("Arial", Font.PLAIN, 8));
+        FontMetrics costFm = g2d.getFontMetrics();
+        int costX = buttonX + BUTTON_WIDTH - costFm.stringWidth(costText) - 2;
+        int costY = buttonY + BUTTON_HEIGHT - 2;
+
+        Color costColor = hasEnoughGold ? new Color(255, 215, 0) : new Color(255, 100, 100);
+        g2d.setColor(costColor);
+        g2d.drawString(costText, costX, costY);
+    }
+
+    /**
      * Draws the light upgrade button with pixel art styling
      */
     private void drawLightUpgradeButton(Graphics2D g2d) {
@@ -858,6 +972,30 @@ public class TowerSelectionUI {
             }
         }
 
+        if (!tooltipShown && toxicBlastButton != null) {
+            boolean isHover = toxicBlastButton.getBounds().contains(mouseX, mouseY);
+            toxicBlastButton.setMouseOver(isHover);
+
+            if (isHover) {
+                if (selectedTower instanceof objects.PoisonTower) {
+                    objects.PoisonTower poisonTower = (objects.PoisonTower) selectedTower;
+                    boolean canUse = poisonTower.canUseSpecialAbility();
+                    int cost = poisonTower.getSpecialAbilityCost();
+                    long cooldown = poisonTower.getSpecialAbilityRemainingCooldown();
+
+                    String status = canUse ? "Ready" : "Cooldown: " + (cooldown / 1000) + "s";
+                    boolean hasGold = playing.getPlayerManager().getGold() >= cost;
+
+                    tooltip.show("Toxic Blast", cost,
+                            "Instantly poison all enemies on the map. Status: " + status,
+                            hasGold, mouseX, mouseY);
+                } else {
+                    tooltip.show("Toxic Blast", 50, "Poison all enemies on the map", true, mouseX, mouseY);
+                }
+                tooltipShown = true;
+            }
+        }
+
         if (!tooltipShown && reviveButton != null) {
             boolean isHover = reviveButton.getBounds().contains(mouseX, mouseY);
             reviveButton.setMouseOver(isHover);
@@ -968,6 +1106,21 @@ public class TowerSelectionUI {
             playing.updateUIResources();
 
             System.out.println("Tower sold for " + sellPrice + " gold!");
+            handled = true;
+        }
+
+        if (toxicBlastButton != null && toxicBlastButton.getBounds().contains(mouseX, mouseY)) {
+            // Toxic blast button logic
+            if (selectedTower instanceof objects.PoisonTower) {
+                objects.PoisonTower poisonTower = (objects.PoisonTower) selectedTower;
+                if (poisonTower.useSpecialAbility(playing)) {
+                    System.out.println("🧪 Toxic Blast activated! All enemies on the map have been poisoned!");
+                    // Play audio feedback
+                    managers.AudioManager.getInstance().playSpellShotSound();
+                } else {
+                    System.out.println("❌ Cannot use Toxic Blast - check cooldown and gold requirements");
+                }
+            }
             handled = true;
         }
 
@@ -1124,6 +1277,9 @@ public class TowerSelectionUI {
         if (sellButton != null && sellButton.getBounds().contains(mouseX, mouseY)) {
             sellButton.setMousePressed(true);
         }
+        if (toxicBlastButton != null && toxicBlastButton.getBounds().contains(mouseX, mouseY)) {
+            toxicBlastButton.setMousePressed(true);
+        }
     }
 
     /**
@@ -1144,6 +1300,9 @@ public class TowerSelectionUI {
         }
         if (sellButton != null) {
             sellButton.setMousePressed(false);
+        }
+        if (toxicBlastButton != null) {
+            toxicBlastButton.setMousePressed(false);
         }
     }
 

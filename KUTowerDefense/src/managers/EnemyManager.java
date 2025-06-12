@@ -46,7 +46,7 @@ public class EnemyManager {
     private static final float COMBAT_SYNERGY_DISTANCE_SQUARED = 4096f; // 64 * 64
     private static final float EPSILON = 0.001f; // Small value for float comparisons
     private static final int GOLD_BAG_SPAWN_CHANCE = 50; // 50% chance
-    
+
     private Playing playing;
     private static BufferedImage[] enemyImages;
     private ArrayList<Enemy> enemies = new ArrayList<>();
@@ -353,10 +353,10 @@ public class EnemyManager {
 
         if (enemy != null) {
             applyOptionsToEnemy(enemy);
-            
+
             // Initialize enemy direction based on the path
             initializeEnemyDirection(enemy);
-            
+
             enemies.add(enemy);
             long spawnTime = System.currentTimeMillis();
             enemySpawnTimes.put(enemy, spawnTime);
@@ -436,16 +436,16 @@ public class EnemyManager {
      */
     private boolean shouldUseCurvedMovement(int pathIndex) {
         if (pathIndex >= pathPoints.size() - 1) return false;
-        
+
         // Get the current tile and check if it's a curved road
         GridPoint currentPoint = pathPoints.get(pathIndex);
         int tileId = tileData[currentPoint.getY()][currentPoint.getX()];
-        
+
         // Check if the tile is one of the curved road tiles
         // Corner curves: 0, 2, 8, 10
         // Flat curves: 1, 4, 6, 9
-        return tileId == 0 || tileId == 1 || tileId == 2 || tileId == 4 || 
-               tileId == 6 || tileId == 8 || tileId == 9 || tileId == 10;
+        return tileId == 0 || tileId == 1 || tileId == 2 || tileId == 4 ||
+                tileId == 6 || tileId == 8 || tileId == 9 || tileId == 10;
     }
 
     /**
@@ -453,17 +453,17 @@ public class EnemyManager {
      */
     private void moveCurved(Enemy e, float speedMultiplier) {
         int pathIndex = e.getCurrentPathIndex();
-        
+
         GridPoint currentPoint = pathPoints.get(pathIndex);
         GridPoint nextPoint = pathPoints.get(pathIndex + 1);
-        
+
         // Calculate movement direction
         int deltaX = nextPoint.getX() - currentPoint.getX();
         int deltaY = nextPoint.getY() - currentPoint.getY();
-        
+
         // Determine curve type based on direction change and tile type
         CurveParams curveParams = calculateCurveParameters(pathIndex, deltaX, deltaY);
-        
+
         if (curveParams != null) {
             // Use circular arc movement
             moveAlongCircularArc(e, curveParams, speedMultiplier);
@@ -474,7 +474,7 @@ public class EnemyManager {
         }
     }
 
-   /**
+    /**
      * Moves enemy along a circular arc using vector rotation
      * @param enemy The enemy to move
      * @param curveParams The parameters defining the circular arc
@@ -484,167 +484,167 @@ public class EnemyManager {
         // Get current enemy position
         float currentX = enemy.getX();
         float currentY = enemy.getY();
-        
+
         // Get target position (next path point)
         int currentPathIndex = enemy.getCurrentPathIndex();
         if (currentPathIndex >= pathPoints.size() - 1) {
             enemy.setReachedEnd(true);
             return;
         }
-        
+
         GridPoint nextPoint = pathPoints.get(currentPathIndex + 1);
         float targetX = nextPoint.getX() * tileSize + tileSize / 2.0f;
         float targetY = nextPoint.getY() * tileSize + tileSize / 2.0f;
-         
-                 // For curved tiles, adjust the target to be on the actual road path, not the tile center
-         // Check if the NEXT tile (where we're going) is a curved tile
-         int nextTileId = tileData[nextPoint.getY()][nextPoint.getX()];
-         boolean isTargetCornerCurve = (nextTileId == 0 || nextTileId == 2 || nextTileId == 8 || nextTileId == 10);
-         boolean isTargetFlatCurve = (nextTileId == 1 || nextTileId == 4 || nextTileId == 6 || nextTileId == 9);
-         
-         if (isTargetCornerCurve) {
-             // Use specific target offsets for each corner curve type
-             float centerTileX = nextPoint.getX() * tileSize + tileSize / 2.0f;
-             float centerTileY = nextPoint.getY() * tileSize + tileSize / 2.0f;
-             
-             switch (nextTileId) {
-                 case 2: // CurvedRoadEastNorth
-                     targetX = centerTileX - 19;
-                     targetY = centerTileY + 19;
-                     break;
-                 case 0: // CurvedRoadNorthWest
-                     targetX = centerTileX + 19;
-                     targetY = centerTileY + 19;
-                     break;
-                 case 8: // CurvedRoadWestSouth
-                     targetX = centerTileX + 19;
-                     targetY = centerTileY - 19;
-                     break;
-                 case 10: // CurvedRoadSouthEast
-                     targetX = centerTileX - 19;
-                     targetY = centerTileY - 19;
-                     break;
-             }
-         } else if (isTargetFlatCurve) {
-             // Use specific target offsets for each flat curve type
-             float centerTileX = nextPoint.getX() * tileSize + tileSize / 2.0f;
-             float centerTileY = nextPoint.getY() * tileSize + tileSize / 2.0f;
-             
-             switch (nextTileId) {
-                 case 1: // CurvedRoadNorth
-                     targetX = centerTileX;
-                     targetY = centerTileY - 10; // 10 pixels above
-                     break;
-                 case 9: // CurvedRoadSouth
-                     targetX = centerTileX;
-                     targetY = centerTileY + 10; // 10 pixels below
-                     break;
-                 case 4: // CurvedRoadWest
-                     targetX = centerTileX - 10; // 10 pixels left
-                     targetY = centerTileY;
-                     break;
-                 case 6: // CurvedRoadEast
-                     targetX = centerTileX + 10; // 10 pixels right
-                     targetY = centerTileY;
-                     break;
-             }
-         }
-        
-        
+
+        // For curved tiles, adjust the target to be on the actual road path, not the tile center
+        // Check if the NEXT tile (where we're going) is a curved tile
+        int nextTileId = tileData[nextPoint.getY()][nextPoint.getX()];
+        boolean isTargetCornerCurve = (nextTileId == 0 || nextTileId == 2 || nextTileId == 8 || nextTileId == 10);
+        boolean isTargetFlatCurve = (nextTileId == 1 || nextTileId == 4 || nextTileId == 6 || nextTileId == 9);
+
+        if (isTargetCornerCurve) {
+            // Use specific target offsets for each corner curve type
+            float centerTileX = nextPoint.getX() * tileSize + tileSize / 2.0f;
+            float centerTileY = nextPoint.getY() * tileSize + tileSize / 2.0f;
+
+            switch (nextTileId) {
+                case 2: // CurvedRoadEastNorth
+                    targetX = centerTileX - 19;
+                    targetY = centerTileY + 19;
+                    break;
+                case 0: // CurvedRoadNorthWest
+                    targetX = centerTileX + 19;
+                    targetY = centerTileY + 19;
+                    break;
+                case 8: // CurvedRoadWestSouth
+                    targetX = centerTileX + 19;
+                    targetY = centerTileY - 19;
+                    break;
+                case 10: // CurvedRoadSouthEast
+                    targetX = centerTileX - 19;
+                    targetY = centerTileY - 19;
+                    break;
+            }
+        } else if (isTargetFlatCurve) {
+            // Use specific target offsets for each flat curve type
+            float centerTileX = nextPoint.getX() * tileSize + tileSize / 2.0f;
+            float centerTileY = nextPoint.getY() * tileSize + tileSize / 2.0f;
+
+            switch (nextTileId) {
+                case 1: // CurvedRoadNorth
+                    targetX = centerTileX;
+                    targetY = centerTileY - 10; // 10 pixels above
+                    break;
+                case 9: // CurvedRoadSouth
+                    targetX = centerTileX;
+                    targetY = centerTileY + 10; // 10 pixels below
+                    break;
+                case 4: // CurvedRoadWest
+                    targetX = centerTileX - 10; // 10 pixels left
+                    targetY = centerTileY;
+                    break;
+                case 6: // CurvedRoadEast
+                    targetX = centerTileX + 10; // 10 pixels right
+                    targetY = centerTileY;
+                    break;
+            }
+        }
+
+
         // Calculate current vector from center to enemy position
         float vx = currentX - curveParams.centerX;
         float vy = currentY - curveParams.centerY;
-        
+
         // Calculate target vector from center to target position
         float targetVx = targetX - curveParams.centerX;
         float targetVy = targetY - curveParams.centerY;
-        
+
         // Calculate the enemy's effective speed with all modifiers
         float baseSpeed = enemy.getSpeed() * speedMultiplier;
-        
+
         // Apply weather effects to enemy speed
         if (weatherManager != null && weatherManager.isSnowing()) {
             baseSpeed *= weatherManager.getEnemySpeedMultiplier();
         }
-        
+
         // Apply effective speed modifiers (slow effects, etc.)
         float effectiveSpeed = baseSpeed * enemy.getEffectiveSpeed();
-        
+
         // Calculate rotation angle based on speed and arc radius
         float rotationAngle = effectiveSpeed / curveParams.radius;
-        
+
         // Determine the correct rotation direction by checking which direction gets us closer to target
         // Calculate current angle and target angle
         float currentAngle = (float) Math.atan2(vy, vx);
         float targetAngle = (float) Math.atan2(targetVy, targetVx);
-        
+
         // Calculate the shortest angular distance to target
         float angleDiff = targetAngle - currentAngle;
-        
+
         // Normalize angle difference to [-π, π] to find shortest path
         while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
         while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
-        
+
         // Determine rotation direction based on shortest path to target
         if (angleDiff < 0) {
             rotationAngle = -rotationAngle; // Clockwise rotation
         }
-        
+
         // Limit rotation angle to not overshoot the target
         if (Math.abs(rotationAngle) > Math.abs(angleDiff)) {
             rotationAngle = angleDiff; // Don't rotate past the target
         }
-        
+
         // Apply vector rotation using the formula you provided
         float cos_theta = (float) Math.cos(rotationAngle);
         float sin_theta = (float) Math.sin(rotationAngle);
-        
+
         float vx_prime = vx * cos_theta - vy * sin_theta;
         float vy_prime = vx * sin_theta + vy * cos_theta;
-        
+
         // Calculate new position
         float newX = curveParams.centerX + vx_prime;
         float newY = curveParams.centerY + vy_prime;
-        
+
         // Calculate movement delta for direction tracking
         float dx = newX - currentX;
         float dy = newY - currentY;
-        
-                 // Update enemy position
-         enemy.setX(newX);
-         enemy.setY(newY);
-         
-         // Update direction based on movement (for sprite facing)
-         if (dx != 0 || dy != 0) {
-             float totalSpeed = (float) Math.sqrt(dx * dx + dy * dy);
-             if (totalSpeed > 0) {
-                 // Store the direction the enemy is facing for sprite rendering
-                 float dirX = dx / totalSpeed;
-                 float dirY = dy / totalSpeed;
-                 enemy.setDirection(dirX, dirY);
-             }
-         }
-        
-         // Check if enemy has reached the target position (with some tolerance)
-         float distanceToTarget = (float) Math.sqrt((newX - targetX) * (newX - targetX) + 
-                                                   (newY - targetY) * (newY - targetY));
-         
-         // Different completion thresholds for curved vs straight paths
-         float completionThreshold;
-         if (isTargetCornerCurve || isTargetFlatCurve) {
-             // For curved roads, use a smaller threshold since we're targeting specific road positions
-             completionThreshold = effectiveSpeed * 2.0f;
-         } else {
-             // For straight paths, use the normal threshold
-             completionThreshold = effectiveSpeed;
-         }
-         
-         // If we're close enough to the target, move to next path point
-         if (distanceToTarget < completionThreshold || Math.abs(angleDiff) < 0.05f) {
-             // Let enemies find their own way to targets without teleporting/snapping
-             // This prevents teleportation when transitioning between different road types
-             enemy.setCurrentPathIndex(currentPathIndex + 1);
-         }
+
+        // Update enemy position
+        enemy.setX(newX);
+        enemy.setY(newY);
+
+        // Update direction based on movement (for sprite facing)
+        if (dx != 0 || dy != 0) {
+            float totalSpeed = (float) Math.sqrt(dx * dx + dy * dy);
+            if (totalSpeed > 0) {
+                // Store the direction the enemy is facing for sprite rendering
+                float dirX = dx / totalSpeed;
+                float dirY = dy / totalSpeed;
+                enemy.setDirection(dirX, dirY);
+            }
+        }
+
+        // Check if enemy has reached the target position (with some tolerance)
+        float distanceToTarget = (float) Math.sqrt((newX - targetX) * (newX - targetX) +
+                (newY - targetY) * (newY - targetY));
+
+        // Different completion thresholds for curved vs straight paths
+        float completionThreshold;
+        if (isTargetCornerCurve || isTargetFlatCurve) {
+            // For curved roads, use a smaller threshold since we're targeting specific road positions
+            completionThreshold = effectiveSpeed * 2.0f;
+        } else {
+            // For straight paths, use the normal threshold
+            completionThreshold = effectiveSpeed;
+        }
+
+        // If we're close enough to the target, move to next path point
+        if (distanceToTarget < completionThreshold || Math.abs(angleDiff) < 0.05f) {
+            // Let enemies find their own way to targets without teleporting/snapping
+            // This prevents teleportation when transitioning between different road types
+            enemy.setCurrentPathIndex(currentPathIndex + 1);
+        }
     }
 
     /**
@@ -656,7 +656,7 @@ public class EnemyManager {
         float startAngle;        // Starting angle in radians
         float endAngle;          // Ending angle in radians
         float arcLength;         // Total arc length for speed calculation
-        
+
         CurveParams(float centerX, float centerY, float radius, float startAngle, float endAngle) {
             this.centerX = centerX;
             this.centerY = centerY;
@@ -671,14 +671,14 @@ public class EnemyManager {
      * Calculate the unified center point of the circular arc system
      * Based on the image, the center is at the center of the 3x3 grid area
      */
-    private float[] calculateCurveCenter(float currentX, float currentY, int prevDirX, int prevDirY, 
+    private float[] calculateCurveCenter(float currentX, float currentY, int prevDirX, int prevDirY,
                                          int nextDirX, int nextDirY, int tileId, boolean isCornerCurve) {
         // Calculate shared center points so adjacent segments form continuous circles
         // We need to find the center that both adjacent segments can share
-        
+
         float radius = (float) Math.sqrt(64 * 64 + 32 * 32); // ≈ 71.55px
         float centerX, centerY;
-        
+
         if (isCornerCurve) {
             // Corner curves: determine which circle system this belongs to
             if (tileId == 0) {
@@ -728,7 +728,7 @@ public class EnemyManager {
                 centerY = currentY;
             }
         }
-        
+
         return new float[]{centerX, centerY};
     }
 
@@ -737,27 +737,27 @@ public class EnemyManager {
      */
     private CurveParams calculateCurveParameters(int pathIndex, int deltaX, int deltaY) {
         if (pathIndex == 0) return null;
-        
+
         GridPoint prevPoint = pathPoints.get(pathIndex - 1);
         GridPoint currentPoint = pathPoints.get(pathIndex);
         GridPoint nextPoint = pathPoints.get(pathIndex + 1);
-        
+
         // Calculate direction vectors
         int prevDirX = currentPoint.getX() - prevPoint.getX();
         int prevDirY = currentPoint.getY() - prevPoint.getY();
         int nextDirX = nextPoint.getX() - currentPoint.getX();
         int nextDirY = nextPoint.getY() - currentPoint.getY();
-        
+
         // Skip if no movement vectors are valid
         if (Math.abs(prevDirX) + Math.abs(prevDirY) == 0 || Math.abs(nextDirX) + Math.abs(nextDirY) == 0) return null;
-        
+
         // Unified radius for all curved paths: sqrt(64² + 32²) pixels
         final float UNIFIED_RADIUS = (float) Math.sqrt(64 * 64 + 32 * 32); // ≈ 71.55px
         final float QUARTER_CIRCLE_ARC = (float) Math.toRadians(36.8998); // ~37°
-        
+
         float currentX = currentPoint.getX() * tileSize + tileSize / 2.0f;
         float currentY = currentPoint.getY() * tileSize + tileSize / 2.0f;
-        
+
         // Determine curve type and calculate arc parameters
         if (isCornerCurve(currentPoint, prevDirX, prevDirY, nextDirX, nextDirY)) {
             int tileId = tileData[currentPoint.getY()][currentPoint.getX()];
@@ -766,7 +766,7 @@ public class EnemyManager {
             int tileId = tileData[currentPoint.getY()][currentPoint.getX()];
             return calculateFlatCurveArc(currentX, currentY, prevDirX, prevDirY, nextDirX, nextDirY, tileId);
         }
-        
+
         return null;
     }
 
@@ -777,20 +777,20 @@ public class EnemyManager {
     private boolean isCornerCurve(GridPoint currentPoint, int prevDirX, int prevDirY, int nextDirX, int nextDirY) {
         // Check for 90-degree direction changes first
         boolean hasDirectionChange = (Math.abs(prevDirX) != Math.abs(nextDirX)) && (Math.abs(prevDirY) != Math.abs(nextDirY));
-        
+
         if (hasDirectionChange) {
             // Get the tile ID at the current position
             int tileId = tileData[currentPoint.getY()][currentPoint.getX()];
-            
+
             // Check for corner curved road tile IDs from TileManager
             boolean isCurvedRoadNorthWest = (tileId == 0);   // CurvedRoadNorthWest
             boolean isCurvedRoadEastNorth = (tileId == 2);   // CurvedRoadEastNorth
             boolean isCurvedRoadWestSouth = (tileId == 8);   // CurvedRoadWestSouth
             boolean isCurvedRoadSouthEast = (tileId == 10);  // CurvedRoadSouthEast
-            
+
             return isCurvedRoadNorthWest || isCurvedRoadEastNorth || isCurvedRoadWestSouth || isCurvedRoadSouthEast;
         }
-        
+
         return false;
     }
 
@@ -803,21 +803,21 @@ public class EnemyManager {
         // This happens when the current tile is a curved road tile (N, E, W, S types)
         boolean sameDirection = (prevDirX == nextDirX && prevDirY == nextDirY);
         boolean validDirections = (Math.abs(prevDirX) + Math.abs(prevDirY) == 1);
-        
+
         // Check if this is actually a curved road tile by checking tile ID
         if (sameDirection && validDirections) {
             // Get the tile ID at the current position
             int tileId = tileData[currentPoint.getY()][currentPoint.getX()];
-            
+
             // Check for flat curved road tile IDs from TileManager
             boolean isCurvedRoadNorth = (tileId == 1);  // CurvedRoadNorth
             boolean isCurvedRoadWest = (tileId == 4);   // CurvedRoadWest  
             boolean isCurvedRoadEast = (tileId == 6);   // CurvedRoadEast
             boolean isCurvedRoadSouth = (tileId == 9);  // CurvedRoadSouth
-            
+
             return isCurvedRoadNorth || isCurvedRoadWest || isCurvedRoadEast || isCurvedRoadSouth;
         }
-        
+
         return false;
     }
 
@@ -826,20 +826,20 @@ public class EnemyManager {
      * All curves are segments of the same large circle with a common center point
      * Now uses actual tile IDs to determine the correct arc parameters
      */
-    private CurveParams calculateQuarterCircleArc(float currentX, float currentY, int prevDirX, int prevDirY, 
-                                                 int nextDirX, int nextDirY, float radius, int tileId) {
+    private CurveParams calculateQuarterCircleArc(float currentX, float currentY, int prevDirX, int prevDirY,
+                                                  int nextDirX, int nextDirY, float radius, int tileId) {
         // Calculate the proper center for this specific corner curve segment
         float unifiedRadius = radius;
-        
+
         float[] center = calculateCurveCenter(currentX, currentY, prevDirX, prevDirY, nextDirX, nextDirY, tileId, true);
         float centerX = center[0];
         float centerY = center[1];
-        
+
         float startAngle, endAngle;
-        
+
         // Each corner curve is a segment of the unified circle with EXACT angle ranges
         // Using the actual tile IDs to determine the correct angles
-        
+
         switch (tileId) {
             case 0: // CurvedRoadNorthWest: 116.57° to 153.43°
                 if (prevDirX == 0 && prevDirY == 1 && nextDirX == 1 && nextDirY == 0) {
@@ -850,10 +850,10 @@ public class EnemyManager {
                     // Reverse direction: East to South
                     startAngle = (float) Math.toRadians(116.57);
                     endAngle = (float) Math.toRadians(153.43);
-                   
+
                 }
                 break;
-                
+
             case 2: // CurvedRoadEastNorth: 26.57° to 63.43°
                 if (prevDirX == 0 && prevDirY == 1 && nextDirX == -1 && nextDirY == 0) {
                     // Moving from South to West
@@ -865,20 +865,20 @@ public class EnemyManager {
                     endAngle = (float) Math.toRadians(26.57);
                 }
                 break;
-                
+
             case 8: // CurvedRoadWestSouth: 206.57° to 243.43°
                 if (prevDirX == -1 && prevDirY == 0 && nextDirX == 0 && nextDirY == -1) {
                     // Moving from East to North
                     startAngle = (float) Math.toRadians(243.43);
                     endAngle = (float) Math.toRadians(206.57);
-                    
+
                 } else {
                     // Reverse direction: North to East
                     startAngle = (float) Math.toRadians(206.57);
                     endAngle = (float) Math.toRadians(243.43);
                 }
                 break;
-                
+
             case 10: // CurvedRoadSouthEast: 296.57° to 333.43°
                 if (prevDirX == 1 && prevDirY == 0 && nextDirX == 0 && nextDirY == -1) {
                     // Moving from West to North
@@ -890,7 +890,7 @@ public class EnemyManager {
                     endAngle = (float) Math.toRadians(296.57);
                 }
                 break;
-                
+
             default:
                 // Fallback case for unknown corner curve types
                 System.out.println("Warning: Unknown corner curve tile ID: " + tileId);
@@ -901,7 +901,7 @@ public class EnemyManager {
                 unifiedRadius = tileSize / 4.0f;
                 break;
         }
-        
+
         return new CurveParams(centerX, centerY, unifiedRadius, startAngle, endAngle);
     }
 
@@ -913,23 +913,23 @@ public class EnemyManager {
      * CurvedRoadWest: vertical movement (north↔south) curved westward
      * CurvedRoadEast: vertical movement (north↔south) curved eastward
      */
-    private CurveParams calculateFlatCurveArc(float currentX, float currentY, int prevDirX, int prevDirY, 
-                                            int nextDirX, int nextDirY, int tileId) {
+    private CurveParams calculateFlatCurveArc(float currentX, float currentY, int prevDirX, int prevDirY,
+                                              int nextDirX, int nextDirY, int tileId) {
         // Use unified radius - same as corner curves: sqrt(64² + 32²) pixels
         float curveRadius = (float) Math.sqrt(64 * 64 + 32 * 32); // ≈ 71.55px
-        
+
         // Calculate the proper center for this specific flat curve segment  
         float[] center = calculateCurveCenter(currentX, currentY, prevDirX, prevDirY, nextDirX, nextDirY, tileId, false);
         float centerX = center[0];
         float centerY = center[1];
-        
-        float startAngle, endAngle;
-        
 
-        
+        float startAngle, endAngle;
+
+
+
         // Each flat curve is a segment of the unified circle with EXACT angle ranges
         // Using the strict angle definitions provided
-        
+
         if (tileId == 6) { // CurvedRoadEast: -26.57° to 26.57°
             if (prevDirY == 1 && nextDirY == 1) { // Moving north to south  
                 startAngle = (float) Math.toRadians(26.57);
@@ -942,7 +942,7 @@ public class EnemyManager {
                 startAngle = (float) Math.toRadians(26.57);
                 endAngle = (float) Math.toRadians(-26.57);
             }
-            
+
         } else if (tileId == 1) { // CurvedRoadNorth: 63.43° to 116.57°
             if (prevDirX == 1 && nextDirX == 1) { // Moving west to east
                 startAngle = (float) Math.toRadians(116.57);
@@ -955,7 +955,7 @@ public class EnemyManager {
                 startAngle = (float) Math.toRadians(63.43);
                 endAngle = (float) Math.toRadians(116.57);
             }
-            
+
         } else if (tileId == 4) { // CurvedRoadWest: 153.43° to 206.57°
             if (prevDirY == 1 && nextDirY == 1) { // Moving north to south
                 startAngle = (float) Math.toRadians(153.43);
@@ -968,7 +968,7 @@ public class EnemyManager {
                 startAngle = (float) Math.toRadians(153.43);
                 endAngle = (float) Math.toRadians(206.57);
             }
-            
+
         } else if (tileId == 9) { // CurvedRoadSouth: 243.43° to 296.57°
             if (prevDirX == 1 && nextDirX == 1) { // Moving west to east
                 startAngle = (float) Math.toRadians(243.43);
@@ -981,14 +981,14 @@ public class EnemyManager {
                 startAngle = (float) Math.toRadians(243.43);
                 endAngle = (float) Math.toRadians(296.57);
             }
-            
+
         } else {
             // Default case - minimal curve
             startAngle = 0;
             endAngle = (float) Math.PI / 8;
             curveRadius = tileSize / 2.0f;
         }
-        
+
         return new CurveParams(centerX, centerY, curveRadius, startAngle, endAngle);
     }
 
@@ -1014,7 +1014,7 @@ public class EnemyManager {
 
         // Check if we should start a curve early to avoid teleport effect
         float thresholdDistance = tileSize * CURVE_THRESHOLD_DISTANCE;
-        
+
         // Check if next segment is curved and we're close enough to start the curve
         if (distance < thresholdDistance && pathIndex + 1 < pathPoints.size() - 1) {
             if (shouldUseCurvedMovement(pathIndex + 1)) {
@@ -1039,7 +1039,7 @@ public class EnemyManager {
         if (weatherManager != null && weatherManager.isSnowing()) {
             baseSpeed *= weatherManager.getEnemySpeedMultiplier();
         }
-        
+
         // Apply effective speed modifiers (slow effects, etc.)
         float effectiveSpeed = baseSpeed * e.getEffectiveSpeed();
 
@@ -1047,7 +1047,7 @@ public class EnemyManager {
         float invDistance = 1.0f / distance;
         float dirX = xDiff * invDistance;
         float dirY = yDiff * invDistance;
-        
+
         // Calculate movement distances
         float xSpeed = dirX * effectiveSpeed;
         float ySpeed = dirY * effectiveSpeed;
@@ -1055,10 +1055,10 @@ public class EnemyManager {
         // Move enemy by updating position directly
         e.setX(e.getX() + xSpeed);
         e.setY(e.getY() + ySpeed);
-        
+
         // Set direction directly for consistent sprite facing
         e.setDirection(dirX, dirY);
-        
+
 
     }
 
@@ -1075,10 +1075,10 @@ public class EnemyManager {
         // Get the direction from spawn point to first path point
         GridPoint firstPoint = pathPoints.get(0);
         GridPoint secondPoint = pathPoints.get(1);
-        
+
         float dirX = secondPoint.getX() - firstPoint.getX();
         float dirY = secondPoint.getY() - firstPoint.getY();
-        
+
         float magnitude = (float) Math.sqrt(dirX * dirX + dirY * dirY);
         if (magnitude > 0.001f) {
             dirX /= magnitude;
@@ -1110,12 +1110,12 @@ public class EnemyManager {
                 }
             }
         }
-        
+
         // Optional: Draw curved path visualization (uncomment for debugging)
         // drawCurvedPaths(g); // COMMENTED OUT FOR PERFORMANCE
-        
+
     }
-    
+
     /**
      * Debug method to visualize curved paths using circular arcs
      * COMMENTED OUT FOR PERFORMANCE - Uncomment when debugging is needed
@@ -1258,24 +1258,24 @@ public class EnemyManager {
         // Store original settings
         Color originalColor = g2d.getColor();
         BasicStroke originalStroke = (BasicStroke) g2d.getStroke();
-        
+
         // Draw the main arc path
         float arcCenterX = curve.centerX - curve.radius;
         float arcCenterY = curve.centerY - curve.radius;
         float arcDiameter = curve.radius * 2;
-        
+
         double startAngleDegrees = Math.toDegrees(curve.startAngle);
         double endAngleDegrees = Math.toDegrees(curve.endAngle);
         double arcExtent = endAngleDegrees - startAngleDegrees;
-        
+
         // Normalize arc extent
         while (arcExtent > 360) arcExtent -= 360;
         while (arcExtent < -360) arcExtent += 360;
-        
+
         // Draw the main arc path
         g2d.setStroke(new BasicStroke(3.0f));
-        g2d.drawArc((int)arcCenterX, (int)arcCenterY, (int)arcDiameter, (int)arcDiameter, 
-                   (int)startAngleDegrees, (int)arcExtent);
+        g2d.drawArc((int)arcCenterX, (int)arcCenterY, (int)arcDiameter, (int)arcDiameter,
+                (int)startAngleDegrees, (int)arcExtent);
 
         // Restore original settings
         g2d.setColor(originalColor);
@@ -1329,11 +1329,11 @@ public class EnemyManager {
 
     // Cache for anchor offsets to avoid repeated calculations
     private static final Map<String, int[]> anchorOffsetCache = new HashMap<>();
-    
+
     /**
      * Calculates the anchor point offset for each enemy type based on their sprite sheet anchor points
      * and current sub-image extraction parameters. Results are cached for performance.
-     * 
+     *
      * @param enemyType The type of enemy
      * @param scale The scale factor applied to the sprite
      * @return An array containing [offsetX, offsetY] to align the anchor point with enemy center
@@ -1345,10 +1345,10 @@ public class EnemyManager {
         if (cached != null) {
             return cached;
         }
-        
+
         int anchorX, anchorY;
         int extractStartX, extractStartY;
-        
+
         switch (enemyType) {
             case GOBLIN:
                 anchorX = Enemy.GOBLIN_ANCHOR_X;
@@ -1383,15 +1383,15 @@ public class EnemyManager {
             default:
                 return new int[]{0, 0};
         }
-        
+
         // Calculate where the anchor point is within the extracted sub-image
         int anchorInSubImageX = anchorX - extractStartX;
         int anchorInSubImageY = anchorY - extractStartY;
-        
+
         // Apply scale and calculate offset to center the anchor point
         int scaledAnchorX = (int)(anchorInSubImageX * scale);
         int scaledAnchorY = (int)(anchorInSubImageY * scale);
-        
+
         int[] result = new int[]{scaledAnchorX, scaledAnchorY};
         anchorOffsetCache.put(cacheKey, result);
         return result;
@@ -1463,7 +1463,7 @@ public class EnemyManager {
 
         // Calculate anchor point offset for this enemy type and scale
         int[] anchorOffset = calculateAnchorOffset(enemy.getEnemyType(), scale);
-        
+
         // Position the sprite so that the anchor point aligns with the enemy's center position
         int drawX = (int)(enemy.getX() - anchorOffset[0]);
         int drawY = (int)(enemy.getY() - anchorOffset[1]);
@@ -1471,16 +1471,16 @@ public class EnemyManager {
         // Determine sprite facing based on movement direction
         float dirX = enemy.getDirX();
         float dirY = enemy.getDirY();
-        
+
         // Calculate the angle of movement direction
         double movementAngle = Math.atan2(dirY, dirX);
-        
+
         // Convert to degrees for easier understanding
         double angleDegrees = Math.toDegrees(movementAngle);
-        
+
         // Normalize angle to 0-360 range
         if (angleDegrees < 0) angleDegrees += 360;
-        
+
         // Face left if moving in the left half of the circle (90° to 270°)
         // This handles all directions: up-left, left, down-left
         boolean facingLeft = angleDegrees > 90 && angleDegrees < 270;
@@ -1613,6 +1613,18 @@ public class EnemyManager {
             }
             if (Enemy.thunderIcon != null) {
                 g.drawImage(Enemy.thunderIcon, iconX, iconY, 12, 12, null);
+                iconX -= 14; // Move left for next icon
+            }
+        }
+
+        // Draw poison effect icon if active
+        if (enemy.isPoisoned()) {
+            if (Enemy.poisonIcon == null) {
+                Enemy.poisonIcon = LoadSave.getImageFromPath("/TowerAssets/poison_icon.png");
+            }
+            if (Enemy.poisonIcon != null) {
+                g.drawImage(Enemy.poisonIcon, iconX, iconY, 12, 12, null);
+                iconX -= 14; // Move left for next icon
             }
         }
     }
@@ -1813,7 +1825,7 @@ public class EnemyManager {
         float yDiff = e1.getSpriteCenterY() - e2.getSpriteCenterY();
         return (float) Math.sqrt(xDiff * xDiff + yDiff * yDiff);
     }
-    
+
     // Optimized version for distance comparison without sqrt
     private float calculateDistanceSquared(Enemy e1, Enemy e2) {
         float xDiff = e1.getSpriteCenterX() - e2.getSpriteCenterX();
@@ -1830,7 +1842,7 @@ public class EnemyManager {
             System.out.println("Warning: Cannot update enemy stats - GameOptions is null");
             return;
         }
-        
+
         System.out.println("Updating all existing enemies with new difficulty settings...");
         for (Enemy enemy : enemies) {
             if (enemy != null && enemy.isAlive()) {
@@ -1839,7 +1851,7 @@ public class EnemyManager {
         }
         System.out.println("Updated " + enemies.size() + " enemies with new difficulty settings");
     }
-    
+
     /**
      * Update GameOptions reference (for when difficulty changes)
      */
