@@ -165,6 +165,15 @@ public class PlayingController implements Observer {
 
     // Input handling methods
     public void mouseClicked(int x, int y) {
+        // First, let UI handle the click - UI interactions work even when paused
+        if (view.mouseClicked(x, y)) {
+            // TowerSelectionUI handled the click, don't process other interactions
+            return;
+        }
+
+        // Block all gameplay interactions when paused
+        if (model.isGamePaused()) return;
+
         // Handle warrior placement
         if (model.getPendingWarriorPlacement() != null) {
             handleWarriorPlacement(x, y);
@@ -173,12 +182,6 @@ public class PlayingController implements Observer {
 
         // Delegate ultimate ability interactions to UltimateController
         if (ultimateController.handleMouseClick(x, y)) {
-            return;
-        }
-
-        // First, check if tower selection UI handles the click (for upgrade/targeting buttons)
-        if (view.mouseClicked(x, y)) {
-            // TowerSelectionUI handled the click, don't process other interactions
             return;
         }
 
@@ -224,16 +227,26 @@ public class PlayingController implements Observer {
     }
 
     public void mouseMoved(int x, int y) {
+        // UI mouse movements are always allowed (for hover effects, tooltips, etc.)
+        view.mouseMoved(x, y);
+
+        // Block gameplay mouse movements when paused
+        if (model.isGamePaused()) return;
+
         // Delegate mining manager mouse events to MiningController
         miningController.handleMouseMoved(x, y);
 
         // Delegate tree interactions to TreeController for tooltips
         treeController.handleMouseMoved(x, y);
-
-        view.mouseMoved(x, y);
     }
 
     public void mousePressed(int x, int y) {
+        // UI interactions are handled first and always allowed
+        view.mousePressed(x, y);
+
+        // Block all gameplay interactions when paused
+        if (model.isGamePaused()) return;
+
         // Delegate ultimate ability targeting to UltimateController
         if (ultimateController.handleMousePressed(x, y)) {
             return;
@@ -256,26 +269,35 @@ public class PlayingController implements Observer {
 
         // Delegate tree interactions to TreeController
         treeController.handleMousePressed(x, y);
-
-        view.mousePressed(x, y);
     }
 
     public void mouseReleased(int x, int y) {
+        // UI interactions are always allowed
+        view.mouseReleased(x, y);
+
+        // Block gameplay interactions when paused
+        if (model.isGamePaused()) return;
+
         // Delegate mining manager mouse events to MiningController
         miningController.handleMouseReleased(x, y);
-
-        view.mouseReleased(x, y);
     }
 
     public void mouseDragged(int x, int y) {
+        // UI drag operations are always allowed
         view.mouseDragged(x, y);
+        // Note: Currently no gameplay drag operations to block
     }
 
     public void mouseWheelMoved(MouseWheelEvent e) {
+        // UI wheel events are always allowed
         view.mouseWheelMoved(e);
+        // Note: Currently no gameplay wheel operations to block
     }
 
     public void rightMouseClicked(int x, int y) {
+        // Block gameplay right-click actions when paused
+        if (model.isGamePaused()) return;
+
         boolean cancelled = false;
 
         // Cancel warrior placement

@@ -21,6 +21,9 @@ public class UltimateController {
      * Handles mouse clicks for ultimate ability usage and targeting
      */
     public boolean handleMouseClick(int x, int y) {
+        // Block ultimate abilities when game is paused
+        if (model.isGamePaused()) return false;
+
         if (model.getUltiManager() == null) {
             return false;
         }
@@ -37,6 +40,9 @@ public class UltimateController {
      * Handles mouse pressed events for ultimate targeting
      */
     public boolean handleMousePressed(int x, int y) {
+        // Block ultimate abilities when game is paused
+        if (model.isGamePaused()) return false;
+
         if (model.getUltiManager() == null) {
             return false;
         }
@@ -54,23 +60,26 @@ public class UltimateController {
      * Handles right mouse clicks for canceling ultimate abilities
      */
     public boolean handleRightMouseClick(int x, int y) {
+        // Block ultimate abilities when game is paused
+        if (model.isGamePaused()) return false;
+
         if (model.getUltiManager() == null) {
             return false;
         }
 
         boolean cancelled = false;
 
-        // Cancel lightning targeting
+        // Cancel lightning targeting mode
         if (model.getUltiManager().isWaitingForLightningTarget()) {
             model.getUltiManager().setWaitingForLightningTarget(false);
-            System.out.println("⚡ Lightning strike targeting cancelled by right-click!");
+            System.out.println("⚡ Lightning targeting cancelled by right-click!");
             cancelled = true;
         }
 
-        // Cancel gold factory placement
+        // Cancel gold factory placement mode
         if (model.getUltiManager().isGoldFactorySelected()) {
             model.getUltiManager().deselectGoldFactory();
-            System.out.println("🏭 Gold factory placement cancelled by right-click!");
+            System.out.println("🏭 Gold Factory placement cancelled by right-click!");
             cancelled = true;
         }
 
@@ -81,12 +90,15 @@ public class UltimateController {
      * Triggers earthquake ultimate ability
      */
     public boolean triggerEarthquake() {
+        // Block ultimate abilities when game is paused
+        if (model.isGamePaused()) return false;
+
         if (model.getUltiManager() == null || model.getPlayerManager() == null) {
             return false;
         }
 
         if (model.getUltiManager().canUseEarthquake()) {
-            if (model.getPlayerManager().getGold() >= 50) {
+            if (model.getPlayerManager().getGold() >= 50) { // earthquakeCost
                 model.getUltiManager().triggerEarthquake();
                 return true;
             } else {
@@ -100,19 +112,20 @@ public class UltimateController {
     }
 
     /**
-     * Initiates lightning strike targeting mode
+     * Initiates lightning strike targeting
      */
     public boolean initiateLightningStrike() {
+        // Block ultimate abilities when game is paused
+        if (model.isGamePaused()) return false;
+
         if (model.getUltiManager() == null || model.getPlayerManager() == null) {
             return false;
         }
 
-        if (model.getUltiManager().isWaitingForLightningTarget()) {
-            model.getUltiManager().setWaitingForLightningTarget(false);
-            return true;
-        } else if (model.getUltiManager().canUseLightning()) {
-            if (model.getPlayerManager().getGold() >= 75) {
+        if (model.getUltiManager().canUseLightning()) {
+            if (model.getPlayerManager().getGold() >= 75) { // lightningCost
                 model.getUltiManager().setWaitingForLightningTarget(true);
+                System.out.println("⚡ Lightning Strike ready - click on target location!");
                 return true;
             } else {
                 System.out.println("Not enough gold for Lightning Strike!");
@@ -128,12 +141,15 @@ public class UltimateController {
      * Triggers freeze ultimate ability
      */
     public boolean triggerFreeze() {
+        // Block ultimate abilities when game is paused
+        if (model.isGamePaused()) return false;
+
         if (model.getUltiManager() == null || model.getPlayerManager() == null) {
             return false;
         }
 
         if (model.getUltiManager().canUseFreeze()) {
-            if (model.getPlayerManager().getGold() >= 60) {
+            if (model.getPlayerManager().getGold() >= 60) { // freezeCost
                 model.getUltiManager().triggerFreeze();
                 return true;
             } else {
@@ -147,9 +163,12 @@ public class UltimateController {
     }
 
     /**
-     * Selects or deselects gold factory for placement
+     * Selects gold factory for placement
      */
     public boolean selectGoldFactory() {
+        // Block ultimate abilities when game is paused
+        if (model.isGamePaused()) return false;
+
         if (model.getUltiManager() == null || model.getPlayerManager() == null) {
             return false;
         }
