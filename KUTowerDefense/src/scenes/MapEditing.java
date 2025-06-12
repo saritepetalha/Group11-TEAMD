@@ -15,6 +15,7 @@ import views.MapView;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 
 /**
  * MapEditing - Now powered by MVC architecture internally
@@ -245,5 +246,14 @@ public class MapEditing extends GameScene implements SceneMethods {
 
     public MapController getMapController() {
         return mapController;
+    }
+
+    /**
+     * Handle keyboard events for map editing
+     * @param e The KeyEvent to handle
+     */
+    public void keyPressed(KeyEvent e) {
+        // Delegate keyboard events to the controller
+        mapController.handleKeyPressed(e);
     }
 }

@@ -3,6 +3,9 @@ package main;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.Toolkit;
 
 import javax.swing.JPanel;
 
@@ -13,6 +16,9 @@ import scenes.LoadGameMenu;
 
 public class GameScreen extends JPanel {
 	private Dimension size;
+	private Dimension baseSize;
+	private double scaleX = 1.0;
+	private double scaleY = 1.0;
 
 	private MyMouseListener myMouseListener;
 	private KeyboardListener keyboardListener;
@@ -21,6 +27,7 @@ public class GameScreen extends JPanel {
 
 	public GameScreen(Game game) {
 		this.game = game;
+		this.baseSize = new Dimension(GameDimensions.MAIN_MENU_SCREEN_WIDTH, GameDimensions.MAIN_MENU_SCREEN_HEIGHT);
 		setPanelInitialSize();
 		initInputs();
 		setLayout(new BorderLayout());
@@ -40,8 +47,36 @@ public class GameScreen extends JPanel {
 	}
 
 	private void setPanelInitialSize() {
-		size = new Dimension(GameDimensions.MAIN_MENU_SCREEN_WIDTH, GameDimensions.MAIN_MENU_SCREEN_HEIGHT);
+		size = new Dimension(baseSize);
 		setPreferredSize(size);
+	}
+
+	public void updateScreenSize() {
+		if (game.isFullscreen()) {
+			Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+			size = new Dimension(screenSize);
+
+			// Calculate scaling factors while maintaining aspect ratio
+			double screenRatio = (double) screenSize.width / screenSize.height;
+			double gameRatio = (double) baseSize.width / baseSize.height;
+
+			if (screenRatio > gameRatio) {
+				// Screen is wider than game ratio - fit to height
+				scaleY = (double) screenSize.height / baseSize.height;
+				scaleX = scaleY;
+			} else {
+				// Screen is taller than game ratio - fit to width
+				scaleX = (double) screenSize.width / baseSize.width;
+				scaleY = scaleX;
+			}
+		} else {
+			size = new Dimension(baseSize);
+			scaleX = 1.0;
+			scaleY = 1.0;
+		}
+		setPreferredSize(size);
+		revalidate();
+		repaint();
 	}
 
 	public void setPanelSize() {
@@ -51,31 +86,54 @@ public class GameScreen extends JPanel {
 				GameStates.gameState == GameStates.NEW_GAME_LEVEL_SELECT ||
 				GameStates.gameState == GameStates.OPTIONS ||
 				GameStates.gameState == GameStates.SKILL_SELECTION) {
-			size = new Dimension(GameDimensions.MAIN_MENU_SCREEN_WIDTH, GameDimensions.MAIN_MENU_SCREEN_HEIGHT);
+			baseSize = new Dimension(GameDimensions.MAIN_MENU_SCREEN_WIDTH, GameDimensions.MAIN_MENU_SCREEN_HEIGHT);
 		} else if (GameStates.gameState == GameStates.EDIT){
-			size = new Dimension(GameDimensions.TOTAL_GAME_WIDTH, GameDimensions.GAME_HEIGHT);
+			baseSize = new Dimension(GameDimensions.TOTAL_GAME_WIDTH, GameDimensions.GAME_HEIGHT);
 		} else if (GameStates.gameState == GameStates.PLAYING){
-			size = new Dimension(GameDimensions.GAME_WIDTH, GameDimensions.GAME_HEIGHT);
+			baseSize = new Dimension(GameDimensions.GAME_WIDTH, GameDimensions.GAME_HEIGHT);
 		}
 		else if (GameStates.gameState == GameStates.GAME_OVER) {
-			size = new Dimension(GameDimensions.GAME_WIDTH, GameDimensions.GAME_HEIGHT);
+			baseSize = new Dimension(GameDimensions.GAME_WIDTH, GameDimensions.GAME_HEIGHT);
 		}
 		else {
-			size = new Dimension(GameDimensions.MAIN_MENU_SCREEN_WIDTH, GameDimensions.MAIN_MENU_SCREEN_HEIGHT);
+			baseSize = new Dimension(GameDimensions.MAIN_MENU_SCREEN_WIDTH, GameDimensions.MAIN_MENU_SCREEN_HEIGHT);
 		}
-		setPreferredSize(size);
-		revalidate();
-		repaint();
+		updateScreenSize();
 	}
 
 	@Override
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
+		Graphics2D g2d = (Graphics2D) g;
+
+		// Enable antialiasing for smoother rendering
+		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+
+		if (game.isFullscreen()) {
+			// Calculate centered position for the game area
+			int gameX = (getWidth() - (int)(baseSize.width * scaleX)) / 2;
+			int gameY = (getHeight() - (int)(baseSize.height * scaleY)) / 2;
+
+			// Translate to center the game area
+			g2d.translate(gameX, gameY);
+
+			// Scale the graphics context
+			g2d.scale(scaleX, scaleY);
+		}
+
 		if (GameStates.gameState != GameStates.OPTIONS &&
 				GameStates.gameState != GameStates.LOAD_GAME &&
 				GameStates.gameState != GameStates.NEW_GAME_LEVEL_SELECT &&
 				GameStates.gameState != GameStates.SKILL_SELECTION) {
-			game.getRender().render(g);
+			game.getRender().render(g2d);
+		}
+
+		if (game.isFullscreen()) {
+			// Reset transform
+			g2d.scale(1/scaleX, 1/scaleY);
+			g2d.translate(-(getWidth() - (int)(baseSize.width * scaleX)) / 2,
+					-(getHeight() - (int)(baseSize.height * scaleY)) / 2);
 		}
 	}
 
@@ -126,4 +184,20 @@ public class GameScreen extends JPanel {
 		return myMouseListener;
 	}
 
+	// Add methods to handle mouse coordinates for proper scaling
+	public int getScaledMouseX(int mouseX) {
+		if (game.isFullscreen()) {
+			int gameX = (getWidth() - (int)(baseSize.width * scaleX)) / 2;
+			return (int)((mouseX - gameX) / scaleX);
+		}
+		return mouseX;
+	}
+
+	public int getScaledMouseY(int mouseY) {
+		if (game.isFullscreen()) {
+			int gameY = (getHeight() - (int)(baseSize.height * scaleY)) / 2;
+			return (int)((mouseY - gameY) / scaleY);
+		}
+		return mouseY;
+	}
 }

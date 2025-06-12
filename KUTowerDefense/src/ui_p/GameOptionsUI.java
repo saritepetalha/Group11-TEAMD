@@ -52,6 +52,9 @@ public class GameOptionsUI extends JPanel {
     private final Color tabBackgroundColor = new Color(50, 100, 160);
     private final Color tabTextColor = Color.WHITE;
 
+    // Add fullscreen button
+    private JButton fullscreenButton;
+
     public GameOptionsUI(Game game, GameOptions options) {
         this.game = game;
         this.options = options;
@@ -120,6 +123,20 @@ public class GameOptionsUI extends JPanel {
                 // No focus indicator
             }
         });
+
+        // Create fullscreen button
+        fullscreenButton = new JButton(game.isFullscreen() ? "Exit Fullscreen" : "Enter Fullscreen");
+        styleButtonWithHoverEffect(fullscreenButton);
+        fullscreenButton.addActionListener(e -> {
+            game.toggleFullscreen();
+            fullscreenButton.setText(game.isFullscreen() ? "Exit Fullscreen" : "Enter Fullscreen");
+        });
+
+        // Add fullscreen button to top of panel
+        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        topPanel.setOpaque(false);
+        topPanel.add(fullscreenButton);
+        add(topPanel, BorderLayout.NORTH);
 
         tabbedPane.addTab("General", createGeneralPanel());
         tabbedPane.addTab("Enemy Stats", createEnemyStatsPanel());

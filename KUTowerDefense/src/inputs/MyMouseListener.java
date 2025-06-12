@@ -18,171 +18,148 @@ public class MyMouseListener implements MouseListener, MouseMotionListener, Mous
 
     @Override
     public void mouseDragged(MouseEvent e) {
-        if (GameStates.gameState == GameStates.PLAYING) {
-            if (game.getPlaying() != null) {                // ← ADD
-                game.getPlaying().mouseDragged(e.getX(), e.getY());
-            }
-        }
-        else if (GameStates.gameState == GameStates.MENU) {
-            game.getMenu().mouseDragged(e.getX(), e.getY());
-        }
-        else if (GameStates.gameState == GameStates.OPTIONS) {
-            game.getOptions().mouseDragged(e.getX(), e.getY());
-        }
-        else if (GameStates.gameState == GameStates.EDIT) {
-            game.getMapEditing().mouseDragged(e.getX(), e.getY());
-        }
-        else if (GameStates.gameState == GameStates.GAME_OVER) {
-            if (game.getGameOverScene() != null) {
-                game.getGameOverScene().mouseDragged(e.getX(), e.getY());
-            }
-        }
-        else if (GameStates.gameState == GameStates.STATISTICS) {
-            if (game.getStatisticsScene() != null) {
-                game.getStatisticsScene().mouseDragged(e.getX(), e.getY());
-            }
+        int scaledX = game.getGameScreen().getScaledMouseX(e.getX());
+        int scaledY = game.getGameScreen().getScaledMouseY(e.getY());
+
+        switch (GameStates.gameState) {
+            case MENU:
+                game.getMenu().mouseDragged(scaledX, scaledY);
+                break;
+            case PLAYING:
+                game.getPlaying().mouseDragged(scaledX, scaledY);
+                break;
+            case OPTIONS:
+                game.getOptions().mouseDragged(scaledX, scaledY);
+                break;
+            case EDIT:
+                game.getMapEditing().mouseDragged(scaledX, scaledY);
+                break;
+            case GAME_OVER:
+                game.getGameOverScene().mouseDragged(scaledX, scaledY);
+                break;
+            default:
+                break;
         }
     }
 
     @Override
     public void mouseMoved(MouseEvent e) {
-        if (GameStates.gameState == GameStates.PLAYING) {
-            if (game.getPlaying() != null) {
-                game.getPlaying().mouseMoved(e.getX(), e.getY());
-            }
-        }
-        else if (GameStates.gameState == GameStates.MENU) {
-            game.getMenu().mouseMoved(e.getX(), e.getY());
-        }
-        else if (GameStates.gameState == GameStates.OPTIONS) {
-            game.getOptions().mouseMoved(e.getX(), e.getY());
-        }
-        else if (GameStates.gameState == GameStates.EDIT) {
-            game.getMapEditing().mouseMoved(e.getX(), e.getY());
-        }
-        else if (GameStates.gameState == GameStates.GAME_OVER) {
-            if (game.getGameOverScene() != null) {
-                game.getGameOverScene().mouseMoved(e.getX(), e.getY());
-            }
-        }
-        else if (GameStates.gameState == GameStates.STATISTICS) {
-            if (game.getStatisticsScene() != null) {
-                game.getStatisticsScene().mouseMoved(e.getX(), e.getY());
-            }
-        }
+        int scaledX = game.getGameScreen().getScaledMouseX(e.getX());
+        int scaledY = game.getGameScreen().getScaledMouseY(e.getY());
 
+        switch (GameStates.gameState) {
+            case MENU:
+                game.getMenu().mouseMoved(scaledX, scaledY);
+                break;
+            case PLAYING:
+                game.getPlaying().mouseMoved(scaledX, scaledY);
+                break;
+            case OPTIONS:
+                game.getOptions().mouseMoved(scaledX, scaledY);
+                break;
+            case EDIT:
+                game.getMapEditing().mouseMoved(scaledX, scaledY);
+                break;
+            case GAME_OVER:
+                game.getGameOverScene().mouseMoved(scaledX, scaledY);
+                break;
+            default:
+                break;
+        }
     }
 
     @Override
     public void mouseClicked(MouseEvent e) {
-        if (e.getButton() == MouseEvent.BUTTON1) {
-            if (GameStates.gameState == GameStates.PLAYING) {
-                if (game.getPlaying() != null) {
-                    game.getPlaying().mouseClicked(e.getX(), e.getY());
-                }
-            }
-            else if (GameStates.gameState == GameStates.MENU) {
-                game.getMenu().mouseClicked(e.getX(), e.getY());
-            }
-            else if (GameStates.gameState == GameStates.OPTIONS) {
-                game.getOptions().mouseClicked(e.getX(), e.getY());
-            }
-            else if (GameStates.gameState == GameStates.EDIT) {
-                game.getMapEditing().mouseClicked(e.getX(), e.getY());
-            }
-            else if (GameStates.gameState == GameStates.GAME_OVER) {
-                if (game.getGameOverScene() != null) {
-                    game.getGameOverScene().mouseClicked(e.getX(), e.getY());
-                }
-            }
-            else if (GameStates.gameState == GameStates.STATISTICS) {
-                game.getStatisticsScene().mouseClicked(e.getX(), e.getY());
-            }
+        int scaledX = game.getGameScreen().getScaledMouseX(e.getX());
+        int scaledY = game.getGameScreen().getScaledMouseY(e.getY());
 
+        switch (GameStates.gameState) {
+            case MENU:
+                game.getMenu().mouseClicked(scaledX, scaledY);
+                break;
+            case PLAYING:
+                game.getPlaying().mouseClicked(scaledX, scaledY);
+                break;
+            case OPTIONS:
+                game.getOptions().mouseClicked(scaledX, scaledY);
+                break;
+            case EDIT:
+                game.getMapEditing().mouseClicked(scaledX, scaledY);
+                break;
+            case GAME_OVER:
+                game.getGameOverScene().mouseClicked(scaledX, scaledY);
+                break;
+            default:
+                break;
         }
-        else if (e.getButton() == MouseEvent.BUTTON3) {
-            if (GameStates.gameState == GameStates.PLAYING) {
-                if (game.getPlaying() != null) {
-                    game.getPlaying().rightMouseClicked(e.getX(), e.getY());
-                }
-            }
-            System.out.println("Right mouse button was clicked");
-        }
-
     }
 
     @Override
     public void mousePressed(MouseEvent e) {
-        // Only handle left-click presses to avoid triggering actions on right-click
-        if (e.getButton() == MouseEvent.BUTTON1) {
-            if (GameStates.gameState == GameStates.PLAYING) {
-                if (game.getPlaying() != null) {
-                    game.getPlaying().mousePressed(e.getX(), e.getY());
-                }
-            }
-            else if (GameStates.gameState == GameStates.MENU) {
-                game.getMenu().mousePressed(e.getX(), e.getY());
-            }
-            else if (GameStates.gameState == GameStates.OPTIONS) {
-                game.getOptions().mousePressed(e.getX(), e.getY());
-            }
-            else if (GameStates.gameState == GameStates.EDIT) {
-                game.getMapEditing().mousePressed(e.getX(), e.getY());
-            }
-            else if (GameStates.gameState == GameStates.GAME_OVER) {
-                if (game.getGameOverScene() != null) {
-                    game.getGameOverScene().mousePressed(e.getX(), e.getY());
-                }
-            }
-            else if (GameStates.gameState == GameStates.STATISTICS) {
-                game.getStatisticsScene().mousePressed(e.getX(), e.getY());
-            }
+        int scaledX = game.getGameScreen().getScaledMouseX(e.getX());
+        int scaledY = game.getGameScreen().getScaledMouseY(e.getY());
+
+        switch (GameStates.gameState) {
+            case MENU:
+                game.getMenu().mousePressed(scaledX, scaledY);
+                break;
+            case PLAYING:
+                game.getPlaying().mousePressed(scaledX, scaledY);
+                break;
+            case OPTIONS:
+                game.getOptions().mousePressed(scaledX, scaledY);
+                break;
+            case EDIT:
+                game.getMapEditing().mousePressed(scaledX, scaledY);
+                break;
+            case GAME_OVER:
+                game.getGameOverScene().mousePressed(scaledX, scaledY);
+                break;
+            default:
+                break;
         }
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
-        // Only handle left-click releases to be consistent with mousePressed
-        if (e.getButton() == MouseEvent.BUTTON1) {
-            if (GameStates.gameState == GameStates.PLAYING) {
-                if (game.getPlaying() != null) {
-                    game.getPlaying().mouseReleased(e.getX(), e.getY());
-                }
-            }
-            else if (GameStates.gameState == GameStates.MENU) {
-                game.getMenu().mouseReleased(e.getX(), e.getY());
-            }
-            else if (GameStates.gameState == GameStates.OPTIONS) {
-                game.getOptions().mouseReleased(e.getX(), e.getY());
-            }
-            else if (GameStates.gameState == GameStates.EDIT) {
-                game.getMapEditing().mouseReleased(e.getX(), e.getY());
-            }
-            else if (GameStates.gameState == GameStates.STATISTICS) {
-                game.getStatisticsScene().mouseReleased(e.getX(), e.getY());
-            }
+        int scaledX = game.getGameScreen().getScaledMouseX(e.getX());
+        int scaledY = game.getGameScreen().getScaledMouseY(e.getY());
+
+        switch (GameStates.gameState) {
+            case MENU:
+                game.getMenu().mouseReleased(scaledX, scaledY);
+                break;
+            case PLAYING:
+                game.getPlaying().mouseReleased(scaledX, scaledY);
+                break;
+            case OPTIONS:
+                game.getOptions().mouseReleased(scaledX, scaledY);
+                break;
+            case EDIT:
+                game.getMapEditing().mouseReleased(scaledX, scaledY);
+                break;
+            case GAME_OVER:
+                game.getGameOverScene().mouseReleased(scaledX, scaledY);
+                break;
+            default:
+                break;
         }
     }
 
     @Override
     public void mouseWheelMoved(MouseWheelEvent e) {
-        // Forward mouse wheel events to the appropriate scene
-        if (GameStates.gameState == GameStates.PLAYING) {
-            if (game.getPlaying() != null) {
+        int scaledX = game.getGameScreen().getScaledMouseX(e.getX());
+        int scaledY = game.getGameScreen().getScaledMouseY(e.getY());
+
+        switch (GameStates.gameState) {
+            case PLAYING:
                 game.getPlaying().mouseWheelMoved(e);
-            }
-        }
-        else if (GameStates.gameState == GameStates.MENU) {
-            // Add mouseWheelMoved method to Menu class if needed
-        }
-        else if (GameStates.gameState == GameStates.OPTIONS) {
-            // Add mouseWheelMoved method to Options class if needed
-        }
-        else if (GameStates.gameState == GameStates.EDIT) {
-            // Add mouseWheelMoved method to MapEditing class if needed
-        }
-        else if (GameStates.gameState == GameStates.STATISTICS) {
-            game.getStatisticsScene().mouseWheelMoved(e);
+                break;
+            case EDIT:
+                game.getMapEditing().mouseWheelMoved(e);
+                break;
+            default:
+                break;
         }
     }
 

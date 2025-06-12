@@ -7,21 +7,28 @@ import main.GameStates;
 
 import java.awt.event.KeyEvent;
 
+import scenes.MapEditing;
 
 public class KeyboardListener implements KeyListener {
 
     @Override
     public void keyTyped(KeyEvent e) {}
-    private scenes.MapEditing mapEditing;
+    private MapEditing mapEditing;
     private Game game;
 
-    public KeyboardListener(scenes.MapEditing mapEditing, Game game) {
+    public KeyboardListener(MapEditing mapEditing, Game game) {
         this.mapEditing = mapEditing;
         this.game = game;
     }
 
     @Override
     public void keyPressed(KeyEvent e) {
+        // Handle F11 key for fullscreen toggle
+        if (e.getKeyCode() == KeyEvent.VK_F11) {
+            game.toggleFullscreen();
+            return;
+        }
+
         // if in intro, any key skips to menu
         if (GameStates.gameState == GameStates.INTRO) {
             game.getIntro().stopMusic();

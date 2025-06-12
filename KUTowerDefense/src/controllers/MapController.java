@@ -9,6 +9,7 @@ import strategies.TilePlacementStrategy;
 import strategies.TilePlacementStrategyFactory;
 import ui_p.EditTiles;
 import views.MapView;
+import java.awt.event.KeyEvent;
 
 /**
  * MapController - Coordinates user interactions between Model and View
@@ -211,4 +212,33 @@ public class MapController {
     // Mouse position getters for backwards compatibility
     public int getMouseX() { return mouseX; }
     public int getMouseY() { return mouseY; }
+
+    /**
+     * Handle keyboard events for map editing
+     * @param e The KeyEvent to handle
+     */
+    public void handleKeyPressed(KeyEvent e) {
+        // Handle keyboard shortcuts for map editing
+        switch (e.getKeyCode()) {
+            case KeyEvent.VK_DELETE:
+            case KeyEvent.VK_BACK_SPACE:
+                // Clear selected tile
+                setSelectedTile(null);
+                break;
+            case KeyEvent.VK_F:
+                // Fill mode
+                if (selectedTile != null) {
+                    setMode("Fill");
+                }
+                break;
+            case KeyEvent.VK_E:
+                // Erase mode
+                setMode("Erase");
+                break;
+            case KeyEvent.VK_D:
+                // Draw mode
+                setMode("Draw");
+                break;
+        }
+    }
 } 
