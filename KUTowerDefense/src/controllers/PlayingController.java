@@ -903,7 +903,7 @@ public class PlayingController implements Observer {
             } else if (tile.equals("ARTILERRY")) {
                 level[y][x] = 21;
             } else if (tile.equals("POISON")) {
-                level[y][x] = 33;
+                level[y][x] = 39;
             } else if (tile.equals("DEADTREE")) {
                 level[y][x] = 15;
             }

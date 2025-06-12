@@ -18,9 +18,13 @@ public class TileManager {
             Tree1, Tree2, Tree3, Rock1,
             ArtilleryTower, MageTower, House, Rock2,
             CastleTopLeft, CastleTopRight, ArcherTower, Pit,
-            CastleBottomLeft, CastleBottomRight, SmallCastle, Wood, RoadFourWay, PoisonTower;
+            CastleBottomLeft, CastleBottomRight, SmallCastle, Wood,
+            WaterTile1, WaterTile2, WaterTile3, RoadFourWay,
+            WaterTile4, WaterTile5, WaterTile6, PoisonTower,
+            WaterTile7, WaterTile8, WaterTile9;
 
     public BufferedImage atlas;
+    public BufferedImage waterTileSet;
     public ArrayList<Tile> tiles = new ArrayList<>();
 
     // New snow transition manager
@@ -43,6 +47,13 @@ public class TileManager {
         atlas = LoadSave.getSpriteAtlas();
         if (atlas == null) {
             throw new RuntimeException("Failed to load tile atlas");
+        }
+
+        waterTileSet = LoadSave.getWaterTileSet();
+        if (waterTileSet == null) {
+            System.err.println("Warning: Failed to load water tileset, water tiles will use fallback");
+        } else {
+            System.out.println("✅ Water tileset loaded successfully: " + waterTileSet.getWidth() + "x" + waterTileSet.getHeight());
         }
     }
 
@@ -89,9 +100,19 @@ public class TileManager {
         tiles.add(SmallCastle = new Tile(getSprite(2, 7), id++, "SmallCastle"));
         tiles.add(Wood = new Tile(getSprite(3, 7), id++, "Wood"));
 
+        tiles.add(WaterTile1 = new Tile(getSprite(0, 8), id++, "WaterTile1"));
+        tiles.add(WaterTile2 = new Tile(getSprite(1, 8), id++, "WaterTile2"));
+        tiles.add(WaterTile3 = new Tile(getSprite(2, 8), id++, "WaterTile3"));
         tiles.add(RoadFourWay = new Tile(AssetsLoader.getInstance().fourWayRoadImg,id++,"RoadFourWay"));
 
+        tiles.add(WaterTile4 = new Tile(getSprite(0, 9), id++, "WaterTile4"));
+        tiles.add(WaterTile5 = new Tile(getSprite(1, 9), id++, "WaterTile5"));
+        tiles.add(WaterTile6 = new Tile(getSprite(2, 9), id++, "WaterTile6"));
         tiles.add(PoisonTower = new Tile(resizeImage(AssetsLoader.getInstance().poisonTowerImg,GameDimensions.TILE_DISPLAY_SIZE, GameDimensions.TILE_DISPLAY_SIZE), id++, "PoisonTower"));
+
+        tiles.add(WaterTile7 = new Tile(getSprite(0, 10), id++, "WaterTile7"));
+        tiles.add(WaterTile8 = new Tile(getSprite(1, 10), id++, "WaterTile8"));
+        tiles.add(WaterTile9 = new Tile(getSprite(2, 10), id++, "WaterTile9"));
     }
 
     // This method is used to get the sprite of a specific tile by index
@@ -230,6 +251,28 @@ public class TileManager {
 
     // This method is used to get a specific tile sprite from the atlas (except castle tiles)
     private BufferedImage getSprite(int x, int y) {
+        // Handle water tiles from the water tileset (rows 8, 9, 10)
+        if (y >= 8 && y <= 10) {
+            if (waterTileSet != null) {
+                // Map row 8->0, row 9->1, row 10->2 in the water tileset
+                int waterRow = y - 8;
+                return waterTileSet.getSubimage(x * GameDimensions.TILE_DISPLAY_SIZE,
+                        waterRow * GameDimensions.TILE_DISPLAY_SIZE,
+                        GameDimensions.TILE_DISPLAY_SIZE,
+                        GameDimensions.TILE_DISPLAY_SIZE);
+            } else {
+                System.err.println("Water tileset not loaded, using fallback");
+                // Return a blue-colored fallback tile
+                BufferedImage fallback = new BufferedImage(GameDimensions.TILE_DISPLAY_SIZE, GameDimensions.TILE_DISPLAY_SIZE, BufferedImage.TYPE_INT_ARGB);
+                Graphics2D g = fallback.createGraphics();
+                g.setColor(Color.BLUE);
+                g.fillRect(0, 0, GameDimensions.TILE_DISPLAY_SIZE, GameDimensions.TILE_DISPLAY_SIZE);
+                g.dispose();
+                return fallback;
+            }
+        }
+
+        // Regular tiles from the main atlas
         BufferedImage tile = atlas.getSubimage(x * GameDimensions.TILE_DISPLAY_SIZE,
                 y * GameDimensions.TILE_DISPLAY_SIZE,
                 GameDimensions.TILE_DISPLAY_SIZE,

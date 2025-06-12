@@ -24,6 +24,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 
+import constants.GameDimensions;
 import objects.Warrior;
 import objects.WizardWarrior;
 
@@ -41,6 +42,22 @@ public class LoadSave {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        return img;
+    }
+
+    public static BufferedImage getWaterTileSet() {
+
+        BufferedImage img = null;
+        InputStream is = LoadSave.class.getResourceAsStream("/Tiles/waterTileSet.png");
+
+        try {
+            img = ImageIO.read(is);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        img = resizeImage(img, GameDimensions.TILE_DISPLAY_SIZE*3, GameDimensions.TILE_DISPLAY_SIZE*3);
 
         return img;
     }

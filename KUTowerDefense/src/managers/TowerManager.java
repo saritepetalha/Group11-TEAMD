@@ -11,6 +11,7 @@ import objects.Tower;
 import objects.TowerDecorator;
 import strategies.TargetingStrategy;
 import scenes.Playing;
+import ui_p.AssetsLoader;
 import ui_p.DeadTree;
 import ui_p.LiveTree;
 import objects.Warrior;
@@ -49,7 +50,7 @@ public class TowerManager {
         towerImages[0] = tilesetImage.getSubimage(2 * 64, 6 * 64, 64, 64); // Archer Tower (row 6, col 2)
         towerImages[1] = tilesetImage.getSubimage(0 * 64, 5 * 64, 64, 64); // Artillery Tower (row 5, col 0)
         towerImages[2] = tilesetImage.getSubimage(1 * 64, 5 * 64, 64, 64); // Mage Tower (row 5, col 1)
-        towerImages[3] = LoadSave.getImageFromPath("/TowerAssets/PoisonTower.png"); // Poison Tower from asset
+        towerImages[3] = AssetsLoader.getInstance().poisonTowerImg; // Poison Tower from asset
 
         // Load night mode sprites
         nightTowerImages = new BufferedImage[4];
@@ -239,7 +240,7 @@ public class TowerManager {
                     g.drawImage(spriteToDraw, x, y, w, h, null);
 
                     // Draw green smoke effect for poison towers
-                    if (tower instanceof objects.PoisonTower) {
+                    if (tower instanceof objects.PoisonTower && !tower.isDestroyed()) {
                         objects.PoisonTower poisonTower = (objects.PoisonTower) tower;
                         if (poisonTower.isShowingSmokeEffect()) {
                             drawPoisonSmokeEffect(g, poisonTower);
@@ -469,9 +470,33 @@ public class TowerManager {
     public void removeTower(Tower tower) {
         boolean removed = towers.remove(tower);
         if (removed) {
-            System.out.println("Tower removed successfully");
+            // Reset the tile data back to grass where the tower was located
+            resetTileToGrass(tower);
+            System.out.println("Tower removed successfully and tile reset to grass");
         } else {
             System.err.println("Error: Tower not found in list for removal.");
+        }
+    }
+
+    /**
+     * Resets the tile at the tower's position back to grass (ID 5)
+     */
+    private void resetTileToGrass(Tower tower) {
+        if (tower == null || playing == null) return;
+
+        // Convert tower pixel coordinates to tile coordinates
+        int tileX = tower.getX() / GameDimensions.TILE_DISPLAY_SIZE;
+        int tileY = tower.getY() / GameDimensions.TILE_DISPLAY_SIZE;
+
+        // Get the level data
+        int[][] level = playing.getLevel();
+        if (level == null) return;
+
+        // Check bounds
+        if (tileY >= 0 && tileY < level.length && tileX >= 0 && tileX < level[0].length) {
+            // Reset to grass tile (ID 5)
+            level[tileY][tileX] = 5;
+            System.out.println("Reset tile at (" + tileX + ", " + tileY + ") to grass");
         }
     }
 
