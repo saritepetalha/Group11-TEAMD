@@ -11,6 +11,7 @@ import objects.Tower;
 import objects.TowerDecorator;
 import strategies.TargetingStrategy;
 import scenes.Playing;
+import ui_p.AssetsLoader;
 import ui_p.DeadTree;
 import ui_p.LiveTree;
 import objects.Warrior;
@@ -49,7 +50,7 @@ public class TowerManager {
         towerImages[0] = tilesetImage.getSubimage(2 * 64, 6 * 64, 64, 64); // Archer Tower (row 6, col 2)
         towerImages[1] = tilesetImage.getSubimage(0 * 64, 5 * 64, 64, 64); // Artillery Tower (row 5, col 0)
         towerImages[2] = tilesetImage.getSubimage(1 * 64, 5 * 64, 64, 64); // Mage Tower (row 5, col 1)
-        towerImages[3] = LoadSave.getImageFromPath("/TowerAssets/PoisonTower.png"); // Poison Tower from asset
+        towerImages[3] = AssetsLoader.getInstance().poisonTowerImg; // Poison Tower from asset
 
         // Load night mode sprites
         nightTowerImages = new BufferedImage[4];
@@ -239,7 +240,7 @@ public class TowerManager {
                     g.drawImage(spriteToDraw, x, y, w, h, null);
 
                     // Draw green smoke effect for poison towers
-                    if (tower instanceof objects.PoisonTower) {
+                    if (tower instanceof objects.PoisonTower && !tower.isDestroyed()) {
                         objects.PoisonTower poisonTower = (objects.PoisonTower) tower;
                         if (poisonTower.isShowingSmokeEffect()) {
                             drawPoisonSmokeEffect(g, poisonTower);
