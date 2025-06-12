@@ -748,19 +748,31 @@ public class PlayingUI {
             int maxScrollOffset = Math.max(0, totalMusicOptions - musicDropdownVisibleItems);
             musicDropdownScrollOffset = Math.max(0, Math.min(musicDropdownScrollOffset, maxScrollOffset));
 
+            // determine if dropdown should expand upward or downward to avoid overlapping with save button
+            int dropdownBottomY = dropdownY + dropdownHeight + totalDropdownHeight;
+            int saveButtonY = startY + spacing * 3 + 38 + 8; // Approximate save button Y position
+            boolean expandUpward = dropdownBottomY > saveButtonY - 20; // 20px buffer
+
+            int dropdownContainerY;
+            if (expandUpward) {
+                dropdownContainerY = dropdownY - totalDropdownHeight;
+            } else {
+                dropdownContainerY = dropdownY + dropdownHeight;
+            }
+
             // ensure the dropdown appears above all other UI elements
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.95f));
 
             // create scrolling dropdown container
             g2d.setColor(new Color(50, 50, 60, 245));
-            g2d.fillRoundRect(controlX - 10, dropdownY + dropdownHeight, dropdownWidth, totalDropdownHeight, 5, 5);
+            g2d.fillRoundRect(controlX - 10, dropdownContainerY, dropdownWidth, totalDropdownHeight, 5, 5);
 
             // draw scrollbar if needed
             if (totalMusicOptions > musicDropdownVisibleItems) {
                 int scrollbarWidth = 8;
                 int scrollbarHeight = totalDropdownHeight - 4;
                 int scrollbarX = controlX + dropdownWidth - scrollbarWidth - 5;
-                int scrollbarY = dropdownY + dropdownHeight + 2;
+                int scrollbarY = dropdownContainerY + 2;
 
                 // scrollbar background
                 g2d.setColor(new Color(30, 30, 40));
@@ -780,7 +792,7 @@ public class PlayingUI {
                 // up arrow
                 g2d.setColor(new Color(200, 200, 255));
                 int upArrowX = controlX + dropdownWidth / 2;
-                int upArrowY = dropdownY + dropdownHeight + 10;
+                int upArrowY = dropdownContainerY + 10;
                 g2d.fillPolygon(
                         new int[]{upArrowX - 8, upArrowX + 8, upArrowX},
                         new int[]{upArrowY + 6, upArrowY + 6, upArrowY},
@@ -792,7 +804,7 @@ public class PlayingUI {
                 // down arrow
                 g2d.setColor(new Color(200, 200, 255));
                 int downArrowX = controlX + dropdownWidth / 2;
-                int downArrowY = dropdownY + dropdownHeight + totalDropdownHeight - 10;
+                int downArrowY = dropdownContainerY + totalDropdownHeight - 10;
                 g2d.fillPolygon(
                         new int[]{downArrowX - 8, downArrowX + 8, downArrowX},
                         new int[]{downArrowY - 6, downArrowY - 6, downArrowY},
@@ -808,7 +820,7 @@ public class PlayingUI {
                 if (optionIndex >= totalMusicOptions) break;
 
                 String option = musicOptions[optionIndex];
-                int optionY = dropdownY + dropdownHeight + (i * optionHeight);
+                int optionY = dropdownContainerY + (i * optionHeight);
 
                 Rectangle optionRect = new Rectangle(controlX - 10, optionY, dropdownWidth, optionHeight);
                 musicOptionRects.put(option, optionRect);
@@ -1222,17 +1234,34 @@ public class PlayingUI {
             }
             // check if clicking on a music option
             else if (musicDropdownOpen) {
-                // check if clicking on scroll up button
-                int upArrowX = musicDropdownRect.x + musicDropdownRect.width / 2;
-                int upArrowY = musicDropdownRect.y + musicDropdownRect.height + 10;
-                Rectangle upArrowBounds = new Rectangle(upArrowX - 10, upArrowY - 5, 20, 10);
-
-                // check if clicking on scroll down button
+                // Calculate the same positioning logic as in the drawing code
                 int visibleItems = Math.min(musicDropdownVisibleItems, musicOptions.length);
                 int optionHeight = 25;
                 int totalDropdownHeight = optionHeight * visibleItems;
+
+                // Determine dropdown direction (same logic as drawing)
+                int startY = (GameDimensions.GAME_HEIGHT - AssetsLoader.getInstance().optionsMenuImg.getHeight()/2) / 2 + AssetsLoader.getInstance().optionsMenuImg.getHeight()/4 + 10;
+                int spacing = AssetsLoader.getInstance().optionsMenuImg.getHeight()/2 / 6;
+                int dropdownY = startY + spacing / 2;
+                int dropdownBottomY = dropdownY + 23 + totalDropdownHeight;
+                int saveButtonY = startY + spacing * 3 + 38 + 8;
+                boolean expandUpward = dropdownBottomY > saveButtonY - 20;
+
+                int dropdownContainerY;
+                if (expandUpward) {
+                    dropdownContainerY = dropdownY - totalDropdownHeight;
+                } else {
+                    dropdownContainerY = dropdownY + 23; // dropdownHeight = 23
+                }
+
+                // check if clicking on scroll up button
+                int upArrowX = musicDropdownRect.x + musicDropdownRect.width / 2;
+                int upArrowY = dropdownContainerY + 10;
+                Rectangle upArrowBounds = new Rectangle(upArrowX - 10, upArrowY - 5, 20, 10);
+
+                // check if clicking on scroll down button
                 int downArrowX = upArrowX;
-                int downArrowY = musicDropdownRect.y + musicDropdownRect.height + totalDropdownHeight - 10;
+                int downArrowY = dropdownContainerY + totalDropdownHeight - 10;
                 Rectangle downArrowBounds = new Rectangle(downArrowX - 10, downArrowY - 5, 20, 10);
 
                 if (musicDropdownScrollOffset > 0 && upArrowBounds.contains(mouseX, mouseY)) {
@@ -1259,7 +1288,7 @@ public class PlayingUI {
                     // if not clicking on any option, check if clicking on scrollbar
                     int scrollbarWidth = 8;
                     int scrollbarX = musicDropdownRect.x + musicDropdownRect.width - scrollbarWidth - 5;
-                    int scrollbarY = musicDropdownRect.y + musicDropdownRect.height + 2;
+                    int scrollbarY = dropdownContainerY + 2;
                     int scrollbarHeight = totalDropdownHeight - 4;
                     Rectangle scrollbarBounds = new Rectangle(scrollbarX, scrollbarY, scrollbarWidth, scrollbarHeight);
 
@@ -1424,21 +1453,33 @@ public class PlayingUI {
             updateSliderValue(mouseX);
         }
 
-        // handle music dropdown scrolling via drag
         if (musicDropdownOpen && musicOptions.length > musicDropdownVisibleItems) {
             int optionHeight = 25;
             int visibleItems = Math.min(musicDropdownVisibleItems, musicOptions.length);
             int totalDropdownHeight = optionHeight * visibleItems;
 
-            // create dropdown area rectangle
+            int startY = (GameDimensions.GAME_HEIGHT - AssetsLoader.getInstance().optionsMenuImg.getHeight()/2) / 2 + AssetsLoader.getInstance().optionsMenuImg.getHeight()/4 + 10;
+            int spacing = AssetsLoader.getInstance().optionsMenuImg.getHeight()/2 / 6;
+            int dropdownY = startY + spacing / 2;
+            int dropdownBottomY = dropdownY + 23 + totalDropdownHeight;
+            int saveButtonY = startY + spacing * 3 + 38 + 8;
+            boolean expandUpward = dropdownBottomY > saveButtonY - 20;
+
+            int dropdownContainerY;
+            if (expandUpward) {
+                dropdownContainerY = dropdownY - totalDropdownHeight;
+            } else {
+                dropdownContainerY = dropdownY + 23;
+            }
+
+
             Rectangle dropdownArea = new Rectangle(
                     musicDropdownRect.x,
-                    musicDropdownRect.y + musicDropdownRect.height,
+                    dropdownContainerY,
                     musicDropdownRect.width,
                     totalDropdownHeight
             );
 
-            // check if dragging inside dropdown area or scrollbar
             if (dropdownArea.contains(mouseX, mouseY) ||
                     (mouseX >= dropdownArea.x + dropdownArea.width - 15 &&
                             mouseY >= dropdownArea.y && mouseY <= dropdownArea.y + dropdownArea.height)) {
@@ -1548,15 +1589,28 @@ public class PlayingUI {
             int mouseX = e.getX();
             int mouseY = e.getY();
 
-            // calculate dropdown dimensions
             int optionHeight = 25;
             int visibleItems = Math.min(musicDropdownVisibleItems, musicOptions.length);
             int totalDropdownHeight = optionHeight * visibleItems;
 
+            int startY = (GameDimensions.GAME_HEIGHT - AssetsLoader.getInstance().optionsMenuImg.getHeight()/2) / 2 + AssetsLoader.getInstance().optionsMenuImg.getHeight()/4 + 10;
+            int spacing = AssetsLoader.getInstance().optionsMenuImg.getHeight()/2 / 6;
+            int dropdownY = startY + spacing / 2;
+            int dropdownBottomY = dropdownY + 23 + totalDropdownHeight;
+            int saveButtonY = startY + spacing * 3 + 38 + 8;
+            boolean expandUpward = dropdownBottomY > saveButtonY - 20;
+
+            int dropdownContainerY;
+            if (expandUpward) {
+                dropdownContainerY = dropdownY - totalDropdownHeight;
+            } else {
+                dropdownContainerY = dropdownY + 23;
+            }
+
             // create dropdown area rectangle
             Rectangle dropdownArea = new Rectangle(
                     musicDropdownRect.x,
-                    musicDropdownRect.y + musicDropdownRect.height,
+                    dropdownContainerY,
                     musicDropdownRect.width,
                     totalDropdownHeight
             );

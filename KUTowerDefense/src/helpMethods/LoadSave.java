@@ -640,7 +640,7 @@ public class LoadSave {
     public static BufferedImage[] getWarriorAnimation(Warrior warrior) {
         return getWarriorAttackAnimation(warrior);
     }
-    
+
     /**
      * Get TNT enemy animation frames for TNT warrior
      * Returns the TNT enemy running animation frames
@@ -648,7 +648,7 @@ public class LoadSave {
     public static BufferedImage[] getTNTEnemyAnimation() {
         // Use existing getEnemyAtlas method which has the correct path
         BufferedImage tntSheet = getEnemyAtlas("tnt");
-        
+
         if (tntSheet == null) {
             // Create a fallback TNT sprite if image not found
             BufferedImage fallback = new BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB);
@@ -664,17 +664,17 @@ public class LoadSave {
             g.dispose();
             return new BufferedImage[]{fallback};
         }
-        
+
         // TNT enemy sprites are typically 64x64, extract frames if it's a sprite sheet
         int frameWidth = 64;  // Updated to match typical enemy sprite size
         int frameHeight = 64;
         int frameCount = Math.max(1, tntSheet.getWidth() / frameWidth);
-        
+
         // If it's just a single sprite (width <= 64), use it as-is
         if (tntSheet.getWidth() <= frameWidth) {
             return new BufferedImage[]{tntSheet};
         }
-        
+
         // Extract multiple frames if it's a sprite sheet
         BufferedImage[] frames = new BufferedImage[frameCount];
         for (int i = 0; i < frameCount; i++) {
@@ -684,7 +684,7 @@ public class LoadSave {
                 frames[i] = frames[0]; // Use first frame as fallback
             }
         }
-        
+
         return frames;
     }
 
@@ -719,12 +719,53 @@ public class LoadSave {
                 success = false;
             }
 
+            // Load four-way road snow variants separately
+            loadFourWayRoadSnowTiles(spriteCache);
+
             return success;
 
         } catch (Exception e) {
             System.err.println("Error loading snow tilesets: " + e.getMessage());
             e.printStackTrace();
             return false;
+        }
+    }
+
+    /**
+     * Loads the four-way road snow variants and caches them
+     * @param spriteCache Map to cache sprites for quick access
+     */
+    private static void loadFourWayRoadSnowTiles(Map<String, BufferedImage> spriteCache) {
+        try {
+            // Load medium snow four-way road
+            BufferedImage mediumSnowFourWay = getImageFromPath("/Tiles/RoadFourWayMediumSnow.png");
+            if (mediumSnowFourWay != null) {
+                // Resize to game tile size if needed
+                BufferedImage resizedMedium = resizeImage(mediumSnowFourWay,
+                        constants.GameDimensions.TILE_DISPLAY_SIZE,
+                        constants.GameDimensions.TILE_DISPLAY_SIZE);
+                spriteCache.put("medium_fourway", resizedMedium);
+                System.out.println("Medium snow four-way road loaded successfully");
+            } else {
+                System.err.println("Failed to load medium snow four-way road");
+            }
+
+            // Load full snow four-way road
+            BufferedImage fullSnowFourWay = getImageFromPath("/Tiles/RoadFourWayFullSnow.png");
+            if (fullSnowFourWay != null) {
+                // Resize to game tile size if needed
+                BufferedImage resizedFull = resizeImage(fullSnowFourWay,
+                        constants.GameDimensions.TILE_DISPLAY_SIZE,
+                        constants.GameDimensions.TILE_DISPLAY_SIZE);
+                spriteCache.put("full_fourway", resizedFull);
+                System.out.println("Full snow four-way road loaded successfully");
+            } else {
+                System.err.println("Failed to load full snow four-way road");
+            }
+
+        } catch (Exception e) {
+            System.err.println("Error loading four-way road snow tiles: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
