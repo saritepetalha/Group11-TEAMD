@@ -205,6 +205,12 @@ public class UltiManager {
     }
 
     public void triggerLightningAt(int x, int y) {
+        // Block lightning strikes when game is paused
+        if (playing.isGamePaused()) {
+            waitingForLightningTarget = false;
+            return;
+        }
+
         if (!canUseLightning()) {
             System.out.println("Lightning Strike is on cooldown!");
             waitingForLightningTarget = false;

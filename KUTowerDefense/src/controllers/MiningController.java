@@ -20,6 +20,9 @@ public class MiningController {
      * Handles mouse clicks for stone mining interactions
      */
     public boolean handleMouseClick(int x, int y) {
+        // Block mining interactions when game is paused
+        if (model.isGamePaused()) return false;
+
         if (model.getStoneMiningManager() == null) {
             return false;
         }
@@ -39,6 +42,9 @@ public class MiningController {
      * Handles mouse pressed events for mining
      */
     public boolean handleMousePressed(int x, int y) {
+        // Block mining interactions when game is paused
+        if (model.isGamePaused()) return false;
+
         if (model.getStoneMiningManager() == null) {
             return false;
         }
@@ -66,6 +72,9 @@ public class MiningController {
      * Handles mouse released events for mining
      */
     public boolean handleMouseReleased(int x, int y) {
+        // Block mining interactions when game is paused
+        if (model.isGamePaused()) return false;
+
         if (model.getStoneMiningManager() == null) {
             return false;
         }
@@ -78,6 +87,7 @@ public class MiningController {
      * Handles mouse moved events for mining
      */
     public boolean handleMouseMoved(int x, int y) {
+        // Allow mouse moved for mining UI elements even when paused (for tooltips)
         if (model.getStoneMiningManager() == null) {
             return false;
         }

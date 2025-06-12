@@ -20,6 +20,9 @@ public class TreeController {
      * Handles mouse clicks for tree interactions
      */
     public boolean handleMouseClick(int x, int y) {
+        // Block tree interactions when game is paused
+        if (model.isGamePaused()) return false;
+
         if (model.getTreeInteractionManager() == null) {
             return false;
         }
@@ -43,6 +46,9 @@ public class TreeController {
      * Handles mouse pressed events for tree interactions
      */
     public boolean handleMousePressed(int x, int y) {
+        // Block tree interactions when game is paused
+        if (model.isGamePaused()) return false;
+
         if (model.getTreeInteractionManager() == null) {
             return false;
         }
@@ -156,6 +162,7 @@ public class TreeController {
      * Handles mouse movement for tree tooltips
      */
     public void handleMouseMoved(int x, int y) {
+        // Allow mouse moved for tree tooltips even when paused
         // Handle tooltips for live trees
         if (model.getLiveTrees() != null) {
             for (LiveTree liveTree : model.getLiveTrees()) {
