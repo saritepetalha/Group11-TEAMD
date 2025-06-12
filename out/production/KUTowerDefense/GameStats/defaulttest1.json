@@ -1,0 +1,11 @@
+{
+  "mapName": "defaultlevel",
+  "victory": true,
+  "gold": 315,
+  "enemiesSpawned": 42,
+  "enemiesReachedEnd": 3,
+  "towersBuilt": 7,
+  "enemyDefeated": 39,
+  "totalDamage": 812,
+  "timePlayed": 177
+}
