@@ -86,6 +86,14 @@ public abstract class Enemy {
     private boolean isFrozen = false;
     private long freezeTimer = 0; // Will store remaining duration in ticks
 
+    // Poison effect fields
+    private boolean isPoisoned = false;
+    private int poisonDamage = 0;
+    private long poisonTimer = 0; // Will store remaining duration in ticks
+    private int poisonTickInterval = 60; // Apply poison damage every 60 ticks (1 second at 60 FPS)
+    private int poisonTickCounter = 0;
+    public static BufferedImage poisonIcon = null;
+
     public void setAlive(boolean alive) {
         this.alive = alive;
     }
@@ -642,8 +650,62 @@ public abstract class Enemy {
         return isFrozen;
     }
 
+    /**
+     * Apply poison effect to this enemy
+     * @param damage Damage per poison tick
+     * @param durationTicks How long the poison lasts (in game ticks)
+     */
+    public void applyPoison(int damage, int durationTicks) {
+        if (!isPoisoned || damage > this.poisonDamage) { // Apply new poison if not poisoned, or if new poison is stronger
+            this.isPoisoned = true;
+            this.poisonDamage = damage;
+            this.poisonTimer = durationTicks;
+            this.poisonTickCounter = 0; // Reset tick counter
+            if (poisonIcon == null) {
+                poisonIcon = LoadSave.getImageFromPath("/TowerAssets/poison_icon.png");
+            }
+            System.out.println("Enemy ID: " + id + " is now poisoned for " + damage + " damage over " + durationTicks + " ticks.");
+        }
+    }
+
+    private void updatePoison() {
+        if (isPoisoned) {
+            poisonTickCounter++;
+
+            // Apply poison damage every interval
+            if (poisonTickCounter >= poisonTickInterval) {
+                // Use MAGICAL damage type for poison (since it's like a magical effect)
+                takeDamage(poisonDamage, DamageType.MAGICAL, true); // Ignore invisibility for poison
+                poisonTickCounter = 0; // Reset counter
+                System.out.println("Enemy ID: " + id + " took " + poisonDamage + " poison damage. Health: " + health);
+            }
+
+            // Decrease poison timer
+            poisonTimer--;
+            if (poisonTimer <= 0) {
+                isPoisoned = false;
+                poisonDamage = 0;
+                poisonTickCounter = 0;
+                System.out.println("Poison effect ended for enemy ID: " + id);
+            }
+        }
+    }
+
+    public boolean isPoisoned() {
+        return isPoisoned;
+    }
+
+    public int getPoisonDamage() {
+        return poisonDamage;
+    }
+
+    public long getPoisonTimer() {
+        return poisonTimer;
+    }
+
     public void update() {
         updateFreeze();
+        updatePoison();
         if (!isFrozen) {
             updateAnimationTick();
         }

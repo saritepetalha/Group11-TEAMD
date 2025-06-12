@@ -64,6 +64,7 @@ public class Constants {
         public static final int ARCHER = 0;
         public static final int ARTILLERY = 1;
         public static final int MAGE = 2;
+        public static final int POISON = 3;
 
         public static int getCost(int towerType) {
             switch (towerType) {
@@ -73,6 +74,8 @@ public class Constants {
                     return 65;
                 case MAGE:
                     return 50;
+                case POISON:
+                    return 80;
             }
             return 0;
         }
@@ -85,6 +88,8 @@ public class Constants {
                     return 120;
                 case MAGE:
                     return 100;
+                case POISON:
+                    return 0; // No upgrade available yet
             }
             return 0;
         }
@@ -97,6 +102,8 @@ public class Constants {
                     return "Artillery Tower";
                 case MAGE:
                     return "Mage Tower";
+                case POISON:
+                    return "Poison Tower";
             }
             return "";
         }
@@ -109,6 +116,8 @@ public class Constants {
                     return 20;
                 case MAGE:
                     return 15;
+                case POISON:
+                    return 2; // Lower base damage since it applies poison over time
             }
             return 0;
         }
@@ -121,6 +130,8 @@ public class Constants {
                     return 90;
                 case MAGE:
                     return 100;
+                case POISON:
+                    return 110; // Medium range
             }
             return 0;
         }
@@ -133,6 +144,8 @@ public class Constants {
                     return 120;
                 case MAGE:
                     return 50;
+                case POISON:
+                    return 80; // Slower attack rate since it has poison effects
             }
             return 0;
         }
@@ -142,6 +155,26 @@ public class Constants {
                 return 40; // Only Artillery has AOE
             }
             return 0;
+        }
+
+        // Special ability costs for towers
+        public static int getSpecialAbilityCost(int towerType) {
+            switch (towerType) {
+                case POISON:
+                    return 150; // Cost for global poison ability
+                default:
+                    return 0;
+            }
+        }
+
+        // Special ability cooldowns (in milliseconds)
+        public static long getSpecialAbilityCooldown(int towerType) {
+            switch (towerType) {
+                case POISON:
+                    return 45000; // 45 seconds cooldown
+                default:
+                    return 0;
+            }
         }
     }
 

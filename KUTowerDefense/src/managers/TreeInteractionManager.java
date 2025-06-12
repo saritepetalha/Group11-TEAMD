@@ -60,6 +60,20 @@ public class TreeInteractionManager {
                     tree.setShowChoices(false);
                     return;
                 }
+                if (tree.getPoisonButton().isMousePressed(mouseX, mouseY)) {
+                    int cost = Constants.Towers.getCost(Constants.Towers.POISON);
+                    if (playing.getPlayerManager().spendGold(cost)) {
+                        playing.getTowerManager().buildPoisonTower(tileX, tileY);
+                        playing.getDeadTrees().remove(tree);
+                        playing.setSelectedDeadTree(null);
+                        playing.setDisplayedTower(null);
+                        playing.modifyTile(tileX, tileY, "POISON");
+                        playing.updateUIResources();
+                        System.out.println("🧪 Poison Tower built at (" + tileX + ", " + tileY + ") for " + cost + " gold");
+                    }
+                    tree.setShowChoices(false);
+                    return;
+                }
             }
         }
 

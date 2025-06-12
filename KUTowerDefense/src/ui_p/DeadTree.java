@@ -14,7 +14,7 @@ public class DeadTree {
 
     public int x,y;
     public boolean showChoices = false;
-    public TheButton mageButton, archerButton, artilleryButton;
+    public TheButton mageButton, archerButton, artilleryButton, poisonButton;
     private CostTooltip tooltip;
     private ArrayList<TheButton> theButtons = new ArrayList<>();
     private ArrayList<BufferedImage> ButtonImages = new ArrayList<>();
@@ -31,10 +31,12 @@ public class DeadTree {
         loadButtonImageFile();
         loadButtonImages();
 
+        // Updated layout for 4 towers - arranged in a cross pattern
         theButtons.add(mageButton = new TheButton("Mage", x - size + 16, y, size, size, ButtonImages.get(1)));
         theButtons.add(archerButton = new TheButton("Archer", x + 16, y - size, size, size, ButtonImages.get(0)));
         theButtons.add(artilleryButton = new TheButton("Artillery", x + size + 16, y, size, size, ButtonImages.get(2)));
-        
+        theButtons.add(poisonButton = new TheButton("Poison", x + 16, y + size, size, size, ButtonImages.get(3))); // Bottom position
+
         this.tooltip = new CostTooltip();
     }
 
@@ -43,6 +45,7 @@ public class DeadTree {
             drawButtonWithHover(g, mageButton, 0);
             drawButtonWithHover(g, archerButton, 1);
             drawButtonWithHover(g, artilleryButton, 2);
+            drawButtonWithHover(g, poisonButton, 3); // Draw poison button
             // Update and draw tooltip
             tooltip.update();
             tooltip.draw((Graphics2D) g);
@@ -71,13 +74,14 @@ public class DeadTree {
             e.printStackTrace();
         }
     }
+
     private void loadButtonImages() {
         int size = 64;
 
         ButtonImages.add(buttonSheetImg.getSubimage(size * 0, size * 2, size, size));
         ButtonImages.add(buttonSheetImg.getSubimage(size * 2, size * 2, size, size));
         ButtonImages.add(buttonSheetImg.getSubimage(size * 3, size * 2, size, size));
-
+        ButtonImages.add(buttonSheetImg.getSubimage(size * 1, size * 2, size, size));
 
     }
 
@@ -117,6 +121,14 @@ public class DeadTree {
         this.artilleryButton = artilleryButton;
     }
 
+    public TheButton getPoisonButton() {
+        return poisonButton;
+    }
+
+    public void setPoisonButton(TheButton poisonButton) {
+        this.poisonButton = poisonButton;
+    }
+
     public int getX() {
         return x;
     }
@@ -124,7 +136,7 @@ public class DeadTree {
     public int getY() {
         return y;
     }
-    
+
     /**
      * Handles mouse hover for tooltips - should be called from Playing/Controller
      */
@@ -133,25 +145,31 @@ public class DeadTree {
             tooltip.hide();
             return;
         }
-        
+
         if (archerButton.getBounds().contains(mouseX, mouseY)) {
             int cost = playing.getTowerManager().getTowerCostFromOptions(constants.Constants.Towers.ARCHER, playing.getGameOptions());
             boolean canAfford = playing.getPlayerManager().getGold() >= cost;
-            tooltip.show("Archer Tower", cost, 
-                "Fast firing, long range. Effective against light enemies.", 
-                canAfford, mouseX, mouseY);
+            tooltip.show("Archer Tower", cost,
+                    "Fast firing, long range. Effective against light enemies.",
+                    canAfford, mouseX, mouseY);
         } else if (mageButton.getBounds().contains(mouseX, mouseY)) {
             int cost = playing.getTowerManager().getTowerCostFromOptions(constants.Constants.Towers.MAGE, playing.getGameOptions());
             boolean canAfford = playing.getPlayerManager().getGold() >= cost;
-            tooltip.show("Mage Tower", cost, 
-                "Magical attacks with special effects. Can spawn wizard warriors.", 
-                canAfford, mouseX, mouseY);
+            tooltip.show("Mage Tower", cost,
+                    "Magical attacks with special effects. Can spawn wizard warriors.",
+                    canAfford, mouseX, mouseY);
         } else if (artilleryButton.getBounds().contains(mouseX, mouseY)) {
             int cost = playing.getTowerManager().getTowerCostFromOptions(constants.Constants.Towers.ARTILLERY, playing.getGameOptions());
             boolean canAfford = playing.getPlayerManager().getGold() >= cost;
-            tooltip.show("Artillery Tower", cost, 
-                "Slow but powerful. Area of effect damage.", 
-                canAfford, mouseX, mouseY);
+            tooltip.show("Artillery Tower", cost,
+                    "Slow but powerful. Area of effect damage.",
+                    canAfford, mouseX, mouseY);
+        } else if (poisonButton.getBounds().contains(mouseX, mouseY)) {
+            int cost = constants.Constants.Towers.getCost(constants.Constants.Towers.POISON);
+            boolean canAfford = playing.getPlayerManager().getGold() >= cost;
+            tooltip.show("Poison Tower", cost,
+                    "Applies poison damage over time. Special ability affects all enemies.",
+                    canAfford, mouseX, mouseY);
         } else {
             tooltip.hide();
         }
@@ -161,5 +179,6 @@ public class DeadTree {
         mageButton.setMouseOver(mageButton.getBounds().contains(mouseX, mouseY));
         archerButton.setMouseOver(archerButton.getBounds().contains(mouseX, mouseY));
         artilleryButton.setMouseOver(artilleryButton.getBounds().contains(mouseX, mouseY));
+        poisonButton.setMouseOver(poisonButton.getBounds().contains(mouseX, mouseY));
     }
 }

@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import helpMethods.LoadSave;
 import ui_p.AssetsLoader;
 
+
 public class TileManager {
     public Tile
             CurvedRoadRightUp, CurvedRoadNorth, CurvedRoadLeftDown, FlatRoadUp,
@@ -17,7 +18,7 @@ public class TileManager {
             Tree1, Tree2, Tree3, Rock1,
             ArtilleryTower, MageTower, House, Rock2,
             CastleTopLeft, CastleTopRight, ArcherTower, Pit,
-            CastleBottomLeft, CastleBottomRight, SmallCastle, Wood, RoadFourWay;
+            CastleBottomLeft, CastleBottomRight, SmallCastle, Wood, RoadFourWay, PoisonTower;
 
     public BufferedImage atlas;
     public ArrayList<Tile> tiles = new ArrayList<>();
@@ -89,6 +90,8 @@ public class TileManager {
         tiles.add(Wood = new Tile(getSprite(3, 7), id++, "Wood"));
 
         tiles.add(RoadFourWay = new Tile(AssetsLoader.getInstance().fourWayRoadImg,id++,"RoadFourWay"));
+
+        tiles.add(PoisonTower = new Tile(resizeImage(AssetsLoader.getInstance().poisonTowerImg,GameDimensions.TILE_DISPLAY_SIZE, GameDimensions.TILE_DISPLAY_SIZE), id++, "PoisonTower"));
     }
 
     // This method is used to get the sprite of a specific tile by index
