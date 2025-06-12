@@ -107,7 +107,7 @@ public class SnowTransitionManager {
         }
 
         // Special handling for four-way road tile (ID 32)
-        if (tileId == 32) {
+        if (tileId == 35) {
             return getFourWayRoadSnowSprite();
         }
 
