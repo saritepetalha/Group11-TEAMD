@@ -24,6 +24,7 @@ import constants.GameDimensions;
 import helpMethods.FontLoader;
 import managers.AudioManager;
 import scenes.Playing;
+import skills.SkillTree;
 
 public class PlayingUI {
     private Playing playing;
@@ -1191,27 +1192,33 @@ public class PlayingUI {
         this.mouseX = mouseX;
         this.mouseY = mouseY;
 
-        if (playing.getUltiManager().isWaitingForLightningTarget() &&
-                !lightningButton.getBounds().contains(mouseX, mouseY)) {
-
-            playing.getUltiManager().triggerLightningAt(mouseX, mouseY);
-            return;
+        if (playing.getUltiManager().isWaitingForLightningTarget()) {
+            if (!lightningButton.getBounds().contains(mouseX, mouseY)) {
+                playing.getUltiManager().triggerLightningAt(mouseX, mouseY);
+                return;
+            }
         }
 
-        if (playing.getUltiManager().isGoldFactorySelected() &&
-                !goldFactoryButton.getBounds().contains(mouseX, mouseY) &&
-                !playing.isOptionsMenuOpen() && !playing.isGamePaused()) {
-
-            // Don't handle placement here - let the Playing scene handle it
-            return;
-        }
-
+        // Handle other button clicks
         if (pauseButton.getBounds().contains(mouseX, mouseY)) {
             AudioManager.getInstance().playButtonClickSound();
             toggleButtonState(pauseButton);
+        } else if (lightningButton.getBounds().contains(mouseX, mouseY)) {
+            if (playing.getUltiManager().canUseLightning()) {
+                if (playing.getPlayerManager().getGold() >= 75) {
+                    playing.getUltiManager().setWaitingForLightningTarget(true);
+                    System.out.println("⚡ Lightning targeting mode activated!");
+                    AudioManager.getInstance().playButtonClickSound();
+                    System.out.println("⚡ Lightning Strike ready - click on target location!");
+                } else {
+                    System.out.println("Not enough gold for Lightning Strike!");
+                }
+            } else {
+                System.out.println("Lightning Strike is on cooldown!");
+            }
+            return;
         } else if (fastForwardButton.getBounds().contains(mouseX, mouseY)) {
             AudioManager.getInstance().playButtonClickSound();
-
             toggleButtonState(fastForwardButton);
         } else if (optionsButton.getBounds().contains(mouseX, mouseY)) {
             AudioManager.getInstance().playButtonClickSound();
@@ -1325,6 +1332,7 @@ public class PlayingUI {
                 if (isMouseOverButton(mainMenuButton, mouseX, mouseY)) {
                     AudioManager.getInstance().playButtonClickSound();
                     toggleButtonState(mainMenuButton);
+                    SkillTree.getInstance().resetAllSkills();
                     return;
                 }
 
@@ -1377,23 +1385,6 @@ public class PlayingUI {
                 }
             } else {
                 System.out.println("Earthquake is on cooldown!");
-            }
-            return;
-        }
-
-        if (lightningButton.getBounds().contains(mouseX, mouseY)) {
-            if (playing.getUltiManager().isWaitingForLightningTarget()) {
-                playing.getUltiManager().setWaitingForLightningTarget(false);
-            } else if (playing.getUltiManager().canUseLightning()) {
-                if (playing.getPlayerManager().getGold() >= 75) {
-                    lightningButton.setMousePressed(true);
-                    playing.getUltiManager().setWaitingForLightningTarget(true);
-                    lightningButton.setMousePressed(false);
-                } else {
-                    System.out.println("Not enough gold for Lightning Strike!");
-                }
-            } else {
-                System.out.println("Lightning Strike is on cooldown!");
             }
             return;
         }

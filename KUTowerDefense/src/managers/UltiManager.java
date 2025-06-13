@@ -216,18 +216,15 @@ public class UltiManager {
             waitingForLightningTarget = false;
             return;
         }
-        if (SkillTree.getInstance().isSkillSelected(SkillType.DIVINE_WRATH)) {
-            long cooldown = Math.round(lightningCooldownMillis * 0.8f);
-            System.out.println("[DIVINE_WRATH] Lightning cooldown reduced: " + lightningCooldownMillis + " -> " + cooldown);
-        }
-        if (SkillTree.getInstance().isSkillSelected(SkillType.BATTLE_READINESS)) {
-            long cooldown = getEffectiveLightningCooldown();
-            System.out.println("[BATTLE_READINESS] Lightning cooldown reduced: " + lightningCooldownMillis + " -> " + cooldown);
-        }
 
         if (playing.getPlayerManager().getGold() < lightningCost) {
             System.out.println("Not enough gold for Lightning Strike!");
             waitingForLightningTarget = false; // Exit targeting mode
+            return;
+        }
+
+        // Only trigger if we're in targeting mode
+        if (!waitingForLightningTarget) {
             return;
         }
 

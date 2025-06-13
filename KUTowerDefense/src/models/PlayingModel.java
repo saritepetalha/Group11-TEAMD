@@ -322,6 +322,8 @@ public class PlayingModel extends Observable implements GameContext {
         // Delete the save file
         if (gameStateManager != null) gameStateManager.deleteSaveFile(currentMapName);
 
+        SkillTree.getInstance().resetAllSkills();
+
         // play a random victory sound
         AudioManager.getInstance().playRandomVictorySound();
 
@@ -346,6 +348,8 @@ public class PlayingModel extends Observable implements GameContext {
 
         // stop any ongoing waves/spawning
         if (enemyManager != null) enemyManager.getEnemies().clear();
+
+        SkillTree.getInstance().resetAllSkills();
 
         setChanged();
         notifyObservers("gameOver");

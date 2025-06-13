@@ -158,6 +158,10 @@ public class  Game extends JFrame implements Runnable{
 						helpMethods.OptionsIO.restoreCustomSettings();
 						System.out.println("Restored custom settings after gameplay");
 					}
+					// Reset skills when returning to menu
+					if (skillSelectionScene != null) {
+						skillSelectionScene.resetSkillSelections();
+					}
 					break;
 				case PLAYING:
 					// Reset game state BEFORE making window visible to prevent black flash
@@ -169,7 +173,7 @@ public class  Game extends JFrame implements Runnable{
 				case SKILL_SELECTION:
 					// Clear any previously selected skills
 					if (skillSelectionScene != null) {
-						SkillTree.getInstance().clearSkills();
+						skillSelectionScene.resetSkillSelections();
 					}
 					break;
 				case NEW_GAME_LEVEL_SELECT:
