@@ -95,7 +95,7 @@ public class TileConnectivity {
         TILE_CONNECTIONS.put(14, Set.of(Direction.WEST));     // FlatRoadRight (dead-end)
         
         // Four-way road connects all directions
-        TILE_CONNECTIONS.put(32, Set.of(Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST)); // RoadFourWay
+        TILE_CONNECTIONS.put(35, Set.of(Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST)); // RoadFourWay
         
         // Special tiles
         TILE_CONNECTIONS.put(-4, Set.of(Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST)); // Gate (can connect from any direction)
