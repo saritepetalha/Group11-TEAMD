@@ -896,7 +896,7 @@ public class LoadGameMenu extends JPanel {
             };
 
             panel.setLayout(new BorderLayout());
-            panel.setPreferredSize(new Dimension(180, 140));
+            panel.setPreferredSize(new Dimension(200, 180));
             panel.setOpaque(false);
             panel.setBorder(null);
             panel.setBackground(new Color(0, 0, 0, 0));
@@ -998,6 +998,31 @@ public class LoadGameMenu extends JPanel {
             difficultyLabel.setOpaque(false);
             contentPanel.add(difficultyLabel);
 
+            // Add skills information
+            if (saveData.getSelectedSkills() != null && !saveData.getSelectedSkills().isEmpty()) {
+                JLabel skillsHeaderLabel = new JLabel("⭐ Skills:");
+                skillsHeaderLabel.setFont(infoFont);
+                skillsHeaderLabel.setForeground(new Color(255, 140, 0));
+                skillsHeaderLabel.setOpaque(false);
+                contentPanel.add(skillsHeaderLabel);
+
+                // Create a panel for skills with smaller text
+                for (skills.SkillType skill : saveData.getSelectedSkills()) {
+                    String skillName = getSkillDisplayName(skill);
+                    JLabel skillLabel = new JLabel("  • " + skillName);
+                    skillLabel.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 9));
+                    skillLabel.setForeground(new Color(70, 130, 180));
+                    skillLabel.setOpaque(false);
+                    contentPanel.add(skillLabel);
+                }
+            } else {
+                JLabel noSkillsLabel = new JLabel("⭐ Skills: None");
+                noSkillsLabel.setFont(infoFont);
+                noSkillsLabel.setForeground(new Color(128, 128, 128));
+                noSkillsLabel.setOpaque(false);
+                contentPanel.add(noSkillsLabel);
+            }
+
             contentPanel.add(Box.createRigidArea(new Dimension(0, 4)));
 
             String timeAgo = getFileTimeAgo(levelName);
@@ -1022,6 +1047,24 @@ public class LoadGameMenu extends JPanel {
             label.setOpaque(false);
             fallbackPanel.add(label);
             return fallbackPanel;
+        }
+    }
+
+    /**
+     * Convert SkillType to user-friendly display name
+     */
+    private String getSkillDisplayName(skills.SkillType skillType) {
+        switch (skillType) {
+            case BOUNTIFUL_START: return "Bountiful Start";
+            case PLUNDERER_BONUS: return "Plunderer Bonus";
+            case INTEREST_SYSTEM: return "Interest System";
+            case SHARP_ARROW_TIPS: return "Sharp Arrow Tips";
+            case EAGLE_EYE: return "Eagle Eye";
+            case MAGIC_PIERCING: return "Magic Piercing";
+            case SHATTERING_FORCE: return "Shattering Force";
+            case DIVINE_WRATH: return "Divine Wrath";
+            case BATTLE_READINESS: return "Battle Readiness";
+            default: return skillType.name();
         }
     }
 

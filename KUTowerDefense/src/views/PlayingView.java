@@ -1219,4 +1219,4 @@ public class PlayingView implements Observer {
             System.out.println("Tile modified at (" + x + ", " + y + ") to: " + tile);
         }
     }
-}
+} 

@@ -821,6 +821,9 @@ public class PlayingModel extends Observable implements GameContext {
         saveData.setLevel(deepCopy2DArray(level));
         saveData.setOverlay(deepCopy2DArray(overlay));
 
+        // Skills selected at the start of the game
+        saveData.setSelectedSkills(skills.SkillTree.getInstance().getSelectedSkills());
+
         // Manager states (if managers are available) - basic version
         if (managersInitialized()) {
             // Save only basic state information
@@ -885,6 +888,16 @@ public class PlayingModel extends Observable implements GameContext {
         }
         if (saveData.getOverlay() != null) {
             overlay = deepCopy2DArray(saveData.getOverlay());
+        }
+
+        // Restore skills selected at the start of the game
+        if (saveData.getSelectedSkills() != null) {
+            skills.SkillTree.getInstance().setSelectedSkills(saveData.getSelectedSkills());
+            System.out.println("Restored " + saveData.getSelectedSkills().size() + " skills from save data");
+        } else {
+            // Clear skills if none were saved (backward compatibility)
+            skills.SkillTree.getInstance().clearSkills();
+            System.out.println("No skills found in save data, cleared skill tree");
         }
 
         // Apply manager states (if managers are available) - basic version
@@ -1041,4 +1054,4 @@ public class PlayingModel extends Observable implements GameContext {
         return victoryConfetti;
     }
 
-} 
+}
