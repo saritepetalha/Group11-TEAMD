@@ -242,7 +242,16 @@ public class PlayingUI {
         int barWidth = 150; // Increased width for more text
         int barHeight = 32;
         int iconSize = 32;
-        int startX = GameDimensions.GAME_WIDTH - barWidth - iconSize - buttonSpacing - 10;
+
+        // Calculate the actual level width instead of using fixed GAME_WIDTH
+        int actualWidth = GameDimensions.GAME_WIDTH; // Default fallback
+        if (playing != null && playing.getLevel() != null) {
+            int[][] level = playing.getLevel();
+            int levelCols = level[0].length;
+            actualWidth = levelCols * GameDimensions.TILE_DISPLAY_SIZE;
+        }
+
+        int startX = actualWidth - barWidth - iconSize - buttonSpacing - 10;
         int startY = buttonSize + 16;
 
         // Using the new method from Playing that works with our refactored WaveManager

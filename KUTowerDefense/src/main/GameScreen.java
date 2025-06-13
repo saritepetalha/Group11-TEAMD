@@ -101,8 +101,21 @@ public class GameScreen extends JPanel {
 			// Get base dimensions for the current state
 			int baseWidth, baseHeight;
 			if (GameStates.gameState == GameStates.PLAYING || GameStates.gameState == GameStates.GAME_OVER) {
-				baseWidth = GameDimensions.GAME_WIDTH;
-				baseHeight = GameDimensions.GAME_HEIGHT;
+				// For playing state, use actual level dimensions if available
+				if (game.getPlaying() != null && game.getPlaying().getController() != null
+						&& game.getPlaying().getController().getModel() != null
+						&& game.getPlaying().getController().getModel().getLevel() != null) {
+
+					int[][] level = game.getPlaying().getController().getModel().getLevel();
+					int levelCols = level[0].length;
+					int levelRows = level.length;
+					baseWidth = levelCols * GameDimensions.TILE_DISPLAY_SIZE;
+					baseHeight = levelRows * GameDimensions.TILE_DISPLAY_SIZE;
+				} else {
+					// Fallback to default dimensions
+					baseWidth = GameDimensions.GAME_WIDTH;
+					baseHeight = GameDimensions.GAME_HEIGHT;
+				}
 			} else if (GameStates.gameState == GameStates.EDIT) {
 				baseWidth = GameDimensions.TOTAL_GAME_WIDTH;
 				baseHeight = GameDimensions.GAME_HEIGHT;
@@ -268,7 +281,7 @@ public class GameScreen extends JPanel {
 	public void refreshForFullscreenChange() {
 		GameStates currentState = GameStates.gameState;
 		boolean isFullscreen = game.getFullscreenManager() != null && game.getFullscreenManager().isFullscreen();
-		System.out.println("Refreshing screen for state: " + currentState + ", Fullscreen: " + isFullscreen);
+		System.out.println("🔄 Refreshing screen for state: " + currentState + ", Fullscreen: " + isFullscreen);
 		updateContentForState(currentState, currentState);
 		setPanelSize();
 	}

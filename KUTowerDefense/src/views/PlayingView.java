@@ -147,12 +147,16 @@ public class PlayingView implements Observer {
         int[][] level = model.getLevel();
         if (level == null) return;
 
-        // Fill background color - this will be properly scaled by the fullscreen manager
-        g.setColor(new Color(134, 177, 63, 255));
-        g.fillRect(0, 0, GameDimensions.GAME_WIDTH, GameDimensions.GAME_HEIGHT);
-
         int rowCount = level.length;
         int colCount = level[0].length;
+
+        // Calculate actual level dimensions in pixels
+        int levelPixelWidth = colCount * GameDimensions.TILE_DISPLAY_SIZE;
+        int levelPixelHeight = rowCount * GameDimensions.TILE_DISPLAY_SIZE;
+
+        // Fill background color using actual level dimensions
+        g.setColor(new Color(134, 177, 63, 255));
+        g.fillRect(0, 0, levelPixelWidth, levelPixelHeight);
 
         // Check if we're in snow mode
         boolean isSnowActive = model.getTileManager() != null &&

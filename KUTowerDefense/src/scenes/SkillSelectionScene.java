@@ -31,7 +31,7 @@ public class SkillSelectionScene extends JPanel {
     private final Playing playing;
     private final Game game;
     private final JPanel contentPanel;
-    private final TheButton startGameButtonStyled;
+    private TheButton startGameButtonStyled;
     private BufferedImage backgroundImg;
     private TheButton backButtonStyled;
     private JPanel styledButtonPanel;
@@ -50,6 +50,7 @@ public class SkillSelectionScene extends JPanel {
         }
 
         setLayout(new BorderLayout());
+        // Keep preferred size for proper scaling with wrapper
         setPreferredSize(new Dimension(1280, 720));
 
         // İçerik paneli (skill grid)
@@ -182,25 +183,34 @@ public class SkillSelectionScene extends JPanel {
     }
 
     private void initializeButtons() {
-        int x = 20; // Daha sola hizala
+        // Calculate dynamic positioning based on panel width
+        int panelWidth = 1280; // Use base width for calculations
+        int availableWidth = panelWidth - 40; // Subtract left/right margins
+        int totalButtonsWidth = BUTTON_WIDTH * 3 + BUTTON_SPACING * 2;
+        int extraSpace = availableWidth - totalButtonsWidth;
+
+        // Distribute buttons evenly across the available width
+        int startX = 20 + extraSpace / 6; // Add some of the extra space as left margin
+        int adjustedSpacing = BUTTON_SPACING + extraSpace / 3; // Increase spacing between buttons
+
         int y = SKILLS_START_Y;
 
         // Economy Skills
-        addSkillButton(x, y, SkillType.BOUNTIFUL_START, "Economy");
-        addSkillButton(x + BUTTON_WIDTH + BUTTON_SPACING, y, SkillType.PLUNDERER_BONUS, "Economy");
-        addSkillButton(x + (BUTTON_WIDTH + BUTTON_SPACING) * 2, y, SkillType.INTEREST_SYSTEM, "Economy");
+        addSkillButton(startX, y, SkillType.BOUNTIFUL_START, "Economy");
+        addSkillButton(startX + BUTTON_WIDTH + adjustedSpacing, y, SkillType.PLUNDERER_BONUS, "Economy");
+        addSkillButton(startX + (BUTTON_WIDTH + adjustedSpacing) * 2, y, SkillType.INTEREST_SYSTEM, "Economy");
 
         // Tower Skills
         y += ROW_SPACING;
-        addSkillButton(x, y, SkillType.SHARP_ARROW_TIPS, "Tower");
-        addSkillButton(x + BUTTON_WIDTH + BUTTON_SPACING, y, SkillType.EAGLE_EYE, "Tower");
-        addSkillButton(x + (BUTTON_WIDTH + BUTTON_SPACING) * 2, y, SkillType.MAGIC_PIERCING, "Tower");
+        addSkillButton(startX, y, SkillType.SHARP_ARROW_TIPS, "Tower");
+        addSkillButton(startX + BUTTON_WIDTH + adjustedSpacing, y, SkillType.EAGLE_EYE, "Tower");
+        addSkillButton(startX + (BUTTON_WIDTH + adjustedSpacing) * 2, y, SkillType.MAGIC_PIERCING, "Tower");
 
         // Ultimate Skills
         y += ROW_SPACING;
-        addSkillButton(x, y, SkillType.SHATTERING_FORCE, "Ultimate");
-        addSkillButton(x + BUTTON_WIDTH + BUTTON_SPACING, y, SkillType.DIVINE_WRATH, "Ultimate");
-        addSkillButton(x + (BUTTON_WIDTH + BUTTON_SPACING) * 2, y, SkillType.BATTLE_READINESS, "Ultimate");
+        addSkillButton(startX, y, SkillType.SHATTERING_FORCE, "Ultimate");
+        addSkillButton(startX + BUTTON_WIDTH + adjustedSpacing, y, SkillType.DIVINE_WRATH, "Ultimate");
+        addSkillButton(startX + (BUTTON_WIDTH + adjustedSpacing) * 2, y, SkillType.BATTLE_READINESS, "Ultimate");
     }
 
     private void addSkillButton(int x, int y, SkillType skillType, String category) {
@@ -215,11 +225,18 @@ public class SkillSelectionScene extends JPanel {
         String title = "Skill Selection";
         g.drawString(title, 20, TITLE_Y);
 
+        // Calculate category title positions to match button positions
+        int panelWidth = 1280;
+        int availableWidth = panelWidth - 40;
+        int totalButtonsWidth = BUTTON_WIDTH * 3 + BUTTON_SPACING * 2;
+        int extraSpace = availableWidth - totalButtonsWidth;
+        int categoryStartX = 20 + extraSpace / 6;
+
         // Draw category titles
         g.setFont(new Font("Arial", Font.BOLD, 18));
-        g.drawString("Economy Skills", 20, SKILLS_START_Y - CATEGORY_TITLE_OFFSET);
-        g.drawString("Tower Skills", 20, SKILLS_START_Y + ROW_SPACING - CATEGORY_TITLE_OFFSET);
-        g.drawString("Ultimate Skills", 20, SKILLS_START_Y + ROW_SPACING * 2 - CATEGORY_TITLE_OFFSET);
+        g.drawString("Economy Skills", categoryStartX, SKILLS_START_Y - CATEGORY_TITLE_OFFSET);
+        g.drawString("Tower Skills", categoryStartX, SKILLS_START_Y + ROW_SPACING - CATEGORY_TITLE_OFFSET);
+        g.drawString("Ultimate Skills", categoryStartX, SKILLS_START_Y + ROW_SPACING * 2 - CATEGORY_TITLE_OFFSET);
 
         // Draw skill buttons
         for (SkillButton button : skillButtons) {

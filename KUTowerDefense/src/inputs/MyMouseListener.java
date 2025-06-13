@@ -2,6 +2,7 @@ package inputs;
 
 import main.Game;
 import main.GameStates;
+import constants.GameDimensions;
 import java.awt.Point;
 
 import java.awt.event.MouseListener;
@@ -39,14 +40,27 @@ public class MyMouseListener implements MouseListener, MouseMotionListener, Mous
         // Calculate the same scaling as done in GameScreen.paintComponent
         int baseWidth, baseHeight;
         if (GameStates.gameState == GameStates.PLAYING || GameStates.gameState == GameStates.GAME_OVER) {
-            baseWidth = 1280; // GameDimensions.GAME_WIDTH
-            baseHeight = 720; // GameDimensions.GAME_HEIGHT
+            // For playing state, use actual level dimensions if available
+            if (game.getPlaying() != null && game.getPlaying().getController() != null
+                    && game.getPlaying().getController().getModel() != null
+                    && game.getPlaying().getController().getModel().getLevel() != null) {
+
+                int[][] level = game.getPlaying().getController().getModel().getLevel();
+                int levelCols = level[0].length;
+                int levelRows = level.length;
+                baseWidth = levelCols * GameDimensions.TILE_DISPLAY_SIZE;
+                baseHeight = levelRows * GameDimensions.TILE_DISPLAY_SIZE;
+            } else {
+                // Fallback to default dimensions
+                baseWidth = GameDimensions.GAME_WIDTH;
+                baseHeight = GameDimensions.GAME_HEIGHT;
+            }
         } else if (GameStates.gameState == GameStates.EDIT) {
-            baseWidth = 1472; // GameDimensions.TOTAL_GAME_WIDTH (1280 + 4 * 48)
-            baseHeight = 720; // GameDimensions.GAME_HEIGHT
+            baseWidth = GameDimensions.TOTAL_GAME_WIDTH;
+            baseHeight = GameDimensions.GAME_HEIGHT;
         } else {
-            baseWidth = 1280; // GameDimensions.MAIN_MENU_SCREEN_WIDTH
-            baseHeight = 720; // GameDimensions.MAIN_MENU_SCREEN_HEIGHT
+            baseWidth = GameDimensions.MAIN_MENU_SCREEN_WIDTH;
+            baseHeight = GameDimensions.MAIN_MENU_SCREEN_HEIGHT;
         }
 
         // Get GameScreen dimensions
