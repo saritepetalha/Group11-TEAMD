@@ -90,22 +90,50 @@ public class GameScreen extends JPanel {
 
 		super.paintComponent(g);
 
-		// Apply fullscreen transformation if in fullscreen mode
-		if (game.getFullscreenManager() != null) {
-			game.getFullscreenManager().applyRenderingTransform(g2d);
-		}
-
-		// Render game content for states that use custom rendering
-		if (GameStates.gameState != GameStates.OPTIONS &&
+		// Check if current state uses custom rendering (not JPanel-based)
+		boolean usesCustomRendering = (GameStates.gameState != GameStates.OPTIONS &&
 				GameStates.gameState != GameStates.LOAD_GAME &&
 				GameStates.gameState != GameStates.NEW_GAME_LEVEL_SELECT &&
-				GameStates.gameState != GameStates.SKILL_SELECTION) {
-			game.getRender().render(g2d);
-		}
+				GameStates.gameState != GameStates.SKILL_SELECTION);
 
-		// Reset transformation after rendering
-		if (game.getFullscreenManager() != null) {
-			game.getFullscreenManager().resetRenderingTransform(g2d);
+		// For custom-rendered scenes in fullscreen, apply consistent scaling
+		if (usesCustomRendering && game.getFullscreenManager() != null && game.getFullscreenManager().isFullscreen()) {
+			// Get base dimensions for the current state
+			int baseWidth, baseHeight;
+			if (GameStates.gameState == GameStates.PLAYING || GameStates.gameState == GameStates.GAME_OVER) {
+				baseWidth = GameDimensions.GAME_WIDTH;
+				baseHeight = GameDimensions.GAME_HEIGHT;
+			} else if (GameStates.gameState == GameStates.EDIT) {
+				baseWidth = GameDimensions.TOTAL_GAME_WIDTH;
+				baseHeight = GameDimensions.GAME_HEIGHT;
+			} else {
+				baseWidth = GameDimensions.MAIN_MENU_SCREEN_WIDTH;
+				baseHeight = GameDimensions.MAIN_MENU_SCREEN_HEIGHT;
+			}
+
+			// Calculate scaling using the same method as createScaledWrapper
+			double scaleX = (double) getWidth() / baseWidth;
+			double scaleY = (double) getHeight() / baseHeight;
+			double scale = Math.min(scaleX, scaleY);
+
+			int scaledWidth = (int) (baseWidth * scale);
+			int scaledHeight = (int) (baseHeight * scale);
+			int offsetX = (getWidth() - scaledWidth) / 2;
+			int offsetY = (getHeight() - scaledHeight) / 2;
+
+			// Apply transformation
+			g2d.translate(offsetX, offsetY);
+			g2d.scale(scale, scale);
+
+			// Render game content
+			game.getRender().render(g2d);
+
+			// Reset transformation
+			g2d.scale(1.0/scale, 1.0/scale);
+			g2d.translate(-offsetX, -offsetY);
+		} else if (usesCustomRendering) {
+			// In windowed mode, just render normally
+			game.getRender().render(g2d);
 		}
 	}
 
@@ -193,17 +221,18 @@ public class GameScreen extends JPanel {
 	 * Creates a scaled wrapper panel for fullscreen mode
 	 */
 	private JPanel createScaledWrapper(JPanel content, int baseWidth, int baseHeight) {
-		JPanel wrapper = new JPanel() {
+		JPanel wrapper = new JPanel(null) { // Use null layout for absolute positioning
 			@Override
 			protected void paintComponent(Graphics g) {
-				Graphics2D g2d = (Graphics2D) g;
+				// Fill background with black for letterboxing
+				g.setColor(java.awt.Color.BLACK);
+				g.fillRect(0, 0, getWidth(), getHeight());
+			}
 
-				// Fill background with black
-				g2d.setColor(java.awt.Color.BLACK);
-				g2d.fillRect(0, 0, getWidth(), getHeight());
-
-				if (game.getFullscreenManager() != null) {
-					// Apply the same transformation as the fullscreen manager
+			@Override
+			public void doLayout() {
+				if (getComponentCount() > 0 && game.getFullscreenManager() != null) {
+					// Calculate scaling
 					double scaleX = (double) getWidth() / baseWidth;
 					double scaleY = (double) getHeight() / baseHeight;
 					double scale = Math.min(scaleX, scaleY);
@@ -213,16 +242,17 @@ public class GameScreen extends JPanel {
 					int offsetX = (getWidth() - scaledWidth) / 2;
 					int offsetY = (getHeight() - scaledHeight) / 2;
 
-					g2d.translate(offsetX, offsetY);
-					g2d.scale(scale, scale);
+					// Set the content panel bounds to scaled size and centered position
+					getComponent(0).setBounds(offsetX, offsetY, scaledWidth, scaledHeight);
 				}
-
-				super.paintComponent(g);
 			}
 		};
 
-		wrapper.setLayout(new BorderLayout());
-		wrapper.add(content, BorderLayout.CENTER);
+		// Set content panel to its preferred size
+		content.setPreferredSize(new Dimension(baseWidth, baseHeight));
+		content.setSize(baseWidth, baseHeight);
+
+		wrapper.add(content);
 		wrapper.setBackground(java.awt.Color.BLACK);
 
 		return wrapper;
@@ -237,6 +267,8 @@ public class GameScreen extends JPanel {
 	 */
 	public void refreshForFullscreenChange() {
 		GameStates currentState = GameStates.gameState;
+		boolean isFullscreen = game.getFullscreenManager() != null && game.getFullscreenManager().isFullscreen();
+		System.out.println("Refreshing screen for state: " + currentState + ", Fullscreen: " + isFullscreen);
 		updateContentForState(currentState, currentState);
 		setPanelSize();
 	}

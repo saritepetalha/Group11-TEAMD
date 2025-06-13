@@ -18,13 +18,56 @@ public class MyMouseListener implements MouseListener, MouseMotionListener, Mous
     }
 
     /**
-     * Scales mouse coordinates for fullscreen mode
+     * Scales mouse coordinates for fullscreen mode using the same logic as rendering
      */
     private Point getScaledMouseCoordinates(int x, int y) {
-        if (game.getFullscreenManager() != null) {
-            return game.getFullscreenManager().scaleMouseCoordinates(x, y);
+        if (game.getFullscreenManager() == null || !game.getFullscreenManager().isFullscreen()) {
+            return new Point(x, y);
         }
-        return new Point(x, y);
+
+        // Only apply coordinate scaling for custom-rendered scenes
+        boolean usesCustomRendering = (GameStates.gameState != GameStates.OPTIONS &&
+                GameStates.gameState != GameStates.LOAD_GAME &&
+                GameStates.gameState != GameStates.NEW_GAME_LEVEL_SELECT &&
+                GameStates.gameState != GameStates.SKILL_SELECTION);
+
+        if (!usesCustomRendering) {
+            // For JPanel-based scenes, coordinates are handled by the wrapper
+            return new Point(x, y);
+        }
+
+        // Calculate the same scaling as done in GameScreen.paintComponent
+        int baseWidth, baseHeight;
+        if (GameStates.gameState == GameStates.PLAYING || GameStates.gameState == GameStates.GAME_OVER) {
+            baseWidth = 1280; // GameDimensions.GAME_WIDTH
+            baseHeight = 720; // GameDimensions.GAME_HEIGHT
+        } else if (GameStates.gameState == GameStates.EDIT) {
+            baseWidth = 1472; // GameDimensions.TOTAL_GAME_WIDTH (1280 + 4 * 48)
+            baseHeight = 720; // GameDimensions.GAME_HEIGHT
+        } else {
+            baseWidth = 1280; // GameDimensions.MAIN_MENU_SCREEN_WIDTH
+            baseHeight = 720; // GameDimensions.MAIN_MENU_SCREEN_HEIGHT
+        }
+
+        // Get GameScreen dimensions
+        int screenWidth = game.getGameScreen().getWidth();
+        int screenHeight = game.getGameScreen().getHeight();
+
+        // Calculate scaling using the same method as GameScreen
+        double scaleX = (double) screenWidth / baseWidth;
+        double scaleY = (double) screenHeight / baseHeight;
+        double scale = Math.min(scaleX, scaleY);
+
+        int scaledWidth = (int) (baseWidth * scale);
+        int scaledHeight = (int) (baseHeight * scale);
+        int offsetX = (screenWidth - scaledWidth) / 2;
+        int offsetY = (screenHeight - scaledHeight) / 2;
+
+        // Convert screen coordinates to game coordinates
+        int gameX = (int) ((x - offsetX) / scale);
+        int gameY = (int) ((y - offsetY) / scale);
+
+        return new Point(gameX, gameY);
     }
 
     @Override

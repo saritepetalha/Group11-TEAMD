@@ -152,9 +152,23 @@ public class FullscreenManager {
         int baseWidth = getBaseWidth();
         int baseHeight = getBaseHeight();
 
+        // Use GameScreen dimensions instead of screen dimensions for more accurate scaling
+        int actualWidth = screenWidth;
+        int actualHeight = screenHeight;
+
+        if (game.getGameScreen() != null) {
+            actualWidth = game.getGameScreen().getWidth();
+            actualHeight = game.getGameScreen().getHeight();
+        }
+
+        System.out.println("🔍 SCALING DEBUG - Current game state: " + GameStates.gameState);
+        System.out.println("🔍 Screen dimensions: " + screenWidth + "x" + screenHeight);
+        System.out.println("🔍 GameScreen dimensions: " + actualWidth + "x" + actualHeight);
+        System.out.println("🔍 Base dimensions: " + baseWidth + "x" + baseHeight);
+
         // Calculate scale factors to fit the content on screen while maintaining aspect ratio
-        double scaleX = (double) screenWidth / baseWidth;
-        double scaleY = (double) screenHeight / baseHeight;
+        double scaleX = (double) actualWidth / baseWidth;
+        double scaleY = (double) actualHeight / baseHeight;
 
         // Use uniform scaling to maintain aspect ratio
         double scale = Math.min(scaleX, scaleY);
@@ -166,13 +180,14 @@ public class FullscreenManager {
         int scaledWidth = (int) (baseWidth * scale);
         int scaledHeight = (int) (baseHeight * scale);
 
-        this.offsetX = (screenWidth - scaledWidth) / 2;
-        this.offsetY = (screenHeight - scaledHeight) / 2;
+        this.offsetX = (actualWidth - scaledWidth) / 2;
+        this.offsetY = (actualHeight - scaledHeight) / 2;
 
-        System.out.println("Scaling factors calculated:");
-        System.out.println("- Base size: " + baseWidth + "x" + baseHeight);
-        System.out.println("- Scale: " + scale);
-        System.out.println("- Offset: " + offsetX + "x" + offsetY);
+        System.out.println("🔍 Calculated scale factors:");
+        System.out.println("🔍 - scaleX ratio: " + scaleX + ", scaleY ratio: " + scaleY);
+        System.out.println("🔍 - Final scale: " + scale);
+        System.out.println("🔍 - Scaled size: " + scaledWidth + "x" + scaledHeight);
+        System.out.println("🔍 - Offsets: " + offsetX + "x" + offsetY);
     }
 
     private void resetScalingFactors() {
@@ -228,9 +243,21 @@ public class FullscreenManager {
             return;
         }
 
-        // Fill background with black to handle letterboxing
+        System.out.println("🎨 APPLYING TRANSFORM - State: " + GameStates.gameState);
+        System.out.println("🎨 - Scale: " + scaleX + "x" + scaleY);
+        System.out.println("🎨 - Offset: " + offsetX + "," + offsetY);
+
+        // Fill background with black to handle letterboxing using actual GameScreen dimensions
+        int actualWidth = screenWidth;
+        int actualHeight = screenHeight;
+
+        if (game.getGameScreen() != null) {
+            actualWidth = game.getGameScreen().getWidth();
+            actualHeight = game.getGameScreen().getHeight();
+        }
+
         g2d.setColor(Color.BLACK);
-        g2d.fillRect(0, 0, screenWidth, screenHeight);
+        g2d.fillRect(0, 0, actualWidth, actualHeight);
 
         // Apply transformation
         AffineTransform transform = new AffineTransform();
