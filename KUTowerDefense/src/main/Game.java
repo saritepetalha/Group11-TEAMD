@@ -6,6 +6,7 @@ import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
+import java.io.File;
 
 import javax.swing.JFrame;
 
@@ -52,6 +53,9 @@ public class  Game extends JFrame implements Runnable{
 	private GameStates previousGameState = GameStates.MENU;
 
 	public Game() {
+		// Debug information for IntelliJ compatibility
+		printDebugInfo();
+
 		System.out.println("Game Starting...");
 
 		// Initialize the enhanced options system
@@ -68,13 +72,39 @@ public class  Game extends JFrame implements Runnable{
 
 		this.tileManager = new TileManager();
 
-		setDefaultCloseOperation(EXIT_ON_CLOSE);
-		setResizable(false);
 		initClasses();
 		add(gamescreen);
+		setLocationRelativeTo(null);
+		setResizable(false);
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		pack();
 		setVisible(true);
-		setLocationRelativeTo(null);
+	}
+
+	/**
+	 * Print debug information to help with IntelliJ path issues
+	 */
+	private void printDebugInfo() {
+		System.out.println("=== GAME DEBUG INFO ===");
+		System.out.println("Working Directory: " + System.getProperty("user.dir"));
+		System.out.println("Java Version: " + System.getProperty("java.version"));
+		System.out.println("OS: " + System.getProperty("os.name"));
+
+		// Check if key directories exist
+		String[] checkPaths = {
+				"src/main/resources/Saves",
+				"src/main/resources/Levels",
+				"src/main/resources/Options",
+				"demo/src/main/resources/Saves",
+				"./src/main/resources/Saves"
+		};
+
+		System.out.println("Directory existence check:");
+		for (String path : checkPaths) {
+			File dir = new File(path);
+			System.out.println("  " + path + " - exists: " + dir.exists() + ", isDirectory: " + dir.isDirectory());
+		}
+		System.out.println("========================");
 	}
 
 	private void createDefaultLevel() {
