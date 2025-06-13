@@ -42,26 +42,17 @@ public class SavedLevelsOnlyStrategy implements LevelSelectionStrategy {
      */
     private boolean hasSaveFile(String levelName) {
         try {
-            // Try multiple possible paths in order of preference
-            String[] possiblePaths = {
-                    "src/main/resources/Saves",          // Standard Maven structure from project root
-                    "demo/src/main/resources/Saves",     // If running from parent directory
-                    "main/resources/Saves",              // If running from src directory
-                    "resources/Saves",                   // If running from src/main directory
-                    "KUTowerDefense/resources/Saves"     // Legacy structure
-            };
+            // Check for .save files in the saves/ directory (where PlayingModel saves them)
+            File saveFile = new File("saves", levelName + ".save");
+            boolean exists = saveFile.exists();
 
-            for (String path : possiblePaths) {
-                File savesDir = new File(path);
-                if (savesDir.exists() && savesDir.isDirectory()) {
-                    File saveFile = new File(savesDir, levelName + ".json");
-                    if (saveFile.exists()) {
-                        return true;
-                    }
-                }
+            if (exists) {
+                System.out.println("Found save file: " + saveFile.getAbsolutePath());
+            } else {
+                System.out.println("No save file found for: " + levelName + " at " + saveFile.getAbsolutePath());
             }
 
-            return false;
+            return exists;
         } catch (Exception e) {
             System.err.println("Error checking save file for level: " + levelName + " - " + e.getMessage());
             return false;

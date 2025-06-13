@@ -287,7 +287,8 @@ public class Playing extends GameScene implements SceneMethods {
     // Game state save/load - delegate to controller
     public void saveGameState() {
         if (controller != null) {
-            controller.saveGameState("autosave");
+            String currentMap = getCurrentMapName();
+            controller.saveGameState(currentMap != null ? currentMap : "autosave");
         }
     }
 

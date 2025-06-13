@@ -50,7 +50,7 @@ public class PlayingController implements Observer {
     public PlayingController(Game game) {
         this.game = game;
         this.model = new PlayingModel();
-        this.view = new PlayingView(model);
+        this.view = new PlayingView(model, this);
 
         // Initialize specialized controllers
         initializeControllers();
@@ -65,7 +65,7 @@ public class PlayingController implements Observer {
     public PlayingController(Game game, managers.TileManager tileManager) {
         this.game = game;
         this.model = new PlayingModel(tileManager);
-        this.view = new PlayingView(model);
+        this.view = new PlayingView(model, this);
 
         // Initialize specialized controllers
         initializeControllers();
@@ -79,7 +79,7 @@ public class PlayingController implements Observer {
     public PlayingController(Game game, managers.TileManager tileManager, int[][] customLevel, int[][] customOverlay) {
         this.game = game;
         this.model = new PlayingModel(tileManager, customLevel, customOverlay);
-        this.view = new PlayingView(model);
+        this.view = new PlayingView(model, this);
 
         // Initialize specialized controllers
         initializeControllers();
@@ -946,4 +946,4 @@ public class PlayingController implements Observer {
             // If placement failed, keep factory selected for another try
         }
     }
-} 
+}
