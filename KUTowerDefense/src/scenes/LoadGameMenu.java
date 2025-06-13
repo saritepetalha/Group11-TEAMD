@@ -417,13 +417,13 @@ public class LoadGameMenu extends JPanel {
                         }
                     }
 
-                    // Load saved game state to get the difficulty from .save file
-                    models.GameSaveData saveData = loadGameSaveData(levelName);
+                    // Load saved game state to get the difficulty from JSON file
+                    GameStateMemento saveData = loadGameStateMemento(levelName);
                     String difficulty = "Normal"; // Default fallback
 
                     // Get difficulty directly from saved game state
-                    if (saveData != null && saveData.getCurrentDifficulty() != null) {
-                        difficulty = saveData.getCurrentDifficulty();
+                    if (saveData != null && saveData.getDifficulty() != null) {
+                        difficulty = saveData.getDifficulty();
                     }
 
                     // Start the game and then load the saved state
@@ -866,8 +866,8 @@ public class LoadGameMenu extends JPanel {
      */
     private JPanel createTooltipPanel(String levelName) {
         try {
-            // Load the game save data directly from .save file
-            models.GameSaveData saveData = loadGameSaveData(levelName);
+            // Load the game save data from JSON file
+            GameStateMemento saveData = loadGameStateMemento(levelName);
 
             JPanel panel = new JPanel() {
                 @Override
@@ -932,24 +932,9 @@ public class LoadGameMenu extends JPanel {
             contentPanel.add(Box.createRigidArea(new Dimension(0, 6)));
 
             // Extract player data from save
-            int health = 100, shield = 100, gold = 100; // defaults
-            if (saveData.getPlayerData() != null) {
-                try {
-                    @SuppressWarnings("unchecked")
-                    java.util.Map<String, Object> playerData = (java.util.Map<String, Object>) saveData.getPlayerData();
-                    if (playerData.containsKey("health")) {
-                        health = (Integer) playerData.get("health");
-                    }
-                    if (playerData.containsKey("shield")) {
-                        shield = (Integer) playerData.get("shield");
-                    }
-                    if (playerData.containsKey("gold")) {
-                        gold = (Integer) playerData.get("gold");
-                    }
-                } catch (Exception e) {
-                    System.err.println("Error extracting player data: " + e.getMessage());
-                }
-            }
+            int health = saveData != null ? saveData.getHealth() : 100;
+            int shield = saveData != null ? saveData.getShield() : 100;
+            int gold = saveData != null ? saveData.getGold() : 100;
 
             JLabel healthLabel = new JLabel("❤️ Health: " + health + "/" + health);
             healthLabel.setFont(infoFont);
@@ -970,18 +955,7 @@ public class LoadGameMenu extends JPanel {
             contentPanel.add(goldLabel);
 
             // Extract wave data from save
-            int waveIndex = 0;
-            if (saveData.getWaveData() != null) {
-                try {
-                    @SuppressWarnings("unchecked")
-                    java.util.Map<String, Object> waveData = (java.util.Map<String, Object>) saveData.getWaveData();
-                    if (waveData.containsKey("currentWaveIndex")) {
-                        waveIndex = (Integer) waveData.get("currentWaveIndex");
-                    }
-                } catch (Exception e) {
-                    System.err.println("Error extracting wave data: " + e.getMessage());
-                }
-            }
+            int waveIndex = saveData != null ? saveData.getWaveIndex() : 0;
 
             String waveText = "🌊 Wave: " + (waveIndex + 1);
             JLabel waveLabel = new JLabel(waveText);
@@ -991,7 +965,7 @@ public class LoadGameMenu extends JPanel {
             contentPanel.add(waveLabel);
 
             // Add difficulty information
-            String difficultyText = "⚔️ Difficulty: " + (saveData.getCurrentDifficulty() != null ? saveData.getCurrentDifficulty() : "Unknown");
+            String difficultyText = "⚔️ Difficulty: " + (saveData != null && saveData.getDifficulty() != null ? saveData.getDifficulty() : "Unknown");
             JLabel difficultyLabel = new JLabel(difficultyText);
             difficultyLabel.setFont(infoFont);
             difficultyLabel.setForeground(new Color(128, 0, 128));
@@ -1069,23 +1043,18 @@ public class LoadGameMenu extends JPanel {
     }
 
     /**
-     * Loads GameSaveData directly from .save file
+     * Loads GameStateMemento from JSON file
      */
-    private models.GameSaveData loadGameSaveData(String levelName) {
+    private GameStateMemento loadGameStateMemento(String levelName) {
         try {
-            java.io.File saveFile = new java.io.File("saves", levelName + ".save");
-            if (!saveFile.exists()) {
-                System.err.println("Save file not found: " + saveFile.getAbsolutePath());
+            if (gameStateManager == null) {
+                System.err.println("GameStateManager is null, cannot load save data");
                 return null;
             }
 
-            try (java.io.ObjectInputStream ois = new java.io.ObjectInputStream(
-                    new java.io.FileInputStream(saveFile))) {
-                models.GameSaveData saveData = (models.GameSaveData) ois.readObject();
-                return saveData;
-            }
+            return gameStateManager.loadGameState(levelName);
         } catch (Exception e) {
-            System.err.println("Failed to load save data: " + e.getMessage());
+            System.err.println("Failed to load save data for " + levelName + ": " + e.getMessage());
             return null;
         }
     }

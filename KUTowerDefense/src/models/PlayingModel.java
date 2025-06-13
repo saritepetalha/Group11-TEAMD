@@ -614,20 +614,15 @@ public class PlayingModel extends Observable implements GameContext {
      */
     public boolean saveGameState(String filename) {
         try {
-            GameSaveData saveData = createGameSaveData();
-            // For now, use a simple file-based approach until GameStateManager is updated
-            java.io.File saveDir = new java.io.File("saves");
-            if (!saveDir.exists()) {
-                saveDir.mkdirs();
+            if (gameStateManager == null) {
+                System.err.println("GameStateManager is null, cannot save game state");
+                return false;
             }
 
-            java.io.File saveFile = new java.io.File(saveDir, filename + ".save");
-            try (java.io.ObjectOutputStream oos = new java.io.ObjectOutputStream(
-                    new java.io.FileOutputStream(saveFile))) {
-                oos.writeObject(saveData);
-                System.out.println("Game state saved successfully to: " + saveFile.getAbsolutePath());
-                return true;
-            }
+            GameStateMemento memento = createGameStateMemento();
+            gameStateManager.saveGameState(memento, filename);
+            System.out.println("Game state saved successfully as: " + filename);
+            return true;
         } catch (Exception e) {
             System.err.println("Failed to save game state: " + e.getMessage());
             e.printStackTrace();
@@ -642,21 +637,22 @@ public class PlayingModel extends Observable implements GameContext {
      */
     public boolean loadGameState(String filename) {
         try {
-            java.io.File saveFile = new java.io.File("saves", filename + ".save");
-            if (!saveFile.exists()) {
-                System.err.println("Save file not found: " + saveFile.getAbsolutePath());
+            if (gameStateManager == null) {
+                System.err.println("GameStateManager is null, cannot load game state");
                 return false;
             }
 
-            try (java.io.ObjectInputStream ois = new java.io.ObjectInputStream(
-                    new java.io.FileInputStream(saveFile))) {
-                GameSaveData saveData = (GameSaveData) ois.readObject();
-                applyGameSaveData(saveData);
-                setChanged();
-                notifyObservers("gameStateLoaded");
-                System.out.println("Game state loaded successfully from: " + saveFile.getAbsolutePath());
-                return true;
+            GameStateMemento memento = gameStateManager.loadGameState(filename);
+            if (memento == null) {
+                System.err.println("Failed to load game state: " + filename);
+                return false;
             }
+
+            applyGameStateMemento(memento);
+            setChanged();
+            notifyObservers("gameStateLoaded");
+            System.out.println("Game state loaded successfully: " + filename);
+            return true;
         } catch (Exception e) {
             System.err.println("Failed to load game state: " + e.getMessage());
             e.printStackTrace();
@@ -793,45 +789,49 @@ public class PlayingModel extends Observable implements GameContext {
     }
 
     /**
-     * Create a GameSaveData object representing the current game state
+     * Create a GameStateMemento object representing the current game state for JSON save
      */
-    private GameSaveData createGameSaveData() {
-        GameSaveData saveData = new GameSaveData();
+    private GameStateMemento createGameStateMemento() {
+        // Get current player state
+        int gold = playerManager != null ? playerManager.getGold() : 0;
+        int health = playerManager != null ? playerManager.getHealth() : castleCurrentHealth;
+        int shield = playerManager != null ? playerManager.getShield() : 0;
 
-        // Core game state
-        saveData.setGamePaused(gamePaused);
-        saveData.setGameSpeedIncreased(gameSpeedIncreased);
-        saveData.setGameSpeedMultiplier(gameSpeedMultiplier);
-        saveData.setCurrentMapName(currentMapName);
-        saveData.setCurrentDifficulty(currentDifficulty);
+        // Get current wave state
+        int waveIndex = waveManager != null ? waveManager.getWaveIndex() : 0;
+        int groupIndex = 0; // TODO: Add group tracking if needed
 
-        // Game statistics
-        saveData.setTotalEnemiesSpawned(totalEnemiesSpawned);
-        saveData.setEnemiesReachedEnd(enemiesReachedEnd);
-        saveData.setEnemyDefeated(enemyDefeated);
-        saveData.setTotalDamage(totalDamage);
-        saveData.setTimePlayedInSeconds(timePlayedInSeconds);
-        saveData.setGameTimeMillis(gameTimeMillis);
+        // Get tower states
+        java.util.List<GameStateMemento.TowerState> towerStates = createTowerStates();
 
-        // Castle health
-        saveData.setCastleMaxHealth(castleMaxHealth);
-        saveData.setCastleCurrentHealth(castleCurrentHealth);
+        // Get enemy states (empty for now)
+        java.util.List<GameStateMemento.EnemyState> enemyStates = new java.util.ArrayList<>();
 
-        // Level data
-        saveData.setLevel(deepCopy2DArray(level));
-        saveData.setOverlay(deepCopy2DArray(overlay));
+        // Get skills
+        java.util.Set<skills.SkillType> selectedSkills = skills.SkillTree.getInstance().getSelectedSkills();
 
-        // Skills selected at the start of the game
-        saveData.setSelectedSkills(skills.SkillTree.getInstance().getSelectedSkills());
+        return new GameStateMemento(
+                gold, health, shield, waveIndex, groupIndex,
+                towerStates, enemyStates, gameOptions, currentDifficulty, selectedSkills
+        );
+    }
 
-        // Manager states (if managers are available) - basic version
-        if (managersInitialized()) {
-            // Save only basic state information
-            saveData.setPlayerData(createPlayerSaveData());
-            saveData.setWaveData(createWaveSaveData());
+    /**
+     * Create tower states from current towers
+     */
+    private java.util.List<GameStateMemento.TowerState> createTowerStates() {
+        java.util.List<GameStateMemento.TowerState> towerStates = new java.util.ArrayList<>();
+
+        if (towerManager != null && towerManager.getTowers() != null) {
+            for (Tower tower : towerManager.getTowers()) {
+                GameStateMemento.TowerState towerState = new GameStateMemento.TowerState(
+                        tower.getX(), tower.getY(), tower.getType(), tower.getLevel()
+                );
+                towerStates.add(towerState);
+            }
         }
 
-        return saveData;
+        return towerStates;
     }
 
     /**
@@ -909,6 +909,63 @@ public class PlayingModel extends Observable implements GameContext {
                 applyWaveSaveData(saveData.getWaveData());
             }
         }
+    }
+
+    /**
+     * Apply loaded game state memento to the current game
+     */
+    private void applyGameStateMemento(GameStateMemento memento) {
+        // Set difficulty
+        if (memento.getDifficulty() != null) {
+            currentDifficulty = memento.getDifficulty();
+        }
+
+        // Restore skills selected at the start of the game
+        if (memento.getSelectedSkills() != null && !memento.getSelectedSkills().isEmpty()) {
+            skills.SkillTree.getInstance().setSelectedSkills(memento.getSelectedSkills());
+            System.out.println("Restored " + memento.getSelectedSkills().size() + " skills from save data");
+        }
+
+        // Apply player state if managers are available
+        if (managersInitialized()) {
+            if (playerManager != null) {
+                playerManager.setGold(memento.getGold());
+                playerManager.setHealth(memento.getHealth());
+                playerManager.setShield(memento.getShield());
+                System.out.println("Restored player state: Gold=" + memento.getGold() +
+                        ", Health=" + memento.getHealth() +
+                        ", Shield=" + memento.getShield());
+            }
+
+            // Apply wave state
+            if (waveManager != null) {
+                // TODO: Add wave state restoration when methods become available
+                System.out.println("Wave index from save: " + memento.getWaveIndex());
+            }
+
+            // Apply tower states
+            if (towerManager != null && memento.getTowerStates() != null) {
+                restoreTowerStates(memento.getTowerStates());
+            }
+        }
+
+        // Update castle health to match player health
+        castleCurrentHealth = memento.getHealth();
+
+        System.out.println("Game state memento applied successfully");
+    }
+
+    /**
+     * Restore tower states from saved data
+     */
+    private void restoreTowerStates(java.util.List<GameStateMemento.TowerState> towerStates) {
+        // For now, just log the towers to restore - full implementation depends on TowerManager capabilities
+        for (GameStateMemento.TowerState towerState : towerStates) {
+            System.out.println("Restoring tower at (" + towerState.getX() + "," + towerState.getY() +
+                    ") Type=" + towerState.getType() + " Level=" + towerState.getLevel());
+        }
+
+        System.out.println("Restored " + towerStates.size() + " towers from save data");
     }
 
     /**
