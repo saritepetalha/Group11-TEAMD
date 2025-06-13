@@ -101,6 +101,7 @@ public class SkillSelectionScene extends JPanel {
             public void mousePressed(java.awt.event.MouseEvent e) {
                 if (backButtonStyled.getBounds().contains(e.getX(), e.getY())) {
                     backButtonStyled.setMousePressed(true);
+                    SkillTree.getInstance().resetAllSkills();
                     styledButtonPanel.repaint();
                 } else if (startGameButtonStyled.getBounds().contains(e.getX(), e.getY())) {
                     startGameButtonStyled.setMousePressed(true);
@@ -398,5 +399,19 @@ public class SkillSelectionScene extends JPanel {
                 default: return type.getDescription();
             }
         }
+    }
+
+    public void resetSkillSelections() {
+        // Unselect all buttons in UI
+        for (SkillButton button : skillButtons) {
+            button.setSelected(false);
+            button.setHovered(false);
+        }
+        // Clear SkillTree data
+        SkillTree.getInstance().resetAllSkills();
+        // Repaint both panels to ensure UI is updated
+        contentPanel.repaint();
+        styledButtonPanel.repaint();
+        repaint();
     }
 } 

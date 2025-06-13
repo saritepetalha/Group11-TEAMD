@@ -30,8 +30,9 @@ public class SkillTree {
         return selectedSkills.contains(skill);
     }
 
-    public void clearSkills() {
+    public void resetAllSkills() {
         selectedSkills.clear();
+        System.out.println("All skills have been reset");
     }
 
     // Economy skill effects
@@ -58,4 +59,5 @@ public class SkillTree {
         System.out.println("Calculating interest: " + currentGold + " gold * " + getInterestRate() + " = " + interest + " gold");
         return interest;
     }
+
 } 

@@ -6,6 +6,7 @@ import main.Game;
 import managers.*;
 import javax.swing.JPanel;
 import controllers.PlayingController;
+import skills.SkillTree;
 
 /**
  * Playing - Thin wrapper around PlayingController for MVC architecture
@@ -301,6 +302,8 @@ public class Playing extends GameScene implements SceneMethods {
     public void resetGameState() {
         if (controller != null) {
             controller.resetGameState();
+            // Reset skills when game is over
+            SkillTree.getInstance().resetAllSkills();
         }
     }
 
