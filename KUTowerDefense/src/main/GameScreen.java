@@ -282,6 +282,21 @@ public class GameScreen extends JPanel {
 		GameStates currentState = GameStates.gameState;
 		boolean isFullscreen = game.getFullscreenManager() != null && game.getFullscreenManager().isFullscreen();
 		System.out.println("🔄 Refreshing screen for state: " + currentState + ", Fullscreen: " + isFullscreen);
+
+		// Update UI elements for fullscreen
+		if (currentState == GameStates.PLAYING && game.getPlaying() != null && game.getPlaying().getPlayingUI() != null) {
+			game.getPlaying().getPlayingUI().updateForFullscreen();
+		}
+
+		if (currentState == GameStates.NEW_GAME_LEVEL_SELECT && game.getNewGameLevelSelection() != null) {
+			game.getNewGameLevelSelection().updateForFullscreen();
+		}
+
+		if (currentState == GameStates.STATISTICS && game.getStatisticsScene() != null) {
+			// Statistics scene should re-update button positions
+			game.getStatisticsScene().update();
+		}
+
 		updateContentForState(currentState, currentState);
 		setPanelSize();
 	}

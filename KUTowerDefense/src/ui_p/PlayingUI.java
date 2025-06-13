@@ -90,18 +90,30 @@ public class PlayingUI {
         initButtons();
     }
 
-    private void initButtons() {
+    /**
+     * Updates button positions when fullscreen mode changes
+     */
+    public void updateForFullscreen() {
+        initButtons(); // Reinitialize buttons with new positions
+    }
+
+    private void initButtons()     {
         int buttonSpacing = 8;
 
-        // Calculate the actual level width instead of using fixed GAME_WIDTH
-        int actualWidth = GameDimensions.GAME_WIDTH; // Default fallback
-        if (playing != null && playing.getLevel() != null) {
+        // Calculate the actual screen width for fullscreen mode
+        int screenWidth = GameDimensions.GAME_WIDTH; // Default fallback
+        if (playing != null && playing.getGame() != null &&
+                playing.getGame().getFullscreenManager() != null &&
+                playing.getGame().getFullscreenManager().isFullscreen()) {
+            screenWidth = playing.getGame().getFullscreenManager().getScreenWidth();
+        } else if (playing != null && playing.getLevel() != null) {
+            // In windowed mode, use level width
             int[][] level = playing.getLevel();
             int levelCols = level[0].length;
-            actualWidth = levelCols * GameDimensions.TILE_DISPLAY_SIZE;
+            screenWidth = levelCols * GameDimensions.TILE_DISPLAY_SIZE;
         }
 
-        int startX = actualWidth - (buttonSize * 3 + buttonSpacing * 2) - 10;
+        int startX = screenWidth - (buttonSize * 3 + buttonSpacing * 2) - 10;
         int startY = 8;
 
         // initialize control buttons as TheButton objects
@@ -252,15 +264,20 @@ public class PlayingUI {
         int barHeight = 32;
         int iconSize = 32;
 
-        // Calculate the actual level width instead of using fixed GAME_WIDTH
-        int actualWidth = GameDimensions.GAME_WIDTH; // Default fallback
-        if (playing != null && playing.getLevel() != null) {
+        // Calculate the actual screen width for fullscreen mode
+        int screenWidth = GameDimensions.GAME_WIDTH; // Default fallback
+        if (playing != null && playing.getGame() != null &&
+                playing.getGame().getFullscreenManager() != null &&
+                playing.getGame().getFullscreenManager().isFullscreen()) {
+            screenWidth = playing.getGame().getFullscreenManager().getScreenWidth();
+        } else if (playing != null && playing.getLevel() != null) {
+            // In windowed mode, use level width
             int[][] level = playing.getLevel();
             int levelCols = level[0].length;
-            actualWidth = levelCols * GameDimensions.TILE_DISPLAY_SIZE;
+            screenWidth = levelCols * GameDimensions.TILE_DISPLAY_SIZE;
         }
 
-        int startX = actualWidth - barWidth - iconSize - buttonSpacing - 10;
+        int startX = screenWidth - barWidth - iconSize - buttonSpacing - 10;
         int startY = buttonSize + 16;
 
         // Using the new method from Playing that works with our refactored WaveManager
@@ -501,15 +518,20 @@ public class PlayingUI {
     private void drawControlButtons(Graphics g) {
         int buttonSpacing = 8;
 
-        // Calculate the actual level width instead of using fixed GAME_WIDTH
-        int actualWidth = GameDimensions.GAME_WIDTH; // Default fallback
-        if (playing != null && playing.getLevel() != null) {
+        // Calculate the actual screen width for fullscreen mode
+        int screenWidth = GameDimensions.GAME_WIDTH; // Default fallback
+        if (playing != null && playing.getGame() != null &&
+                playing.getGame().getFullscreenManager() != null &&
+                playing.getGame().getFullscreenManager().isFullscreen()) {
+            screenWidth = playing.getGame().getFullscreenManager().getScreenWidth();
+        } else if (playing != null && playing.getLevel() != null) {
+            // In windowed mode, use level width
             int[][] level = playing.getLevel();
             int levelCols = level[0].length;
-            actualWidth = levelCols * GameDimensions.TILE_DISPLAY_SIZE;
+            screenWidth = levelCols * GameDimensions.TILE_DISPLAY_SIZE;
         }
 
-        int startX = actualWidth - (buttonSize * 3 + buttonSpacing * 2) - 10;
+        int startX = screenWidth - (buttonSize * 3 + buttonSpacing * 2) - 10;
         int startY = 8;
 
         Graphics2D g2d = (Graphics2D) g;

@@ -50,13 +50,17 @@ public class LevelSelectionScene extends JPanel {
     private TheButton backButton;
     private LevelSelectionStrategy strategy;
 
-    private static final int PREVIEW_WIDTH = 192;
-    private static final int PREVIEW_HEIGHT = 108;
+    private static final int BASE_PREVIEW_WIDTH = 192;
+    private static final int BASE_PREVIEW_HEIGHT = 108;
     private static final int PREVIEW_MARGIN = 15;
     private static final int PREVIEWS_PER_ROW = 2;
     private static final int PREVIEWS_PER_PAGE = 4;
     private static final int HEADER_HEIGHT = 80;
     private static final int FOOTER_HEIGHT = 80;
+
+    // Dynamic preview sizes based on fullscreen
+    private int PREVIEW_WIDTH = BASE_PREVIEW_WIDTH;
+    private int PREVIEW_HEIGHT = BASE_PREVIEW_HEIGHT;
 
     private Font medodicaFontSmall;
     private Font medodicaFontSmallBold;
@@ -96,10 +100,57 @@ public class LevelSelectionScene extends JPanel {
         this.medodicaFontMedium = FontLoader.loadMedodicaFont(16f);
         this.mvBoliFontBold = new Font("MV Boli", Font.BOLD, 14);
 
-        setPreferredSize(new Dimension(GameDimensions.MAIN_MENU_SCREEN_WIDTH, GameDimensions.MAIN_MENU_SCREEN_HEIGHT));
+        updateSizeForFullscreen();
         setLayout(new BorderLayout());
 
         initUI();
+    }
+
+    /**
+     * Updates the panel size based on fullscreen state
+     */
+    private void updateSizeForFullscreen() {
+        if (game.getFullscreenManager() != null && game.getFullscreenManager().isFullscreen()) {
+            setPreferredSize(new Dimension(game.getFullscreenManager().getScreenWidth(),
+                    game.getFullscreenManager().getScreenHeight()));
+        } else {
+            setPreferredSize(new Dimension(GameDimensions.MAIN_MENU_SCREEN_WIDTH, GameDimensions.MAIN_MENU_SCREEN_HEIGHT));
+        }
+    }
+
+    /**
+     * Called when fullscreen mode changes
+     */
+    public void updateForFullscreen() {
+        updateSizeForFullscreen();
+
+        // Scale fonts and preview sizes for fullscreen
+        if (game.getFullscreenManager() != null && game.getFullscreenManager().isFullscreen()) {
+            float scaleFactor = Math.min(game.getFullscreenManager().getScreenWidth() / (float)GameDimensions.MAIN_MENU_SCREEN_WIDTH,
+                    game.getFullscreenManager().getScreenHeight() / (float)GameDimensions.MAIN_MENU_SCREEN_HEIGHT);
+            scaleFactor = Math.max(1.0f, scaleFactor);
+
+            // Scale fonts
+            this.medodicaFontSmall = FontLoader.loadMedodicaFont(14f * scaleFactor);
+            this.medodicaFontSmallBold = FontLoader.loadMedodicaFont(14f * scaleFactor).deriveFont(Font.BOLD);
+            this.medodicaFontMedium = FontLoader.loadMedodicaFont(16f * scaleFactor);
+            this.mvBoliFontBold = new Font("MV Boli", Font.BOLD, (int)(14 * scaleFactor));
+
+            // Scale preview sizes
+            this.PREVIEW_WIDTH = (int)(BASE_PREVIEW_WIDTH * scaleFactor);
+            this.PREVIEW_HEIGHT = (int)(BASE_PREVIEW_HEIGHT * scaleFactor);
+        } else {
+            this.medodicaFontSmall = FontLoader.loadMedodicaFont(14f);
+            this.medodicaFontSmallBold = FontLoader.loadMedodicaFont(14f).deriveFont(Font.BOLD);
+            this.medodicaFontMedium = FontLoader.loadMedodicaFont(16f);
+            this.mvBoliFontBold = new Font("MV Boli", Font.BOLD, 14);
+
+            // Reset preview sizes
+            this.PREVIEW_WIDTH = BASE_PREVIEW_WIDTH;
+            this.PREVIEW_HEIGHT = BASE_PREVIEW_HEIGHT;
+        }
+
+        refreshLevelList(); // Refresh the UI with new fonts
     }
 
     public void refreshLevelList() {

@@ -5,6 +5,7 @@ import main.Game;
 import main.GameStates;
 import stats.GameStatsRecord;
 import ui_p.TheButton;
+import constants.GameDimensions;
 
 import java.awt.*;
 import java.awt.event.MouseWheelEvent;
@@ -19,7 +20,6 @@ public class StatisticsScene extends GameScene implements SceneMethods {
     private int scrollOffset = 0;
     private final int cardHeight = 120;
     private final int spacing = 20;
-    int visibleAreaHeight = 500 - 100 - 20;
     private BufferedImage bg;
     private boolean scrollbarDragging = false;
     private int dragStartY = 0;
@@ -27,16 +27,41 @@ public class StatisticsScene extends GameScene implements SceneMethods {
 
     public StatisticsScene(Game game) {
         super(game);
-        int buttonWidth = 180;
-        int buttonHeight = 50;
-        int x = 400;
-        int y = 400;
-        backButton = new TheButton("Back", x, y, buttonWidth, buttonHeight);
         bg = LoadSave.getImageFromPath("/KuTowerDefence1.jpg");
 
         game.getStatsManager().loadFromFiles();
-
         this.stats = game.getStatsManager().getRecords();
+        updateButtonPosition();
+    }
+
+    private void updateButtonPosition() {
+        int screenWidth = getScreenWidth();
+        int screenHeight = getScreenHeight();
+
+        int buttonWidth = 180;
+        int buttonHeight = 50;
+        int x = screenWidth - buttonWidth - 40;
+        int y = screenHeight - buttonHeight - 40;
+
+        backButton = new TheButton("Back", x, y, buttonWidth, buttonHeight);
+    }
+
+    private int getScreenWidth() {
+        if (game.getFullscreenManager() != null && game.getFullscreenManager().isFullscreen()) {
+            return game.getFullscreenManager().getScreenWidth();
+        }
+        return GameDimensions.MAIN_MENU_SCREEN_WIDTH;
+    }
+
+    private int getScreenHeight() {
+        if (game.getFullscreenManager() != null && game.getFullscreenManager().isFullscreen()) {
+            return game.getFullscreenManager().getScreenHeight();
+        }
+        return GameDimensions.MAIN_MENU_SCREEN_HEIGHT;
+    }
+
+    private int getVisibleAreaHeight() {
+        return getScreenHeight() - 200; // 100 for header, 100 for bottom padding
     }
 
     private void drawCard(Graphics g, GameStatsRecord record, int x, int y, int width, int height, boolean selected) {
@@ -126,14 +151,17 @@ public class StatisticsScene extends GameScene implements SceneMethods {
 
     private int getMaxScrollOffset() {
         int totalHeight = getTotalContentHeight();
+        int visibleAreaHeight = getVisibleAreaHeight();
         int bottomPadding = 20;
         return Math.max(0, totalHeight - visibleAreaHeight + bottomPadding);
     }
 
     private Rectangle getScrollbarThumbBounds() {
-        int cardX = 40;
+        int screenWidth = getScreenWidth();
+        int cardX = (int) (screenWidth * 0.05); // 5% margin from left
         int cardYStart = 100;
         int totalHeight = getTotalContentHeight();
+        int visibleAreaHeight = getVisibleAreaHeight();
 
         if (totalHeight > visibleAreaHeight) {
             int scrollbarX = cardX - 10;
@@ -155,29 +183,46 @@ public class StatisticsScene extends GameScene implements SceneMethods {
         return null; // No scrollbar visible
     }
 
-    public void update() {}
+    public void update() {
+        // Update button position in case fullscreen mode changed
+        updateButtonPosition();
+    }
 
     @Override
     public void render(Graphics g) {
-        g.setColor(Color.BLACK);
-        g.fillRect(0, 0, 1024, 768);
-        Graphics2D g2d = (Graphics2D) g.create();
-        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.25f));
-        g2d.drawImage(bg, 0, 0, null);
-        g2d.dispose();
+        int screenWidth = getScreenWidth();
+        int screenHeight = getScreenHeight();
 
+        // Fill background
+        g.setColor(Color.BLACK);
+        g.fillRect(0, 0, screenWidth, screenHeight);
+
+        // Draw background image scaled to screen
+        if (bg != null) {
+            Graphics2D g2d = (Graphics2D) g.create();
+            g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.25f));
+            g2d.drawImage(bg, 0, 0, screenWidth, screenHeight, null);
+            g2d.dispose();
+        }
+
+        // Draw title
         g.setFont(new Font("MV Boli", Font.BOLD, 28));
         g.setColor(Color.WHITE);
-        g.drawString("GAME STATISTICS", 40, 60);
+        int titleX = (int) (screenWidth * 0.05); // 5% margin from left
+        g.drawString("GAME STATISTICS", titleX, 60);
 
-        int cardX = 40;
+        // Calculate responsive dimensions
+        int cardX = titleX;
         int cardYStart = 100;
-        int cardWidth = 300;
-        int cardHeight = 120;
-        int spacing = 20;
+        int cardWidth = (int) (screenWidth * 0.3); // 30% of screen width
+        int visibleAreaHeight = getVisibleAreaHeight();
+
+        // Create clipping area for cards
         Graphics clippedG = g.create();
         clippedG.setClip(cardX, cardYStart, cardWidth + 20, visibleAreaHeight);
 
+        // Draw cards
         for (int i = 0; i < stats.size(); i++) {
             int y = cardYStart + i * (cardHeight + spacing) - scrollOffset;
 
@@ -188,21 +233,26 @@ public class StatisticsScene extends GameScene implements SceneMethods {
 
         clippedG.dispose();
 
+        // Draw details panel
         if (selectedIndex >= 0 && selectedIndex < stats.size()) {
             GameStatsRecord selected = stats.get(selectedIndex);
 
-            int detailX = 380;
+            int detailX = cardX + cardWidth + 40;
             int detailY = 120;
+            int detailWidth = (int) (screenWidth * 0.25); // 25% of screen width
+            int detailHeight = 260;
+
             g.setColor(new Color(255, 255, 255, 20));
-            g.fillRoundRect(detailX - 20, 90, 230, 260, 15, 15);
+            g.fillRoundRect(detailX - 20, 90, detailWidth, detailHeight, 15, 15);
 
             drawDetails(g, selected, detailX, detailY);
-
         }
 
+        // Draw back button
         backButton.drawStyled(g);
-        int totalHeight = getTotalContentHeight();
 
+        // Draw scrollbar
+        int totalHeight = getTotalContentHeight();
         if (totalHeight > visibleAreaHeight) {
             int scrollbarX = cardX - 10;
             int scrollbarY = cardYStart;
@@ -211,7 +261,7 @@ public class StatisticsScene extends GameScene implements SceneMethods {
             int maxScrollOffset = getMaxScrollOffset();
 
             float ratio = visibleAreaHeight / (float) totalHeight;
-            int thumbHeight = Math.max(20, (int) (scrollbarHeight * ratio)); // Minimum thumb size
+            int thumbHeight = Math.max(20, (int) (scrollbarHeight * ratio));
             int maxThumbY = scrollbarY + scrollbarHeight - thumbHeight;
             int thumbY = scrollbarY + (int) ((scrollOffset / (float) maxScrollOffset) * (scrollbarHeight - thumbHeight));
 
@@ -228,16 +278,13 @@ public class StatisticsScene extends GameScene implements SceneMethods {
         }
     }
 
-
-
-
     @Override
     public void mouseClicked(int x, int y) {
-        int cardX = 40;
+        int screenWidth = getScreenWidth();
+        int cardX = (int) (screenWidth * 0.05);
         int cardYStart = 100;
-        int cardWidth = 300;
-        int cardHeight = 120;
-        int spacing = 20;
+        int cardWidth = (int) (screenWidth * 0.3);
+        int visibleAreaHeight = getVisibleAreaHeight();
 
         // Only check for card clicks if the click is within the scrollable area
         if (x >= cardX && x <= cardX + cardWidth && y >= cardYStart && y <= cardYStart + visibleAreaHeight) {
@@ -261,8 +308,6 @@ public class StatisticsScene extends GameScene implements SceneMethods {
         }
     }
 
-
-
     @Override
     public void mouseMoved(int x, int y) {
         backButton.setMouseOver(backButton.getBounds().contains(x, y));
@@ -279,10 +324,12 @@ public class StatisticsScene extends GameScene implements SceneMethods {
         }
 
         if (thumbBounds != null) {
-            int cardX = 40;
+            int screenWidth = getScreenWidth();
+            int cardX = (int) (screenWidth * 0.05);
             int cardYStart = 100;
             int scrollbarX = cardX - 10;
             int scrollbarWidth = 10;
+            int visibleAreaHeight = getVisibleAreaHeight();
 
             Rectangle scrollbarTrack = new Rectangle(scrollbarX, cardYStart, scrollbarWidth, visibleAreaHeight);
             if (scrollbarTrack.contains(x, y)) {
@@ -309,6 +356,7 @@ public class StatisticsScene extends GameScene implements SceneMethods {
     public void mouseDragged(int x, int y) {
         if (scrollbarDragging) {
             int totalHeight = getTotalContentHeight();
+            int visibleAreaHeight = getVisibleAreaHeight();
 
             if (totalHeight <= visibleAreaHeight) {
                 return;
@@ -343,6 +391,4 @@ public class StatisticsScene extends GameScene implements SceneMethods {
         scrollOffset += scrollAmount;
         scrollOffset = Math.max(0, Math.min(scrollOffset, maxScrollOffset));
     }
-
-
 }

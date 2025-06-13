@@ -72,6 +72,15 @@ public class KeyboardListener implements KeyListener {
                 }
             }
 
+            // If in statistics scene, always toggle fullscreen
+            if (GameStates.gameState == GameStates.STATISTICS) {
+                if (game.getFullscreenManager() != null) {
+                    System.out.println("ESC: Toggling fullscreen mode from statistics");
+                    game.getFullscreenManager().toggleFullscreen();
+                }
+                return;
+            }
+
             // If no selection to clear, toggle fullscreen
             if (!hasSelectionToClear && game.getFullscreenManager() != null) {
                 System.out.println("ESC: Toggling fullscreen mode");
