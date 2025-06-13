@@ -1,23 +1,10 @@
 {
-  "gold": 40,
+  "gold": 200,
   "health": 25,
   "shield": 25,
   "waveIndex": 0,
   "groupIndex": 0,
-  "towerStates": [
-    {
-      "x": 448,
-      "y": 192,
-      "type": 3,
-      "level": 1
-    },
-    {
-      "x": 256,
-      "y": 320,
-      "type": 3,
-      "level": 1
-    }
-  ],
+  "towerStates": [],
   "enemyStates": [],
   "gameOptions": {
     "startingGold": 200,
