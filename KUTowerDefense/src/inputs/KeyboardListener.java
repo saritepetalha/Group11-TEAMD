@@ -7,28 +7,21 @@ import main.GameStates;
 
 import java.awt.event.KeyEvent;
 
-import scenes.MapEditing;
 
 public class KeyboardListener implements KeyListener {
 
     @Override
     public void keyTyped(KeyEvent e) {}
-    private MapEditing mapEditing;
+    private scenes.MapEditing mapEditing;
     private Game game;
 
-    public KeyboardListener(MapEditing mapEditing, Game game) {
+    public KeyboardListener(scenes.MapEditing mapEditing, Game game) {
         this.mapEditing = mapEditing;
         this.game = game;
     }
 
     @Override
     public void keyPressed(KeyEvent e) {
-        // Handle F11 key for fullscreen toggle
-        if (e.getKeyCode() == KeyEvent.VK_F11) {
-            game.toggleFullscreen();
-            return;
-        }
-
         // if in intro, any key skips to menu
         if (GameStates.gameState == GameStates.INTRO) {
             game.getIntro().stopMusic();
@@ -43,12 +36,25 @@ public class KeyboardListener implements KeyListener {
         } else if (e.getKeyCode() == KeyEvent.VK_D) {
             game.changeGameState(GameStates.OPTIONS);
         } else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
-            System.out.println("ESC key pressed - clearing tile selection");
+            System.out.println("ESC key pressed");
+
+            // Check if we can clear selections first
+            boolean hasSelectionToClear = false;
 
             // If in edit state, clear the tile selection
             if (GameStates.gameState == GameStates.EDIT) {
-                mapEditing.setDrawSelected(false);
-                mapEditing.setSelectedTile(null);
+                // Check if there's a selected tile through the controller
+                boolean hasSelectedTile = false;
+                if (mapEditing != null && mapEditing.getMapController() != null) {
+                    hasSelectedTile = mapEditing.getMapController().getSelectedTile() != null;
+                }
+
+                if (hasSelectedTile) {
+                    mapEditing.setDrawSelected(false);
+                    mapEditing.setSelectedTile(null);
+                    hasSelectionToClear = true;
+                    System.out.println("ESC: Cleared edit tile selection");
+                }
             }
 
             // If in playing state, clear the tile selection
@@ -56,10 +62,26 @@ public class KeyboardListener implements KeyListener {
                 if (game.getPlaying().getSelectedDeadTree() != null) {
                     game.getPlaying().getSelectedDeadTree().setShowChoices(false);
                     game.getPlaying().setSelectedDeadTree(null);
+                    hasSelectionToClear = true;
+                    System.out.println("ESC: Cleared dead tree selection");
                 }
                 if (game.getPlaying().getDisplayedTower() != null) {
                     game.getPlaying().setDisplayedTower(null);
+                    hasSelectionToClear = true;
+                    System.out.println("ESC: Cleared tower selection");
                 }
+            }
+
+            // If no selection to clear, toggle fullscreen
+            if (!hasSelectionToClear && game.getFullscreenManager() != null) {
+                System.out.println("ESC: Toggling fullscreen mode");
+                game.getFullscreenManager().toggleFullscreen();
+            }
+        } else if (e.getKeyCode() == KeyEvent.VK_F11) {
+            // F11 always toggles fullscreen regardless of selections
+            if (game.getFullscreenManager() != null) {
+                System.out.println("F11: Toggling fullscreen mode");
+                game.getFullscreenManager().toggleFullscreen();
             }
         }
     }

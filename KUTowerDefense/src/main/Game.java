@@ -3,7 +3,6 @@ package main;
 import java.awt.Cursor;
 import java.awt.Graphics2D;
 import java.awt.Point;
-import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
@@ -11,6 +10,7 @@ import java.awt.image.BufferedImage;
 import javax.swing.JFrame;
 
 import managers.AudioManager;
+import managers.FullscreenManager;
 import managers.GameStatsManager;
 import managers.TileManager;
 import scenes.GameOverScene;
@@ -25,14 +25,15 @@ import scenes.StatisticsScene;
 import scenes.SkillSelectionScene;
 import skills.SkillTree;
 
-public class Game extends JFrame implements Runnable {
+public class  Game extends JFrame implements Runnable{
 
 	private GameScreen gamescreen;
+
 	private Thread gameThread;
+
 	private final double FPS_SET = 120.0;
 	private final double UPS_SET = 60.0;
-	private boolean isFullscreen = false;
-	private Rectangle windowedBounds;
+
 
 	private Render render;
 	private Intro intro;
@@ -47,6 +48,7 @@ public class Game extends JFrame implements Runnable {
 	private TileManager tileManager;
 	private GameStatsManager statsManager;
 	private SkillSelectionScene skillSelectionScene;
+	private FullscreenManager fullscreenManager;
 
 	// State tracking for map editing context
 	private GameStates previousGameState = GameStates.MENU;
@@ -67,41 +69,15 @@ public class Game extends JFrame implements Runnable {
 		}
 
 		this.tileManager = new TileManager();
+		this.fullscreenManager = new FullscreenManager(this);
 
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
-		setResizable(false); // Start with fixed size
+		setResizable(false);
 		initClasses();
 		add(gamescreen);
 		pack();
 		setVisible(true);
 		setLocationRelativeTo(null);
-		windowedBounds = getBounds();
-	}
-
-	public void toggleFullscreen() {
-		if (!isFullscreen) {
-			windowedBounds = getBounds();
-			dispose();
-			setUndecorated(true);
-			setResizable(true);
-			setExtendedState(JFrame.MAXIMIZED_BOTH);
-			setVisible(true);
-			isFullscreen = true;
-		} else {
-			dispose();
-			setUndecorated(false);
-			setResizable(false);
-			setBounds(windowedBounds);
-			setVisible(true);
-			isFullscreen = false;
-		}
-		if (gamescreen != null) {
-			gamescreen.updateScreenSize();
-		}
-	}
-
-	public boolean isFullscreen() {
-		return isFullscreen;
 	}
 
 	private void createDefaultLevel() {
@@ -126,6 +102,11 @@ public class Game extends JFrame implements Runnable {
 		this.previousGameState = previousState;
 
 		GameStates.gameState = newState;
+
+		// Update fullscreen scaling when game state changes
+		if (fullscreenManager != null) {
+			fullscreenManager.onGameStateChanged();
+		}
 
 		AudioManager audioManager = AudioManager.getInstance();
 		boolean isMenuRelatedToggle = (
@@ -517,6 +498,10 @@ public class Game extends JFrame implements Runnable {
 
 	public SkillSelectionScene getSkillSelectionScene() {
 		return skillSelectionScene;
+	}
+
+	public FullscreenManager getFullscreenManager() {
+		return fullscreenManager;
 	}
 
 	public GameScreen getGameScreen() {

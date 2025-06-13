@@ -147,7 +147,7 @@ public class PlayingView implements Observer {
         int[][] level = model.getLevel();
         if (level == null) return;
 
-        // Fill background color
+        // Fill background color - this will be properly scaled by the fullscreen manager
         g.setColor(new Color(134, 177, 63, 255));
         g.fillRect(0, 0, GameDimensions.GAME_WIDTH, GameDimensions.GAME_HEIGHT);
 

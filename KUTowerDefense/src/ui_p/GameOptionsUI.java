@@ -125,11 +125,15 @@ public class GameOptionsUI extends JPanel {
         });
 
         // Create fullscreen button
-        fullscreenButton = new JButton(game.isFullscreen() ? "Exit Fullscreen" : "Enter Fullscreen");
+        boolean isCurrentlyFullscreen = (game.getFullscreenManager() != null && game.getFullscreenManager().isFullscreen());
+        fullscreenButton = new JButton(isCurrentlyFullscreen ? "Exit Fullscreen" : "Enter Fullscreen");
         styleButtonWithHoverEffect(fullscreenButton);
         fullscreenButton.addActionListener(e -> {
-            game.toggleFullscreen();
-            fullscreenButton.setText(game.isFullscreen() ? "Exit Fullscreen" : "Enter Fullscreen");
+            if (game.getFullscreenManager() != null) {
+                game.getFullscreenManager().toggleFullscreen();
+                boolean newFullscreenState = game.getFullscreenManager().isFullscreen();
+                fullscreenButton.setText(newFullscreenState ? "Exit Fullscreen" : "Enter Fullscreen");
+            }
         });
 
         // Add fullscreen button to top of panel
