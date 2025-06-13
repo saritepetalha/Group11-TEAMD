@@ -2,7 +2,7 @@
   "gold": 200,
   "health": 25,
   "shield": 25,
-  "waveIndex": 0,
+  "waveIndex": 1,
   "groupIndex": 0,
   "towerStates": [],
   "enemyStates": [],
@@ -153,8 +153,8 @@
     "savedGold": 0,
     "savedCastleHealth": 0
   },
-  "difficulty": "Easy",
+  "difficulty": "Custom",
   "selectedSkills": [
-    "PLUNDERER_BONUS"
+    "BOUNTIFUL_START"
   ]
 }
