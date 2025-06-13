@@ -92,7 +92,16 @@ public class PlayingUI {
 
     private void initButtons() {
         int buttonSpacing = 8;
-        int startX = GameDimensions.GAME_WIDTH - (buttonSize * 3 + buttonSpacing * 2) - 10;
+
+        // Calculate the actual level width instead of using fixed GAME_WIDTH
+        int actualWidth = GameDimensions.GAME_WIDTH; // Default fallback
+        if (playing != null && playing.getLevel() != null) {
+            int[][] level = playing.getLevel();
+            int levelCols = level[0].length;
+            actualWidth = levelCols * GameDimensions.TILE_DISPLAY_SIZE;
+        }
+
+        int startX = actualWidth - (buttonSize * 3 + buttonSpacing * 2) - 10;
         int startY = 8;
 
         // initialize control buttons as TheButton objects
@@ -491,7 +500,16 @@ public class PlayingUI {
 
     private void drawControlButtons(Graphics g) {
         int buttonSpacing = 8;
-        int startX = GameDimensions.GAME_WIDTH - (buttonSize * 3 + buttonSpacing * 2) - 10;
+
+        // Calculate the actual level width instead of using fixed GAME_WIDTH
+        int actualWidth = GameDimensions.GAME_WIDTH; // Default fallback
+        if (playing != null && playing.getLevel() != null) {
+            int[][] level = playing.getLevel();
+            int levelCols = level[0].length;
+            actualWidth = levelCols * GameDimensions.TILE_DISPLAY_SIZE;
+        }
+
+        int startX = actualWidth - (buttonSize * 3 + buttonSpacing * 2) - 10;
         int startY = 8;
 
         Graphics2D g2d = (Graphics2D) g;

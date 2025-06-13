@@ -17,13 +17,13 @@ import java.util.List;
 import static helpMethods.LoadSave.resizeImage;
 
 public class SkillSelectionScene extends JPanel {
-    private static final int BUTTON_WIDTH = 180;
-    private static final int BUTTON_HEIGHT = 75;
-    private static final int BUTTON_SPACING = 30;
+    private static final int BUTTON_WIDTH = 250;
+    private static final int BUTTON_HEIGHT = 90;
+    private static final int BUTTON_SPACING = 40;
     private static final int TITLE_Y = 40;
     private static final int SKILLS_START_Y = 80;
     private static final int SKILLS_PER_ROW = 3;
-    private static final int ROW_SPACING = 100;
+    private static final int ROW_SPACING = 120;
     private static final int CATEGORY_TITLE_OFFSET = 10;
 
     private final List<SkillButton> skillButtons;
@@ -320,20 +320,20 @@ public class SkillSelectionScene extends JPanel {
             g.drawRect(bounds.x, bounds.y, bounds.width, bounds.height);
 
             g.setColor(Color.WHITE);
-            g.setFont(new Font("Arial", Font.BOLD, 14));
+            g.setFont(new Font("Arial", Font.BOLD, 16));
             String name = getEnglishSkillName(skillType);
             int nameWidth = g.getFontMetrics().stringWidth(name);
-            g.drawString(name, bounds.x + (bounds.width - nameWidth) / 2, bounds.y + 23);
+            g.drawString(name, bounds.x + (bounds.width - nameWidth) / 2, bounds.y + 28);
 
-            g.setFont(new Font("Arial", Font.PLAIN, 11));
+            g.setFont(new Font("Arial", Font.PLAIN, 12));
             String description = getEnglishSkillDescription(skillType);
-            int maxWidth = bounds.width - 16;
+            int maxWidth = bounds.width - 20;
             List<String> lines = wrapText(description, g.getFontMetrics(), maxWidth);
-            int lineY = bounds.y + 42;
+            int lineY = bounds.y + 50;
             for (String line : lines) {
                 int descWidth = g.getFontMetrics().stringWidth(line);
                 g.drawString(line, bounds.x + (bounds.width - descWidth) / 2, lineY);
-                lineY += 13;
+                lineY += 15;
             }
         }
 
