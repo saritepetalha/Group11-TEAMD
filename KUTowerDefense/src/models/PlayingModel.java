@@ -1221,6 +1221,17 @@ public class PlayingModel extends Observable implements GameContext {
     }
 
     /**
+     * Update wave start tower states to reflect current tower configuration
+     * This should be called when towers are sold/removed during gameplay
+     */
+    public void updateWaveStartTowerStates() {
+        if (towerManager != null) {
+            waveStartTowerStates = createWaveStartTowerStates();
+            System.out.println("Updated wave start tower states - now tracking " + waveStartTowerStates.size() + " towers");
+        }
+    }
+
+    /**
      * Apply player save data
      */
     @SuppressWarnings("unchecked")

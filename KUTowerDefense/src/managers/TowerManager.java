@@ -470,9 +470,13 @@ public class TowerManager {
     public void removeTower(Tower tower) {
         boolean removed = towers.remove(tower);
         if (removed) {
-            // Reset the tile data back to grass where the tower was located
-            resetTileToGrass(tower);
-            System.out.println("Tower removed successfully and tile reset to grass");
+            // Reset the tile data back to dead tree where the tower was located
+            resetTileToDeadTree(tower);
+
+            // Create a dead tree object at the tower's position
+            createDeadTreeAtPosition(tower.getX(), tower.getY());
+
+            System.out.println("Tower removed successfully and dead tree created");
         } else {
             System.err.println("Error: Tower not found in list for removal.");
         }
@@ -497,6 +501,44 @@ public class TowerManager {
             // Reset to grass tile (ID 5)
             level[tileY][tileX] = 5;
             System.out.println("Reset tile at (" + tileX + ", " + tileY + ") to grass");
+        }
+    }
+
+    /**
+     * Resets the tile at the tower's position back to dead tree (ID 15)
+     */
+    private void resetTileToDeadTree(Tower tower) {
+        if (tower == null || playing == null) return;
+
+        // Convert tower pixel coordinates to tile coordinates
+        int tileX = tower.getX() / GameDimensions.TILE_DISPLAY_SIZE;
+        int tileY = tower.getY() / GameDimensions.TILE_DISPLAY_SIZE;
+
+        // Get the level data
+        int[][] level = playing.getLevel();
+        if (level == null) return;
+
+        // Check bounds
+        if (tileY >= 0 && tileY < level.length && tileX >= 0 && tileX < level[0].length) {
+            // Reset to dead tree tile (ID 15)
+            level[tileY][tileX] = 15;
+            System.out.println("Reset tile at (" + tileX + ", " + tileY + ") to dead tree");
+        }
+    }
+
+    /**
+     * Creates a dead tree object at the specified position and adds it to the game
+     */
+    private void createDeadTreeAtPosition(int x, int y) {
+        if (playing == null) return;
+
+        // Create a new dead tree at the tower's position
+        DeadTree deadTree = new DeadTree(x, y);
+
+        // Add it to the playing scene's dead trees list
+        if (playing.getDeadTrees() != null) {
+            playing.getDeadTrees().add(deadTree);
+            System.out.println("Created dead tree at position (" + x + ", " + y + ")");
         }
     }
 

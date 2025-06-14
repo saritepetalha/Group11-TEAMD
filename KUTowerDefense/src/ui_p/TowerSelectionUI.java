@@ -1099,6 +1099,9 @@ public class TowerSelectionUI {
             // Remove the tower
             playing.getTowerManager().removeTower(selectedTower);
 
+            // Update wave start tower states to reflect the removal
+            playing.updateWaveStartTowerStates();
+
             // Clear selection
             setSelectedTower(null);
 
@@ -1319,4 +1322,4 @@ public class TowerSelectionUI {
     public boolean hasTowerSelected() {
         return selectedTower != null;
     }
-} 
+}
