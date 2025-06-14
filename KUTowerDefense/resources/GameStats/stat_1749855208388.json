@@ -1,0 +1,11 @@
+{
+  "mapName": "ankara",
+  "victory": true,
+  "gold": 256,
+  "enemiesSpawned": 6,
+  "enemiesReachedEnd": 0,
+  "towersBuilt": 1,
+  "enemyDefeated": 6,
+  "totalDamage": 40,
+  "timePlayedInSeconds": 8
+}
