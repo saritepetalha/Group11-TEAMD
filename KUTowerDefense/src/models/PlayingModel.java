@@ -78,6 +78,9 @@ public class PlayingModel extends Observable implements GameContext {
     // Wave-start tracking for weather state
     private Object waveStartWeatherData = null;
 
+    // Wave-start tracking for tower states
+    private java.util.List<GameStateMemento.TowerState> waveStartTowerStates = new java.util.ArrayList<>();
+
     // Castle health
     private int castleMaxHealth;
     private int castleCurrentHealth;
@@ -828,8 +831,8 @@ public class PlayingModel extends Observable implements GameContext {
         int waveIndex = waveManager != null ? waveManager.getWaveIndex() : 0;
         int groupIndex = waveManager != null ? waveManager.getCurrentGroupIndex() : 0;
 
-        // No towers for round start - empty tower states
-        java.util.List<GameStateMemento.TowerState> towerStates = new java.util.ArrayList<>();
+        // Use tower states that were captured at wave start
+        java.util.List<GameStateMemento.TowerState> towerStates = waveStartTowerStates;
 
         // No enemies for round start - empty enemy states
         java.util.List<GameStateMemento.EnemyState> enemyStates = new java.util.ArrayList<>();
@@ -864,6 +867,33 @@ public class PlayingModel extends Observable implements GameContext {
             }
         }
 
+        return towerStates;
+    }
+
+    /**
+     * Create tower states for wave start saves - includes targeting strategy and light information
+     */
+    private java.util.List<GameStateMemento.TowerState> createWaveStartTowerStates() {
+        java.util.List<GameStateMemento.TowerState> towerStates = new java.util.ArrayList<>();
+
+        if (towerManager != null && towerManager.getTowers() != null) {
+            for (Tower tower : towerManager.getTowers()) {
+                // Get targeting strategy name
+                String targetingStrategy = tower.getTargetingStrategy().getStrategyName();
+
+                // Check if tower has light upgrade
+                boolean hasLight = tower instanceof objects.LightDecorator;
+
+                // Create tower state with full information
+                GameStateMemento.TowerState towerState = new GameStateMemento.TowerState(
+                        tower.getX(), tower.getY(), tower.getType(), tower.getLevel(),
+                        targetingStrategy, hasLight
+                );
+                towerStates.add(towerState);
+            }
+        }
+
+        System.out.println("Saved " + towerStates.size() + " towers with targeting and light information for wave start");
         return towerStates;
     }
 
@@ -983,6 +1013,9 @@ public class PlayingModel extends Observable implements GameContext {
                 // Update game start tracking (for consistency)
                 gameStartHealth = memento.getHealth();
                 gameStartShield = memento.getShield();
+                // Update wave start tower states
+                waveStartTowerStates = memento.getTowerStates() != null ?
+                        new java.util.ArrayList<>(memento.getTowerStates()) : new java.util.ArrayList<>();
                 System.out.println("Restored player state: Gold=" + memento.getGold() +
                         ", Health=" + memento.getHealth() +
                         ", Shield=" + memento.getShield());
@@ -1033,13 +1066,95 @@ public class PlayingModel extends Observable implements GameContext {
      * Restore tower states from saved data
      */
     private void restoreTowerStates(java.util.List<GameStateMemento.TowerState> towerStates) {
-        // For now, just log the towers to restore - full implementation depends on TowerManager capabilities
-        for (GameStateMemento.TowerState towerState : towerStates) {
-            System.out.println("Restoring tower at (" + towerState.getX() + "," + towerState.getY() +
-                    ") Type=" + towerState.getType() + " Level=" + towerState.getLevel());
+        if (towerManager == null) {
+            System.err.println("Cannot restore towers: TowerManager is null");
+            return;
         }
 
-        System.out.println("Restored " + towerStates.size() + " towers from save data");
+        // Clear existing towers first
+        towerManager.clearTowers();
+
+        int restoredCount = 0;
+        for (GameStateMemento.TowerState towerState : towerStates) {
+            try {
+                // Convert strategy name to strategy instance
+                strategies.TargetingStrategy targetingStrategy = convertStrategyNameToStrategy(towerState.getTargetingStrategy());
+
+                // Create tower based on type
+                Tower tower = createTowerFromState(towerState, targetingStrategy);
+
+                if (tower != null) {
+                    // Handle tower upgrades (level 2)
+                    if (towerState.getLevel() == 2) {
+                        tower = tower.upgrade();
+                    }
+
+                    // Handle light upgrades
+                    if (towerState.hasLight()) {
+                        objects.LightDecorator lightTower = towerManager.upgradeTowerWithLight(tower);
+                        if (lightTower != null) {
+                            tower = lightTower;
+                        }
+                    }
+
+                    // Add the tower to the manager
+                    towerManager.addTower(tower);
+                    restoredCount++;
+
+                    System.out.println("Restored tower at (" + towerState.getX() + "," + towerState.getY() +
+                            ") Type=" + towerState.getType() + " Level=" + towerState.getLevel() +
+                            " Strategy=" + towerState.getTargetingStrategy() + " Light=" + towerState.hasLight());
+                }
+            } catch (Exception e) {
+                System.err.println("Failed to restore tower at (" + towerState.getX() + "," + towerState.getY() + "): " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+
+        System.out.println("Successfully restored " + restoredCount + " out of " + towerStates.size() + " towers from save data");
+    }
+
+    /**
+     * Convert strategy name to TargetingStrategy instance
+     */
+    private strategies.TargetingStrategy convertStrategyNameToStrategy(String strategyName) {
+        if (strategyName == null) strategyName = "First";
+
+        strategies.TargetingStrategyFactory.StrategyType strategyType;
+        switch (strategyName) {
+            case "First": strategyType = strategies.TargetingStrategyFactory.StrategyType.FIRST; break;
+            case "Last": strategyType = strategies.TargetingStrategyFactory.StrategyType.LAST; break;
+            case "Strongest": strategyType = strategies.TargetingStrategyFactory.StrategyType.STRONGEST; break;
+            case "Weakest": strategyType = strategies.TargetingStrategyFactory.StrategyType.WEAKEST; break;
+            default:
+                System.out.println("Unknown targeting strategy: " + strategyName + ", defaulting to First");
+                strategyType = strategies.TargetingStrategyFactory.StrategyType.FIRST;
+        }
+
+        return strategies.TargetingStrategyFactory.createStrategy(strategyType);
+    }
+
+    /**
+     * Create tower from saved state with proper targeting strategy
+     */
+    private Tower createTowerFromState(GameStateMemento.TowerState towerState, strategies.TargetingStrategy targetingStrategy) {
+        int x = towerState.getX();
+        int y = towerState.getY();
+        int type = towerState.getType();
+
+        switch (type) {
+            case constants.Constants.Towers.ARCHER: // Archer Tower
+                return new objects.ArcherTower(x, y, targetingStrategy);
+            case constants.Constants.Towers.ARTILLERY: // Artillery Tower
+                return new objects.ArtilleryTower(x, y, targetingStrategy);
+            case constants.Constants.Towers.MAGE: // Mage Tower
+                return new objects.MageTower(x, y, targetingStrategy);
+            case constants.Constants.Towers.POISON: // Poison Tower (no targeting strategy needed)
+                return new objects.PoisonTower(x, y);
+            default:
+                System.err.println("Unknown tower type: " + type);
+                return null;
+        }
     }
 
     /**
@@ -1226,6 +1341,10 @@ public class PlayingModel extends Observable implements GameContext {
             waveStartWeatherData = null;
             System.out.println("WeatherManager is null, no weather state tracked");
         }
+
+        // Track tower states at wave start
+        waveStartTowerStates = createWaveStartTowerStates();
+        System.out.println("Wave started - Captured " + waveStartTowerStates.size() + " tower states at wave start");
     }
 
     /**
