@@ -381,4 +381,98 @@ public class WeatherManager {
 
         System.out.println("WeatherManager reset: weather=" + currentWeather + ", day/night cycle reset");
     }
+
+    /**
+     * Get weather state for saving
+     * @return A map containing all the weather state information
+     */
+    public java.util.Map<String, Object> getWeatherState() {
+        java.util.Map<String, Object> state = new java.util.HashMap<>();
+        state.put("currentWeather", currentWeather.toString());
+        state.put("dayTime", dayTime);
+        state.put("nightIntensity", nightIntensity);
+        state.put("lastNightState", lastNightState);
+        return state;
+    }
+
+    /**
+     * Restore weather state from saved data
+     * @param weatherState The saved weather state data
+     */
+    @SuppressWarnings("unchecked")
+    public void restoreWeatherState(java.util.Map<String, Object> weatherState) {
+        try {
+            // Stop current weather sounds before changing weather
+            stopAllWeatherSounds();
+
+            // Restore weather type
+            String weatherTypeStr = (String) weatherState.get("currentWeather");
+            if (weatherTypeStr != null) {
+                currentWeather = WeatherType.valueOf(weatherTypeStr);
+            }
+
+            // Restore day/night cycle
+            if (weatherState.containsKey("dayTime")) {
+                dayTime = ((Number) weatherState.get("dayTime")).floatValue();
+            }
+            if (weatherState.containsKey("nightIntensity")) {
+                nightIntensity = ((Number) weatherState.get("nightIntensity")).floatValue();
+            }
+            if (weatherState.containsKey("lastNightState")) {
+                lastNightState = (Boolean) weatherState.get("lastNightState");
+            }
+
+            // Reset lastWeather to trigger weather sound
+            lastWeather = null;
+
+            // Reinitialize particles for new weather type
+            weatherParticles.clear();
+            initializeWeatherParticles();
+
+            // Start weather sound for restored weather
+            startWeatherSound();
+
+            System.out.println("Weather state restored: weather=" + currentWeather +
+                    ", dayTime=" + dayTime + ", isNight=" + isNight());
+
+        } catch (Exception e) {
+            System.err.println("Failed to restore weather state: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Get current day time for saving
+     * @return current day time value
+     */
+    public float getDayTime() {
+        return dayTime;
+    }
+
+    /**
+     * Set day time (used for restoration)
+     * @param dayTime the day time to set
+     */
+    public void setDayTime(float dayTime) {
+        this.dayTime = dayTime;
+        updateNightIntensity(); // Recalculate night intensity based on new day time
+    }
+
+    /**
+     * Set current weather type (used for restoration)
+     * @param weatherType the weather type to set
+     */
+    public void setCurrentWeather(WeatherType weatherType) {
+        WeatherType oldWeather = this.currentWeather;
+        this.currentWeather = weatherType;
+
+        // If weather changed, restart weather sounds and particles
+        if (oldWeather != weatherType) {
+            stopAllWeatherSounds();
+            weatherParticles.clear();
+            initializeWeatherParticles();
+            startWeatherSound();
+            lastWeather = null;
+        }
+    }
 }

@@ -817,11 +817,14 @@ public class PlayingModel extends Observable implements GameContext {
         // Get skills that were selected at round start
         java.util.Set<skills.SkillType> selectedSkills = skills.SkillTree.getInstance().getSelectedSkills();
 
+        // Get weather state
+        Object weatherData = weatherManager != null ? weatherManager.getWeatherState() : null;
+
         System.out.println("Saving round start values with current wave: Gold=" + gold + ", Health=" + health + ", Shield=" + shield + ", Wave=" + waveIndex);
 
         return new GameStateMemento(
                 gold, health, shield, waveIndex, groupIndex,
-                towerStates, enemyStates, gameOptions, currentDifficulty, selectedSkills
+                towerStates, enemyStates, gameOptions, currentDifficulty, selectedSkills, weatherData
         );
     }
 
@@ -864,8 +867,17 @@ public class PlayingModel extends Observable implements GameContext {
 
         java.util.Map<String, Object> waveData = new java.util.HashMap<>();
         waveData.put("currentWaveIndex", waveManager.getWaveIndex());
+        waveData.put("currentGroupIndex", waveManager.getCurrentGroupIndex());
         // Note: Additional wave state can be added when methods are available
         return waveData;
+    }
+
+    /**
+     * Create simple weather save data
+     */
+    private Object createWeatherSaveData() {
+        if (weatherManager == null) return null;
+        return weatherManager.getWeatherState();
     }
 
     /**
@@ -916,6 +928,9 @@ public class PlayingModel extends Observable implements GameContext {
             if (saveData.getWaveData() != null) {
                 applyWaveSaveData(saveData.getWaveData());
             }
+            if (saveData.getWeatherData() != null) {
+                applyWeatherSaveData(saveData.getWeatherData());
+            }
         }
     }
 
@@ -950,6 +965,18 @@ public class PlayingModel extends Observable implements GameContext {
                 waveManager.restoreWaveState(memento.getWaveIndex(), memento.getGroupIndex());
                 System.out.println("Restored wave state: Wave=" + memento.getWaveIndex() +
                         ", Group=" + memento.getGroupIndex());
+            }
+
+            // Apply weather state
+            if (weatherManager != null && memento.getWeatherData() != null) {
+                try {
+                    @SuppressWarnings("unchecked")
+                    java.util.Map<String, Object> weatherState = (java.util.Map<String, Object>) memento.getWeatherData();
+                    weatherManager.restoreWeatherState(weatherState);
+                    System.out.println("Restored weather state from save data");
+                } catch (Exception e) {
+                    System.err.println("Failed to restore weather state: " + e.getMessage());
+                }
             }
 
             // Apply tower states
@@ -1014,6 +1041,22 @@ public class PlayingModel extends Observable implements GameContext {
             System.out.println("Wave save data available but detailed restoration not yet implemented");
         } catch (Exception e) {
             System.err.println("Failed to apply wave save data: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Apply weather save data
+     */
+    @SuppressWarnings("unchecked")
+    private void applyWeatherSaveData(Object weatherDataObj) {
+        if (weatherManager == null || weatherDataObj == null) return;
+
+        try {
+            java.util.Map<String, Object> weatherData = (java.util.Map<String, Object>) weatherDataObj;
+            weatherManager.restoreWeatherState(weatherData);
+            System.out.println("Restored weather state from save data");
+        } catch (Exception e) {
+            System.err.println("Failed to apply weather save data: " + e.getMessage());
         }
     }
 
