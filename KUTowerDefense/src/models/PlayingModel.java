@@ -234,7 +234,10 @@ public class PlayingModel extends Observable implements GameContext {
         if (projectileManager != null) projectileManager.update();
         if (fireAnimationManager != null) fireAnimationManager.update();
         if (ultiManager != null) ultiManager.update(gameTimeMillis, gameSpeedMultiplier);
-        if (weatherManager != null) weatherManager.update(deltaTimeSeconds);
+        if (weatherManager != null) {
+            // Apply speed multiplier to weather system for faster day/night cycles
+            weatherManager.update(deltaTimeSeconds * gameSpeedMultiplier);
+        }
 
         if (tileManager != null && weatherManager != null) {
             tileManager.updateSnowTransition(deltaTimeSeconds, weatherManager.isSnowing());
@@ -264,7 +267,7 @@ public class PlayingModel extends Observable implements GameContext {
             handleGameOver();
         }
 
-        if (goldBagManager != null) goldBagManager.update();
+        if (goldBagManager != null) goldBagManager.update(gameSpeedMultiplier);
 
         if (stoneMiningManager != null) {
             stoneMiningManager.update();

@@ -16,15 +16,20 @@ public class GoldBagManager {
         AudioManager.getInstance().playSound("coin_drop");
     }
 
-    public void update() {
+    public void update(float speedMultiplier) {
         Iterator<GoldBag> iterator = goldBags.iterator();
         while (iterator.hasNext()) {
             GoldBag bag = iterator.next();
-            bag.update();
+            bag.update(speedMultiplier);
             if (bag.isExpired() || (bag.isCollected() && !bag.isShowingCollectionEffect())) {
                 iterator.remove();
             }
         }
+    }
+
+    // Backward compatibility
+    public void update() {
+        update(1.0f);
     }
 
     public void draw(Graphics g) {

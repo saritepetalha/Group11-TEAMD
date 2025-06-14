@@ -37,7 +37,7 @@ public class FireAnimationManager {
     }
 
     /**
-     * Clear all fire animations for game restart
+     * Clear all fire animations for game to restart
      */
     public void clear() {
         animations.clear();

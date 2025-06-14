@@ -9,7 +9,7 @@ public class GoldBag {
     private static final int FRAME_COUNT = 8;
     private static final int FRAME_WIDTH = 128;
     private static final int FRAME_HEIGHT = 128;
-    private static final long LIFETIME_NANOS = 10_000_000_000L; // 10 seconds
+    private static final long LIFETIME_MILLIS = 10000; // 10 seconds base lifetime
     private static final int DRAW_SIZE = 64; // display size in game
     private static final int COLLECTION_BOX_SIZE = 96; // bigger bounding box for easier collection
 
@@ -19,6 +19,10 @@ public class GoldBag {
     private int tick = 0;
     private final int tickLimit = 7; // controls animation speed
     private boolean collected = false;
+    
+    // Accumulated lifetime tracking (similar to Warrior/GoldFactory fix)
+    private float accumulatedLifetime = 0f;
+    private long lastUpdateTime = 0;
     private long spawnTime;
 
     // Collection animation properties
@@ -30,23 +34,39 @@ public class GoldBag {
         this.x = x;
         this.y = y;
         this.goldAmount = goldAmount;
-        this.spawnTime = System.nanoTime();
+        this.spawnTime = System.currentTimeMillis();
+        this.lastUpdateTime = System.currentTimeMillis();
+        this.accumulatedLifetime = 0f;
     }
 
-    public void update() {
+    public void update(float speedMultiplier) {
+        // Update animation
         tick++;
         if (tick >= tickLimit) {
             tick = 0;
             frameIndex = (frameIndex + 1) % FRAME_COUNT;
         }
 
+        // Update accumulated lifetime
+        long currentTime = System.currentTimeMillis();
+        if (lastUpdateTime > 0) {
+            float deltaTime = currentTime - lastUpdateTime;
+            accumulatedLifetime += deltaTime * speedMultiplier;
+        }
+        lastUpdateTime = currentTime;
+
         // Update collection effect timer
         if (showCollectionEffect) {
-            long currentTime = System.nanoTime();
-            if (currentTime - collectionEffectStartTime > COLLECTION_EFFECT_DURATION) {
+            long currentTimeNanos = System.nanoTime();
+            if (currentTimeNanos - collectionEffectStartTime > COLLECTION_EFFECT_DURATION) {
                 showCollectionEffect = false;
             }
         }
+    }
+
+    // Backward compatibility
+    public void update() {
+        update(1.0f);
     }
 
     public void draw(Graphics g) {
@@ -61,7 +81,7 @@ public class GoldBag {
     }
 
     public boolean isExpired() {
-        return !collected && (System.nanoTime() - spawnTime > LIFETIME_NANOS);
+        return !collected && accumulatedLifetime >= LIFETIME_MILLIS;
     }
 
     public boolean isCollected() {
