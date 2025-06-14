@@ -32,6 +32,7 @@ public class WeatherManager {
     private float nightIntensity;
     private boolean lastNightState = false;
     private TowerManager towerManager;
+    private boolean isLoadingFromSave = false; // Flag to prevent random weather during loading
 
     public WeatherManager() {
         weatherParticles = new ArrayList<>();
@@ -45,6 +46,59 @@ public class WeatherManager {
         initializeWeatherParticles();
 
         startWeatherSound();
+    }
+
+    /**
+     * Constructor with initial weather state (for loading saved games)
+     * @param initialWeatherState The weather state to restore
+     */
+    public WeatherManager(java.util.Map<String, Object> initialWeatherState) {
+        weatherParticles = new ArrayList<>();
+        random = new Random();
+
+        // Initialize with default values first
+        dayTime = 0;
+        nightIntensity = 0.0f;
+        lastNightState = false;
+        currentWeather = WeatherType.CLEAR; // Default fallback
+
+        // Restore the weather state if provided
+        if (initialWeatherState != null) {
+            restoreWeatherState(initialWeatherState);
+        } else {
+            // Fallback to random weather if no state provided
+            WeatherType[] weatherTypes = {WeatherType.CLEAR, WeatherType.RAINY, WeatherType.SNOWY, WeatherType.WINDY};
+            currentWeather = weatherTypes[random.nextInt(weatherTypes.length)];
+            initializeWeatherParticles();
+            startWeatherSound();
+        }
+    }
+
+    /**
+     * Prepare WeatherManager for loading saved state (prevents random weather initialization)
+     */
+    public void prepareForLoading() {
+        isLoadingFromSave = true;
+        // Set to a neutral state while waiting for saved state to be loaded
+        currentWeather = WeatherType.CLEAR;
+        dayTime = 0;
+        nightIntensity = 0.0f;
+        lastNightState = false;
+        lastWeather = null;
+
+        // Initialize particles but don't start weather sounds yet
+        weatherParticles.clear();
+        initializeWeatherParticles();
+
+        System.out.println("WeatherManager prepared for loading saved state");
+    }
+
+    /**
+     * Complete the loading process after weather state has been restored
+     */
+    public void completeLoading() {
+        isLoadingFromSave = false;
+        System.out.println("WeatherManager loading completed with weather: " + currentWeather);
     }
 
     public void update() {
@@ -431,6 +485,11 @@ public class WeatherManager {
 
             // Start weather sound for restored weather
             startWeatherSound();
+
+            // Complete loading process if we were in loading mode
+            if (isLoadingFromSave) {
+                completeLoading();
+            }
 
             System.out.println("Weather state restored: weather=" + currentWeather +
                     ", dayTime=" + dayTime + ", isNight=" + isNight());
