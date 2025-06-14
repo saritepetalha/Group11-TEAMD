@@ -16,10 +16,26 @@ public class GameStateMemento {
     private GameOptions gameOptions;
     private String difficulty;
     private Set<SkillType> selectedSkills;
+    private Object weatherData;
 
     /** Gson needs this no-args constructor */
     public GameStateMemento() {
         // leave empty or initialize defaults if you like
+    }
+
+    // Legacy constructor for backward compatibility
+    public GameStateMemento(int gold,
+                            int health,
+                            int shield,
+                            int waveIndex,
+                            int groupIndex,
+                            List<TowerState> towerStates,
+                            List<EnemyState> enemyStates,
+                            GameOptions gameOptions,
+                            String difficulty,
+                            Set<SkillType> selectedSkills) {
+        this(gold, health, shield, waveIndex, groupIndex, towerStates, enemyStates,
+                gameOptions, difficulty, selectedSkills, null);
     }
 
     public GameStateMemento(int gold,
@@ -31,7 +47,8 @@ public class GameStateMemento {
                             List<EnemyState> enemyStates,
                             GameOptions gameOptions,
                             String difficulty,
-                            Set<SkillType> selectedSkills) {
+                            Set<SkillType> selectedSkills,
+                            Object weatherData) {
         this.gold = gold;
         this.health = health;
         this.shield = shield;
@@ -41,6 +58,7 @@ public class GameStateMemento {
         this.enemyStates = enemyStates;
         this.gameOptions = gameOptions;
         this.selectedSkills = selectedSkills;
+        this.weatherData = weatherData;
 
         // Ensure difficulty is never null and always valid
         if (difficulty == null) {
@@ -102,6 +120,14 @@ public class GameStateMemento {
 
     public void setSelectedSkills(Set<SkillType> selectedSkills) {
         this.selectedSkills = selectedSkills;
+    }
+
+    public Object getWeatherData() {
+        return weatherData;
+    }
+
+    public void setWeatherData(Object weatherData) {
+        this.weatherData = weatherData;
     }
 
     public static class TowerState {

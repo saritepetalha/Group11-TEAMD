@@ -154,5 +154,11 @@
     "savedCastleHealth": 0
   },
   "difficulty": "Easy",
-  "selectedSkills": []
+  "selectedSkills": [],
+  "weatherData": {
+    "currentWeather": "SNOWY",
+    "nightIntensity": 0.0,
+    "lastNightState": false,
+    "dayTime": 7.343962
+  }
 }
