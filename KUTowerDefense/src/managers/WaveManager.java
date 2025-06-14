@@ -449,4 +449,39 @@ public class WaveManager {
         // If we're in the middle of a wave, let it finish with the old settings and new waves will use new settings
         System.out.println("Wave configuration updated: " + waves.size() + " waves loaded, inter-wave delay: " + newOptions.getInterWaveDelay() + "s");
     }
+
+    /**
+     * Restore wave state from a saved game
+     * @param savedWaveIndex The wave index to restore to
+     * @param savedGroupIndex The group index to restore to
+     */
+    public void restoreWaveState(int savedWaveIndex, int savedGroupIndex) {
+        System.out.println("Restoring wave state to Wave " + (savedWaveIndex + 1) + ", Group " + (savedGroupIndex + 1));
+
+        // Set the wave and group indices
+        setWaveIndex(savedWaveIndex);
+        setCurrentGroupIndex(savedGroupIndex);
+
+        // Reset wave state to prepare for continuing
+        currentGroupEnemyQueue.clear();
+        waitingForNextWave = true;
+        waitingForNextGroup = false;
+        waitingForNextEnemy = false;
+        waveTimerActive = false;
+        pendingWaveFinish = false;
+        interWaveTick = 0;
+        groupDelayTick = 0;
+        enemyDelayTick = 0;
+
+        // If we're at the end of all waves, mark as finished
+        if (savedWaveIndex >= waves.size()) {
+            System.out.println("Restored to completed wave state - all waves finished");
+            return;
+        }
+
+        // Start preparing for the current wave
+        prepareNextWave();
+
+        System.out.println("Wave state restored successfully - ready to continue from Wave " + (savedWaveIndex + 1));
+    }
 }

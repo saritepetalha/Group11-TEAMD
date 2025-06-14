@@ -806,7 +806,7 @@ public class PlayingModel extends Observable implements GameContext {
 
         // Save current wave state (not reset to beginning)
         int waveIndex = waveManager != null ? waveManager.getWaveIndex() : 0;
-        int groupIndex = 0; // Start from group 0 within the current wave
+        int groupIndex = waveManager != null ? waveManager.getCurrentGroupIndex() : 0;
 
         // No towers for round start - empty tower states
         java.util.List<GameStateMemento.TowerState> towerStates = new java.util.ArrayList<>();
@@ -947,8 +947,9 @@ public class PlayingModel extends Observable implements GameContext {
 
             // Apply wave state
             if (waveManager != null) {
-                // TODO: Add wave state restoration when methods become available
-                System.out.println("Wave index from save: " + memento.getWaveIndex());
+                waveManager.restoreWaveState(memento.getWaveIndex(), memento.getGroupIndex());
+                System.out.println("Restored wave state: Wave=" + memento.getWaveIndex() +
+                        ", Group=" + memento.getGroupIndex());
             }
 
             // Apply tower states
