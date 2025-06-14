@@ -1099,6 +1099,13 @@ public class PlayingModel extends Observable implements GameContext {
 
                     // Add the tower to the manager
                     towerManager.addTower(tower);
+
+                    // Update tile data to reflect tower placement
+                    updateTileDataForTower(tower);
+
+                    // Remove any dead tree at this position
+                    removeDeadTreeAtPosition(tower.getX(), tower.getY());
+
                     restoredCount++;
 
                     System.out.println("Restored tower at (" + towerState.getX() + "," + towerState.getY() +
@@ -1155,6 +1162,62 @@ public class PlayingModel extends Observable implements GameContext {
                 System.err.println("Unknown tower type: " + type);
                 return null;
         }
+    }
+
+    /**
+     * Update tile data to reflect tower placement (removes dead trees)
+     */
+    private void updateTileDataForTower(Tower tower) {
+        if (tower == null || level == null) return;
+
+        // Convert tower pixel coordinates to tile coordinates
+        int tileX = tower.getX() / constants.GameDimensions.TILE_DISPLAY_SIZE;
+        int tileY = tower.getY() / constants.GameDimensions.TILE_DISPLAY_SIZE;
+
+        // Check bounds
+        if (tileY >= 0 && tileY < level.length && tileX >= 0 && tileX < level[0].length) {
+            // Set the appropriate tile ID based on tower type
+            int tileId;
+            switch (tower.getType()) {
+                case constants.Constants.Towers.ARCHER:
+                    tileId = 26; // Archer Tower tile ID
+                    break;
+                case constants.Constants.Towers.ARTILLERY:
+                    tileId = 21; // Artillery Tower tile ID
+                    break;
+                case constants.Constants.Towers.MAGE:
+                    tileId = 20; // Mage Tower tile ID
+                    break;
+                case constants.Constants.Towers.POISON:
+                    tileId = 39; // Poison Tower tile ID
+                    break;
+                default:
+                    System.err.println("Unknown tower type for tile update: " + tower.getType());
+                    return;
+            }
+
+            level[tileY][tileX] = tileId;
+
+            // Clear overlay data to remove dead trees or other overlays
+            if (overlay != null && tileY < overlay.length && tileX < overlay[0].length) {
+                overlay[tileY][tileX] = 0; // NO_OVERLAY = 0
+                System.out.println("Cleared overlay at (" + tileX + ", " + tileY + ")");
+            }
+
+            System.out.println("Updated tile at (" + tileX + ", " + tileY + ") to tower tile ID: " + tileId);
+        }
+    }
+
+    /**
+     * Remove dead tree at the specified pixel position
+     */
+    private void removeDeadTreeAtPosition(int pixelX, int pixelY) {
+        if (deadTrees == null) return;
+
+        // Remove any dead tree at this exact position
+        deadTrees.removeIf(deadTree -> deadTree.getX() == pixelX && deadTree.getY() == pixelY);
+
+        System.out.println("Removed dead tree at pixel position (" + pixelX + ", " + pixelY + ")");
     }
 
     /**
