@@ -170,7 +170,7 @@ public class UltiManager {
     }
 
     public void triggerLightningAt(int x, int y) {
-        // Block lightning strikes when game is paused
+        // Block lightning strikes when game is paused 
         if (playing.isGamePaused()) {
             waitingForLightningTarget = false;
             return;
@@ -188,7 +188,7 @@ public class UltiManager {
             return;
         }
 
-        // Only trigger if we're in targeting mode
+        // Only trigger if we're in targeting mode 
         if (!waitingForLightningTarget) {
             return;
         }
