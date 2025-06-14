@@ -81,6 +81,9 @@ public class PlayingModel extends Observable implements GameContext {
     // Wave-start tracking for tower states
     private java.util.List<GameStateMemento.TowerState> waveStartTowerStates = new java.util.ArrayList<>();
 
+    // Flag to prevent overwriting wave start states during save loading
+    private boolean isLoadingFromSave = false;
+
     // Castle health
     private int castleMaxHealth;
     private int castleCurrentHealth;
@@ -989,6 +992,9 @@ public class PlayingModel extends Observable implements GameContext {
      * Apply loaded game state memento to the current game
      */
     private void applyGameStateMemento(GameStateMemento memento) {
+        // Set loading flag to prevent wave start from overwriting tower states
+        isLoadingFromSave = true;
+
         // Set difficulty
         if (memento.getDifficulty() != null) {
             currentDifficulty = memento.getDifficulty();
@@ -1058,6 +1064,9 @@ public class PlayingModel extends Observable implements GameContext {
 
         // Update castle health to match player health
         castleCurrentHealth = memento.getHealth();
+
+        // Clear loading flag after everything is restored
+        isLoadingFromSave = false;
 
         System.out.println("Game state memento applied successfully");
     }
@@ -1228,8 +1237,17 @@ public class PlayingModel extends Observable implements GameContext {
         if (towerManager != null) {
             waveStartTowerStates = createWaveStartTowerStates();
             System.out.println("Updated wave start tower states - now tracking " + waveStartTowerStates.size() + " towers");
+
+            // Debug: Print current tower states
+            for (GameStateMemento.TowerState towerState : waveStartTowerStates) {
+                System.out.println("  - Tower at (" + towerState.getX() + "," + towerState.getY() +
+                        ") Type=" + towerState.getType() + " Level=" + towerState.getLevel() +
+                        " Strategy=" + towerState.getTargetingStrategy() + " Light=" + towerState.hasLight());
+            }
         }
     }
+
+
 
     /**
      * Apply player save data
@@ -1416,9 +1434,13 @@ public class PlayingModel extends Observable implements GameContext {
             System.out.println("WeatherManager is null, no weather state tracked");
         }
 
-        // Track tower states at wave start
-        waveStartTowerStates = createWaveStartTowerStates();
-        System.out.println("Wave started - Captured " + waveStartTowerStates.size() + " tower states at wave start");
+        // Track tower states at wave start (but don't overwrite when loading from save)
+        if (!isLoadingFromSave) {
+            waveStartTowerStates = createWaveStartTowerStates();
+            System.out.println("Wave started - Captured " + waveStartTowerStates.size() + " tower states at wave start");
+        } else {
+            System.out.println("Wave started - Preserving loaded tower states (" + waveStartTowerStates.size() + " towers) from save file");
+        }
     }
 
     /**

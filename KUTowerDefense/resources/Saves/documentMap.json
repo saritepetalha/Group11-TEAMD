@@ -1,10 +1,27 @@
 {
-  "gold": 56,
+  "gold": 69,
   "health": 25,
   "shield": 25,
   "waveIndex": 1,
-  "groupIndex": 1,
-  "towerStates": [],
+  "groupIndex": 0,
+  "towerStates": [
+    {
+      "x": 512,
+      "y": 320,
+      "type": 0,
+      "level": 2,
+      "targetingStrategy": "First",
+      "hasLight": false
+    },
+    {
+      "x": 640,
+      "y": 256,
+      "type": 2,
+      "level": 1,
+      "targetingStrategy": "First",
+      "hasLight": false
+    }
+  ],
   "enemyStates": [],
   "gameOptions": {
     "startingGold": 200,
@@ -156,9 +173,9 @@
   "difficulty": "Easy",
   "selectedSkills": [],
   "weatherData": {
-    "currentWeather": "CLEAR",
+    "currentWeather": "SNOWY",
     "nightIntensity": 0.8,
     "lastNightState": true,
-    "dayTime": 37.696186
+    "dayTime": 41.119938
   }
 }

@@ -415,34 +415,43 @@ public class TowerManager {
 
     public void buildArcherTower(int x, int y) {
         towers.add(new ArcherTower(x, y));
+        // Don't notify tower placement during wave - wave start states should remain unchanged
     }
 
     // Method to build tower with custom targeting strategy
     public void buildArcherTower(int x, int y, TargetingStrategy targetingStrategy) {
         towers.add(new ArcherTower(x, y, targetingStrategy));
+        // Don't notify tower placement during wave - wave start states should remain unchanged
     }
 
     public void buildMageTower(int x, int y) {
         towers.add(new MageTower(x, y));
+        // Don't notify tower placement during wave - wave start states should remain unchanged
     }
 
     // Method to build tower with custom targeting strategy
     public void buildMageTower(int x, int y, TargetingStrategy targetingStrategy) {
         towers.add(new MageTower(x, y, targetingStrategy));
+        // Don't notify tower placement during wave - wave start states should remain unchanged
     }
 
     public void buildArtilerryTower(int x, int y) {
         towers.add(new ArtilleryTower(x, y));
+        // Don't notify tower placement during wave - wave start states should remain unchanged
     }
 
     // Method to build tower with custom targeting strategy
     public void buildArtilleryTower(int x, int y, TargetingStrategy targetingStrategy) {
         towers.add(new ArtilleryTower(x, y, targetingStrategy));
+        // Don't notify tower placement during wave - wave start states should remain unchanged
     }
 
     public void buildPoisonTower(int x, int y) {
         towers.add(new PoisonTower(x, y));
+        // Don't notify tower placement during wave - wave start states should remain unchanged
     }
+
+
 
     public ArrayList<Tower> getTowers() {return towers;}
 
@@ -452,6 +461,8 @@ public class TowerManager {
 
     public void addTower(Tower tower) {
         towers.add(tower);
+        // Don't notify for tower placement during restore - this would cause infinite loops
+        // Only notify for new tower placements during gameplay
     }
 
     // Method to replace an old tower instance with a new one (e.g., after upgrading)
@@ -475,6 +486,9 @@ public class TowerManager {
 
             // Create a dead tree object at the tower's position
             createDeadTreeAtPosition(tower.getX(), tower.getY());
+
+            // Don't notify tower removal during wave - wave start states should remain unchanged
+            // Only update wave start states when towers are sold before wave starts
 
             System.out.println("Tower removed successfully and dead tree created");
         } else {
