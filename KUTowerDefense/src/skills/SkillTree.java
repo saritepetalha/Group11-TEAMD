@@ -35,6 +35,15 @@ public class SkillTree {
         System.out.println("All skills have been reset");
     }
 
+    public Set<SkillType> getSelectedSkills() {
+        return new HashSet<>(selectedSkills); // Return a copy to prevent external modification
+    }
+
+    public void setSelectedSkills(Set<SkillType> skills) {
+        selectedSkills.clear();
+        selectedSkills.addAll(skills);
+    }
+
     // Economy skill effects
     public int getStartingGold() {
         return isSkillSelected(SkillType.BOUNTIFUL_START) ? 150 : 0;
@@ -59,5 +68,5 @@ public class SkillTree {
         System.out.println("Calculating interest: " + currentGold + " gold * " + getInterestRate() + " = " + interest + " gold");
         return interest;
     }
-
 } 
+

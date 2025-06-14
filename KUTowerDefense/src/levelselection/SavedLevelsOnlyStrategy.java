@@ -42,19 +42,42 @@ public class SavedLevelsOnlyStrategy implements LevelSelectionStrategy {
      */
     private boolean hasSaveFile(String levelName) {
         try {
-            // Check for .save files in the saves/ directory (where PlayingModel saves them)
-            File saveFile = new File("saves", levelName + ".save");
-            boolean exists = saveFile.exists();
+            // Use the same path detection logic as GameStateManager
+            String currentDir = System.getProperty("user.dir");
 
-            if (exists) {
-                System.out.println("Found save file: " + saveFile.getAbsolutePath());
-            } else {
-                System.out.println("No save file found for: " + levelName + " at " + saveFile.getAbsolutePath());
+            // Check for JSON save files (prioritizing top-level resources directory)
+            String[] possiblePaths = {
+                    "resources/Saves",                   // Top-level resources directory (PREFERRED)
+                    "./resources/Saves",                 // Explicit relative path to top-level resources
+                    currentDir + "/resources/Saves",     // Absolute path to top-level resources
+                    "src/main/resources/Saves",          // Standard Maven structure from project root
+                    "demo/src/main/resources/Saves",     // If running from parent directory
+                    "main/resources/Saves",              // If running from src directory
+                    "KUTowerDefense/resources/Saves",    // Legacy structure
+                    // Additional paths for IntelliJ
+                    "./src/main/resources/Saves",        // Explicit relative path
+                    "../src/main/resources/Saves",       // If running from target directory
+                    "../../src/main/resources/Saves",    // If running from deeper nested directory
+                    // Absolute path construction
+                    currentDir + "/src/main/resources/Saves",
+                    currentDir + "/demo/src/main/resources/Saves"
+            };
+
+            for (String path : possiblePaths) {
+                File savesDir = new File(path);
+                if (savesDir.exists() && savesDir.isDirectory()) {
+                    File saveFile = new File(savesDir, levelName + ".json");
+                    if (saveFile.exists()) {
+                        System.out.println("✅ SavedLevelsOnlyStrategy: Found save file: " + saveFile.getAbsolutePath());
+                        return true;
+                    }
+                }
             }
 
-            return exists;
+            System.out.println("❌ SavedLevelsOnlyStrategy: No save file found for: " + levelName);
+            return false;
         } catch (Exception e) {
-            System.err.println("Error checking save file for level: " + levelName + " - " + e.getMessage());
+            System.err.println("❌ SavedLevelsOnlyStrategy: Error checking save file for level: " + levelName + " - " + e.getMessage());
             return false;
         }
     }

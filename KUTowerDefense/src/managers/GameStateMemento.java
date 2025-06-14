@@ -1,7 +1,9 @@
 package managers;
 
 import java.util.List;
+import java.util.Set;
 import config.GameOptions;
+import skills.SkillType;
 
 public class GameStateMemento {
     private int gold;
@@ -13,6 +15,7 @@ public class GameStateMemento {
     private List<EnemyState> enemyStates;
     private GameOptions gameOptions;
     private String difficulty;
+    private Set<SkillType> selectedSkills;
 
     /** Gson needs this no-args constructor */
     public GameStateMemento() {
@@ -27,7 +30,8 @@ public class GameStateMemento {
                             List<TowerState> towerStates,
                             List<EnemyState> enemyStates,
                             GameOptions gameOptions,
-                            String difficulty) {
+                            String difficulty,
+                            Set<SkillType> selectedSkills) {
         this.gold = gold;
         this.health = health;
         this.shield = shield;
@@ -36,6 +40,7 @@ public class GameStateMemento {
         this.towerStates = towerStates;
         this.enemyStates = enemyStates;
         this.gameOptions = gameOptions;
+        this.selectedSkills = selectedSkills;
 
         // Ensure difficulty is never null and always valid
         if (difficulty == null) {
@@ -89,6 +94,14 @@ public class GameStateMemento {
 
     public String getDifficulty() {
         return difficulty != null ? difficulty : "Normal";
+    }
+
+    public Set<SkillType> getSelectedSkills() {
+        return selectedSkills;
+    }
+
+    public void setSelectedSkills(Set<SkillType> selectedSkills) {
+        this.selectedSkills = selectedSkills;
     }
 
     public static class TowerState {
