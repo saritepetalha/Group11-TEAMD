@@ -285,7 +285,7 @@ public class PlayingUI {
 
         // Weather info panel dimensions
         int panelWidth = 180;
-        int panelHeight = isSnowy || hasSnowTransition ? 80 : 60; // Expanded height for snow info
+        int panelHeight = isSnowy || hasSnowTransition ? 90 : 70; // Expanded height for season info and snow info
 
         // Background panel
         g2d.setColor(new Color(0, 0, 0, 120));
@@ -295,9 +295,10 @@ public class PlayingUI {
         g2d.setColor(new Color(255, 255, 255, 180));
         g2d.drawRoundRect(x, y, panelWidth, panelHeight, 8, 8);
 
-        // Weather type and time of day
+        // Weather type, season, and time of day
         String weatherType = playing.getWeatherManager().getCurrentWeatherType().toString();
         String timeOfDay = playing.getWeatherManager().getCurrentTimeOfDay();
+        String seasonName = playing.getWeatherManager().getCurrentSeasonName();
 
         // Format weather name
         weatherType = weatherType.substring(0, 1).toUpperCase() + weatherType.substring(1).toLowerCase();
@@ -310,14 +311,19 @@ public class PlayingUI {
         // Draw weather text
         g2d.setColor(Color.WHITE);
         g2d.setFont(new Font("Arial", Font.BOLD, 12));
-        g2d.drawString(weatherType + " - " + timeOfDay, x + 30, y + 20);
+        g2d.drawString(seasonName + " - " + weatherType, x + 30, y + 20);
+        
+        // Draw time of day on second line
+        g2d.setFont(new Font("Arial", Font.PLAIN, 10));
+        g2d.setColor(new Color(200, 200, 200));
+        g2d.drawString(timeOfDay, x + 30, y + 32);
 
         // Draw weather effects
         g2d.setFont(new Font("Arial", Font.PLAIN, 10));
         String effectText = getWeatherEffectText(playing.getWeatherManager().getCurrentWeatherType());
         if (!effectText.isEmpty()) {
             g2d.setColor(new Color(255, 255, 100));
-            g2d.drawString(effectText, x + 8, y + 38);
+            g2d.drawString(effectText, x + 8, y + 46);
         }
 
         // Draw snow transition information if active
@@ -328,7 +334,7 @@ public class PlayingUI {
         // Draw additional effect if applicable
         String secondEffect = getSecondaryWeatherEffect(playing.getWeatherManager().getCurrentWeatherType());
         if (!secondEffect.isEmpty()) {
-            int effectY = isSnowy || hasSnowTransition ? y + 70 : y + 50;
+            int effectY = isSnowy || hasSnowTransition ? y + 80 : y + 60;
             g2d.drawString(secondEffect, x + 8, effectY);
         }
     }
@@ -538,8 +544,15 @@ public class PlayingUI {
     private void drawControlButton(Graphics2D g2d, TheButton button, int x, int y, int width, int height,
                                    BufferedImage normalImg, BufferedImage hoverImg, BufferedImage pressedImg) {
 
+        // Reset lightning button state when targeting mode ends
+        if (button == lightningButton && lightningButton.isMousePressed() && 
+            !playing.getUltiManager().isWaitingForLightningTarget()) {
+            lightningButton.setMousePressed(false);
+        }
+
         boolean isEarthquakeCooldown = (button == earthquakeButton && !playing.getUltiManager().canUseEarthquake());
         boolean isLightningCooldown = (button == lightningButton && !playing.getUltiManager().canUseLightning());
+        boolean isLightningTargeting = (button == lightningButton && playing.getUltiManager().isWaitingForLightningTarget());
         boolean isFreezeCooldown = (button == freezeButton && !playing.getUltiManager().canUseFreeze());
         boolean isGoldFactoryUnavailable = false;
 
@@ -562,6 +575,18 @@ public class PlayingUI {
         // Handle different visual states - show pressed/grayed state for unavailable buttons
         if (isEarthquakeCooldown || isLightningCooldown || isFreezeCooldown || isGoldFactoryUnavailable || button.isMousePressed()) {
             g2d.drawImage(pressedImg, x, y, width, height, null);
+        } else if (isLightningTargeting) {
+            // Special visual state for lightning targeting mode - pulsing effect
+            long currentTime = System.currentTimeMillis();
+            float alpha = (float) (0.7f + 0.3f * Math.sin(currentTime * 0.008));
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+            g2d.drawImage(hoverImg, x, y, width, height, null);
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
+            
+            // Add a bright border to indicate targeting mode
+            g2d.setColor(new Color(255, 255, 0, (int)(alpha * 255)));
+            g2d.setStroke(new BasicStroke(3f));
+            g2d.drawRoundRect(x - 2, y - 2, width + 4, height + 4, 8, 8);
         } else if (button.isMouseOver()) {
             long currentTime = System.currentTimeMillis();
             float alpha = (float) (0.5f + 0.5f * Math.sin(currentTime * 0.003));
@@ -1206,9 +1231,10 @@ public class PlayingUI {
         } else if (lightningButton.getBounds().contains(mouseX, mouseY)) {
             if (playing.getUltiManager().canUseLightning()) {
                 if (playing.getPlayerManager().getGold() >= 75) {
+                    AudioManager.getInstance().playButtonClickSound();
+                    lightningButton.setMousePressed(true);
                     playing.getUltiManager().setWaitingForLightningTarget(true);
                     System.out.println("⚡ Lightning targeting mode activated!");
-                    AudioManager.getInstance().playButtonClickSound();
                     System.out.println("⚡ Lightning Strike ready - click on target location!");
                 } else {
                     System.out.println("Not enough gold for Lightning Strike!");
