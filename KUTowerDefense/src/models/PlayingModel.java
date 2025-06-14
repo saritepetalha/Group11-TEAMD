@@ -75,6 +75,9 @@ public class PlayingModel extends Observable implements GameContext {
     private int waveStartHealth = 0;
     private int waveStartShield = 0;
 
+    // Wave-start tracking for weather state
+    private Object waveStartWeatherData = null;
+
     // Castle health
     private int castleMaxHealth;
     private int castleCurrentHealth;
@@ -834,8 +837,9 @@ public class PlayingModel extends Observable implements GameContext {
         // Get skills that were selected at round start
         java.util.Set<skills.SkillType> selectedSkills = skills.SkillTree.getInstance().getSelectedSkills();
 
-        // Get weather state
-        Object weatherData = weatherManager != null ? weatherManager.getWeatherState() : null;
+        // Get wave start weather state instead of current weather state
+        Object weatherData = waveStartWeatherData != null ? waveStartWeatherData :
+                (weatherManager != null ? weatherManager.getWeatherState() : null);
 
         System.out.println("Saving wave start values: Gold=" + gold + ", Health=" + health + ", Shield=" + shield + ", Wave=" + (waveIndex + 1));
 
@@ -997,8 +1001,17 @@ public class PlayingModel extends Observable implements GameContext {
                 try {
                     @SuppressWarnings("unchecked")
                     java.util.Map<String, Object> weatherState = (java.util.Map<String, Object>) memento.getWeatherData();
+
+                    // Prepare weather manager for loading to override any random initialization
+                    weatherManager.prepareForLoading();
+
+                    // Restore the saved weather state
                     weatherManager.restoreWeatherState(weatherState);
+
+                    // Update wave start weather tracking
+                    waveStartWeatherData = memento.getWeatherData();
                     System.out.println("Restored weather state from save data");
+                    System.out.println("Wave start weather tracking updated");
                 } catch (Exception e) {
                     System.err.println("Failed to restore weather state: " + e.getMessage());
                 }
@@ -1204,6 +1217,15 @@ public class PlayingModel extends Observable implements GameContext {
             waveStartShield = gameOptions != null ? gameOptions.getStartingShield() : 0;
             System.out.println("PlayerManager is null, using default starting values: Gold=" + waveStartGold + ", Health=" + waveStartHealth + ", Shield=" + waveStartShield);
         }
+
+        // Track weather state at wave start
+        if (weatherManager != null) {
+            waveStartWeatherData = weatherManager.getWeatherState();
+            System.out.println("Wave started - Tracking weather state at wave start");
+        } else {
+            waveStartWeatherData = null;
+            System.out.println("WeatherManager is null, no weather state tracked");
+        }
     }
 
     /**
@@ -1281,6 +1303,20 @@ public class PlayingModel extends Observable implements GameContext {
      */
     public void setWaveStartShield(int shield) {
         this.waveStartShield = shield;
+    }
+
+    /**
+     * Get the weather data at wave start (for saving)
+     */
+    public Object getWaveStartWeatherData() {
+        return waveStartWeatherData;
+    }
+
+    /**
+     * Set the weather data at wave start (for loading)
+     */
+    public void setWaveStartWeatherData(Object weatherData) {
+        this.waveStartWeatherData = weatherData;
     }
 
 }

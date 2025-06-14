@@ -1,9 +1,9 @@
 {
-  "gold": 197,
+  "gold": 166,
   "health": 25,
-  "shield": 24,
+  "shield": 25,
   "waveIndex": 1,
-  "groupIndex": 1,
+  "groupIndex": 0,
   "towerStates": [],
   "enemyStates": [],
   "gameOptions": {
@@ -157,8 +157,8 @@
   "selectedSkills": [],
   "weatherData": {
     "currentWeather": "CLEAR",
-    "nightIntensity": 0.8,
-    "lastNightState": true,
-    "dayTime": 40.623974
+    "nightIntensity": 0.0,
+    "lastNightState": false,
+    "dayTime": 10.575921
   }
 }
