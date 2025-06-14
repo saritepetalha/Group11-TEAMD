@@ -64,6 +64,9 @@ public class PlayingModel extends Observable implements GameContext {
     private int updateCounter = 0;
     private long gameTimeMillis = 0;
 
+    // Wave-start tracking for save/load
+    private int waveStartGold = 0;
+
     // Castle health
     private int castleMaxHealth;
     private int castleCurrentHealth;
@@ -799,8 +802,8 @@ public class PlayingModel extends Observable implements GameContext {
      * Create a GameStateMemento object representing the current game state for JSON save
      */
     private GameStateMemento createGameStateMemento() {
-        // Get round start values from GameOptions instead of current values
-        int gold = gameOptions != null ? gameOptions.getStartingGold() : 0;
+        // Use wave start gold instead of default starting gold
+        int gold = waveStartGold > 0 ? waveStartGold : (gameOptions != null ? gameOptions.getStartingGold() : 0);
         int health = gameOptions != null ? gameOptions.getStartingPlayerHP() : castleCurrentHealth;
         int shield = gameOptions != null ? gameOptions.getStartingShield() : 0;
 
@@ -820,7 +823,7 @@ public class PlayingModel extends Observable implements GameContext {
         // Get weather state
         Object weatherData = weatherManager != null ? weatherManager.getWeatherState() : null;
 
-        System.out.println("Saving round start values with current wave: Gold=" + gold + ", Health=" + health + ", Shield=" + shield + ", Wave=" + waveIndex);
+        System.out.println("Saving wave start values: Gold=" + gold + ", Health=" + health + ", Shield=" + shield + ", Wave=" + (waveIndex + 1));
 
         return new GameStateMemento(
                 gold, health, shield, waveIndex, groupIndex,
@@ -955,9 +958,12 @@ public class PlayingModel extends Observable implements GameContext {
                 playerManager.setGold(memento.getGold());
                 playerManager.setHealth(memento.getHealth());
                 playerManager.setShield(memento.getShield());
+                // Update wave start gold tracking
+                waveStartGold = memento.getGold();
                 System.out.println("Restored player state: Gold=" + memento.getGold() +
                         ", Health=" + memento.getHealth() +
                         ", Shield=" + memento.getShield());
+                System.out.println("Wave start gold tracking updated to: " + waveStartGold);
             }
 
             // Apply wave state
@@ -1130,6 +1136,9 @@ public class PlayingModel extends Observable implements GameContext {
         int startingGoldBonus = SkillTree.getInstance().getStartingGold();
         if (playerManager != null) {
             playerManager.addGold(startingGoldBonus);
+            // Track the gold at the start of the first wave
+            waveStartGold = playerManager.getGold();
+            System.out.println("Game initialized - Wave start gold tracked: " + waveStartGold);
         }
     }
 
@@ -1154,6 +1163,33 @@ public class PlayingModel extends Observable implements GameContext {
         } else {
             System.out.println("PlayerManager is null, cannot calculate interest");
         }
+    }
+
+    /**
+     * Called when a wave starts to track the gold at wave start
+     */
+    public void onWaveStart() {
+        if (playerManager != null) {
+            waveStartGold = playerManager.getGold();
+            System.out.println("Wave started - Tracking gold at wave start: " + waveStartGold);
+        } else {
+            waveStartGold = gameOptions != null ? gameOptions.getStartingGold() : 0;
+            System.out.println("PlayerManager is null, using default starting gold: " + waveStartGold);
+        }
+    }
+
+    /**
+     * Get the gold value at wave start (for saving)
+     */
+    public int getWaveStartGold() {
+        return waveStartGold;
+    }
+
+    /**
+     * Set the gold value at wave start (for loading)
+     */
+    public void setWaveStartGold(int gold) {
+        this.waveStartGold = gold;
     }
 
     /**

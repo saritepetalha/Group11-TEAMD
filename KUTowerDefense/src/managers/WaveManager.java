@@ -134,6 +134,11 @@ public class WaveManager {
             prepareNextGroup();
             waitingForNextWave = false;
             System.out.println("Preparing Wave: " + (waveIndex + 1));
+
+            // Notify the model that a wave is starting (for gold tracking)
+            if (playing.getController() != null) {
+                playing.getController().getModel().onWaveStart();
+            }
         } else {
             System.out.println("All waves completed.");
         }
