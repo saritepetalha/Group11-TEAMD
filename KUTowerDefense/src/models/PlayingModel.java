@@ -67,6 +67,14 @@ public class PlayingModel extends Observable implements GameContext {
     // Wave-start tracking for save/load
     private int waveStartGold = 0;
 
+    // Game-start tracking for save/load
+    private int gameStartHealth = 0;
+    private int gameStartShield = 0;
+
+    // Wave-start tracking for health and shield
+    private int waveStartHealth = 0;
+    private int waveStartShield = 0;
+
     // Castle health
     private int castleMaxHealth;
     private int castleCurrentHealth;
@@ -804,8 +812,14 @@ public class PlayingModel extends Observable implements GameContext {
     private GameStateMemento createGameStateMemento() {
         // Use wave start gold instead of default starting gold
         int gold = waveStartGold > 0 ? waveStartGold : (gameOptions != null ? gameOptions.getStartingGold() : 0);
-        int health = gameOptions != null ? gameOptions.getStartingPlayerHP() : castleCurrentHealth;
-        int shield = gameOptions != null ? gameOptions.getStartingShield() : 0;
+
+        // Use wave start health and shield values
+        int health = waveStartHealth > 0 ? waveStartHealth :
+                (playerManager != null ? playerManager.getHealth() :
+                        (gameOptions != null ? gameOptions.getStartingPlayerHP() : castleCurrentHealth));
+        int shield = waveStartShield > 0 ? waveStartShield :
+                (playerManager != null ? playerManager.getShield() :
+                        (gameOptions != null ? gameOptions.getStartingShield() : 0));
 
         // Save current wave state (not reset to beginning)
         int waveIndex = waveManager != null ? waveManager.getWaveIndex() : 0;
@@ -958,12 +972,17 @@ public class PlayingModel extends Observable implements GameContext {
                 playerManager.setGold(memento.getGold());
                 playerManager.setHealth(memento.getHealth());
                 playerManager.setShield(memento.getShield());
-                // Update wave start gold tracking
+                // Update wave start tracking values
                 waveStartGold = memento.getGold();
+                waveStartHealth = memento.getHealth();
+                waveStartShield = memento.getShield();
+                // Update game start tracking (for consistency)
+                gameStartHealth = memento.getHealth();
+                gameStartShield = memento.getShield();
                 System.out.println("Restored player state: Gold=" + memento.getGold() +
                         ", Health=" + memento.getHealth() +
                         ", Shield=" + memento.getShield());
-                System.out.println("Wave start gold tracking updated to: " + waveStartGold);
+                System.out.println("Wave start tracking updated: Gold=" + waveStartGold + ", Health=" + waveStartHealth + ", Shield=" + waveStartShield);
             }
 
             // Apply wave state
@@ -1138,7 +1157,11 @@ public class PlayingModel extends Observable implements GameContext {
             playerManager.addGold(startingGoldBonus);
             // Track the gold at the start of the first wave
             waveStartGold = playerManager.getGold();
+            // Track the health and shield at game start
+            gameStartHealth = playerManager.getHealth();
+            gameStartShield = playerManager.getShield();
             System.out.println("Game initialized - Wave start gold tracked: " + waveStartGold);
+            System.out.println("Game initialized - Health tracked: " + gameStartHealth + ", Shield tracked: " + gameStartShield);
         }
     }
 
@@ -1171,10 +1194,15 @@ public class PlayingModel extends Observable implements GameContext {
     public void onWaveStart() {
         if (playerManager != null) {
             waveStartGold = playerManager.getGold();
+            waveStartHealth = playerManager.getHealth();
+            waveStartShield = playerManager.getShield();
             System.out.println("Wave started - Tracking gold at wave start: " + waveStartGold);
+            System.out.println("Wave started - Tracking health/shield at wave start: " + waveStartHealth + "/" + waveStartShield);
         } else {
             waveStartGold = gameOptions != null ? gameOptions.getStartingGold() : 0;
-            System.out.println("PlayerManager is null, using default starting gold: " + waveStartGold);
+            waveStartHealth = gameOptions != null ? gameOptions.getStartingPlayerHP() : 0;
+            waveStartShield = gameOptions != null ? gameOptions.getStartingShield() : 0;
+            System.out.println("PlayerManager is null, using default starting values: Gold=" + waveStartGold + ", Health=" + waveStartHealth + ", Shield=" + waveStartShield);
         }
     }
 
@@ -1193,10 +1221,66 @@ public class PlayingModel extends Observable implements GameContext {
     }
 
     /**
+     * Get the health value at game start (for saving)
+     */
+    public int getGameStartHealth() {
+        return gameStartHealth;
+    }
+
+    /**
+     * Set the health value at game start (for loading)
+     */
+    public void setGameStartHealth(int health) {
+        this.gameStartHealth = health;
+    }
+
+    /**
+     * Get the shield value at game start (for saving)
+     */
+    public int getGameStartShield() {
+        return gameStartShield;
+    }
+
+    /**
+     * Set the shield value at game start (for loading)
+     */
+    public void setGameStartShield(int shield) {
+        this.gameStartShield = shield;
+    }
+
+    /**
      * Get the current victory confetti animation (for rendering)
      */
     public ui_p.ConfettiAnimation getVictoryConfetti() {
         return victoryConfetti;
+    }
+
+    /**
+     * Get the health value at wave start (for saving)
+     */
+    public int getWaveStartHealth() {
+        return waveStartHealth;
+    }
+
+    /**
+     * Set the health value at wave start (for loading)
+     */
+    public void setWaveStartHealth(int health) {
+        this.waveStartHealth = health;
+    }
+
+    /**
+     * Get the shield value at wave start (for saving)
+     */
+    public int getWaveStartShield() {
+        return waveStartShield;
+    }
+
+    /**
+     * Set the shield value at wave start (for loading)
+     */
+    public void setWaveStartShield(int shield) {
+        this.waveStartShield = shield;
     }
 
 }
