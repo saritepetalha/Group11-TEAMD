@@ -605,9 +605,9 @@ public abstract class Enemy {
         }
     }
 
-    private void updateSlow() {
+    private void updateSlow(float speedMultiplier) {
         if (isSlowed) {
-            slowTimer--;
+            slowTimer -= speedMultiplier;
             if (slowTimer <= 0) {
                 isSlowed = false;
                 currentSlowFactor = 1.0f; // Reset slow factor
@@ -635,10 +635,9 @@ public abstract class Enemy {
         System.out.println("Enemy ID: " + id + " is now frozen.");
     }
 
-    private void updateFreeze() {
+    private void updateFreeze(float speedMultiplier) {
         if (isFrozen) {
-            freezeTimer--;
-            System.out.println("Freeze timer: " + freezeTimer);
+            freezeTimer -= speedMultiplier;
             if (freezeTimer <= 0) {
                 isFrozen = false;
                 System.out.println("Freeze effect ended for enemy ID: " + id);
@@ -703,15 +702,19 @@ public abstract class Enemy {
         return poisonTimer;
     }
 
-    public void update() {
-        updateFreeze();
+    public void update(float speedMultiplier) {
+        updateFreeze(speedMultiplier);
         updatePoison();
         if (!isFrozen) {
             updateAnimationTick();
         }
         updateStatsFromOptions(null);
-        updateSlow();
+        updateSlow(speedMultiplier);
         updateTeleportEffect();
+    }
+
+    public void update() {
+        update(1.0f); // Default speed multiplier for backward compatibility
     }
 
     public float getEffectiveSpeed() {
