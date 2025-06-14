@@ -900,7 +900,6 @@ public class PlayingModel extends Observable implements GameContext {
             System.out.println("Restored " + saveData.getSelectedSkills().size() + " skills from save data");
         } else {
             // Clear skills if none were saved (backward compatibility)
-            skills.SkillTree.getInstance().clearSkills();
             System.out.println("No skills found in save data, cleared skill tree");
         }
 
