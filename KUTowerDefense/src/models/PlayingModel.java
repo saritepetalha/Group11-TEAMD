@@ -799,23 +799,25 @@ public class PlayingModel extends Observable implements GameContext {
      * Create a GameStateMemento object representing the current game state for JSON save
      */
     private GameStateMemento createGameStateMemento() {
-        // Get current player state
-        int gold = playerManager != null ? playerManager.getGold() : 0;
-        int health = playerManager != null ? playerManager.getHealth() : castleCurrentHealth;
-        int shield = playerManager != null ? playerManager.getShield() : 0;
+        // Get round start values from GameOptions instead of current values
+        int gold = gameOptions != null ? gameOptions.getStartingGold() : 0;
+        int health = gameOptions != null ? gameOptions.getStartingPlayerHP() : castleCurrentHealth;
+        int shield = gameOptions != null ? gameOptions.getStartingShield() : 0;
 
-        // Get current wave state
+        // Save current wave state (not reset to beginning)
         int waveIndex = waveManager != null ? waveManager.getWaveIndex() : 0;
-        int groupIndex = 0; // TODO: Add group tracking if needed
+        int groupIndex = waveManager != null ? waveManager.getCurrentGroupIndex() : 0;
 
-        // Get tower states
-        java.util.List<GameStateMemento.TowerState> towerStates = createTowerStates();
+        // No towers for round start - empty tower states
+        java.util.List<GameStateMemento.TowerState> towerStates = new java.util.ArrayList<>();
 
-        // Get enemy states (empty for now)
+        // No enemies for round start - empty enemy states
         java.util.List<GameStateMemento.EnemyState> enemyStates = new java.util.ArrayList<>();
 
-        // Get skills
+        // Get skills that were selected at round start
         java.util.Set<skills.SkillType> selectedSkills = skills.SkillTree.getInstance().getSelectedSkills();
+
+        System.out.println("Saving round start values with current wave: Gold=" + gold + ", Health=" + health + ", Shield=" + shield + ", Wave=" + waveIndex);
 
         return new GameStateMemento(
                 gold, health, shield, waveIndex, groupIndex,
@@ -945,8 +947,9 @@ public class PlayingModel extends Observable implements GameContext {
 
             // Apply wave state
             if (waveManager != null) {
-                // TODO: Add wave state restoration when methods become available
-                System.out.println("Wave index from save: " + memento.getWaveIndex());
+                waveManager.restoreWaveState(memento.getWaveIndex(), memento.getGroupIndex());
+                System.out.println("Restored wave state: Wave=" + memento.getWaveIndex() +
+                        ", Group=" + memento.getGroupIndex());
             }
 
             // Apply tower states
