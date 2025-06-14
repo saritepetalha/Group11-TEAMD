@@ -135,6 +135,8 @@ public class GameStateMemento {
         private int y;
         private int type;
         private int level;
+        private String targetingStrategy; // Store strategy name for save/load
+        private boolean hasLight; // Store whether tower has light upgrade
 
         /** Gson needs this no-args constructor */
         public TowerState() {
@@ -145,6 +147,17 @@ public class GameStateMemento {
             this.y = y;
             this.type = type;
             this.level = level;
+            this.targetingStrategy = "First"; // Default targeting strategy
+            this.hasLight = false; // Default no light
+        }
+
+        public TowerState(int x, int y, int type, int level, String targetingStrategy, boolean hasLight) {
+            this.x = x;
+            this.y = y;
+            this.type = type;
+            this.level = level;
+            this.targetingStrategy = targetingStrategy != null ? targetingStrategy : "First";
+            this.hasLight = hasLight;
         }
 
         public int getX() {
@@ -161,6 +174,14 @@ public class GameStateMemento {
 
         public int getLevel() {
             return level;
+        }
+
+        public String getTargetingStrategy() {
+            return targetingStrategy != null ? targetingStrategy : "First";
+        }
+
+        public boolean hasLight() {
+            return hasLight;
         }
     }
 
