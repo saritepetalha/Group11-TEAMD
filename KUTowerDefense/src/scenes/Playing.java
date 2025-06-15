@@ -332,4 +332,15 @@ public class Playing extends GameScene implements SceneMethods {
         System.out.println("Playing.onWaveComplete called - controller is " + (controller != null ? "not null" : "null"));
         if (controller != null) controller.getModel().onWaveComplete();
     }
+
+    /**
+     * Update wave start tower states - works for both regular Playing and PlayingAdapter
+     */
+    public void updateWaveStartTowerStates() {
+        if (controller != null) {
+            controller.getModel().updateWaveStartTowerStates();
+        } else {
+            System.out.println("Warning: Cannot update wave start tower states - controller is null (likely PlayingAdapter)");
+        }
+    }
 }

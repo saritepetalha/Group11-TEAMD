@@ -1,10 +1,27 @@
 {
-  "gold": 200,
+  "gold": 69,
   "health": 25,
   "shield": 25,
   "waveIndex": 1,
   "groupIndex": 0,
-  "towerStates": [],
+  "towerStates": [
+    {
+      "x": 512,
+      "y": 320,
+      "type": 0,
+      "level": 2,
+      "targetingStrategy": "First",
+      "hasLight": false
+    },
+    {
+      "x": 640,
+      "y": 256,
+      "type": 2,
+      "level": 1,
+      "targetingStrategy": "First",
+      "hasLight": false
+    }
+  ],
   "enemyStates": [],
   "gameOptions": {
     "startingGold": 200,
@@ -154,5 +171,11 @@
     "savedCastleHealth": 0
   },
   "difficulty": "Easy",
-  "selectedSkills": []
+  "selectedSkills": [],
+  "weatherData": {
+    "currentWeather": "SNOWY",
+    "nightIntensity": 0.8,
+    "lastNightState": true,
+    "dayTime": 41.119938
+  }
 }

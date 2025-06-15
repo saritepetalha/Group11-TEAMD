@@ -1218,5 +1218,15 @@ public class PlayingView implements Observer {
             }
             System.out.println("Tile modified at (" + x + ", " + y + ") to: " + tile);
         }
+
+        @Override
+        public void updateWaveStartTowerStates() {
+            // Handle wave start tower state updates directly through model
+            if (model != null) {
+                model.updateWaveStartTowerStates();
+            } else {
+                System.out.println("Warning: Cannot update wave start tower states - model is null");
+            }
+        }
     }
 }
