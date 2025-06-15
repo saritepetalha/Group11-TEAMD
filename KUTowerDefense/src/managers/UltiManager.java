@@ -234,7 +234,9 @@ public class UltiManager {
 
     public void draw(Graphics g, float gameSpeedMultiplier) {
         Graphics2D g2d = (Graphics2D) g;
-        for (LightningStrike strike : activeStrikes) {
+        // Draw lightning strikes - create defensive copy to avoid ConcurrentModificationException
+        List<LightningStrike> strikesCopy = new ArrayList<>(activeStrikes);
+        for (LightningStrike strike : strikesCopy) {
             strike.draw(g2d);
         }
 
