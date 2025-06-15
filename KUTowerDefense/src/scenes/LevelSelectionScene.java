@@ -1049,14 +1049,14 @@ public class LevelSelectionScene extends JPanel {
     private void selectDifficultyAndPlay(String difficulty) {
         hideDifficultyOverlay();
 
-        // Delete all existing save files when starting a new game to ensure fresh start
+        // Delete only the specific level's save file when starting that level as a new game
         try {
             // Create a GameStateManager instance to access the delete method
             managers.GameStateManager gameStateManager = new managers.GameStateManager();
-            gameStateManager.deleteAllSaveFiles();
-            System.out.println("🔄 LevelSelectionScene: Cleared all save files for new game start");
+            gameStateManager.deleteSaveFileForLevel(selectedLevelName);
+            System.out.println("🔄 LevelSelectionScene: Cleared save file for level '" + selectedLevelName + "' for new game start");
         } catch (Exception e) {
-            System.err.println("❌ LevelSelectionScene: Error clearing save files: " + e.getMessage());
+            System.err.println("❌ LevelSelectionScene: Error clearing save file for level '" + selectedLevelName + "': " + e.getMessage());
             e.printStackTrace();
         }
 
@@ -1084,14 +1084,14 @@ public class LevelSelectionScene extends JPanel {
     }
 
     private void playLevel(String levelName, int[][] levelData) {
-        // Delete all existing save files when starting a new game to ensure fresh start
+        // Delete only the specific level's save file when starting that level as a new game
         try {
             // Create a GameStateManager instance to access the delete method
             managers.GameStateManager gameStateManager = new managers.GameStateManager();
-            gameStateManager.deleteAllSaveFiles();
-            System.out.println("🔄 LevelSelectionScene: Cleared all save files for new game start");
+            gameStateManager.deleteSaveFileForLevel(levelName);
+            System.out.println("🔄 LevelSelectionScene: Cleared save file for level '" + levelName + "' for new game start");
         } catch (Exception e) {
-            System.err.println("❌ LevelSelectionScene: Error clearing save files: " + e.getMessage());
+            System.err.println("❌ LevelSelectionScene: Error clearing save file for level '" + levelName + "': " + e.getMessage());
             e.printStackTrace();
         }
 
