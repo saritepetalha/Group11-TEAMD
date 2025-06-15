@@ -30,12 +30,14 @@ public class AudioManager {
     // Loaded clips
     private Map<String, Clip> musicClips = new HashMap<>();
     private Map<String, Clip> soundClips = new HashMap<>();
+    private Map<String, Clip> weatherClips = new HashMap<>(); // Separate storage for weather sounds
 
     // Track currently playing spawn sounds to stop them when needed
     private Map<String, Clip> currentlyPlayingSpawnSounds = new HashMap<>();
 
-    // Currently playing music
+    // Currently playing music and weather
     private String currentMusic = "";
+    private String currentWeatherSound = "";
 
     // Random generator for variety in sound effects
     private final Random random = new Random();
@@ -289,7 +291,7 @@ public class AudioManager {
             Clip clip = AudioSystem.getClip();
             clip.open(audioStream);
 
-            musicClips.put(name, clip);
+            weatherClips.put(name, clip); // Store in separate weather clips map
             System.out.println("Loaded weather sound: " + name);
 
         } catch (Exception e) {
@@ -512,9 +514,9 @@ public class AudioManager {
     public void setSoundVolume(float volume) {
         this.soundVolume = Math.max(0.0f, Math.min(1.0f, volume));
 
-        String[] weatherSounds = {"rain", "snow", "wind"};
-        for (String weather : weatherSounds) {
-            Clip clip = musicClips.get(weather);
+        // Update volume for currently playing weather sounds
+        if (!currentWeatherSound.isEmpty()) {
+            Clip clip = weatherClips.get(currentWeatherSound);
             if (clip != null && clip.isRunning()) {
                 setClipVolume(clip, soundVolume * 0.8f);
             }
@@ -662,22 +664,34 @@ public class AudioManager {
 
         stopWeatherSounds();
 
-        Clip clip = musicClips.get(weatherType);
+        Clip clip = weatherClips.get(weatherType);
         if (clip != null) {
             setClipVolume(clip, soundVolume * 0.8f);
             clip.setFramePosition(0);
             clip.loop(Clip.LOOP_CONTINUOUSLY);
+            currentWeatherSound = weatherType;
+            System.out.println("Started weather sound: " + weatherType);
         } else {
+            System.out.println("Weather sound not found: " + weatherType);
         }
     }
 
     public void stopWeatherSounds() {
-        String[] weatherSounds = {"rain", "snow", "wind"};
-        for (String weather : weatherSounds) {
-            Clip clip = musicClips.get(weather);
+        if (!currentWeatherSound.isEmpty()) {
+            Clip clip = weatherClips.get(currentWeatherSound);
             if (clip != null && clip.isRunning()) {
                 clip.stop();
-
+                System.out.println("Stopped weather sound: " + currentWeatherSound);
+            }
+            currentWeatherSound = "";
+        }
+        
+        // Also stop any other weather sounds that might be running (safety check)
+        String[] weatherSounds = {"rain", "snow", "wind"};
+        for (String weather : weatherSounds) {
+            Clip clip = weatherClips.get(weather);
+            if (clip != null && clip.isRunning()) {
+                clip.stop();
             }
         }
     }
