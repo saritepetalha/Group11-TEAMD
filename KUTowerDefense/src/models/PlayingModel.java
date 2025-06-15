@@ -1082,64 +1082,74 @@ public class PlayingModel extends Observable implements GameContext {
     /**
      * Update tile data to match the restored tree states
      * This ensures that the visual representation matches the tree objects
+     * Only updates tiles that have changed from their original state
      */
     private void updateTileDataForTreeStates(java.util.List<GameStateMemento.TreeState> deadTreeStates,
                                              java.util.List<GameStateMemento.TreeState> liveTreeStates) {
-        if (level == null) return;
+        if (level == null || originalLevelData == null) return;
 
-        // First, find all current tree positions and clear them
-        clearAllTreeTiles();
+        // Create sets of saved tree positions for quick lookup
+        java.util.Set<String> savedDeadTreePositions = new java.util.HashSet<>();
+        java.util.Set<String> savedLiveTreePositions = new java.util.HashSet<>();
 
-        // Set dead tree tiles
         if (deadTreeStates != null) {
             for (GameStateMemento.TreeState treeState : deadTreeStates) {
                 int tileX = treeState.getX() / constants.GameDimensions.TILE_DISPLAY_SIZE;
                 int tileY = treeState.getY() / constants.GameDimensions.TILE_DISPLAY_SIZE;
-
-                if (tileY >= 0 && tileY < level.length && tileX >= 0 && tileX < level[0].length) {
-                    level[tileY][tileX] = 15; // Dead tree tile ID
-                    System.out.println("Set dead tree tile at (" + tileX + ", " + tileY + ")");
-                }
+                savedDeadTreePositions.add(tileX + "," + tileY);
             }
         }
 
-        // Set live tree tiles (use Tree1 ID 16 as default)
         if (liveTreeStates != null) {
             for (GameStateMemento.TreeState treeState : liveTreeStates) {
                 int tileX = treeState.getX() / constants.GameDimensions.TILE_DISPLAY_SIZE;
                 int tileY = treeState.getY() / constants.GameDimensions.TILE_DISPLAY_SIZE;
+                savedLiveTreePositions.add(tileX + "," + tileY);
+            }
+        }
 
-                if (tileY >= 0 && tileY < level.length && tileX >= 0 && tileX < level[0].length) {
-                    level[tileY][tileX] = 16; // Live tree tile ID (Tree1)
-                    System.out.println("Set live tree tile at (" + tileX + ", " + tileY + ")");
+        // Go through all positions and update only where necessary
+        for (int row = 0; row < level.length; row++) {
+            for (int col = 0; col < level[row].length; col++) {
+                String position = col + "," + row;
+                int originalTileId = originalLevelData[row][col];
+
+                // Check if this position should have a dead tree
+                if (savedDeadTreePositions.contains(position)) {
+                    if (level[row][col] != 15) {
+                        level[row][col] = 15; // Set to dead tree
+                        System.out.println("Updated tile at (" + col + ", " + row + ") to dead tree");
+                    }
+                }
+                // Check if this position should have a live tree
+                else if (savedLiveTreePositions.contains(position)) {
+                    // Use the original tree type if it was a tree, otherwise use Tree1 (16)
+                    int treeId = (originalTileId == 16 || originalTileId == 17 || originalTileId == 18) ?
+                            originalTileId : 16;
+                    if (level[row][col] != treeId) {
+                        level[row][col] = treeId;
+                        System.out.println("Updated tile at (" + col + ", " + row + ") to live tree (ID " + treeId + ")");
+                    }
+                }
+                // If no tree should be here, restore to original tile (unless it's a tower)
+                else {
+                    int currentTileId = level[row][col];
+                    // Only restore if current tile is a tree tile and original wasn't a tree
+                    if ((currentTileId == 15 || currentTileId == 16 || currentTileId == 17 || currentTileId == 18) &&
+                            !(originalTileId == 15 || originalTileId == 16 || originalTileId == 17 || originalTileId == 18)) {
+                        level[row][col] = originalTileId;
+                        System.out.println("Restored tile at (" + col + ", " + row + ") to original (ID " + originalTileId + ")");
+                    }
                 }
             }
         }
 
         System.out.println("Updated tile data for " +
-                (deadTreeStates != null ? deadTreeStates.size() : 0) + " dead trees and " +
-                (liveTreeStates != null ? liveTreeStates.size() : 0) + " live trees");
+                savedDeadTreePositions.size() + " dead trees and " +
+                savedLiveTreePositions.size() + " live trees");
     }
 
-    /**
-     * Clear all tree tiles from the level data
-     * This removes both dead trees (15) and live trees (16, 17, 18) and replaces them with grass (5)
-     */
-    private void clearAllTreeTiles() {
-        if (level == null) return;
 
-        for (int row = 0; row < level.length; row++) {
-            for (int col = 0; col < level[row].length; col++) {
-                int tileId = level[row][col];
-                // Check if it's a tree tile (dead tree: 15, live trees: 16, 17, 18)
-                if (tileId == 15 || tileId == 16 || tileId == 17 || tileId == 18) {
-                    level[row][col] = 5; // Replace with grass
-                }
-            }
-        }
-
-        System.out.println("Cleared all existing tree tiles from level data");
-    }
 
     /**
      * Create simple player save data
