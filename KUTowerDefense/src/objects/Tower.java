@@ -250,8 +250,9 @@ public abstract class Tower {
 
     public void revive() {
         this.destroyed = false;
-        // Reset any other necessary tower stats upon revival, e.g., health if towers had health
-        // For now, just resetting the destroyed flag.
+        // Reset tower to level 1 upon revival (earthquake only destroys level 1 towers)
+        this.level = 1;
+        // Reset any other necessary tower stats upon revival
         this.countDownClock = 0; // Reset cooldown as well
     }
 
