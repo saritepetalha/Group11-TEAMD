@@ -1080,6 +1080,68 @@ public class PlayingModel extends Observable implements GameContext {
     }
 
     /**
+     * Update tile data to match the restored tree states
+     * This ensures that the visual representation matches the tree objects
+     */
+    private void updateTileDataForTreeStates(java.util.List<GameStateMemento.TreeState> deadTreeStates,
+                                             java.util.List<GameStateMemento.TreeState> liveTreeStates) {
+        if (level == null) return;
+
+        // First, find all current tree positions and clear them
+        clearAllTreeTiles();
+
+        // Set dead tree tiles
+        if (deadTreeStates != null) {
+            for (GameStateMemento.TreeState treeState : deadTreeStates) {
+                int tileX = treeState.getX() / constants.GameDimensions.TILE_DISPLAY_SIZE;
+                int tileY = treeState.getY() / constants.GameDimensions.TILE_DISPLAY_SIZE;
+
+                if (tileY >= 0 && tileY < level.length && tileX >= 0 && tileX < level[0].length) {
+                    level[tileY][tileX] = 15; // Dead tree tile ID
+                    System.out.println("Set dead tree tile at (" + tileX + ", " + tileY + ")");
+                }
+            }
+        }
+
+        // Set live tree tiles (use Tree1 ID 16 as default)
+        if (liveTreeStates != null) {
+            for (GameStateMemento.TreeState treeState : liveTreeStates) {
+                int tileX = treeState.getX() / constants.GameDimensions.TILE_DISPLAY_SIZE;
+                int tileY = treeState.getY() / constants.GameDimensions.TILE_DISPLAY_SIZE;
+
+                if (tileY >= 0 && tileY < level.length && tileX >= 0 && tileX < level[0].length) {
+                    level[tileY][tileX] = 16; // Live tree tile ID (Tree1)
+                    System.out.println("Set live tree tile at (" + tileX + ", " + tileY + ")");
+                }
+            }
+        }
+
+        System.out.println("Updated tile data for " +
+                (deadTreeStates != null ? deadTreeStates.size() : 0) + " dead trees and " +
+                (liveTreeStates != null ? liveTreeStates.size() : 0) + " live trees");
+    }
+
+    /**
+     * Clear all tree tiles from the level data
+     * This removes both dead trees (15) and live trees (16, 17, 18) and replaces them with grass (5)
+     */
+    private void clearAllTreeTiles() {
+        if (level == null) return;
+
+        for (int row = 0; row < level.length; row++) {
+            for (int col = 0; col < level[row].length; col++) {
+                int tileId = level[row][col];
+                // Check if it's a tree tile (dead tree: 15, live trees: 16, 17, 18)
+                if (tileId == 15 || tileId == 16 || tileId == 17 || tileId == 18) {
+                    level[row][col] = 5; // Replace with grass
+                }
+            }
+        }
+
+        System.out.println("Cleared all existing tree tiles from level data");
+    }
+
+    /**
      * Create simple player save data
      */
     private Object createPlayerSaveData() {
@@ -1220,6 +1282,10 @@ public class PlayingModel extends Observable implements GameContext {
                 // Also restore current game tree states to match the loaded wave start states
                 deadTrees = createDeadTreesFromTreeStates(memento.getDeadTreeStates());
                 liveTrees = createLiveTreesFromTreeStates(memento.getLiveTreeStates());
+
+                // Update tile data to match the restored tree states
+                updateTileDataForTreeStates(memento.getDeadTreeStates(), memento.getLiveTreeStates());
+
                 System.out.println("Restored current game tree states: " +
                         (deadTrees != null ? deadTrees.size() : 0) + " dead trees, " +
                         (liveTrees != null ? liveTrees.size() : 0) + " live trees");
