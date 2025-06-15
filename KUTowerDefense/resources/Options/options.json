@@ -1,5 +1,5 @@
 {
-  "startingGold": 300,
+  "startingGold": 10000,
   "startingPlayerHP": 20,
   "startingShield": 25,
   "weatherEnabled": true,

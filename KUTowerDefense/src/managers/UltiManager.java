@@ -86,6 +86,49 @@ public class UltiManager {
             }
         }
 
+        // Destroy level 1 towers with 50% chance
+        if (playing.getTowerManager() != null) {
+            for (objects.Tower tower : playing.getTowerManager().getTowers()) {
+                if (tower.getLevel() == 1 && !tower.isDestroyed()) {
+                    // 50% chance to destroy level 1 towers
+                    if (Math.random() < 0.5) {
+                        System.out.println("Earthquake destroyed " + tower.getClass().getSimpleName() + " (50% chance succeeded)!");
+                        tower.setDestroyed(true);
+                        
+                        // Set appropriate destroyed sprite based on tower type
+                        if (tower instanceof objects.MageTower) {
+                            tower.setDestroyedSprite(helpMethods.LoadSave.getImageFromPath("/TowerAssets/Tower_spell_destroyed.png"));
+                        } else if (tower instanceof objects.ArtilleryTower) {
+                            tower.setDestroyedSprite(helpMethods.LoadSave.getImageFromPath("/TowerAssets/Tower_bomb_destroyed.png"));
+                        } else if (tower instanceof objects.ArcherTower) {
+                            tower.setDestroyedSprite(helpMethods.LoadSave.getImageFromPath("/TowerAssets/Tower_archer_destroyed.png"));
+                        } else if (tower instanceof objects.PoisonTower) {
+                            tower.setDestroyedSprite(helpMethods.LoadSave.getImageFromPath("/TowerAssets/Tower_poison_destroyed.png"));
+                        }
+                        
+                        // Spawn debris effect - same as TNT warrior explosion
+                        java.util.List<objects.Tower.Debris> debris = new java.util.ArrayList<>();
+                        int debrisCount = 12 + (int)(Math.random() * 6);
+                        int cx = tower.getX() + 32, cy = tower.getY() + 32;
+                        for (int d = 0; d < debrisCount; d++) {
+                            double angle = Math.random() * 2 * Math.PI;
+                            float speed = 2f + (float)Math.random() * 2f;
+                            float vx = (float)Math.cos(angle) * speed;
+                            float vy = (float)Math.sin(angle) * speed;
+                            int color = 0xFF7C5C2E; // brown debris
+                            int size = 3 + (int)(Math.random() * 4);
+                            int lifetime = 20 + (int)(Math.random() * 10);
+                            debris.add(new objects.Tower.Debris(cx, cy, vx, vy, color, size, lifetime));
+                        }
+                        tower.debrisList = debris;
+                        tower.debrisStartTime = System.currentTimeMillis();
+                    } else {
+                        System.out.println("Earthquake spared " + tower.getClass().getSimpleName() + " (50% chance failed)");
+                    }
+                }
+            }
+        }
+
         earthquakeActive = true;
         AudioManager.getInstance().playSound("earthquake");
     }
