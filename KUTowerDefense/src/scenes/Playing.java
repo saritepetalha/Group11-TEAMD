@@ -343,4 +343,15 @@ public class Playing extends GameScene implements SceneMethods {
             System.out.println("Warning: Cannot update wave start tower states - controller is null (likely PlayingAdapter)");
         }
     }
+
+    /**
+     * Update wave start tree states - works for both regular Playing and PlayingAdapter
+     */
+    public void updateWaveStartTreeStates() {
+        if (controller != null) {
+            controller.getModel().updateWaveStartTreeStates();
+        } else {
+            System.out.println("Warning: Cannot update wave start tree states - controller is null (likely PlayingAdapter)");
+        }
+    }
 }
