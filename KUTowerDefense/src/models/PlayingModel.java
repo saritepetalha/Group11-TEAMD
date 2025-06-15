@@ -52,6 +52,10 @@ public class PlayingModel extends Observable implements GameContext {
     private String currentMapName = "defaultlevel";
     private String currentDifficulty = "Normal";
 
+    // Save system state tracking
+    private boolean isNewGame = true; // true if started as new game, false if loaded
+    private String loadedSaveFileName = null; // the filename of the loaded save, null if new game
+
     // Game options and configuration
     private GameOptions gameOptions;
 
@@ -128,6 +132,9 @@ public class PlayingModel extends Observable implements GameContext {
 
         // Initialize stone mining manager
         stoneMiningManager = StoneMiningManager.getInstance(this);
+
+        // Mark as new game by default
+        markAsNewGame();
     }
 
     public PlayingModel(TileManager tileManager) {
@@ -136,6 +143,9 @@ public class PlayingModel extends Observable implements GameContext {
         this.gameStateManager = new GameStateManager();
         loadDefaultLevel();
         // Managers will be initialized by the controller
+
+        // Mark as new game by default
+        markAsNewGame();
     }
 
     public PlayingModel(TileManager tileManager, int[][] customLevel, int[][] customOverlay) {
@@ -147,6 +157,9 @@ public class PlayingModel extends Observable implements GameContext {
         this.gameOptions = loadOptionsOrDefault();
         this.gameStateManager = new GameStateManager();
         // Managers will be initialized by the controller
+
+        // Mark as new game by default
+        markAsNewGame();
     }
 
     private GameOptions loadOptionsOrDefault() {
@@ -646,15 +659,52 @@ public class PlayingModel extends Observable implements GameContext {
                 return false;
             }
 
+            String saveFileName;
+
+            if (isNewGame) {
+                // New game: create new save file with incremented number
+                saveFileName = generateNewSaveFileName(currentMapName);
+                System.out.println("New game save: Creating new save file: " + saveFileName);
+            } else {
+                // Loaded game: save to the same file that was loaded
+                saveFileName = loadedSaveFileName != null ? loadedSaveFileName : filename;
+                System.out.println("Loaded game save: Saving to original file: " + saveFileName);
+            }
+
             GameStateMemento memento = createGameStateMemento();
-            gameStateManager.saveGameState(memento, filename);
-            System.out.println("Game state saved successfully as: " + filename);
+            gameStateManager.saveGameState(memento, saveFileName);
+            System.out.println("Game state saved successfully as: " + saveFileName);
             return true;
         } catch (Exception e) {
             System.err.println("Failed to save game state: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
+    }
+
+    /**
+     * Generates a new save file name with incremented save number
+     * Format: (levelName)_saveno_(number)
+     * @param levelName The base level name
+     * @return New save file name with incremented number
+     */
+    private String generateNewSaveFileName(String levelName) {
+        if (gameStateManager == null) {
+            return levelName + "_saveno_1";
+        }
+
+        int highestSaveNumber = 0;
+
+        // Find the highest existing save number for this level
+        for (int i = 1; i <= 100; i++) { // Check up to 100 save slots
+            String testFileName = levelName + "_saveno_" + i;
+            if (gameStateManager.saveFileExists(testFileName)) {
+                highestSaveNumber = i;
+            }
+        }
+
+        // Return the next available save number
+        return levelName + "_saveno_" + (highestSaveNumber + 1);
     }
 
     /**
@@ -676,6 +726,12 @@ public class PlayingModel extends Observable implements GameContext {
             }
 
             applyGameStateMemento(memento);
+
+            // Mark this as a loaded game and remember the save file name
+            isNewGame = false;
+            loadedSaveFileName = filename;
+            System.out.println("Game marked as loaded from: " + filename);
+
             setChanged();
             notifyObservers("gameStateLoaded");
             System.out.println("Game state loaded successfully: " + filename);
@@ -805,6 +861,9 @@ public class PlayingModel extends Observable implements GameContext {
             // Ekonomi skilleri için başlangıç bonusunu uygula
             initializeGame();
 
+            // Mark as new game when resetting
+            markAsNewGame();
+
             setChanged();
             notifyObservers("gameStateReset");
 
@@ -813,6 +872,16 @@ public class PlayingModel extends Observable implements GameContext {
             System.err.println("Failed to reset game state: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Marks the current game as a new game (not loaded from save)
+     * This should be called when starting a fresh game
+     */
+    public void markAsNewGame() {
+        isNewGame = true;
+        loadedSaveFileName = null;
+        System.out.println("Game marked as new game");
     }
 
     /**
