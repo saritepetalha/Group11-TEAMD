@@ -1,0 +1,258 @@
+@startuml
+!theme plain
+title Tower Defense Game - Package Architecture
+
+skinparam packageStyle rectangle
+skinparam backgroundColor white
+skinparam packageBackgroundColor white
+skinparam packageBorderColor black
+skinparam classBorderColor black
+skinparam classBackgroundColor white
+
+' === UI LAYER ===
+package "UI Layer" {
+    
+    package "scenes" {
+        class GameOverScene
+        class Intro
+        class LoadGameMenu
+        class MapEditing
+        class Menu
+        class Playing
+        class StatisticsScene
+        class GameScene
+        class Loaded
+        class Options
+        class SceneMethods
+    }
+    
+    package "popUps" {
+        class AbstractDialogue
+        class Dialogue
+        class DialogueFactory
+        class SaveLevelDialogue
+    }
+    
+    package "ui_p" {
+        class AssetsLoader
+        class EditTiles
+        class GameOptionsUI
+        class PlayingUI
+        class TargetingButton
+        class TowerSelectionUI
+        class DeadTree
+        class LiveTree
+        class Bar
+        class FireAnimation
+        class ModeButton
+        class TheButton
+    }
+}
+
+' === APPLICATION LAYER ===
+package "Application Layer" {
+    
+    package "managers" {
+        class WaveManager
+        class TileManager
+        class TowerManager
+        class EnemyManager
+        class GameStateManager
+        class GameStateMemento
+        class GameStatsManager
+        class GoldBagManager
+        class PlayerManager
+        class ProjectileManager
+        class AudioManager
+        class FireAnimationManager
+        class SoundManager
+        class TreeInteractionManager
+        class WeatherManager
+    }
+    
+    package "strategies" {
+        interface TargetingStrategy
+        class WeakestEnemyStrategy
+        class FirstEnemyStrategy
+        class LastEnemyStrategy
+        class StrongestEnemyStrategy
+        class TargetingStrategyFactory
+    }
+    
+    package "controllers" {
+        class PlayingController
+        class MenuController
+        class GameController
+    }
+    
+    package "models" {
+        class PlayingModel
+        class GameSaveData
+        class MapModel
+        class PathValidator
+    }
+}
+
+' === DOMAIN LAYER ===
+package "Domain Layer" {
+    
+    package "objects" {
+        abstract class Tower
+        class TowerDecorator
+        class LightDecorator
+        class ArcherTower
+        class ArtilleryTower
+        class MageTower
+        class PoisonTower
+        class UpgradedArcherTower
+        class UpgradedArtilleryTower
+        class UpgradedMageTower
+        class Projectile
+        class Tile
+        class GridPoint
+        class GoldBag
+        abstract class Warrior
+    }
+    
+    package "enemies" {
+        abstract class Enemy
+        class Goblin
+        class Knight
+        class Barrel
+        class TNT
+        class Troll
+        enum Size
+    }
+    
+    package "stats" {
+        class GameStatsRecord
+        class PlayerStats
+        class WaveStats
+    }
+    
+    package "skills" {
+        class SkillTree
+        enum SkillType
+        class Skill
+    }
+    
+    package "weather" {
+        enum WeatherType
+        enum Season
+        enum TimeOfDay
+        class Weather
+    }
+    
+    package "environment" {
+        class Map
+        class Path
+        class Point
+        class MineableStone
+        class Castle
+    }
+}
+
+' === TECHNICAL SERVICES ===
+package "Technical Services" {
+    
+    package "config" {
+        class GameOptions
+        class Group
+        class TowerStats
+        class TowerType
+        class Wave
+        class EnemyStats
+        class EnemyType
+    }
+    
+    package "inputs" {
+        class MyMouseListener
+        class KeyboardListener
+        class InputHandler
+    }
+    
+    package "interfaces" {
+        interface GameContext
+        interface Drawable
+        interface Updatable
+        interface Targetable
+    }
+    
+    package "observers" {
+        interface Observer
+        interface Observable
+        class EventSystem
+    }
+    
+    package "context" {
+        class GameContext
+    }
+}
+
+' === FOUNDATION ===
+package "Foundation" {
+    
+    package "constants" {
+        class Constants
+        class GameDimensions
+    }
+    
+    package "helpMethods" {
+        class GameStatsIO
+        class LoadSave
+        class OptionsIO
+        class RotatedProjectileFrameGenerator
+        class RotSprite
+        class FontLoader
+        class LevelBuilder
+        class Utils
+    }
+    
+    package "main" {
+        class Game
+        class GameScreen
+        class GameStates
+        class Render
+        class Application
+    }
+    
+    package "events" {
+        abstract class GameEventBase
+        class EnemyDefeatedEvent
+        class TowerPlacedEvent
+        class WaveCompletedEvent
+        class GameOverEvent
+    }
+    
+    package "pathfinding" {
+        class PathFinder
+        class AStarAlgorithm
+        class PathNode
+    }
+}
+
+' === DEPENDENCIES ===
+"UI Layer" ..> "Application Layer" : uses
+"Application Layer" ..> "Domain Layer" : manages
+"Application Layer" ..> "Technical Services" : configures
+"Technical Services" ..> "Foundation" : utilities
+"Domain Layer" ..> "Technical Services" : interfaces
+
+' Specific important dependencies
+scenes ..> managers : controls
+controllers ..> managers : coordinates
+managers ..> objects : manages
+managers ..> enemies : spawns
+strategies ..> enemies : targets
+objects ..> strategies : uses
+config ..> objects : configures
+config ..> enemies : defines
+
+' Notes
+note top of "UI Layer" : Presentation Layer\nHandles user interface,\nviews and user interactions
+note top of "Application Layer" : Business Logic Layer\nCoordinates game operations,\nmanages game state
+note top of "Domain Layer" : Core Game Entities\nRepresents game world\nobjects and rules
+note top of "Technical Services" : Infrastructure Layer\nProvides technical services\nand configurations
+note bottom of "Foundation" : Foundation Layer\nUtilities, constants,\nand core services
+
+@enduml 
