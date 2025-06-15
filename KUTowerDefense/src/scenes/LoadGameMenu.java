@@ -205,16 +205,19 @@ public class LoadGameMenu extends JPanel {
         int currentCol = 0;
 
         for (int i = startIndex; i < endIndex; i++) {
-            String levelName = allSavedLevels.get(i);
-            int[][] levelData = LoadSave.loadLevel(levelName);
+            String saveFileName = allSavedLevels.get(i);
+            String baseLevelName = levelselection.SavedLevelsOnlyStrategy.getBaseLevelName(saveFileName);
+            String displayName = levelselection.SavedLevelsOnlyStrategy.getDisplayName(saveFileName);
+
+            int[][] levelData = LoadSave.loadLevel(baseLevelName);
 
             if (levelData != null) {
-                BufferedImage thumbnail = generateThumbnailWithCache(levelName, levelData);
+                BufferedImage thumbnail = generateThumbnailWithCache(baseLevelName, levelData);
                 RoundedButton previewButton = new RoundedButton("");
                 previewButton.setIcon(new ImageIcon(thumbnail));
                 previewButton.setFont(medodicaFontSmall);
                 previewButton.setToolTipText(null);
-                addCustomTooltipBehavior(previewButton, levelName);
+                addCustomTooltipBehavior(previewButton, saveFileName);
                 previewButton.setPreferredSize(new Dimension(PREVIEW_WIDTH, PREVIEW_HEIGHT));
                 previewButton.setCursor(AssetsLoader.getInstance().customHandCursor);
 
@@ -298,7 +301,7 @@ public class LoadGameMenu extends JPanel {
 
                         // Create custom rounded buttons with proper functionality
                         final JOptionPane optionPane = new JOptionPane(
-                                "Are you sure you want to delete the saved game '" + levelName + "'?\nThis action cannot be undone.",
+                                "Are you sure you want to delete the saved game '" + displayName + "'?\nThis action cannot be undone.",
                                 JOptionPane.WARNING_MESSAGE,
                                 JOptionPane.YES_NO_OPTION,
                                 null,
@@ -382,7 +385,7 @@ public class LoadGameMenu extends JPanel {
                         javax.swing.UIManager.put("OptionPane.buttonFont", originalButtonFont);
 
                         if (result != null && result.equals(JOptionPane.YES_OPTION)) {
-                            deleteSavedGame(levelName);
+                            deleteSavedGame(saveFileName);
                         }
                     }
                 });
@@ -395,7 +398,7 @@ public class LoadGameMenu extends JPanel {
                 buttonPanel.setOpaque(false);
                 buttonPanel.setPreferredSize(new Dimension(PREVIEW_WIDTH, PREVIEW_HEIGHT + 25));
 
-                JLabel nameLabel = new JLabel(levelName, SwingConstants.CENTER);
+                JLabel nameLabel = new JLabel(displayName, SwingConstants.CENTER);
                 nameLabel.setFont(medodicaFontSmallBold);
                 nameLabel.setForeground(Color.BLACK);
                 nameLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
@@ -408,7 +411,7 @@ public class LoadGameMenu extends JPanel {
                     hideCustomTooltip();
 
                     // Prepare overlay data
-                    int[][] overlay = LoadSave.loadOverlay(levelName);
+                    int[][] overlay = LoadSave.loadOverlay(baseLevelName);
                     if (overlay == null) {
                         overlay = new int[levelData.length][levelData[0].length];
                         if (levelData.length > 4 && levelData[0].length > 15) {
@@ -418,7 +421,7 @@ public class LoadGameMenu extends JPanel {
                     }
 
                     // Load saved game state to get the difficulty from JSON file
-                    GameStateMemento saveData = loadGameStateMemento(levelName);
+                    GameStateMemento saveData = loadGameStateMemento(saveFileName);
                     String difficulty = "Normal"; // Default fallback
 
                     // Get difficulty directly from saved game state
@@ -427,12 +430,12 @@ public class LoadGameMenu extends JPanel {
                     }
 
                     // Start the game and then load the saved state
-                    game.startPlayingWithDifficulty(levelData, overlay, levelName, difficulty);
+                    game.startPlayingWithDifficulty(levelData, overlay, baseLevelName, difficulty);
                     game.changeGameState(GameStates.PLAYING);
 
                     // Load the actual saved game state after the game starts
                     if (game.getPlaying() != null && game.getPlaying().getController() != null) {
-                        game.getPlaying().getController().loadGameState(levelName);
+                        game.getPlaying().getController().loadGameState(saveFileName);
                     }
                 });
 
