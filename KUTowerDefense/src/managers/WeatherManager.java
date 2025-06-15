@@ -215,8 +215,8 @@ public class WeatherManager {
         WeatherType newWeather = possibleWeathers[random.nextInt(possibleWeathers.length)];
 
         if (newWeather != currentWeather) {
-            // Stop old weather sounds before changing weather
-            stopAllWeatherSounds();
+            // Stop old weather sounds before changing weather (but keep music playing)
+            stopWeatherSoundsOnly();
             currentWeather = newWeather;
             // Start new weather sound
             startWeatherSound();
@@ -240,8 +240,8 @@ public class WeatherManager {
             } while (newWeather == currentWeather && possibleWeathers.length > 1);
 
             if (newWeather != currentWeather) {
-                // Stop old weather sounds before changing weather
-                stopAllWeatherSounds();
+                // Stop old weather sounds before changing weather (but keep music playing)
+                stopWeatherSoundsOnly();
                 currentWeather = newWeather;
                 // Start new weather sound
                 startWeatherSound();
@@ -544,6 +544,17 @@ public class WeatherManager {
         }
     }
 
+    /**
+     * Stop only weather sounds without affecting music
+     */
+    public void stopWeatherSoundsOnly() {
+        try {
+            AudioManager.getInstance().stopWeatherSounds();
+        } catch (Exception e) {
+            System.err.println("Hava durumu sesleri durdurulurken hata: " + e.getMessage());
+        }
+    }
+
     public void setTowerManager(TowerManager towerManager) {
         this.towerManager = towerManager;
     }
@@ -597,8 +608,8 @@ public class WeatherManager {
     @SuppressWarnings("unchecked")
     public void restoreWeatherState(java.util.Map<String, Object> weatherState) {
         try {
-            // Stop current weather sounds before changing weather
-            stopAllWeatherSounds();
+            // Stop current weather sounds before changing weather (but keep music playing)
+            stopWeatherSoundsOnly();
 
             // Restore weather type
             String weatherTypeStr = (String) weatherState.get("currentWeather");
@@ -668,7 +679,7 @@ public class WeatherManager {
 
         // If weather changed, restart weather sounds and particles
         if (oldWeather != weatherType) {
-            stopAllWeatherSounds();
+            stopWeatherSoundsOnly();
             weatherParticles.clear();
             initializeWeatherParticles();
             startWeatherSound();
