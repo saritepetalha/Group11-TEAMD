@@ -85,6 +85,10 @@ public class PlayingModel extends Observable implements GameContext {
     // Wave-start tracking for tower states
     private java.util.List<GameStateMemento.TowerState> waveStartTowerStates = new java.util.ArrayList<>();
 
+    // Wave-start tracking for tree states
+    private java.util.List<DeadTree> waveStartDeadTrees = new java.util.ArrayList<>();
+    private java.util.List<LiveTree> waveStartLiveTrees = new java.util.ArrayList<>();
+
     // Flag to prevent overwriting wave start states during save loading
     private boolean isLoadingFromSave = false;
 
@@ -916,11 +920,17 @@ public class PlayingModel extends Observable implements GameContext {
         Object weatherData = waveStartWeatherData != null ? waveStartWeatherData :
                 (weatherManager != null ? weatherManager.getWeatherState() : null);
 
+        // Create tree states from CURRENT trees (not wave start trees) to preserve burned/built states
+        java.util.List<GameStateMemento.TreeState> deadTreeStatesToSave = createTreeStatesFromDeadTrees(deadTrees);
+        java.util.List<GameStateMemento.TreeState> liveTreeStatesToSave = createTreeStatesFromLiveTrees(liveTrees);
+
         System.out.println("Saving wave start values: Gold=" + gold + ", Health=" + health + ", Shield=" + shield + ", Wave=" + (waveIndex + 1));
+        System.out.println("Saving tree states: " + deadTreeStatesToSave.size() + " dead trees, " + liveTreeStatesToSave.size() + " live trees");
 
         return new GameStateMemento(
                 gold, health, shield, waveIndex, groupIndex,
-                towerStates, enemyStates, gameOptions, currentDifficulty, selectedSkills, weatherData
+                towerStates, enemyStates, gameOptions, currentDifficulty, selectedSkills, weatherData,
+                deadTreeStatesToSave, liveTreeStatesToSave
         );
     }
 
@@ -967,6 +977,106 @@ public class PlayingModel extends Observable implements GameContext {
 
         System.out.println("Saved " + towerStates.size() + " towers with targeting and light information for wave start");
         return towerStates;
+    }
+
+    /**
+     * Create dead tree states for wave start saves - creates deep copies of current dead trees
+     */
+    private java.util.List<DeadTree> createWaveStartDeadTreeStates() {
+        java.util.List<DeadTree> deadTreeStates = new java.util.ArrayList<>();
+
+        if (deadTrees != null) {
+            for (DeadTree deadTree : deadTrees) {
+                // Create a new DeadTree with the same position
+                DeadTree waveStartDeadTree = new DeadTree(deadTree.getX(), deadTree.getY());
+                deadTreeStates.add(waveStartDeadTree);
+            }
+        }
+
+        System.out.println("Captured " + deadTreeStates.size() + " dead trees for wave start");
+        return deadTreeStates;
+    }
+
+    /**
+     * Create live tree states for wave start saves - creates deep copies of current live trees
+     */
+    private java.util.List<LiveTree> createWaveStartLiveTreeStates() {
+        java.util.List<LiveTree> liveTreeStates = new java.util.ArrayList<>();
+
+        if (liveTrees != null) {
+            for (LiveTree liveTree : liveTrees) {
+                // Create a new LiveTree with the same position
+                LiveTree waveStartLiveTree = new LiveTree(liveTree.getX(), liveTree.getY());
+                liveTreeStates.add(waveStartLiveTree);
+            }
+        }
+
+        System.out.println("Captured " + liveTreeStates.size() + " live trees for wave start");
+        return liveTreeStates;
+    }
+
+    /**
+     * Convert dead tree objects to tree states for saving
+     */
+    private java.util.List<GameStateMemento.TreeState> createTreeStatesFromDeadTrees(java.util.List<DeadTree> deadTreeList) {
+        java.util.List<GameStateMemento.TreeState> treeStates = new java.util.ArrayList<>();
+
+        if (deadTreeList != null) {
+            for (DeadTree deadTree : deadTreeList) {
+                GameStateMemento.TreeState treeState = new GameStateMemento.TreeState(deadTree.getX(), deadTree.getY());
+                treeStates.add(treeState);
+            }
+        }
+
+        return treeStates;
+    }
+
+    /**
+     * Convert live tree objects to tree states for saving
+     */
+    private java.util.List<GameStateMemento.TreeState> createTreeStatesFromLiveTrees(java.util.List<LiveTree> liveTreeList) {
+        java.util.List<GameStateMemento.TreeState> treeStates = new java.util.ArrayList<>();
+
+        if (liveTreeList != null) {
+            for (LiveTree liveTree : liveTreeList) {
+                GameStateMemento.TreeState treeState = new GameStateMemento.TreeState(liveTree.getX(), liveTree.getY());
+                treeStates.add(treeState);
+            }
+        }
+
+        return treeStates;
+    }
+
+    /**
+     * Convert tree states to dead tree objects for loading
+     */
+    private java.util.List<DeadTree> createDeadTreesFromTreeStates(java.util.List<GameStateMemento.TreeState> treeStates) {
+        java.util.List<DeadTree> deadTrees = new java.util.ArrayList<>();
+
+        if (treeStates != null) {
+            for (GameStateMemento.TreeState treeState : treeStates) {
+                DeadTree deadTree = new DeadTree(treeState.getX(), treeState.getY());
+                deadTrees.add(deadTree);
+            }
+        }
+
+        return deadTrees;
+    }
+
+    /**
+     * Convert tree states to live tree objects for loading
+     */
+    private java.util.List<LiveTree> createLiveTreesFromTreeStates(java.util.List<GameStateMemento.TreeState> treeStates) {
+        java.util.List<LiveTree> liveTrees = new java.util.ArrayList<>();
+
+        if (treeStates != null) {
+            for (GameStateMemento.TreeState treeState : treeStates) {
+                LiveTree liveTree = new LiveTree(treeState.getX(), treeState.getY());
+                liveTrees.add(liveTree);
+            }
+        }
+
+        return liveTrees;
     }
 
     /**
@@ -1091,6 +1201,28 @@ public class PlayingModel extends Observable implements GameContext {
                 // Update wave start tower states
                 waveStartTowerStates = memento.getTowerStates() != null ?
                         new java.util.ArrayList<>(memento.getTowerStates()) : new java.util.ArrayList<>();
+
+                // Update wave start tree states
+                if (memento.getDeadTreeStates() != null) {
+                    waveStartDeadTrees = createDeadTreesFromTreeStates(memento.getDeadTreeStates());
+                    System.out.println("Restored " + waveStartDeadTrees.size() + " dead trees for wave start tracking");
+                } else {
+                    waveStartDeadTrees = new java.util.ArrayList<>();
+                }
+
+                if (memento.getLiveTreeStates() != null) {
+                    waveStartLiveTrees = createLiveTreesFromTreeStates(memento.getLiveTreeStates());
+                    System.out.println("Restored " + waveStartLiveTrees.size() + " live trees for wave start tracking");
+                } else {
+                    waveStartLiveTrees = new java.util.ArrayList<>();
+                }
+
+                // Also restore current game tree states to match the loaded wave start states
+                deadTrees = createDeadTreesFromTreeStates(memento.getDeadTreeStates());
+                liveTrees = createLiveTreesFromTreeStates(memento.getLiveTreeStates());
+                System.out.println("Restored current game tree states: " +
+                        (deadTrees != null ? deadTrees.size() : 0) + " dead trees, " +
+                        (liveTrees != null ? liveTrees.size() : 0) + " live trees");
                 System.out.println("Restored player state: Gold=" + memento.getGold() +
                         ", Health=" + memento.getHealth() +
                         ", Shield=" + memento.getShield());
@@ -1316,6 +1448,16 @@ public class PlayingModel extends Observable implements GameContext {
         }
     }
 
+    /**
+     * Update wave start tree states to reflect current tree configuration
+     * This should be called when trees are burned or towers are built on dead trees during gameplay
+     */
+    public void updateWaveStartTreeStates() {
+        waveStartDeadTrees = createWaveStartDeadTreeStates();
+        waveStartLiveTrees = createWaveStartLiveTreeStates();
+        System.out.println("Updated wave start tree states - now tracking " + waveStartDeadTrees.size() + " dead trees and " + waveStartLiveTrees.size() + " live trees");
+    }
+
 
 
     /**
@@ -1510,6 +1652,15 @@ public class PlayingModel extends Observable implements GameContext {
         } else {
             System.out.println("Wave started - Preserving loaded tower states (" + waveStartTowerStates.size() + " towers) from save file");
         }
+
+        // Track tree states at wave start (but don't overwrite when loading from save)
+        if (!isLoadingFromSave) {
+            waveStartDeadTrees = createWaveStartDeadTreeStates();
+            waveStartLiveTrees = createWaveStartLiveTreeStates();
+            System.out.println("Wave started - Captured " + waveStartDeadTrees.size() + " dead trees and " + waveStartLiveTrees.size() + " live trees at wave start");
+        } else {
+            System.out.println("Wave started - Preserving loaded tree states (" + waveStartDeadTrees.size() + " dead trees, " + waveStartLiveTrees.size() + " live trees) from save file");
+        }
     }
 
     /**
@@ -1601,6 +1752,34 @@ public class PlayingModel extends Observable implements GameContext {
      */
     public void setWaveStartWeatherData(Object weatherData) {
         this.waveStartWeatherData = weatherData;
+    }
+
+    /**
+     * Get the dead trees at wave start (for saving)
+     */
+    public java.util.List<DeadTree> getWaveStartDeadTrees() {
+        return waveStartDeadTrees;
+    }
+
+    /**
+     * Set the dead trees at wave start (for loading)
+     */
+    public void setWaveStartDeadTrees(java.util.List<DeadTree> deadTrees) {
+        this.waveStartDeadTrees = deadTrees;
+    }
+
+    /**
+     * Get the live trees at wave start (for saving)
+     */
+    public java.util.List<LiveTree> getWaveStartLiveTrees() {
+        return waveStartLiveTrees;
+    }
+
+    /**
+     * Set the live trees at wave start (for loading)
+     */
+    public void setWaveStartLiveTrees(java.util.List<LiveTree> liveTrees) {
+        this.waveStartLiveTrees = liveTrees;
     }
 
 }

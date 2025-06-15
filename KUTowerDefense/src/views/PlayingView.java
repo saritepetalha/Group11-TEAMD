@@ -1228,5 +1228,15 @@ public class PlayingView implements Observer {
                 System.out.println("Warning: Cannot update wave start tower states - model is null");
             }
         }
+
+        @Override
+        public void updateWaveStartTreeStates() {
+            // Handle wave start tree state updates directly through model
+            if (model != null) {
+                model.updateWaveStartTreeStates();
+            } else {
+                System.out.println("Warning: Cannot update wave start tree states - model is null");
+            }
+        }
     }
 }

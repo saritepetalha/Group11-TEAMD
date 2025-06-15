@@ -17,6 +17,8 @@ public class GameStateMemento {
     private String difficulty;
     private Set<SkillType> selectedSkills;
     private Object weatherData;
+    private List<TreeState> deadTreeStates;
+    private List<TreeState> liveTreeStates;
 
     /** Gson needs this no-args constructor */
     public GameStateMemento() {
@@ -35,7 +37,7 @@ public class GameStateMemento {
                             String difficulty,
                             Set<SkillType> selectedSkills) {
         this(gold, health, shield, waveIndex, groupIndex, towerStates, enemyStates,
-                gameOptions, difficulty, selectedSkills, null);
+                gameOptions, difficulty, selectedSkills, null, null, null);
     }
 
     public GameStateMemento(int gold,
@@ -48,7 +50,9 @@ public class GameStateMemento {
                             GameOptions gameOptions,
                             String difficulty,
                             Set<SkillType> selectedSkills,
-                            Object weatherData) {
+                            Object weatherData,
+                            List<TreeState> deadTreeStates,
+                            List<TreeState> liveTreeStates) {
         this.gold = gold;
         this.health = health;
         this.shield = shield;
@@ -59,6 +63,8 @@ public class GameStateMemento {
         this.gameOptions = gameOptions;
         this.selectedSkills = selectedSkills;
         this.weatherData = weatherData;
+        this.deadTreeStates = deadTreeStates;
+        this.liveTreeStates = liveTreeStates;
 
         // Ensure difficulty is never null and always valid
         if (difficulty == null) {
@@ -128,6 +134,22 @@ public class GameStateMemento {
 
     public void setWeatherData(Object weatherData) {
         this.weatherData = weatherData;
+    }
+
+    public List<TreeState> getDeadTreeStates() {
+        return deadTreeStates;
+    }
+
+    public void setDeadTreeStates(List<TreeState> deadTreeStates) {
+        this.deadTreeStates = deadTreeStates;
+    }
+
+    public List<TreeState> getLiveTreeStates() {
+        return liveTreeStates;
+    }
+
+    public void setLiveTreeStates(List<TreeState> liveTreeStates) {
+        this.liveTreeStates = liveTreeStates;
     }
 
     public static class TowerState {
@@ -222,6 +244,28 @@ public class GameStateMemento {
 
         public int getPathIndex() {
             return pathIndex;
+        }
+    }
+
+    public static class TreeState {
+        private int x;
+        private int y;
+
+        /** Gson needs this no-args constructor */
+        public TreeState() {
+        }
+
+        public TreeState(int x, int y) {
+            this.x = x;
+            this.y = y;
+        }
+
+        public int getX() {
+            return x;
+        }
+
+        public int getY() {
+            return y;
         }
     }
 }

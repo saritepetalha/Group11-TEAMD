@@ -30,6 +30,8 @@ public class TreeInteractionManager {
                         playing.setDisplayedTower(null);
                         playing.modifyTile(tileX, tileY, "ARCHER");
                         playing.updateUIResources();
+                        // Update wave start tree states to reflect the removed dead tree
+                        playing.updateWaveStartTreeStates();
                     }
                     tree.setShowChoices(false);
                     return;
@@ -43,6 +45,8 @@ public class TreeInteractionManager {
                         playing.setDisplayedTower(null);
                         playing.modifyTile(tileX, tileY, "MAGE");
                         playing.updateUIResources();
+                        // Update wave start tree states to reflect the removed dead tree
+                        playing.updateWaveStartTreeStates();
                     }
                     tree.setShowChoices(false);
                     return;
@@ -56,6 +60,8 @@ public class TreeInteractionManager {
                         playing.setDisplayedTower(null);
                         playing.modifyTile(tileX, tileY, "ARTILERRY");
                         playing.updateUIResources();
+                        // Update wave start tree states to reflect the removed dead tree
+                        playing.updateWaveStartTreeStates();
                     }
                     tree.setShowChoices(false);
                     return;
@@ -69,6 +75,8 @@ public class TreeInteractionManager {
                         playing.setDisplayedTower(null);
                         playing.modifyTile(tileX, tileY, "POISON");
                         playing.updateUIResources();
+                        // Update wave start tree states to reflect the removed dead tree
+                        playing.updateWaveStartTreeStates();
                         System.out.println("🧪 Poison Tower built at (" + tileX + ", " + tileY + ") for " + cost + " gold");
                     }
                     tree.setShowChoices(false);
@@ -109,6 +117,8 @@ public class TreeInteractionManager {
                         playing.modifyTile(tileX, tileY, "DEADTREE");
                         playing.getFireAnimationManager().addAnimation(new FireAnimation(tileX, tileY));
                         playing.updateUIResources();
+                        // Update wave start tree states to reflect the burned tree
+                        playing.updateWaveStartTreeStates();
                     }
                     return;
                 }
