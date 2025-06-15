@@ -1,0 +1,445 @@
+@startuml
+' === GAME ENTITIES ===
+
+class Enemy {
+  - position: Point
+  - hitPoints: int
+  - maxHealth: int
+  - speed: float
+  - size: Size
+  - goldReward: int
+  - physicalResistance: float
+  - magicalResistance: float
+  - explosiveResistance: float
+  - ultimateResistance: float
+  - physicalVulnerability: float
+  - magicalVulnerability: float
+  - explosiveVulnerability: float
+  - isSlowed: boolean
+  - slowDuration: int
+  - isFrozen: boolean
+  - freezeDuration: int
+  - isPoisoned: boolean
+  - poisonDamage: int
+  - poisonDuration: int
+  - isTeleporting: boolean
+  - isInvisible: boolean
+  - hasCombatSynergy: boolean
+}
+
+enum Size {
+  SMALL
+  MEDIUM
+  LARGE
+}
+
+class Goblin {
+  + size: Size = SMALL
+}
+
+class Knight {
+  + size: Size = MEDIUM
+  - armor: float
+}
+
+class Barrel {
+  + size: Size = SMALL
+  - explosiveContent: boolean
+}
+
+class TNT {
+  + size: Size = SMALL
+  - explosivePower: float
+}
+
+class Troll {
+  + size: Size = LARGE
+  - thickness: float
+}
+
+' === TOWERS ===
+
+class Tower {
+  - position: Point
+  - type: String
+  - level: int
+  - range: float
+  - damage: int
+  - fireRate: float
+  - cost: int
+  - condition: float
+  - usageCount: int
+  - maxWarriors: int
+  - currentWarriors: int
+  - isDestroyed: boolean
+}
+
+class ArcherTower {
+  - arrowSpeed: float
+  - precision: float
+}
+
+class MageTower {
+  - spellPower: float
+  - magicalEnergy: int
+}
+
+class ArtilleryTower {
+  - blastRadius: float
+  - explosiveDamage: float
+  - ammunitionType: String
+}
+
+class PoisonTower {
+  - toxicityLevel: float
+  - poisonRadius: float
+  - venomType: String
+}
+
+class UpgradedArcherTower {
+  - enhancedAccuracy: float
+  - improvedRange: float
+}
+
+class UpgradedMageTower {
+  - arcaneBoost: float
+  - elementalMastery: boolean
+}
+
+class UpgradedArtilleryTower {
+  - reinforcedBarrel: boolean
+  - extendedRange: float
+}
+
+' === WARRIORS ===
+
+abstract class Warrior {
+  - position: Point
+  - spawnPosition: Point
+  - targetPosition: Point
+  - damage: int
+  - range: float
+  - level: int
+  - lifetime: long
+  - moveSpeed: float
+  - facingDirection: boolean
+  - state: WarriorState
+}
+
+enum WarriorState {
+  RUNNING
+  IDLE  
+  ATTACKING
+  RETURNING
+}
+
+class ArcherWarrior {
+  - bowType: String
+  - arrowCount: int
+}
+
+class WizardWarrior {
+  - spellbook: String
+  - manaReserve: int
+}
+
+class TNTWarrior {
+  - explosiveCharge: int
+  - fuseLength: float
+}
+
+' === PROJECTILES ===
+
+class Projectile {
+  - type: String
+  - damage: float
+  - speed: float
+  - range: float
+  - position: Point
+  - target: Enemy
+}
+
+' === GAME ENVIRONMENT ===
+
+class Map {
+  - width: int
+  - height: int
+  - name: String
+  - difficulty: String
+}
+
+class Tile {
+  - type: String
+  - position: Point
+  - isPassable: boolean
+}
+
+class Path {
+  - length: float
+  - waypoints: List[Point]
+  - difficulty: float
+}
+
+class Point {
+  - x: float
+  - y: float
+}
+
+' === ENVIRONMENTAL OBJECTS ===
+
+class DeadTree {
+  - position: Point
+  - canBuildTower: boolean
+}
+
+class LiveTree {
+  - position: Point
+  - health: int
+  - canBeChopped: boolean
+}
+
+class MineableStone {
+  - position: Point
+  - goldValue: int
+  - hardness: float
+  - isMineable: boolean
+}
+
+' === RESOURCES ===
+
+class GoldBag {
+  - position: Point
+  - goldAmount: int
+  - lifetime: long
+  - isCollected: boolean
+}
+
+class GoldFactory {
+  - position: Point
+  - goldProductionRate: int
+  - operationalDuration: long
+  - efficiency: float
+}
+
+' === WEATHER SYSTEM ===
+
+class Weather {
+  - currentType: WeatherType
+  - season: Season
+  - timeOfDay: TimeOfDay
+  - intensity: float
+  - duration: long
+}
+
+enum WeatherType {
+  CLEAR
+  RAINY
+  SNOWY
+  WINDY  
+}
+
+enum Season {
+  SPRING
+  SUMMER
+  AUTUMN
+  WINTER
+}
+
+enum TimeOfDay {
+  DAY
+  NIGHT
+}
+
+class WeatherParticle {
+  - position: Point
+  - velocity: float
+  - size: float
+  - opacity: float
+}
+
+' === PLAYER & GAME STATE ===
+
+class Player {
+  - hitPoints: int
+  - maxHitPoints: int
+  - shield: int
+  - maxShield: int
+  - gold: int
+  - currentWave: int
+  - totalScore: int
+}
+
+class Castle {
+  - currentHealth: int
+  - maxHealth: int
+  - position: Point
+  - fortificationLevel: int
+}
+
+' === WAVE SYSTEM ===
+
+class Wave {
+  - waveNumber: int
+  - enemyGroups: List[EnemyGroup]
+  - difficulty: float
+  - goldReward: int
+}
+
+class EnemyGroup {
+  - enemyType: String
+  - enemyCount: int
+  - spawnInterval: float
+  - formation: String
+}
+
+' === SKILLS & ABILITIES ===
+
+class SkillTree {
+  - availableSkills: List[Skill]
+  - selectedSkills: List[Skill]
+  - skillPoints: int
+}
+
+class Skill {
+  - name: String
+  - description: String
+  - category: SkillCategory
+  - effectValue: float
+  - cost: int
+  - isUnlocked: boolean
+}
+
+enum SkillCategory {
+  ECONOMY
+  TOWER_ENHANCEMENT
+  ULTIMATE_POWER
+}
+
+' === ULTIMATE ABILITIES ===
+
+class UltimateAbility {
+  - name: String
+  - type: String
+  - damage: int
+  - range: float
+  - cooldown: long
+  - cost: int
+}
+
+class Earthquake {
+  - epicenter: Point
+  - magnitude: float
+  - affectedRadius: float
+  - duration: long
+}
+
+class Lightning {
+  - strikePositions: List[Point]
+  - electricalPower: int
+  - chainRadius: float
+  - stunDuration: long
+}
+
+' === GAME CONFIGURATION ===
+
+class GameSession {
+  - currentLevel: String
+  - currentDifficulty: String
+  - totalScore: int
+  - timePlayedSeconds: int
+  - isNewGame: boolean
+}
+
+class GameOptions {
+  - startingGold: int
+  - startingPlayerHP: int
+  - startingShield: int
+  - weatherEnabled: boolean
+  - difficultyLevel: String
+}
+
+' === DAMAGE TYPES ===
+
+enum DamageType {
+  PHYSICAL
+  MAGICAL
+  EXPLOSIVE
+  ULTIMATE
+}
+
+' === RELATIONSHIPS ===
+
+Enemy <|-- Goblin
+Enemy <|-- Knight
+Enemy <|-- Barrel
+Enemy <|-- TNT
+Enemy <|-- Troll
+
+Tower <|-- ArcherTower
+Tower <|-- MageTower
+Tower <|-- ArtilleryTower
+Tower <|-- PoisonTower
+
+ArcherTower <|-- UpgradedArcherTower
+MageTower <|-- UpgradedMageTower
+ArtilleryTower <|-- UpgradedArtilleryTower
+
+Warrior <|-- ArcherWarrior
+Warrior <|-- WizardWarrior
+Warrior <|-- TNTWarrior
+
+UltimateAbility <|-- Earthquake
+UltimateAbility <|-- Lightning
+
+Enemy --> Path : "follows"
+Enemy --> Size : "has"
+Enemy --> DamageType : "vulnerable to"
+
+Tower --> Warrior : "spawns"
+Tower --> Projectile : "fires"
+Tower --> Enemy : "targets"
+Tower --> Point : "positioned at"
+
+Warrior --> Enemy : "attacks"
+Warrior --> Tower : "spawned from"
+Warrior --> WarriorState : "has state"
+
+Projectile --> Enemy : "hits"
+Projectile --> Tower : "fired by"
+
+Map --> Tile : "contains"
+Map --> Path : "has"
+Map --> Weather : "experiences"
+
+Tile --> Tower : "may contain"
+Tile --> DeadTree : "may contain"
+Tile --> LiveTree : "may contain" 
+Tile --> MineableStone : "may contain"
+
+Weather --> WeatherType : "has type"
+Weather --> Season : "occurs in"
+Weather --> TimeOfDay : "has time"
+Weather --> WeatherParticle : "contains"
+
+Player --> Castle : "defends"
+Player --> Tower : "builds"
+Player --> SkillTree : "develops"
+Player --> UltimateAbility : "can use"
+
+GameSession --> Wave : "contains"
+GameSession --> Map : "played on"
+GameSession --> Player : "has"
+GameSession --> GameOptions : "configured with"
+
+Wave --> EnemyGroup : "contains"
+EnemyGroup --> Enemy : "spawns"
+
+SkillTree --> Skill : "contains"
+Skill --> SkillCategory : "belongs to"
+
+GoldBag --> Point : "located at"
+GoldFactory --> Point : "located at"
+
+Path --> Point : "composed of waypoints"
+
+@enduml 
