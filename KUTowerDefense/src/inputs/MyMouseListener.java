@@ -19,10 +19,18 @@ public class MyMouseListener implements MouseListener, MouseMotionListener, Mous
     }
 
     /**
-     * Scales mouse coordinates for fullscreen mode (only in playing mode)
+     * Scales mouse coordinates for fullscreen mode (only in playing mode) and map editing mode
      */
     private Point getScaledMouseCoordinates(int x, int y) {
-        // Only apply scaling in fullscreen mode and playing state
+        // Handle map editing scaling (1.3x)
+        if (GameStates.gameState == GameStates.EDIT) {
+            double scale = 1.3;
+            int gameX = (int) (x / scale);
+            int gameY = (int) (y / scale);
+            return new Point(gameX, gameY);
+        }
+
+        // Only apply fullscreen scaling in fullscreen mode and playing state
         if (game.getFullscreenManager() == null || !game.getFullscreenManager().isFullscreen() ||
                 GameStates.gameState != GameStates.PLAYING) {
             return new Point(x, y);

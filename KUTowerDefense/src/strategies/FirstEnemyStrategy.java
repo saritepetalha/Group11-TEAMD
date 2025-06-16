@@ -4,22 +4,31 @@ import enemies.Enemy;
 import java.util.List;
 
 /**
- * Targeting strategy that selects the first enemy in range.
- * This represents the current default behavior.
+ * Targeting strategy that selects the enemy furthest from the exit.
+ * This targets enemies with the lowest currentPathIndex (just entered the path).
  */
 public class FirstEnemyStrategy implements TargetingStrategy {
-    
+
     @Override
     public Enemy selectTarget(List<Enemy> enemiesInRange, Object tower) {
-        // Return the first alive enemy in the list (current behavior)
+        Enemy bestTarget = null;
+        int lowestPathIndex = Integer.MAX_VALUE;
+
         for (Enemy enemy : enemiesInRange) {
             if (enemy.isAlive()) {
-                return enemy;
+                int enemyPathIndex = enemy.getCurrentPathIndex();
+
+                // Select enemy with lowest path index (furthest from exit)
+                if (enemyPathIndex < lowestPathIndex) {
+                    lowestPathIndex = enemyPathIndex;
+                    bestTarget = enemy;
+                }
             }
         }
-        return null; // No valid target found
+
+        return bestTarget;
     }
-    
+
     @Override
     public String getStrategyName() {
         return "First";

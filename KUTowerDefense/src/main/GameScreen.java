@@ -62,7 +62,10 @@ public class GameScreen extends JPanel {
 					GameStates.gameState == GameStates.SKILL_SELECTION) {
 				size = new Dimension(GameDimensions.MAIN_MENU_SCREEN_WIDTH, GameDimensions.MAIN_MENU_SCREEN_HEIGHT);
 			} else if (GameStates.gameState == GameStates.EDIT){
-				size = new Dimension(GameDimensions.TOTAL_GAME_WIDTH, GameDimensions.GAME_HEIGHT);
+				// Apply 1.3x scaling for map editing
+				int scaledWidth = (int) (GameDimensions.TOTAL_GAME_WIDTH * 1.3);
+				int scaledHeight = (int) (GameDimensions.GAME_HEIGHT * 1.3);
+				size = new Dimension(scaledWidth, scaledHeight);
 			} else if (GameStates.gameState == GameStates.PLAYING){
 				size = new Dimension(GameDimensions.GAME_WIDTH, GameDimensions.GAME_HEIGHT);
 			}
@@ -143,6 +146,18 @@ public class GameScreen extends JPanel {
 			// Reset transformation
 			g2d.scale(1.0/scale, 1.0/scale);
 			g2d.translate(-offsetX, -offsetY);
+		} else if (usesCustomRendering && GameStates.gameState == GameStates.EDIT) {
+			// Apply 1.3x scaling for map editing
+			double scale = 1.3;
+
+			// Apply transformation
+			g2d.scale(scale, scale);
+
+			// Render game content
+			game.getRender().render(g2d);
+
+			// Reset transformation
+			g2d.scale(1.0/scale, 1.0/scale);
 		} else if (usesCustomRendering) {
 			// In windowed mode or non-playing states, just render normally
 			game.getRender().render(g2d);

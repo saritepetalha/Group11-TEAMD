@@ -55,7 +55,10 @@ public class AssetsLoader {
     public BufferedImage saveButtonImg;
     public BufferedImage pickaxeButtonImg;
     public BufferedImage pickaxeButtonHover;
+    public BufferedImage pickaxeButtonPressed;
     public BufferedImage[] pickaxeAnimationFrames;
+    public BufferedImage fireButtonNormal;
+    public BufferedImage fireButtonHover;
     public BufferedImage[] confettiAnimationFrames;
     public java.awt.Cursor customHandCursor;
     public java.awt.Cursor customNormalCursor;
@@ -110,6 +113,7 @@ public class AssetsLoader {
         loadConfettiAssets();
         loadHandCursor();
         loadNormalCursor();
+        loadFireButtonAssets();
         loadPoisonTowerAsset();
     }
 
@@ -365,7 +369,7 @@ public class AssetsLoader {
 
     private void loadFreezeButtonImages() {
         freezeButtonNormal = loadImage("/UI/freeze_button.png");
-        freezeButtonHover = loadImage("/UI/freeze_button_hover.png");
+        freezeButtonHover = freezeButtonNormal;
         freezeButtonPressed = loadImage("/UI/freeze_button_pressed.png");
     }
 
@@ -412,6 +416,8 @@ public class AssetsLoader {
         pickaxeButtonImg = loadImage("/UI/pickaxeButton.png");
         // Load pickaxe hover image
         pickaxeButtonHover = loadImage("/UI/pickaxeButtonHover.png");
+        // Load pickaxe pressed image
+        pickaxeButtonPressed = loadImage("/UI/pickaxeButtonPressed.png");
         // Load pickaxe animation frames
         try (InputStream is = LoadSave.class.getResourceAsStream("/Effects/Crush_Side-Sheet.png")) {
             if (is != null) {
@@ -498,6 +504,17 @@ public class AssetsLoader {
             System.err.println("Error loading normal cursor from /UI/01.png: " + e.getMessage());
             e.printStackTrace();
             customNormalCursor = java.awt.Cursor.getDefaultCursor();
+        }
+    }
+
+    private void loadFireButtonAssets() {
+        fireButtonNormal = loadImage("/UI/fireButtonNormal.png");
+        fireButtonHover = loadImage("/UI/fireButtonHover.png");
+        if (fireButtonNormal == null) {
+            System.err.println("Warning: Failed to load fireButtonNormal.png");
+        }
+        if (fireButtonHover == null) {
+            System.err.println("Warning: Failed to load fireButtonHover.png");
         }
     }
 

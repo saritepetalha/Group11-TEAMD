@@ -131,7 +131,7 @@ public class StoneMiningManager {
             return;
         }
 
-        showButton = false;
+        showButton = false; // Hide the normal button, but keep it for pressed state
         isMiningInProgress = true;
         miningTickCounter = 0;
         miningProgress = 0f;
@@ -174,7 +174,9 @@ public class StoneMiningManager {
             currentFrame = 0;
             animationTick = 0;
 
+            // Clear the button after mining is complete
             mineButton = null;
+            showButton = false;
         }
     }
 
@@ -188,9 +190,24 @@ public class StoneMiningManager {
     }
 
     public void draw(Graphics2D g) {
-        // 1. Draw the mine button if it's currently visible
-        if (mineButton != null && showButton) {
-            mineButton.draw(g);
+        // 1. Draw the mine button if it's currently visible, or pressed button if mining
+        if (mineButton != null && (showButton || isMiningInProgress)) {
+            // Draw the button with appropriate state - completely bypass TheButton's draw method
+            BufferedImage buttonImage = AssetsLoader.getInstance().pickaxeButtonImg;
+
+            if (isMiningInProgress) {
+                // Show pressed state during mining
+                buttonImage = AssetsLoader.getInstance().pickaxeButtonPressed;
+            } else if (mineButton.isMouseOver()) {
+                // Show hover state when hovering
+                buttonImage = AssetsLoader.getInstance().pickaxeButtonHover;
+            }
+
+            // Always draw our custom image directly, never call TheButton.draw()
+            if (buttonImage != null) {
+                g.drawImage(buttonImage, mineButton.getX(), mineButton.getY(),
+                        mineButton.getWidth(), mineButton.getHeight(), null);
+            }
         }
 
         // 2. If mining is in progress, prepare tile position once

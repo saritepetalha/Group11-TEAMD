@@ -207,6 +207,11 @@ public class PlayingController implements Observer {
         // Clear current selection after checking gold bags and mining
         clearCurrentSelection();
 
+        // Delegate tree interactions to TreeController
+        if (treeController.handleMouseClick(x, y)) {
+            return;
+        }
+
         // Handle tower selection
         Tower clickedTower = null;
         if (model.getTowerManager() != null) {
@@ -218,11 +223,6 @@ public class PlayingController implements Observer {
                     break;
                 }
             }
-        }
-
-        // Delegate tree interactions to TreeController
-        if (treeController.handleMouseClick(x, y)) {
-            return;
         }
     }
 
