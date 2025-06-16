@@ -365,7 +365,7 @@ public class AssetsLoader {
 
     private void loadFreezeButtonImages() {
         freezeButtonNormal = loadImage("/UI/freeze_button.png");
-        freezeButtonHover = loadImage("/UI/freeze_button_hover.png");
+        freezeButtonHover = freezeButtonNormal;
         freezeButtonPressed = loadImage("/UI/freeze_button_pressed.png");
     }
 
