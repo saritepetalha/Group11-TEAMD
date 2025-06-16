@@ -162,6 +162,7 @@ public class TreeController {
         if (model.getLiveTrees() != null) {
             for (LiveTree liveTree : model.getLiveTrees()) {
                 liveTree.handleMouseHover(x, y, model);
+                liveTree.mouseMoved(x, y);
             }
         }
 
