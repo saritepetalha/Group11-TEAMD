@@ -75,12 +75,16 @@ public class  Game extends JFrame implements Runnable{
 		this.tileManager = new TileManager();
 		this.fullscreenManager = new FullscreenManager(this);
 
-		initClasses();
-		add(gamescreen);
-		setLocationRelativeTo(null);
+		// Set window properties before initialization
 		setResizable(false);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+		initClasses();
+		add(gamescreen);
+
+		// Pack first to get proper size, then center
 		pack();
+		setLocationRelativeTo(null);
 		setVisible(true);
 	}
 
@@ -166,7 +170,6 @@ public class  Game extends JFrame implements Runnable{
 						helpMethods.OptionsIO.restoreCustomSettings();
 						System.out.println("Restored custom settings after gameplay");
 					}
-
 					// Reset skills when returning to menu
 					if (skillSelectionScene != null) {
 						skillSelectionScene.resetSkillSelections();
@@ -542,7 +545,7 @@ public class  Game extends JFrame implements Runnable{
 	public SkillSelectionScene getSkillSelectionScene() {
 		return skillSelectionScene;
 	}
-  
+
 	public GameScreen getGameScreen() {
 		return gamescreen;
 	}
@@ -550,5 +553,4 @@ public class  Game extends JFrame implements Runnable{
 	public FullscreenManager getFullscreenManager() {
 		return fullscreenManager;
 	}
-
 }
