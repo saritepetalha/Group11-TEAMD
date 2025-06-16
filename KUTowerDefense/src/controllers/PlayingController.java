@@ -651,6 +651,13 @@ public class PlayingController implements Observer {
         boolean success = model.saveGameState(filename);
         if (success) {
             System.out.println("Game saved successfully as: " + filename);
+
+            // Refresh LoadGameMenu to show the new save file immediately
+            if (game != null && game.getLoadGameMenu() != null) {
+                javax.swing.SwingUtilities.invokeLater(() -> {
+                    game.getLoadGameMenu().refreshMapPreviews();
+                });
+            }
         } else {
             System.err.println("Failed to save game: " + filename);
         }

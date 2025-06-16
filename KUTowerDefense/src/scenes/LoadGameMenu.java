@@ -158,14 +158,6 @@ public class LoadGameMenu extends JPanel {
         mainContentPanel = new JPanel(new BorderLayout());
         mainContentPanel.setOpaque(false);
 
-        /*
-        // Debug: Print saved levels and their content
-        System.out.println("=== DEBUG: createMainContent() ===");
-        System.out.println("Found " + allSavedLevels.size() + " saved levels, " + totalPages + " pages");
-        System.out.println("Current page: " + (currentPage + 1) + "/" + totalPages);
-        System.out.println("Thumbnail cache stats: " + ThumbnailCache.getInstance().getCacheStats());
-        System.out.println("=== END DEBUG ===");*/
-
         if (allSavedLevels.isEmpty()) {
             createNoLevelsPanel();
         } else {
@@ -1190,22 +1182,10 @@ public class LoadGameMenu extends JPanel {
      */
     private void deleteSavedGame(String levelName) {
         try {
-            // Delete the .save file from the saves/ directory
-            java.io.File saveFile = new java.io.File("saves", levelName + ".save");
-            boolean saveDeleted = false;
+            // Use GameStateManager to delete the save file properly
+            if (gameStateManager != null) {
+                gameStateManager.deleteSaveFile(levelName);
 
-            if (saveFile.exists()) {
-                saveDeleted = saveFile.delete();
-                if (saveDeleted) {
-                    System.out.println("Deleted save file: " + saveFile.getAbsolutePath());
-                } else {
-                    System.err.println("Failed to delete save file: " + saveFile.getAbsolutePath());
-                }
-            } else {
-                System.err.println("Save file not found: " + saveFile.getAbsolutePath());
-            }
-
-            if (saveDeleted) {
                 // Remove from cache
                 ThumbnailCache.getInstance().removeThumbnail(levelName);
 
@@ -1214,6 +1194,7 @@ public class LoadGameMenu extends JPanel {
 
                 System.out.println("Successfully deleted saved game: " + levelName);
             } else {
+                System.err.println("GameStateManager is null, cannot delete save file");
                 JOptionPane.showMessageDialog(this,
                         "Failed to delete the saved game '" + levelName + "'.",
                         "Delete Error",
