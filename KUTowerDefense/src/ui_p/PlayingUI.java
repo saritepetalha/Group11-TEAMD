@@ -305,6 +305,7 @@ public class PlayingUI {
         // Weather type, season, and time of day
         String weatherType = playing.getWeatherManager().getCurrentWeatherType().toString();
         String timeOfDay = playing.getWeatherManager().getCurrentTimeOfDay();
+        String seasonName = playing.getWeatherManager().getCurrentSeasonName();
 
 
         // Format weather name
@@ -318,6 +319,7 @@ public class PlayingUI {
         // Draw weather text
         g2d.setColor(Color.WHITE);
         g2d.setFont(new Font("Arial", Font.BOLD, 12));
+        g2d.drawString(seasonName + " - " + weatherType, x + 30, y + 20);
 
         // Draw time of day on second line
         g2d.setFont(new Font("Arial", Font.PLAIN, 10));
@@ -551,8 +553,8 @@ public class PlayingUI {
                                    BufferedImage normalImg, BufferedImage hoverImg, BufferedImage pressedImg) {
 
         // Reset lightning button state when targeting mode ends
-        if (button == lightningButton && lightningButton.isMousePressed() &&
-                !playing.getUltiManager().isWaitingForLightningTarget()) {
+        if (button == lightningButton && lightningButton.isMousePressed() && 
+            !playing.getUltiManager().isWaitingForLightningTarget()) {
             lightningButton.setMousePressed(false);
         }
 
@@ -588,7 +590,7 @@ public class PlayingUI {
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
             g2d.drawImage(hoverImg, x, y, width, height, null);
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
-
+          
             // Add a bright border to indicate targeting mode
             g2d.setColor(new Color(255, 255, 0, (int)(alpha * 255)));
             g2d.setStroke(new BasicStroke(3f));
@@ -1364,6 +1366,7 @@ public class PlayingUI {
                 if (isMouseOverButton(mainMenuButton, mouseX, mouseY)) {
                     AudioManager.getInstance().playButtonClickSound();
                     toggleButtonState(mainMenuButton);
+                    SkillTree.getInstance().resetAllSkills();
                     return;
                 }
 

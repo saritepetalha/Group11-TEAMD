@@ -49,8 +49,11 @@ public class UltimateController {
 
         // Handle lightning targeting
         if (model.getUltiManager().isWaitingForLightningTarget()) {
-            model.getUltiManager().triggerLightningAt(x, y);
-            return true;
+            // Only trigger lightning if we have enough gold
+            if (model.getUltiManager().isWaitingForLightningTarget()) {
+                // Don't handle mouse press here — just acknowledge targeting mode
+                return false;
+            }
         }
 
         return false;

@@ -6,6 +6,7 @@ import main.Game;
 import managers.*;
 import javax.swing.JPanel;
 import controllers.PlayingController;
+import skills.SkillTree;
 
 /**
  * Playing - Thin wrapper around PlayingController for MVC architecture
@@ -287,7 +288,8 @@ public class Playing extends GameScene implements SceneMethods {
     // Game state save/load - delegate to controller
     public void saveGameState() {
         if (controller != null) {
-            controller.saveGameState("autosave");
+            String currentMap = getCurrentMapName();
+            controller.saveGameState(currentMap != null ? currentMap : "autosave");
         }
     }
 
@@ -300,6 +302,8 @@ public class Playing extends GameScene implements SceneMethods {
     public void resetGameState() {
         if (controller != null) {
             controller.resetGameState();
+            // Reset skills when game is over
+            SkillTree.getInstance().resetAllSkills();
         }
     }
 
@@ -327,5 +331,27 @@ public class Playing extends GameScene implements SceneMethods {
     public void onWaveComplete() {
         System.out.println("Playing.onWaveComplete called - controller is " + (controller != null ? "not null" : "null"));
         if (controller != null) controller.getModel().onWaveComplete();
+    }
+
+    /**
+     * Update wave start tower states - works for both regular Playing and PlayingAdapter
+     */
+    public void updateWaveStartTowerStates() {
+        if (controller != null) {
+            controller.getModel().updateWaveStartTowerStates();
+        } else {
+            System.out.println("Warning: Cannot update wave start tower states - controller is null (likely PlayingAdapter)");
+        }
+    }
+
+    /**
+     * Update wave start tree states - works for both regular Playing and PlayingAdapter
+     */
+    public void updateWaveStartTreeStates() {
+        if (controller != null) {
+            controller.getModel().updateWaveStartTreeStates();
+        } else {
+            System.out.println("Warning: Cannot update wave start tree states - controller is null (likely PlayingAdapter)");
+        }
     }
 }

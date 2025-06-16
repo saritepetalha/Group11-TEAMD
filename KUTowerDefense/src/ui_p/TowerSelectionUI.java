@@ -1099,6 +1099,9 @@ public class TowerSelectionUI {
             // Remove the tower
             playing.getTowerManager().removeTower(selectedTower);
 
+            // Don't update wave start tower states when selling during wave
+            // Wave start states should only reflect towers that existed at wave start
+
             // Clear selection
             setSelectedTower(null);
 

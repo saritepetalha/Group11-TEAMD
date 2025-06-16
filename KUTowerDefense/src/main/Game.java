@@ -167,6 +167,10 @@ public class  Game extends JFrame implements Runnable{
 						System.out.println("Restored custom settings after gameplay");
 					}
 
+					// Reset skills when returning to menu
+					if (skillSelectionScene != null) {
+						skillSelectionScene.resetSkillSelections();
+					}
 					break;
 				case PLAYING:
 					// Reset game state BEFORE making window visible to prevent black flash
@@ -176,7 +180,10 @@ public class  Game extends JFrame implements Runnable{
 					audioManager.playRandomGameMusic();
 					break;
 				case SKILL_SELECTION:
-
+					// Clear any previously selected skills
+					if (skillSelectionScene != null) {
+						skillSelectionScene.resetSkillSelections();
+					}
 					break;
 				case NEW_GAME_LEVEL_SELECT:
 					if (newGameLevelSelection != null) {
@@ -535,7 +542,7 @@ public class  Game extends JFrame implements Runnable{
 	public SkillSelectionScene getSkillSelectionScene() {
 		return skillSelectionScene;
 	}
-
+  
 	public GameScreen getGameScreen() {
 		return gamescreen;
 	}
@@ -543,4 +550,5 @@ public class  Game extends JFrame implements Runnable{
 	public FullscreenManager getFullscreenManager() {
 		return fullscreenManager;
 	}
+
 }

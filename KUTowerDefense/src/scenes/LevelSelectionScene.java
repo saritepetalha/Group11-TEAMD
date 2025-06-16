@@ -1049,6 +1049,10 @@ public class LevelSelectionScene extends JPanel {
     private void selectDifficultyAndPlay(String difficulty) {
         hideDifficultyOverlay();
 
+        // Starting a new game - no need to delete existing saves
+        // The save system will handle creating new save files when needed
+        System.out.println("🔄 LevelSelectionScene: Starting new game for level '" + selectedLevelName + "' with difficulty '" + difficulty + "'");
+
         game.startPlayingWithDifficulty(selectedLevelData, selectedOverlayData, selectedLevelName, difficulty);
         game.changeGameState(GameStates.SKILL_SELECTION);
     }
@@ -1073,6 +1077,10 @@ public class LevelSelectionScene extends JPanel {
     }
 
     private void playLevel(String levelName, int[][] levelData) {
+        // Starting a new game - no need to delete existing saves
+        // The save system will handle creating new save files when needed
+        System.out.println("🔄 LevelSelectionScene: Starting new game for level '" + levelName + "'");
+
         int[][] overlayData = LoadSave.loadOverlay(levelName);
         if (overlayData == null) {
             overlayData = new int[levelData.length][levelData[0].length];

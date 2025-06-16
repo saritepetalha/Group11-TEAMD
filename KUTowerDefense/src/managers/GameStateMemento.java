@@ -1,7 +1,9 @@
 package managers;
 
 import java.util.List;
+import java.util.Set;
 import config.GameOptions;
+import skills.SkillType;
 
 public class GameStateMemento {
     private int gold;
@@ -13,10 +15,29 @@ public class GameStateMemento {
     private List<EnemyState> enemyStates;
     private GameOptions gameOptions;
     private String difficulty;
+    private Set<SkillType> selectedSkills;
+    private Object weatherData;
+    private List<TreeState> deadTreeStates;
+    private List<TreeState> liveTreeStates;
 
     /** Gson needs this no-args constructor */
     public GameStateMemento() {
         // leave empty or initialize defaults if you like
+    }
+
+    // Legacy constructor for backward compatibility
+    public GameStateMemento(int gold,
+                            int health,
+                            int shield,
+                            int waveIndex,
+                            int groupIndex,
+                            List<TowerState> towerStates,
+                            List<EnemyState> enemyStates,
+                            GameOptions gameOptions,
+                            String difficulty,
+                            Set<SkillType> selectedSkills) {
+        this(gold, health, shield, waveIndex, groupIndex, towerStates, enemyStates,
+                gameOptions, difficulty, selectedSkills, null, null, null);
     }
 
     public GameStateMemento(int gold,
@@ -27,7 +48,11 @@ public class GameStateMemento {
                             List<TowerState> towerStates,
                             List<EnemyState> enemyStates,
                             GameOptions gameOptions,
-                            String difficulty) {
+                            String difficulty,
+                            Set<SkillType> selectedSkills,
+                            Object weatherData,
+                            List<TreeState> deadTreeStates,
+                            List<TreeState> liveTreeStates) {
         this.gold = gold;
         this.health = health;
         this.shield = shield;
@@ -36,6 +61,10 @@ public class GameStateMemento {
         this.towerStates = towerStates;
         this.enemyStates = enemyStates;
         this.gameOptions = gameOptions;
+        this.selectedSkills = selectedSkills;
+        this.weatherData = weatherData;
+        this.deadTreeStates = deadTreeStates;
+        this.liveTreeStates = liveTreeStates;
 
         // Ensure difficulty is never null and always valid
         if (difficulty == null) {
@@ -91,11 +120,45 @@ public class GameStateMemento {
         return difficulty != null ? difficulty : "Normal";
     }
 
+    public Set<SkillType> getSelectedSkills() {
+        return selectedSkills;
+    }
+
+    public void setSelectedSkills(Set<SkillType> selectedSkills) {
+        this.selectedSkills = selectedSkills;
+    }
+
+    public Object getWeatherData() {
+        return weatherData;
+    }
+
+    public void setWeatherData(Object weatherData) {
+        this.weatherData = weatherData;
+    }
+
+    public List<TreeState> getDeadTreeStates() {
+        return deadTreeStates;
+    }
+
+    public void setDeadTreeStates(List<TreeState> deadTreeStates) {
+        this.deadTreeStates = deadTreeStates;
+    }
+
+    public List<TreeState> getLiveTreeStates() {
+        return liveTreeStates;
+    }
+
+    public void setLiveTreeStates(List<TreeState> liveTreeStates) {
+        this.liveTreeStates = liveTreeStates;
+    }
+
     public static class TowerState {
         private int x;
         private int y;
         private int type;
         private int level;
+        private String targetingStrategy; // Store strategy name for save/load
+        private boolean hasLight; // Store whether tower has light upgrade
 
         /** Gson needs this no-args constructor */
         public TowerState() {
@@ -106,6 +169,17 @@ public class GameStateMemento {
             this.y = y;
             this.type = type;
             this.level = level;
+            this.targetingStrategy = "First"; // Default targeting strategy
+            this.hasLight = false; // Default no light
+        }
+
+        public TowerState(int x, int y, int type, int level, String targetingStrategy, boolean hasLight) {
+            this.x = x;
+            this.y = y;
+            this.type = type;
+            this.level = level;
+            this.targetingStrategy = targetingStrategy != null ? targetingStrategy : "First";
+            this.hasLight = hasLight;
         }
 
         public int getX() {
@@ -122,6 +196,14 @@ public class GameStateMemento {
 
         public int getLevel() {
             return level;
+        }
+
+        public String getTargetingStrategy() {
+            return targetingStrategy != null ? targetingStrategy : "First";
+        }
+
+        public boolean hasLight() {
+            return hasLight;
         }
     }
 
@@ -162,6 +244,28 @@ public class GameStateMemento {
 
         public int getPathIndex() {
             return pathIndex;
+        }
+    }
+
+    public static class TreeState {
+        private int x;
+        private int y;
+
+        /** Gson needs this no-args constructor */
+        public TreeState() {
+        }
+
+        public TreeState(int x, int y) {
+            this.x = x;
+            this.y = y;
+        }
+
+        public int getX() {
+            return x;
+        }
+
+        public int getY() {
+            return y;
         }
     }
 }

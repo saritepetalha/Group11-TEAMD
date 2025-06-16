@@ -27,6 +27,8 @@ public abstract class Warrior {
     private long placementTime = 0; // Time when warrior was actually placed
     private boolean isPlaced = false; // Whether warrior has been placed and lifetime should start
     private boolean isReturning = false;
+    private float accumulatedLifetime = 0.0f; // Track accumulated effective lifetime in milliseconds
+    private long lastUpdateTime = 0; // Track when we last updated the accumulated lifetime
 
     // Strategy Pattern: Warrior targeting behavior
     protected TargetingStrategy targetingStrategy;
@@ -134,24 +136,38 @@ public abstract class Warrior {
      * Update warrior movement and state
      */
     public void update(float gameSpeedMultiplier) {
-        // Update cooldown
-        countDownClock += gameSpeedMultiplier * attackSpeedMultiplier;
-
-        // Check if lifetime has expired and warrior should return to tower
-        // Only start checking lifetime after warrior has been placed
-        long currentTime = System.currentTimeMillis();
+        // Update accumulated lifetime if placed
         if (isPlaced && !isReturning) {
-            // Use a virtual placement time that advances faster with gameSpeedMultiplier
-            float elapsed = (currentTime - placementTime) * gameSpeedMultiplier;
-            if (elapsed > LIFETIME_MILLIS) {
+            long currentTime = System.currentTimeMillis();
+            if (lastUpdateTime > 0) {
+                float deltaTime = currentTime - lastUpdateTime;
+                accumulatedLifetime += deltaTime * gameSpeedMultiplier;
+            }
+            lastUpdateTime = currentTime;
+            
+            // Check if lifetime has expired
+            if (accumulatedLifetime >= LIFETIME_MILLIS) {
                 startReturningToTower();
+                return;
             }
         }
 
-        // Update based on current state
-        if (currentState == WarriorState.RUNNING && !hasReachedDestination) {
+        countDownClock += gameSpeedMultiplier * attackSpeedMultiplier;
+
+        // Lifetime check using accumulated time
+        if (isPlaced && !isReturning && accumulatedLifetime >= LIFETIME_MILLIS) {
+            startReturningToTower();
+            return;
+        }
+
+        // Use a virtual placement time that advances faster with gameSpeedMultiplier
+        long currentTime = System.currentTimeMillis();
+        float elapsed = accumulatedLifetime;
+
+        // Update movement
+        if (!hasReachedDestination && !isReturning) {
             updateMovement(gameSpeedMultiplier);
-        } else if (currentState == WarriorState.RETURNING) {
+        } else if (isReturning) {
             updateReturnMovement(gameSpeedMultiplier);
         }
 
@@ -528,9 +544,7 @@ public abstract class Warrior {
         if (!isPlaced) {
             return LIFETIME_MILLIS; // Full lifetime if not placed yet
         }
-        long currentTime = System.currentTimeMillis();
-        long elapsed = currentTime - placementTime;
-        return Math.max(0, LIFETIME_MILLIS - elapsed);
+        return (long)Math.max(0, LIFETIME_MILLIS - accumulatedLifetime);
     }
 
     /**
@@ -540,9 +554,7 @@ public abstract class Warrior {
         if (!isPlaced) {
             return 1.0f; // Full lifetime if not placed yet
         }
-        long currentTime = System.currentTimeMillis();
-        float elapsed = (currentTime - placementTime) * gameSpeedMultiplier;
-        float remaining = Math.max(0, LIFETIME_MILLIS - elapsed);
+        float remaining = Math.max(0, LIFETIME_MILLIS - accumulatedLifetime);
         return remaining / LIFETIME_MILLIS;
     }
     
@@ -552,6 +564,8 @@ public abstract class Warrior {
     public void markAsPlaced() {
         this.isPlaced = true;
         this.placementTime = System.currentTimeMillis();
+        this.lastUpdateTime = System.currentTimeMillis();
+        this.accumulatedLifetime = 0.0f;
     }
 
     /**

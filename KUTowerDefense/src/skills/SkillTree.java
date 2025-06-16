@@ -30,8 +30,18 @@ public class SkillTree {
         return selectedSkills.contains(skill);
     }
 
-    public void clearSkills() {
+    public void resetAllSkills() {
         selectedSkills.clear();
+        System.out.println("All skills have been reset");
+    }
+
+    public Set<SkillType> getSelectedSkills() {
+        return new HashSet<>(selectedSkills); // Return a copy to prevent external modification
+    }
+
+    public void setSelectedSkills(Set<SkillType> skills) {
+        selectedSkills.clear();
+        selectedSkills.addAll(skills);
     }
 
     // Economy skill effects
@@ -59,3 +69,4 @@ public class SkillTree {
         return interest;
     }
 } 
+

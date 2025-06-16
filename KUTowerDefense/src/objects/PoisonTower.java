@@ -7,6 +7,8 @@ import scenes.Playing;
 import skills.SkillTree;
 import skills.SkillType;
 
+import java.util.Iterator;
+
 public class PoisonTower extends Tower {
     
     // Special ability fields
@@ -148,13 +150,16 @@ public class PoisonTower extends Tower {
         
         // Apply poison to all living enemies
         int enemiesPoisoned = 0;
-        for (Enemy enemy : playingScene.getEnemyManager().getEnemies()) {
+        Iterator<Enemy> it = playingScene.getEnemyManager().getEnemies().iterator();
+        while (it.hasNext()) {
+            Enemy enemy = it.next();
             if (enemy.isAlive()) {
                 enemy.applyPoison(globalPoisonDamagePerTick, globalPoisonDurationTicks);
                 enemiesPoisoned++;
             }
         }
-        
+
+
         // Update cooldown
         lastSpecialAbilityTime = System.currentTimeMillis();
         

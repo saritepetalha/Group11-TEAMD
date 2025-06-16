@@ -14,13 +14,15 @@ public class GoldFactory {
     private static final long LIFETIME_MILLIS = 30000; // 30 seconds lifetime
 
     private int tileX, tileY; // Store as tile coordinates
-    private long lastSpawnTime;
     private long creationTime;
     private GoldBagManager goldBagManager;
     private boolean destroyed = false;
     private Random random = new Random();
-    private float lifetimeProgress = 0f;
-    private float spawnProgress = 0f;
+    
+    // Accumulated time tracking (similar to Warrior fix)
+    private float accumulatedLifetime = 0f;
+    private float accumulatedSpawnTime = 0f;
+    private long lastUpdateTime = 0;
 
     // Adjacent tile offsets: up, down, left, right
     private static final int[][] ADJACENT_OFFSETS = {
@@ -34,27 +36,33 @@ public class GoldFactory {
         this.tileX = tileX;
         this.tileY = tileY;
         this.goldBagManager = goldBagManager;
-        this.lastSpawnTime = System.currentTimeMillis();
         this.creationTime = System.currentTimeMillis();
+        this.lastUpdateTime = System.currentTimeMillis();
+        this.accumulatedLifetime = 0f;
+        this.accumulatedSpawnTime = 0f;
     }
 
     public void update(float gameSpeedMultiplier) {
         if (destroyed) return;
 
         long currentTime = System.currentTimeMillis();
-        // Simulate faster lifetime and spawn at higher speed
-        float delta = 16f * gameSpeedMultiplier; // assuming 60 UPS
-        lifetimeProgress += delta;
-        spawnProgress += delta;
+        if (lastUpdateTime > 0) {
+            float deltaTime = currentTime - lastUpdateTime;
+            accumulatedLifetime += deltaTime * gameSpeedMultiplier;
+            accumulatedSpawnTime += deltaTime * gameSpeedMultiplier;
+        }
+        lastUpdateTime = currentTime;
 
-        if (lifetimeProgress >= LIFETIME_MILLIS) {
+        // Check if lifetime has expired
+        if (accumulatedLifetime >= LIFETIME_MILLIS) {
             destroyed = true;
             return;
         }
 
-        if (spawnProgress >= SPAWN_INTERVAL_MILLIS) {
+        // Check if it's time to spawn a gold bag
+        if (accumulatedSpawnTime >= SPAWN_INTERVAL_MILLIS) {
             spawnRandomGoldBag();
-            spawnProgress = 0f;
+            accumulatedSpawnTime = 0f; // Reset spawn timer
         }
     }
 
@@ -97,14 +105,12 @@ public class GoldFactory {
             g2d.drawString(text, textX, textY);
         }
         
-        // Draw lifetime indicator with speed multiplier
+        // Draw lifetime indicator
         drawLifetimeBar(g, gameSpeedMultiplier);
     }
 
     private void drawLifetimeBar(Graphics g, float gameSpeedMultiplier) {
-        long currentTime = System.currentTimeMillis();
-        float timeElapsed = (currentTime - creationTime) * gameSpeedMultiplier;
-        float timeRemaining = LIFETIME_MILLIS - timeElapsed;
+        float timeRemaining = LIFETIME_MILLIS - accumulatedLifetime;
         float lifePercentage = Math.max(0, timeRemaining / LIFETIME_MILLIS);
 
         int barWidth = FACTORY_SIZE;

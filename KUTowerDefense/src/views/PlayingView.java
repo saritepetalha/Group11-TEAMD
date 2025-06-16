@@ -27,6 +27,7 @@ import ui_p.LiveTree;
 import ui_p.PlayingUI;
 import ui_p.TowerSelectionUI;
 import javax.swing.JPanel;
+import controllers.PlayingController;
 
 /**
  * PlayingView - Handles all rendering logic for the Playing scene
@@ -42,6 +43,7 @@ import javax.swing.JPanel;
 public class PlayingView implements Observer {
 
     private PlayingModel model;
+    private controllers.PlayingController controller;
     private PlayingUI playingUI;
     private TowerSelectionUI towerSelectionUI;
     private JPanel gamePane;
@@ -57,6 +59,30 @@ public class PlayingView implements Observer {
 
     public PlayingView(PlayingModel model) {
         this.model = model;
+        this.controller = null;
+        this.model.addObserver(this);
+
+        // Initialize UI components that handle rendering
+        initializeUIComponents();
+        loadSpawnPointIndicator();
+
+        // Initialize warrior tooltip
+        this.warriorTooltip = new ui_p.CostTooltip();
+
+        // Initialize game pane
+        gamePane = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                render(g);
+            }
+        };
+        gamePane.setLayout(null);
+    }
+
+    public PlayingView(PlayingModel model, controllers.PlayingController controller) {
+        this.model = model;
+        this.controller = controller;
         this.model.addObserver(this);
 
         // Initialize UI components that handle rendering
@@ -79,7 +105,7 @@ public class PlayingView implements Observer {
 
     private void initializeUIComponents() {
         // Create one shared adapter to avoid multiple instances
-        PlayingAdapter sharedAdapter = new PlayingAdapter(model);
+        PlayingAdapter sharedAdapter = new PlayingAdapter(model, controller);
 
         // Use the shared adapter for both UI components
         this.playingUI = new PlayingUIAdapter(model, sharedAdapter);
@@ -334,7 +360,7 @@ public class PlayingView implements Observer {
             }
         }
 
-        // Handle live tree tooltips  
+        // Handle live tree tooltips
         List<LiveTree> liveTrees = model.getLiveTrees();
         if (liveTrees != null) {
             for (LiveTree liveTree : liveTrees) {
@@ -1068,10 +1094,12 @@ public class PlayingView implements Observer {
 
     private static class PlayingAdapter extends scenes.Playing {
         private PlayingModel model;
+        private controllers.PlayingController controller;
 
-        public PlayingAdapter(PlayingModel model) {
+        public PlayingAdapter(PlayingModel model, controllers.PlayingController controller) {
             super(null, true); // Use safe constructor with isAdapter=true
             this.model = model;
+            this.controller = controller;
         }
 
         // Override key methods that UI components need
@@ -1153,6 +1181,23 @@ public class PlayingView implements Observer {
             System.out.println("Warrior placement mode started for: " + warrior.getClass().getSimpleName());
         }
 
+        // Override saveGameState to use the controller
+        @Override
+        public void saveGameState() {
+            if (controller != null) {
+                String currentMap = getCurrentMapName();
+                System.out.println("PlayingAdapter.saveGameState() called - attempting to save game for map: " + currentMap);
+                boolean success = controller.saveGameState(currentMap != null ? currentMap : "autosave");
+                if (success) {
+                    System.out.println("✅ Save successful for map: " + currentMap);
+                } else {
+                    System.err.println("❌ Save failed for map: " + currentMap);
+                }
+            } else {
+                System.err.println("❌ Cannot save: controller is null in PlayingAdapter");
+            }
+        }
+
         @Override
         public void modifyTile(int x, int y, String tile) {
             // Handle tile modification directly through model (same logic as Playing.java)
@@ -1173,5 +1218,25 @@ public class PlayingView implements Observer {
             }
             System.out.println("Tile modified at (" + x + ", " + y + ") to: " + tile);
         }
+
+        @Override
+        public void updateWaveStartTowerStates() {
+            // Handle wave start tower state updates directly through model
+            if (model != null) {
+                model.updateWaveStartTowerStates();
+            } else {
+                System.out.println("Warning: Cannot update wave start tower states - model is null");
+            }
+        }
+
+        @Override
+        public void updateWaveStartTreeStates() {
+            // Handle wave start tree state updates directly through model
+            if (model != null) {
+                model.updateWaveStartTreeStates();
+            } else {
+                System.out.println("Warning: Cannot update wave start tree states - model is null");
+            }
+        }
     }
-} 
+}

@@ -25,6 +25,7 @@ public class UltiManager {
     private int shakeOffsetY = 0;
     private Random rand = new Random();
 
+    // Ultimate usage tracking - use game time consistently
     private long lastEarthquakeUsedGameTime = -999999;
     private final long earthquakeCooldownMillis = 15000;
     private final int earthquakeCost = 50;
@@ -39,6 +40,11 @@ public class UltiManager {
     private final long goldFactoryCooldownMillis = 30000; // 30 seconds
     private final int goldFactoryCost = 100;
 
+    private long lastFreezeUsedGameTime = -999999;
+    private final long freezeCooldownMillis = 20000; // 20 seconds cooldown
+    private final int freezeCost = 60; // Cost in gold
+    private static final int freezeDuration = 300; // 5 seconds at 60 UPS
+
     private boolean waitingForLightningTarget = false;
     private boolean goldFactorySelected = false;
     private long goldFactorySelectedTime = 0; // Time when factory was selected
@@ -46,39 +52,33 @@ public class UltiManager {
     private final List<LightningStrike> activeStrikes = new ArrayList<>();
     private final List<GoldFactory> goldFactories = new ArrayList<>();
 
-    private long lastFreezeUsedGameTime = -999999;
-    private final long freezeCooldownMillis = 20000; // 20 seconds cooldown
-    private final int freezeCost = 60; // Cost in gold
-    private static final int freezeDuration = 300; // 5 seconds at 60 UPS
-
     public UltiManager(Playing playing) {
         this.playing = playing;
     }
 
     public void triggerEarthquake() {
-        if (!canUseEarthquake())
+        if (!canUseEarthquake()) {
+            System.out.println("Earthquake is on cooldown!");
             return;
-
+        }
+        if (SkillTree.getInstance().isSkillSelected(SkillType.BATTLE_READINESS)) {
+            long cooldown = getEffectiveEarthquakeCooldown();
+            System.out.println("[BATTLE_READINESS] Earthquake cooldown reduced: " + earthquakeCooldownMillis + " -> " + cooldown);
+        }
         if (playing.getPlayerManager().getGold() < earthquakeCost) {
-            System.out.println("Not enough gold!");
+            System.out.println("Not enough gold for Earthquake!");
             return;
         }
 
         playing.getPlayerManager().spendGold(earthquakeCost);
         playing.updateUIResources();
-
         lastEarthquakeUsedGameTime = playing.getGameTime();
+        startScreenShake();
 
-        int finalEarthquakeDamage = earthquakeCost;
-        if (SkillTree.getInstance().isSkillSelected(SkillType.SHATTERING_FORCE)) {
-            finalEarthquakeDamage = Math.round(earthquakeCost * 1.25f);
-            System.out.println("[SHATTERING_FORCE] Earthquake deals bonus damage: " + earthquakeCost + " -> " + finalEarthquakeDamage);
-        }
-
+        // Deal damage to all alive enemies
         for (Enemy enemy : playing.getEnemyManager().getEnemies()) {
             if (enemy.isAlive()) {
-                // Use GRASP Information Expert pattern - let Enemy calculate ultimate damage
-                enemy.takeDamage(finalEarthquakeDamage, enemies.Enemy.DamageType.ULTIMATE, true);
+                enemy.takeDamage(30, enemies.Enemy.DamageType.ULTIMATE, true);
                 // Track death location for confetti if enemy died from earthquake
                 if (!enemy.isAlive() && playing.getController() != null && playing.getController().getModel() != null) {
                     playing.getController().getModel().enemyDiedAt((int)enemy.getX(), (int)enemy.getY());
@@ -86,42 +86,50 @@ public class UltiManager {
             }
         }
 
-        // Counter effect: 50% chance to destroy level 1 towers
-        for (objects.Tower tower : playing.getTowerManager().getTowers()) {
-            if (tower.getLevel() == 1 && !tower.isDestroyed()) {
-                if (Math.random() < 0.5) {
-                    tower.setDestroyed(true);
-                    if (tower instanceof objects.MageTower) {
-                        tower.setDestroyedSprite(LoadSave.getImageFromPath("/TowerAssets/Tower_spell_destroyed.png"));
-                    } else if (tower instanceof objects.ArtilleryTower) {
-                        tower.setDestroyedSprite(LoadSave.getImageFromPath("/TowerAssets/Tower_bomb_destroyed.png"));
-                    } else if (tower instanceof objects.ArcherTower) {
-                        tower.setDestroyedSprite(LoadSave.getImageFromPath("/TowerAssets/Tower_archer_destroyed.png"));
-                    } else if (tower instanceof objects.PoisonTower) {
-                        tower.setDestroyedSprite(LoadSave.getImageFromPath("/TowerAssets/Tower_poison_destroyed.png"));
+        // Destroy level 1 towers with 50% chance
+        if (playing.getTowerManager() != null) {
+            for (objects.Tower tower : playing.getTowerManager().getTowers()) {
+                if (tower.getLevel() == 1 && !tower.isDestroyed()) {
+                    // 50% chance to destroy level 1 towers
+                    if (Math.random() < 0.5) {
+                        System.out.println("Earthquake destroyed " + tower.getClass().getSimpleName() + " (50% chance succeeded)!");
+                        tower.setDestroyed(true);
+                        
+                        // Set appropriate destroyed sprite based on tower type
+                        if (tower instanceof objects.MageTower) {
+                            tower.setDestroyedSprite(helpMethods.LoadSave.getImageFromPath("/TowerAssets/Tower_spell_destroyed.png"));
+                        } else if (tower instanceof objects.ArtilleryTower) {
+                            tower.setDestroyedSprite(helpMethods.LoadSave.getImageFromPath("/TowerAssets/Tower_bomb_destroyed.png"));
+                        } else if (tower instanceof objects.ArcherTower) {
+                            tower.setDestroyedSprite(helpMethods.LoadSave.getImageFromPath("/TowerAssets/Tower_archer_destroyed.png"));
+                        } else if (tower instanceof objects.PoisonTower) {
+                            tower.setDestroyedSprite(helpMethods.LoadSave.getImageFromPath("/TowerAssets/Tower_poison_destroyed.png"));
+                        }
+                        
+                        // Spawn debris effect - same as TNT warrior explosion
+                        java.util.List<objects.Tower.Debris> debris = new java.util.ArrayList<>();
+                        int debrisCount = 12 + (int)(Math.random() * 6);
+                        int cx = tower.getX() + 32, cy = tower.getY() + 32;
+                        for (int d = 0; d < debrisCount; d++) {
+                            double angle = Math.random() * 2 * Math.PI;
+                            float speed = 2f + (float)Math.random() * 2f;
+                            float vx = (float)Math.cos(angle) * speed;
+                            float vy = (float)Math.sin(angle) * speed;
+                            int color = 0xFF7C5C2E; // brown debris
+                            int size = 3 + (int)(Math.random() * 4);
+                            int lifetime = 20 + (int)(Math.random() * 10);
+                            debris.add(new objects.Tower.Debris(cx, cy, vx, vy, color, size, lifetime));
+                        }
+                        tower.debrisList = debris;
+                        tower.debrisStartTime = System.currentTimeMillis();
+                    } else {
+                        System.out.println("Earthquake spared " + tower.getClass().getSimpleName() + " (50% chance failed)");
                     }
-                    // Spawn debris effect
-                    java.util.List<objects.Tower.Debris> debris = new java.util.ArrayList<>();
-                    int debrisCount = 12 + (int)(Math.random() * 6);
-                    int cx = tower.getX() + 32, cy = tower.getY() + 32;
-                    for (int d = 0; d < debrisCount; d++) {
-                        double angle = Math.random() * 2 * Math.PI;
-                        float speed = 2f + (float)Math.random() * 2f;
-                        float vx = (float)Math.cos(angle) * speed;
-                        float vy = (float)Math.sin(angle) * speed;
-                        int color = 0xFF7C5C2E; // brown debris
-                        int size = 3 + (int)(Math.random() * 4);
-                        int lifetime = 20 + (int)(Math.random() * 10);
-                        debris.add(new objects.Tower.Debris(cx, cy, vx, vy, color, size, lifetime));
-                    }
-                    tower.debrisList = debris;
-                    tower.debrisStartTime = System.currentTimeMillis();
                 }
             }
         }
 
-        startScreenShake();
-        shakeDuration = 1000; // Reset to normal earthquake duration
+        earthquakeActive = true;
         AudioManager.getInstance().playSound("earthquake");
     }
 
@@ -205,7 +213,7 @@ public class UltiManager {
     }
 
     public void triggerLightningAt(int x, int y) {
-        // Block lightning strikes when game is paused
+        // Block lightning strikes when game is paused 
         if (playing.isGamePaused()) {
             waitingForLightningTarget = false;
             return;
@@ -216,18 +224,15 @@ public class UltiManager {
             waitingForLightningTarget = false;
             return;
         }
-        if (SkillTree.getInstance().isSkillSelected(SkillType.DIVINE_WRATH)) {
-            long cooldown = Math.round(lightningCooldownMillis * 0.8f);
-            System.out.println("[DIVINE_WRATH] Lightning cooldown reduced: " + lightningCooldownMillis + " -> " + cooldown);
-        }
-        if (SkillTree.getInstance().isSkillSelected(SkillType.BATTLE_READINESS)) {
-            long cooldown = getEffectiveLightningCooldown();
-            System.out.println("[BATTLE_READINESS] Lightning cooldown reduced: " + lightningCooldownMillis + " -> " + cooldown);
-        }
 
         if (playing.getPlayerManager().getGold() < lightningCost) {
             System.out.println("Not enough gold for Lightning Strike!");
             waitingForLightningTarget = false; // Exit targeting mode
+            return;
+        }
+
+        // Only trigger if we're in targeting mode 
+        if (!waitingForLightningTarget) {
             return;
         }
 
@@ -272,7 +277,9 @@ public class UltiManager {
 
     public void draw(Graphics g, float gameSpeedMultiplier) {
         Graphics2D g2d = (Graphics2D) g;
-        for (LightningStrike strike : activeStrikes) {
+        // Draw lightning strikes - create defensive copy to avoid ConcurrentModificationException
+        List<LightningStrike> strikesCopy = new ArrayList<>(activeStrikes);
+        for (LightningStrike strike : strikesCopy) {
             strike.draw(g2d);
         }
 
@@ -391,8 +398,7 @@ public class UltiManager {
     }
 
     public void triggerFreeze() {
-        long currentGameTime = playing.getGameTime();
-        if (currentGameTime - lastFreezeUsedGameTime < getEffectiveFreezeCooldown()) {
+        if (!canUseFreeze()) {
             System.out.println("Freeze is on cooldown!");
             return;
         }
@@ -405,7 +411,7 @@ public class UltiManager {
             return;
         }
         System.out.println("Freeze triggered successfully with duration: " + freezeDuration + " ticks");
-        lastFreezeUsedGameTime = currentGameTime;
+        lastFreezeUsedGameTime = playing.getGameTime();
         playing.getPlayerManager().spendGold(freezeCost);
         playing.updateUIResources();
 
@@ -451,16 +457,18 @@ public class UltiManager {
         lastGoldFactoryUsedGameTime = -999999L;
         lastFreezeUsedGameTime = -999999L;
 
-        goldFactories.clear();
+        // Clear active abilities
         activeStrikes.clear();
+        goldFactories.clear();
 
+        // Reset selection states
         waitingForLightningTarget = false;
         goldFactorySelected = false;
+        goldFactorySelectedTime = 0;
 
+        // Reset screen shake
         earthquakeActive = false;
         shakeStartTime = 0;
-        shakeOffsetX = 0;
-        shakeOffsetY = 0;
     }
 
     private class LightningStrike {

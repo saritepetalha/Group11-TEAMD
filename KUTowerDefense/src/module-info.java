@@ -8,5 +8,7 @@ module KUTowerDefense {
 	opens helpMethods to com.google.gson;
 	opens stats to com.google.gson;
 	opens managers to com.google.gson;
+	// allow Gson to access SkillType enum for save/load functionality
+	opens skills to com.google.gson;
 
 }
