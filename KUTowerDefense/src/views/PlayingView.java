@@ -148,20 +148,17 @@ public class PlayingView implements Observer {
         drawTowers(g);
         drawEnemies(g);
         drawProjectiles(g);
-        drawEffects(g);
 
-        // Draw mining button if it exists
+        // Draw stone mining effects
         if (model.getStoneMiningManager() != null && model.getStoneMiningManager().getMineButton() != null) {
-            model.getStoneMiningManager().getMineButton().draw(g);
+            model.getStoneMiningManager().draw((Graphics2D) g);
         }
+
+        drawEffects(g);
 
         // Draw UI elements
         drawUI(g);
 
-        // Draw stone mining effects
-        if (model.getStoneMiningManager() != null) {
-            model.getStoneMiningManager().draw((Graphics2D) g);
-        }
 
         // Reverse shake effect
         if (model.getUltiManager() != null) {

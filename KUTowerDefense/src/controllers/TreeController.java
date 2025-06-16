@@ -27,19 +27,30 @@ public class TreeController {
             return false;
         }
 
-        boolean handled = false;
+        // Use the existing isTreeClicked method to check if any tree was clicked
+        if (isTreeClicked(x, y)) {
+            // Handle dead tree interactions first
+            if (model.getDeadTrees() != null) {
+                for (DeadTree deadTree : model.getDeadTrees()) {
+                    if (deadTree.isClicked(x, y)) {
+                        model.getTreeInteractionManager().handleDeadTreeInteraction(x, y);
+                        return true;
+                    }
+                }
+            }
 
-        // Handle dead tree interactions first
-        if (model.getDeadTrees() != null) {
-            handled = handleDeadTreeClick(x, y);
+            // Handle live tree interactions
+            if (model.getLiveTrees() != null) {
+                for (LiveTree liveTree : model.getLiveTrees()) {
+                    if (liveTree.isClicked(x, y)) {
+                        model.getTreeInteractionManager().handleLiveTreeInteraction(x, y);
+                        return true;
+                    }
+                }
+            }
         }
 
-        // Handle live tree interactions if dead trees weren't handled
-        if (!handled && model.getLiveTrees() != null) {
-            handled = handleLiveTreeClick(x, y);
-        }
-
-        return handled;
+        return false; // No tree was clicked
     }
 
     /**
@@ -57,22 +68,6 @@ public class TreeController {
         model.getTreeInteractionManager().handleDeadTreeInteraction(x, y);
         model.getTreeInteractionManager().handleLiveTreeInteraction(x, y);
 
-        return true;
-    }
-
-    /**
-     * Handles dead tree interactions specifically
-     */
-    private boolean handleDeadTreeClick(int x, int y) {
-        model.getTreeInteractionManager().handleDeadTreeInteraction(x, y);
-        return true;
-    }
-
-    /**
-     * Handles live tree interactions specifically
-     */
-    private boolean handleLiveTreeClick(int x, int y) {
-        model.getTreeInteractionManager().handleLiveTreeInteraction(x, y);
         return true;
     }
 
