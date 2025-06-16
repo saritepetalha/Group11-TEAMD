@@ -11,6 +11,7 @@ import java.io.File;
 import javax.swing.JFrame;
 
 import managers.AudioManager;
+import managers.FullscreenManager;
 import managers.GameStatsManager;
 import managers.TileManager;
 import scenes.GameOverScene;
@@ -48,6 +49,7 @@ public class  Game extends JFrame implements Runnable{
 	private TileManager tileManager;
 	private GameStatsManager statsManager;
 	private SkillSelectionScene skillSelectionScene;
+	private FullscreenManager fullscreenManager;
 
 	// State tracking for map editing context
 	private GameStates previousGameState = GameStates.MENU;
@@ -71,6 +73,7 @@ public class  Game extends JFrame implements Runnable{
 		}
 
 		this.tileManager = new TileManager();
+		this.fullscreenManager = new FullscreenManager(this);
 
 		initClasses();
 		add(gamescreen);
@@ -130,6 +133,11 @@ public class  Game extends JFrame implements Runnable{
 
 		GameStates.gameState = newState;
 
+		// Update fullscreen scaling when game state changes
+		if (fullscreenManager != null) {
+			fullscreenManager.onGameStateChanged();
+		}
+
 		AudioManager audioManager = AudioManager.getInstance();
 		boolean isMenuRelatedToggle = (
 				(previousState == GameStates.MENU && (newState == GameStates.OPTIONS || newState == GameStates.EDIT || newState == GameStates.LOAD_GAME || newState == GameStates.NEW_GAME_LEVEL_SELECT)) ||
@@ -158,6 +166,7 @@ public class  Game extends JFrame implements Runnable{
 						helpMethods.OptionsIO.restoreCustomSettings();
 						System.out.println("Restored custom settings after gameplay");
 					}
+
 					// Reset skills when returning to menu
 					if (skillSelectionScene != null) {
 						skillSelectionScene.resetSkillSelections();
@@ -206,9 +215,17 @@ public class  Game extends JFrame implements Runnable{
 		getContentPane().removeAll();
 		add(gamescreen);
 
-		pack();
-		setLocationRelativeTo(null);
+		// Only pack and center window if not in fullscreen mode
+		if (fullscreenManager == null || !fullscreenManager.isFullscreen()) {
+			pack();
+			setLocationRelativeTo(null);
+		}
 
+		// Ensure the game window and GameScreen have focus for keyboard input
+		this.requestFocus();
+		if (gamescreen != null) {
+			gamescreen.requestFocusInWindow();
+		}
 
 		// Refresh map previews when entering LOAD_GAME
 		// This ensures any newly saved games show updated thumbnails
@@ -525,4 +542,13 @@ public class  Game extends JFrame implements Runnable{
 	public SkillSelectionScene getSkillSelectionScene() {
 		return skillSelectionScene;
 	}
+  
+	public GameScreen getGameScreen() {
+		return gamescreen;
+	}
+
+	public FullscreenManager getFullscreenManager() {
+		return fullscreenManager;
+	}
+
 }

@@ -91,6 +91,13 @@ public class PlayingUI {
         initButtons();
     }
 
+    /**
+     * Updates button positions when fullscreen mode changes
+     */
+    public void updateForFullscreen() {
+        initButtons(); // Reinitialize buttons with new positions
+    }
+
     private void initButtons() {
         int buttonSpacing = 8;
         int startX = GameDimensions.GAME_WIDTH - (buttonSize * 3 + buttonSpacing * 2) - 10;
@@ -300,6 +307,7 @@ public class PlayingUI {
         String timeOfDay = playing.getWeatherManager().getCurrentTimeOfDay();
         String seasonName = playing.getWeatherManager().getCurrentSeasonName();
 
+
         // Format weather name
         weatherType = weatherType.substring(0, 1).toUpperCase() + weatherType.substring(1).toLowerCase();
 
@@ -312,7 +320,7 @@ public class PlayingUI {
         g2d.setColor(Color.WHITE);
         g2d.setFont(new Font("Arial", Font.BOLD, 12));
         g2d.drawString(seasonName + " - " + weatherType, x + 30, y + 20);
-        
+
         // Draw time of day on second line
         g2d.setFont(new Font("Arial", Font.PLAIN, 10));
         g2d.setColor(new Color(200, 200, 200));
@@ -582,7 +590,7 @@ public class PlayingUI {
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
             g2d.drawImage(hoverImg, x, y, width, height, null);
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
-            
+          
             // Add a bright border to indicate targeting mode
             g2d.setColor(new Color(255, 255, 0, (int)(alpha * 255)));
             g2d.setStroke(new BasicStroke(3f));
