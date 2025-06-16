@@ -6,10 +6,12 @@ import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
+import java.io.File;
 
 import javax.swing.JFrame;
 
 import managers.AudioManager;
+import managers.FullscreenManager;
 import managers.GameStatsManager;
 import managers.TileManager;
 import scenes.GameOverScene;
@@ -47,11 +49,15 @@ public class  Game extends JFrame implements Runnable{
 	private TileManager tileManager;
 	private GameStatsManager statsManager;
 	private SkillSelectionScene skillSelectionScene;
+	private FullscreenManager fullscreenManager;
 
 	// State tracking for map editing context
 	private GameStates previousGameState = GameStates.MENU;
 
 	public Game() {
+		// Debug information for IntelliJ compatibility
+		printDebugInfo();
+
 		System.out.println("Game Starting...");
 
 		// Initialize the enhanced options system
@@ -67,14 +73,41 @@ public class  Game extends JFrame implements Runnable{
 		}
 
 		this.tileManager = new TileManager();
+		this.fullscreenManager = new FullscreenManager(this);
 
-		setDefaultCloseOperation(EXIT_ON_CLOSE);
-		setResizable(false);
 		initClasses();
 		add(gamescreen);
+		setLocationRelativeTo(null);
+		setResizable(false);
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		pack();
 		setVisible(true);
-		setLocationRelativeTo(null);
+	}
+
+	/**
+	 * Print debug information to help with IntelliJ path issues
+	 */
+	private void printDebugInfo() {
+		System.out.println("=== GAME DEBUG INFO ===");
+		System.out.println("Working Directory: " + System.getProperty("user.dir"));
+		System.out.println("Java Version: " + System.getProperty("java.version"));
+		System.out.println("OS: " + System.getProperty("os.name"));
+
+		// Check if key directories exist
+		String[] checkPaths = {
+				"src/main/resources/Saves",
+				"src/main/resources/Levels",
+				"src/main/resources/Options",
+				"demo/src/main/resources/Saves",
+				"./src/main/resources/Saves"
+		};
+
+		System.out.println("Directory existence check:");
+		for (String path : checkPaths) {
+			File dir = new File(path);
+			System.out.println("  " + path + " - exists: " + dir.exists() + ", isDirectory: " + dir.isDirectory());
+		}
+		System.out.println("========================");
 	}
 
 	private void createDefaultLevel() {
@@ -99,6 +132,11 @@ public class  Game extends JFrame implements Runnable{
 		this.previousGameState = previousState;
 
 		GameStates.gameState = newState;
+
+		// Update fullscreen scaling when game state changes
+		if (fullscreenManager != null) {
+			fullscreenManager.onGameStateChanged();
+		}
 
 		AudioManager audioManager = AudioManager.getInstance();
 		boolean isMenuRelatedToggle = (
@@ -128,6 +166,7 @@ public class  Game extends JFrame implements Runnable{
 						helpMethods.OptionsIO.restoreCustomSettings();
 						System.out.println("Restored custom settings after gameplay");
 					}
+
 					break;
 				case PLAYING:
 					// Reset game state BEFORE making window visible to prevent black flash
@@ -137,10 +176,7 @@ public class  Game extends JFrame implements Runnable{
 					audioManager.playRandomGameMusic();
 					break;
 				case SKILL_SELECTION:
-					// Clear any previously selected skills
-					if (skillSelectionScene != null) {
-						SkillTree.getInstance().clearSkills();
-					}
+
 					break;
 				case NEW_GAME_LEVEL_SELECT:
 					if (newGameLevelSelection != null) {
@@ -172,9 +208,17 @@ public class  Game extends JFrame implements Runnable{
 		getContentPane().removeAll();
 		add(gamescreen);
 
-		pack();
-		setLocationRelativeTo(null);
+		// Only pack and center window if not in fullscreen mode
+		if (fullscreenManager == null || !fullscreenManager.isFullscreen()) {
+			pack();
+			setLocationRelativeTo(null);
+		}
 
+		// Ensure the game window and GameScreen have focus for keyboard input
+		this.requestFocus();
+		if (gamescreen != null) {
+			gamescreen.requestFocusInWindow();
+		}
 
 		// Refresh map previews when entering LOAD_GAME
 		// This ensures any newly saved games show updated thumbnails
@@ -490,5 +534,13 @@ public class  Game extends JFrame implements Runnable{
 
 	public SkillSelectionScene getSkillSelectionScene() {
 		return skillSelectionScene;
+	}
+
+	public GameScreen getGameScreen() {
+		return gamescreen;
+	}
+
+	public FullscreenManager getFullscreenManager() {
+		return fullscreenManager;
 	}
 }
