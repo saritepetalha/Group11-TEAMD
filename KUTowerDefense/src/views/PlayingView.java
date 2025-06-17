@@ -27,7 +27,6 @@ import ui_p.LiveTree;
 import ui_p.PlayingUI;
 import ui_p.TowerSelectionUI;
 import javax.swing.JPanel;
-import controllers.PlayingController;
 
 /**
  * PlayingView - Handles all rendering logic for the Playing scene
@@ -1064,9 +1063,6 @@ public class PlayingView implements Observer {
     public PlayingUI getPlayingUI() { return playingUI; }
     public TowerSelectionUI getTowerSelectionUI() { return towerSelectionUI; }
 
-    public JPanel getGamePane() {
-        return gamePane;
-    }
 
     /**
      * Temporary adapter classes to bridge between new MVC and existing UI components
@@ -1151,12 +1147,6 @@ public class PlayingView implements Observer {
         public String getCurrentMapName() { return model.getCurrentMapName(); }
 
         @Override
-        public String getCurrentDifficulty() { return model.getCurrentDifficulty(); }
-
-        @Override
-        public boolean isAllWavesFinished() { return model.isAllWavesFinished(); }
-
-        @Override
         public config.GameOptions getGameOptions() { return model.getGameOptions(); }
 
         // Override tree-related methods
@@ -1212,16 +1202,6 @@ public class PlayingView implements Observer {
                 level[y][x] = 15;
             }
             System.out.println("Tile modified at (" + x + ", " + y + ") to: " + tile);
-        }
-
-        @Override
-        public void updateWaveStartTowerStates() {
-            // Handle wave start tower state updates directly through model
-            if (model != null) {
-                model.updateWaveStartTowerStates();
-            } else {
-                System.out.println("Warning: Cannot update wave start tower states - model is null");
-            }
         }
 
         @Override

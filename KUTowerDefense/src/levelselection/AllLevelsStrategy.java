@@ -14,13 +14,4 @@ public class AllLevelsStrategy implements LevelSelectionStrategy {
         return LoadSave.getSavedLevels();
     }
 
-    @Override
-    public String getSelectionTitle() {
-        return "Select Level";
-    }
-
-    @Override
-    public String getSelectionDescription() {
-        return "Choose a level to start playing";
-    }
 }

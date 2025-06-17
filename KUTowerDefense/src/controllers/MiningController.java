@@ -127,26 +127,6 @@ public class MiningController {
     }
 
     /**
-     * Checks if mining is currently in progress
-     */
-    public boolean isMiningInProgress() {
-        if (model.getStoneMiningManager() == null) {
-            return false;
-        }
-        return model.getStoneMiningManager().isMiningInProgress();
-    }
-
-    /**
-     * Checks if there's an active mining button
-     */
-    public boolean hasActiveMiningButton() {
-        if (model.getStoneMiningManager() == null) {
-            return false;
-        }
-        return model.getStoneMiningManager().getMineButton() != null;
-    }
-
-    /**
      * Clears any active mining operations
      */
     public void clearMiningOperations() {

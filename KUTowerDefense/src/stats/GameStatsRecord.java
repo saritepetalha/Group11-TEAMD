@@ -11,6 +11,9 @@ public class GameStatsRecord {
     private int totalDamage;
     private int timePlayedInSeconds;
 
+    // Transient field - not saved to JSON, only used for tracking which file this record came from
+    private transient String sourceFilename;
+
     public GameStatsRecord() {}
 
     public GameStatsRecord(String mapName, boolean victory, int gold, int enemiesSpawned, int enemiesReachedEnd,
@@ -35,4 +38,8 @@ public class GameStatsRecord {
     public int getEnemyDefeated() { return enemyDefeated; }
     public int getTotalDamage() { return totalDamage; }
     public int getTimePlayed() { return timePlayedInSeconds; }
+
+    // Methods for filename tracking
+    public String getSourceFilename() { return sourceFilename; }
+    public void setSourceFilename(String filename) { this.sourceFilename = filename; }
 }

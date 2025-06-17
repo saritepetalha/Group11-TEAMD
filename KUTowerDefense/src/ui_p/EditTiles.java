@@ -670,8 +670,4 @@ public class EditTiles extends Bar {
                tilesButtons.stream().anyMatch(TheButton::isMouseOver);
     }
 
-    public String getCurrentMode() {
-        return currentMode;
-    }
-
 }

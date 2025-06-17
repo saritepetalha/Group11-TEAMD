@@ -4,10 +4,8 @@ import java.awt.event.MouseWheelEvent;
 import java.util.Observable;
 import java.util.Observer;
 
-import config.GameOptions;
 import constants.GameDimensions;
 import enemies.Enemy;
-import helpMethods.OptionsIO;
 import main.Game;
 import managers.*;
 import models.PlayingModel;
@@ -15,7 +13,6 @@ import objects.Tower;
 import objects.Warrior;
 import scenes.Playing;
 import stats.GameStatsRecord;
-import ui_p.DeadTree;
 import views.PlayingView;
 
 /**
@@ -213,11 +210,9 @@ public class PlayingController implements Observer {
         }
 
         // Handle tower selection
-        Tower clickedTower = null;
         if (model.getTowerManager() != null) {
             for (Tower tower : model.getTowerManager().getTowers()) {
                 if (tower.isClicked(x, y)) {
-                    clickedTower = tower;
                     model.setDisplayedTower(tower);
                     System.out.println("🏰 Tower selected: " + tower.getClass().getSimpleName());
                     break;
@@ -476,9 +471,9 @@ public class PlayingController implements Observer {
 
             // Play spawn sound after placement is completed
             if (pendingWarrior instanceof objects.WizardWarrior) {
-                managers.AudioManager.getInstance().playWizardSpawnSound();
+                audioManager.playWizardSpawnSound();
             } else if (pendingWarrior instanceof objects.ArcherWarrior) {
-                managers.AudioManager.getInstance().playArcherSpawnSound();
+                audioManager.playArcherSpawnSound();
             }
 
             System.out.println("Warrior will run from (" + pendingWarrior.getSpawnX() + ", " + pendingWarrior.getSpawnY() +
@@ -651,6 +646,13 @@ public class PlayingController implements Observer {
         boolean success = model.saveGameState(filename);
         if (success) {
             System.out.println("Game saved successfully as: " + filename);
+
+            // Refresh LoadGameMenu to show the new save file immediately
+            if (game != null && game.getLoadGameMenu() != null) {
+                javax.swing.SwingUtilities.invokeLater(() -> {
+                    game.getLoadGameMenu().refreshMapPreviews();
+                });
+            }
         } else {
             System.err.println("Failed to save game: " + filename);
         }
@@ -687,22 +689,6 @@ public class PlayingController implements Observer {
     }
 
     /**
-     * Quick save functionality - saves to default filename
-     */
-    public boolean quickSave() {
-        return saveGameState("quicksave");
-    }
-
-    /**
-     * Quick load functionality - loads from default filename
-     */
-    public boolean quickLoad() {
-        return loadGameState("quicksave");
-    }
-
-    // ================ PROJECTILE ABSTRACTION ================
-
-    /**
      * Handle projectile creation - abstracted from direct manager access
      * @param shooter The shooter (Tower or Warrior)
      * @param target The target enemy
@@ -711,21 +697,6 @@ public class PlayingController implements Observer {
         model.createProjectile(shooter, target);
     }
 
-    /**
-     * Get active projectile count
-     * @return Number of active projectiles
-     */
-    public int getActiveProjectileCount() {
-        return model.getActiveProjectileCount();
-    }
-
-    /**
-     * Check if there are active projectiles
-     * @return true if projectiles are active
-     */
-    public boolean hasActiveProjectiles() {
-        return model.hasActiveProjectiles();
-    }
 
     @Override
     public void update(Observable o, Object arg) {
@@ -789,11 +760,6 @@ public class PlayingController implements Observer {
             model.getWaveManager().resetWaveManager();
         }
     }
-
-    // Getter methods for the specialized controllers
-    public UltimateController getUltimateController() { return ultimateController; }
-    public MiningController getMiningController() { return miningController; }
-    public TreeController getTreeController() { return treeController; }
 
     // Existing getters
     public PlayingModel getModel() { return model; }
@@ -890,12 +856,6 @@ public class PlayingController implements Observer {
         public String getCurrentMapName() { return model.getCurrentMapName(); }
 
         @Override
-        public String getCurrentDifficulty() { return model.getCurrentDifficulty(); }
-
-        @Override
-        public boolean isAllWavesFinished() { return model.isAllWavesFinished(); }
-
-        @Override
         public config.GameOptions getGameOptions() { return model.getGameOptions(); }
 
         @Override
@@ -940,10 +900,4 @@ public class PlayingController implements Observer {
         }
     }
 
-    private void handleGoldFactoryPlacement(int x, int y) {
-        boolean placed = model.getUltiManager().tryPlaceGoldFactory(x, y);
-        if (!placed) {
-            // If placement failed, keep factory selected for another try
-        }
-    }
 }

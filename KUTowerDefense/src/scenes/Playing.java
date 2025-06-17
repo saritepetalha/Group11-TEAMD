@@ -108,10 +108,6 @@ public class Playing extends GameScene implements SceneMethods {
         return controller != null ? controller.getCurrentMapName() : "default";
     }
 
-    public String getCurrentDifficulty() {
-        return controller != null ? controller.getCurrentDifficulty() : "Normal";
-    }
-
     // Backward compatibility methods - delegate to model
     public managers.TowerManager getTowerManager() {
         return controller != null ? controller.getModel().getTowerManager() : null;
@@ -169,9 +165,6 @@ public class Playing extends GameScene implements SceneMethods {
         return controller != null ? controller.getModel().getWaveStatus() : "Loading...";
     }
 
-    public boolean isAllWavesFinished() {
-        return controller != null ? controller.getModel().isAllWavesFinished() : false;
-    }
 
     public java.util.List<ui_p.DeadTree> getDeadTrees() {
         return controller != null ? controller.getModel().getDeadTrees() : null;
@@ -197,21 +190,8 @@ public class Playing extends GameScene implements SceneMethods {
         if (controller != null) controller.getModel().setSelectedDeadTree(deadTree);
     }
 
-    // Game state management methods
-    public void loadLevel(String levelName) {
-        controller.loadLevel(levelName);
-    }
-
-    public void saveLevel(String filename) {
-        controller.saveLevel(filename);
-    }
-
     public void reloadGameOptions() {
         controller.reloadGameOptions();
-    }
-
-    public void returnToMainMenu() {
-        controller.returnToMainMenu();
     }
 
     // Compatibility methods for managers that call these
@@ -293,11 +273,6 @@ public class Playing extends GameScene implements SceneMethods {
         }
     }
 
-    public void loadGameState() {
-        if (controller != null) {
-            controller.loadGameState("autosave");
-        }
-    }
 
     public void resetGameState() {
         if (controller != null) {
@@ -325,22 +300,6 @@ public class Playing extends GameScene implements SceneMethods {
             level[y][x] = 33;
         } else if (tile.equals("DEADTREE")) {
             level[y][x] = 15;
-        }
-    }
-
-    public void onWaveComplete() {
-        System.out.println("Playing.onWaveComplete called - controller is " + (controller != null ? "not null" : "null"));
-        if (controller != null) controller.getModel().onWaveComplete();
-    }
-
-    /**
-     * Update wave start tower states - works for both regular Playing and PlayingAdapter
-     */
-    public void updateWaveStartTowerStates() {
-        if (controller != null) {
-            controller.getModel().updateWaveStartTowerStates();
-        } else {
-            System.out.println("Warning: Cannot update wave start tower states - controller is null (likely PlayingAdapter)");
         }
     }
 

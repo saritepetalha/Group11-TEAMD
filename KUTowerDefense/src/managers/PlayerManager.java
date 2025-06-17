@@ -66,15 +66,6 @@ public class PlayerManager {
         }
     }
 
-    public void heal(int amount) {
-        int maxHealth = getMaxHealthFromOptions();
-        health = Math.min(maxHealth, health + amount);
-    }
-
-    public void rechargeShield(int amount) {
-        shield = Math.min(MAX_SHIELD, shield + amount);
-    }
-
     // Getters and setters
     public int getGold() {
         return gold;
@@ -86,14 +77,6 @@ public class PlayerManager {
 
     public int getShield() {
         return shield;
-    }
-
-    public int getMaxHealth() {
-        return getMaxHealthFromOptions();
-    }
-
-    public int getMaxShield() {
-        return MAX_SHIELD;
     }
 
     public boolean isAlive() {

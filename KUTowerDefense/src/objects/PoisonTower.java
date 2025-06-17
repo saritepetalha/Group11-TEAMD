@@ -181,14 +181,7 @@ public class PoisonTower extends Tower {
     public int getSpecialAbilityCost() {
         return specialAbilityCost;
     }
-    
-    /**
-     * Get the cooldown duration of the special ability
-     * @return The cooldown in milliseconds
-     */
-    public long getSpecialAbilityCooldown() {
-        return specialAbilityCooldown;
-    }
+
     
     @Override
     protected float getDegradationRate() {

@@ -27,11 +27,11 @@ public class StatisticsScene extends GameScene implements SceneMethods {
 
     public StatisticsScene(Game game) {
         super(game);
-        int buttonWidth = 180;
+        int buttonWidth = 150;
         int buttonHeight = 50;
-        int x = 400;
-        int y = 400;
-        backButton = new TheButton("Back", x, y, buttonWidth, buttonHeight);
+        int backButtonX = 380; // Move back button to the right
+        int buttonY = 420; // Move back button up
+        backButton = new TheButton("Back", backButtonX, buttonY, buttonWidth, buttonHeight);
         bg = LoadSave.getImageFromPath("/KuTowerDefence1.jpg");
 
         game.getStatsManager().loadFromFiles();
@@ -58,6 +58,23 @@ public class StatisticsScene extends GameScene implements SceneMethods {
         g.drawString("Gold: " + record.getGold(), x + 10, y + 70);
         g.drawString("Enemy Spawned: " + record.getEnemiesSpawned(), x + 10, y + 90);
         g.drawString("Tower Built: " + record.getTowersBuilt(), x + 10, y + 110);
+
+        // Draw delete button (X) in top-right corner of card
+        int deleteButtonSize = 20;
+        int deleteX = x + width - deleteButtonSize - 5;
+        int deleteY = y + 5;
+
+        // Draw delete button background
+        g.setColor(new Color(255, 100, 100, 200));
+        g.fillOval(deleteX, deleteY, deleteButtonSize, deleteButtonSize);
+
+        // Draw X
+        g.setColor(Color.WHITE);
+        g.setFont(new Font("Arial", Font.BOLD, 14));
+        FontMetrics fm = g.getFontMetrics();
+        int textX = deleteX + (deleteButtonSize - fm.stringWidth("×")) / 2;
+        int textY = deleteY + (deleteButtonSize + fm.getAscent()) / 2 - 2;
+        g.drawString("×", textX, textY);
     }
 
     private void drawDetails(Graphics g, GameStatsRecord record, int x, int y) {
@@ -155,6 +172,13 @@ public class StatisticsScene extends GameScene implements SceneMethods {
         return null; // No scrollbar visible
     }
 
+    private Rectangle getDeleteButtonBounds(int cardIndex, int cardX, int cardY, int cardWidth) {
+        int deleteButtonSize = 20;
+        int deleteX = cardX + cardWidth - deleteButtonSize - 5;
+        int deleteY = cardY + 5;
+        return new Rectangle(deleteX, deleteY, deleteButtonSize, deleteButtonSize);
+    }
+
     public void update() {}
 
     @Override
@@ -228,9 +252,6 @@ public class StatisticsScene extends GameScene implements SceneMethods {
         }
     }
 
-
-
-
     @Override
     public void mouseClicked(int x, int y) {
         int cardX = 40;
@@ -239,6 +260,13 @@ public class StatisticsScene extends GameScene implements SceneMethods {
         int cardHeight = 120;
         int spacing = 20;
 
+        // Check for back button click first
+        if (backButton.getBounds().contains(x, y)) {
+            playButtonClickSound();
+            GameStates.setGameState(GameStates.MENU);
+            return;
+        }
+
         // Only check for card clicks if the click is within the scrollable area
         if (x >= cardX && x <= cardX + cardWidth && y >= cardYStart && y <= cardYStart + visibleAreaHeight) {
             for (int i = 0; i < stats.size(); i++) {
@@ -246,6 +274,22 @@ public class StatisticsScene extends GameScene implements SceneMethods {
 
                 // Only check cards that are visible within the clipped area
                 if (cardY + cardHeight >= cardYStart && cardY <= cardYStart + visibleAreaHeight) {
+                    // Check if delete button was clicked
+                    Rectangle deleteButtonBounds = getDeleteButtonBounds(i, cardX, cardY, cardWidth);
+                    if (deleteButtonBounds.contains(x, y)) {
+                        playButtonClickSound();
+                        GameStatsRecord selected = stats.get(i);
+                        boolean deleted = game.getStatsManager().deleteRecord(selected);
+                        if (deleted) {
+                            selectedIndex = -1; // Clear selection after successful deletion
+                            System.out.println("Statistics record deleted successfully");
+                        } else {
+                            System.err.println("Failed to delete statistics record");
+                        }
+                        return;
+                    }
+
+                    // Check if card was clicked (but not the delete button)
                     Rectangle cardBounds = new Rectangle(cardX, cardY, cardWidth, cardHeight);
                     if (cardBounds.contains(x, y)) {
                         selectedIndex = i;
@@ -254,14 +298,7 @@ public class StatisticsScene extends GameScene implements SceneMethods {
                 }
             }
         }
-
-        if (backButton.getBounds().contains(x, y)) {
-            playButtonClickSound();
-            GameStates.setGameState(GameStates.MENU);
-        }
     }
-
-
 
     @Override
     public void mouseMoved(int x, int y) {
@@ -343,6 +380,4 @@ public class StatisticsScene extends GameScene implements SceneMethods {
         scrollOffset += scrollAmount;
         scrollOffset = Math.max(0, Math.min(scrollOffset, maxScrollOffset));
     }
-
-
 }

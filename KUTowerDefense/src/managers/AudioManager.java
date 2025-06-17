@@ -76,7 +76,6 @@ public class AudioManager {
     }
 
     private void loadAudio() {
-        // load background music tracks
         loadMusic("intro", "intro_music.wav");
         loadMusic("lonelyhood", "Lonelyhood.wav");
 
@@ -111,7 +110,6 @@ public class AudioManager {
         //loadMusicFromGameMusicFolder("wistful wild", "Wistful Wild.wav");
         //loadMusicFromGameMusicFolder("you have power", "You have power... like mine.wav");
 
-        // load sound effects
         //loadSound("tower_build", "tower_build.wav");
         //loadSound("tower_shoot", "tower_shoot.wav");
         loadSound("button_click", "button_click.wav");
@@ -138,12 +136,10 @@ public class AudioManager {
         loadSound("coin_drop", "coin_drop.wav");
         loadSound("explosion_tnt", "explosionTNT.wav");
 
-        // Warrior spawn sounds
         loadSound("archer_spawn", "archerSpawn.wav");
         loadSound("wizard_spawn", "wizardSpawn.wav");
         loadSound("tnt_spawn", "tntSpawn.wav");
 
-        // Tower and warrior attack sounds
         loadSound("arrow_shot", "arrowShot.wav");
         loadSound("spell_shot", "spellShot.wav");
         loadSound("bomb_shot", "bombShot.wav");
@@ -732,16 +728,4 @@ public class AudioManager {
         }
     }
 
-    /**
-     * Stop all currently playing spawn sounds
-     */
-    public void stopAllSpawnSounds() {
-        for (Map.Entry<String, Clip> entry : currentlyPlayingSpawnSounds.entrySet()) {
-            Clip clip = entry.getValue();
-            if (clip != null && clip.isRunning()) {
-                clip.stop();
-            }
-        }
-        currentlyPlayingSpawnSounds.clear();
-    }
 }

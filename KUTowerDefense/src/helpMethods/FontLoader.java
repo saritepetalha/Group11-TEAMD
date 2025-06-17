@@ -1,7 +1,7 @@
 package helpMethods;
 
 import java.awt.*;
-        import java.io.InputStream;
+import java.io.InputStream;
 
 public class FontLoader {
     public static Font loadMedodicaFont(float size) {

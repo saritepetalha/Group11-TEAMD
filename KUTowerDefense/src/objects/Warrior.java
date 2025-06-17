@@ -335,18 +335,6 @@ public abstract class Warrior {
     public boolean isUpgradeable() { return level == 1; }
     public void setLevel(int lvl) { this.level = lvl; }
 
-    public void setAttackSpeedMultiplier(float multiplier) {
-        this.attackSpeedMultiplier = multiplier;
-    }
-
-    public float getAttackSpeedMultiplier() {
-        return attackSpeedMultiplier;
-    }
-
-    public float getEffectiveRange() {
-        return getRange();
-    }
-
     public int getWidth() {
         return 64;
     }
@@ -355,11 +343,6 @@ public abstract class Warrior {
         return 64;
     }
 
-    // Default implementation for on-hit effects. Can be overridden by specific warriors.
-    public void applyOnHitEffect(Enemy enemy, scenes.Playing playingScene) {
-        // Base warriors typically don't have special on-hit effects beyond damage.
-        // This can be left empty or log a message if needed.
-    }
 
     public void setX(int x) {
         this.x = x;
@@ -411,9 +394,6 @@ public abstract class Warrior {
 
     // ========== NEW: State and Movement Getters ==========
 
-    public WarriorState getCurrentState() {
-        return currentState;
-    }
 
     public boolean hasReachedDestination() {
         return hasReachedDestination;
@@ -421,14 +401,6 @@ public abstract class Warrior {
 
     public boolean isRunning() {
         return currentState == WarriorState.RUNNING && !hasReachedDestination;
-    }
-
-    public boolean isAttacking() {
-        return currentState == WarriorState.ATTACKING;
-    }
-
-    public boolean isIdle() {
-        return currentState == WarriorState.IDLE;
     }
 
     public int getSpawnX() {
@@ -465,20 +437,6 @@ public abstract class Warrior {
         return facingLeft;
     }
 
-    /**
-     * Sets the facing direction manually
-     * @param facingLeft true for facing left, false for facing right
-     */
-    public void setFacingLeft(boolean facingLeft) {
-        this.facingLeft = facingLeft;
-    }
-
-    /**
-     * Gets the current target enemy (may be null)
-     */
-    public Enemy getCurrentTarget() {
-        return currentTarget;
-    }
 
     /**
      * Clears the current target and resets facing to movement direction

@@ -8,11 +8,8 @@ import scenes.Playing;
 import skills.SkillTree;
 import skills.SkillType;
 import config.EnemyType;
-// import java.awt.image.BufferedImage; // No longer needed here
 
 public class MageTower extends Tower {
-    // public BufferedImage upgradedSprite; // No longer needed
-    // private boolean isLevel2 = false; // No longer needed, level is in Tower and decorator handles upgraded state
 
     public MageTower(int x, int y) {
         super(x, y);
@@ -39,7 +36,6 @@ public class MageTower extends Tower {
         float baseRange = Constants.Towers.getRange(Constants.Towers.MAGE);
         if (skills.SkillTree.getInstance().isSkillSelected(skills.SkillType.EAGLE_EYE)) {
             float bonus = GameDimensions.TILE_DISPLAY_SIZE;
-            //System.out.println("[EAGLE_EYE] Mage tower applies bonus range: " + baseRange + " -> " + (baseRange + bonus));
             baseRange += bonus;
         }
         return baseRange;
@@ -81,5 +77,4 @@ public class MageTower extends Tower {
         enemy.hurt(damage);
     }
 
-    // public boolean isLevel2() { return isLevel2; } // No longer needed
 }

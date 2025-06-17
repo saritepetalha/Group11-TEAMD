@@ -239,18 +239,6 @@ public class MyMouseListener implements MouseListener, MouseMotionListener, Mous
                 game.getPlaying().mouseWheelMoved(e);
             }
         }
-        else if (GameStates.gameState == GameStates.MENU) {
-            // Add mouseWheelMoved method to Menu class if needed
-        }
-        else if (GameStates.gameState == GameStates.OPTIONS) {
-            // Add mouseWheelMoved method to Options class if needed
-        }
-        else if (GameStates.gameState == GameStates.EDIT) {
-            // Add mouseWheelMoved method to MapEditing class if needed
-        }
-        else if (GameStates.gameState == GameStates.STATISTICS) {
-            game.getStatisticsScene().mouseWheelMoved(e);
-        }
     }
 
     @Override

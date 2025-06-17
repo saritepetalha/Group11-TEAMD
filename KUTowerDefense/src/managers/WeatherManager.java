@@ -83,31 +83,6 @@ public class WeatherManager {
         System.out.println("Weather System: Starting " + currentSeason.getDisplayName() + " with " + currentWeather + " weather");
     }
 
-    /**
-     * Constructor with initial weather state (for loading saved games)
-     * @param initialWeatherState The weather state to restore
-     */
-    public WeatherManager(java.util.Map<String, Object> initialWeatherState) {
-        weatherParticles = new ArrayList<>();
-        random = new Random();
-
-        // Initialize with default values first
-        dayTime = 0;
-        nightIntensity = 0.0f;
-        lastNightState = false;
-        currentWeather = WeatherType.CLEAR; // Default fallback
-
-        // Restore the weather state if provided
-        if (initialWeatherState != null) {
-            restoreWeatherState(initialWeatherState);
-        } else {
-            // Fallback to random weather if no state provided
-            WeatherType[] weatherTypes = {WeatherType.CLEAR, WeatherType.RAINY, WeatherType.SNOWY, WeatherType.WINDY};
-            currentWeather = weatherTypes[random.nextInt(weatherTypes.length)];
-            initializeWeatherParticles();
-            startWeatherSound();
-        }
-    }
 
     /**
      * Prepare WeatherManager for loading saved state (prevents random weather initialization)
@@ -389,10 +364,6 @@ public class WeatherManager {
         return night;
     }
 
-    public float getNightIntensity() {
-        return nightIntensity;
-    }
-
     public boolean isRaining() {
         return currentWeather == WeatherType.RAINY;
     }
@@ -476,12 +447,6 @@ public class WeatherManager {
         return currentWeather;
     }
 
-    /**
-     * Gets the current season
-     */
-    public Season getCurrentSeason() {
-        return currentSeason;
-    }
 
     /**
      * Gets the current season name for display
@@ -490,27 +455,6 @@ public class WeatherManager {
         return currentSeason.getDisplayName();
     }
 
-    /**
-     * Gets the progress within the current season (0.0 to 1.0)
-     */
-    public float getSeasonProgress() {
-        return Math.min(1.0f, seasonTime / SEASON_DURATION);
-    }
-
-    /**
-     * Gets the total game time in seconds
-     */
-    public float getTotalGameTime() {
-        return totalGameTime;
-    }
-
-    private void checkWeatherChange() {
-        if (lastWeather != currentWeather) {
-
-            startWeatherSound();
-            lastWeather = currentWeather;
-        }
-    }
 
     private void startWeatherSound() {
         try {
@@ -640,23 +584,6 @@ public class WeatherManager {
             System.err.println("Failed to restore weather state: " + e.getMessage());
             e.printStackTrace();
         }
-    }
-
-    /**
-     * Get current day time for saving
-     * @return current day time value
-     */
-    public float getDayTime() {
-        return dayTime;
-    }
-
-    /**
-     * Set day time (used for restoration)
-     * @param dayTime the day time to set
-     */
-    public void setDayTime(float dayTime) {
-        this.dayTime = dayTime;
-        updateNightIntensity(); // Recalculate night intensity based on new day time
     }
 
     /**

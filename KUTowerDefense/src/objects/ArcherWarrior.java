@@ -1,6 +1,5 @@
 package objects;
 
-import strategies.TargetingStrategy;
 import constants.Constants;
 
 public class ArcherWarrior extends Warrior {
@@ -15,21 +14,6 @@ public class ArcherWarrior extends Warrior {
         setDefaultProperties();
     }
 
-    public ArcherWarrior(int x, int y, TargetingStrategy targetingStrategy) {
-        super(x, y, x, y, targetingStrategy); // No movement, start at position with targeting strategy
-        setDefaultProperties();
-    }
-    
-    public ArcherWarrior(int spawnX, int spawnY, int targetX, int targetY, TargetingStrategy targetingStrategy) {
-        super(spawnX, spawnY, targetX, targetY, targetingStrategy);
-        setDefaultProperties();
-    }
-    
-    public ArcherWarrior(int spawnX, int spawnY, int targetX, int targetY, Tower spawnedFromTower) {
-        super(spawnX, spawnY, targetX, targetY);
-        setSpawnedFromTower(spawnedFromTower);
-        setDefaultProperties();
-    }
 
     @Override
     protected void initializeAnimationParameters() {

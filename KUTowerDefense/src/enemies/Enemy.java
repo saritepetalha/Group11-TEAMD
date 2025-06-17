@@ -94,11 +94,6 @@ public abstract class Enemy {
     private int poisonTickCounter = 0;
     public static BufferedImage poisonIcon = null;
 
-    public void setAlive(boolean alive) {
-        this.alive = alive;
-    }
-
-
     // Enemy size category
     public enum Size {
         SMALL(32, 32),
@@ -249,30 +244,6 @@ public abstract class Enemy {
         health = Constants.Enemies.getStartHealth(enemyType);
     }
 
-    public void move(float xSpeed, float ySpeed) {
-        float effSpeed = getEffectiveSpeed();
-        this.x += xSpeed * effSpeed;
-        this.y += ySpeed * effSpeed;
-
-        // Update direction based on movement - optimized to avoid unnecessary calculations
-        if (xSpeed != 0 || ySpeed != 0) {
-            float totalComponentSpeed = (float) Math.sqrt(xSpeed * xSpeed + ySpeed * ySpeed);
-            if (totalComponentSpeed > 0.001f) { // Use small epsilon instead of exact zero check
-                float invTotalSpeed = 1.0f / totalComponentSpeed; // Multiply instead of divide
-                this.dirX = xSpeed * invTotalSpeed;
-                this.dirY = ySpeed * invTotalSpeed;
-            }
-        }
-        updateBoundary();
-    }
-
-    private void updateBoundary() {
-        // Boundary width and height are fixed by the size enum and set in constructor.
-        // Here, we only need to update the x, y position of the boundary using cached values.
-        boundary.x = (int)this.x - this.halfWidth;
-        boundary.y = (int)this.y - this.halfHeight;
-    }
-
     public void updateAnimationTick() {
         if (isFrozen) {
             return;
@@ -289,7 +260,6 @@ public abstract class Enemy {
 
     // Getters and Setters
     public int getAnimationIndex() { return animationIndex; }
-    public int getMaxFrameCount() { return maxFrameCount; }
     public Size getSize() { return size; }
     public float getX() { return x; }
     public void setX(float x) { this.x = x; }
@@ -318,7 +288,6 @@ public abstract class Enemy {
     public boolean isTeleporting() { return isTeleporting; }
     public long getTeleportEffectTimer() { return teleportEffectTimer; }
     public boolean hasCombatSynergy() { return hasCombatSynergy; }
-    public boolean isInvisible() { return invisible; }
     public void setInvisible(boolean invisible) { this.invisible = invisible; }
 
     /**
@@ -378,29 +347,6 @@ public abstract class Enemy {
             case ULTIMATE: return 1.0f; // Ultimate abilities ignore vulnerabilities
             default: return 1.0f;
         }
-    }
-
-    /**
-     * GRASP Information Expert: Debug method to display damage calculations
-     * Demonstrates how the Enemy calculates its own damage based on its properties
-     */
-    public void demonstrateDamageCalculation() {
-        System.out.println("=== GRASP Information Expert Pattern Demonstration ===");
-        System.out.println("Enemy Type: " + getEnemyTypeEnum());
-        System.out.println("Health: " + health + "/" + maxHealth);
-
-        // Test different damage types
-        int testDamage = 100;
-        for (DamageType type : DamageType.values()) {
-            int actualDamage = calculateActualDamage(testDamage, type);
-            float resistance = getResistanceForDamageType(type);
-            float vulnerability = getVulnerabilityForDamageType(type);
-
-            System.out.println(type + " Damage: " + testDamage + " -> " + actualDamage +
-                    " (Resistance: " + (resistance * 100) + "%, " +
-                    "Vulnerability: " + (vulnerability * 100) + "%)");
-        }
-        System.out.println("====================================================");
     }
 
     /**
@@ -478,46 +424,7 @@ public abstract class Enemy {
         }
     }
 
-    /**
-     * GRASP Information Expert: Check if enemy has any significant resistances
-     */
-    public boolean hasResistances() {
-        return physicalResistance > 0 || magicalResistance > 0 ||
-                explosiveResistance > 0 || ultimateResistance > 0;
-    }
 
-    /**
-     * GRASP Information Expert: Check if enemy has any vulnerabilities
-     */
-    public boolean hasVulnerabilities() {
-        return physicalVulnerability > 1.0f || magicalVulnerability > 1.0f ||
-                explosiveVulnerability > 1.0f;
-    }
-
-    // GRASP Information Expert: Getter methods for resistance values
-    public float getPhysicalResistance() { return physicalResistance; }
-    public float getMagicalResistance() { return magicalResistance; }
-    public float getExplosiveResistance() { return explosiveResistance; }
-    public float getUltimateResistance() { return ultimateResistance; }
-
-    // GRASP Information Expert: Getter methods for vulnerability values
-    public float getPhysicalVulnerability() { return physicalVulnerability; }
-    public float getMagicalVulnerability() { return magicalVulnerability; }
-    public float getExplosiveVulnerability() { return explosiveVulnerability; }
-
-    // GRASP Information Expert: Setter methods for dynamic resistance changes
-    public void setPhysicalResistance(float resistance) {
-        this.physicalResistance = Math.max(0.0f, Math.min(0.9f, resistance));
-    }
-    public void setMagicalResistance(float resistance) {
-        this.magicalResistance = Math.max(0.0f, Math.min(0.9f, resistance));
-    }
-    public void setExplosiveResistance(float resistance) {
-        this.explosiveResistance = Math.max(0.0f, Math.min(0.9f, resistance));
-    }
-    public void setUltimateResistance(float resistance) {
-        this.ultimateResistance = Math.max(0.0f, Math.min(0.9f, resistance));
-    }
 
     // Legacy hurt methods - now delegate to the new takeDamage methods
     @Deprecated
@@ -694,14 +601,6 @@ public abstract class Enemy {
         return isPoisoned;
     }
 
-    public int getPoisonDamage() {
-        return poisonDamage;
-    }
-
-    public long getPoisonTimer() {
-        return poisonTimer;
-    }
-
     public void update(float speedMultiplier) {
         updateFreeze(speedMultiplier);
         updatePoison();
@@ -753,7 +652,6 @@ public abstract class Enemy {
 
 
     public void draw(Graphics2D g2d) {
-        //System.out.println("Drawing enemy ID: " + id);
         // Draw the enemy sprite using the current animation frame
         BufferedImage sprite = getSpriteFrame(animationIndex);
         if (sprite != null) {

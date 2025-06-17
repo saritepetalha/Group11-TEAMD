@@ -1,6 +1,5 @@
 package helpMethods;
 
-import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -246,22 +245,6 @@ public class LoadSave {
         createLevel(fileName, tiles);
         // Invalidate thumbnail cache when level is saved
         ThumbnailCache.getInstance().invalidateLevel(fileName);
-    }
-
-    /**
-     * Deletes a saved game file from the saves directory
-     * @param levelName The name of the saved game to delete (without .json extension)
-     * @return true if deletion was successful, false otherwise
-     */
-    public static boolean deleteSavedGame(String levelName) {
-        try {
-            managers.GameStateManager gameStateManager = new managers.GameStateManager();
-            gameStateManager.deleteSaveFile(levelName);
-            return true;
-        } catch (Exception e) {
-            System.err.println("Error deleting saved game " + levelName + ": " + e.getMessage());
-            return false;
-        }
     }
 
     public static ArrayList<String> getSavedLevels() {
@@ -641,64 +624,6 @@ public class LoadSave {
             int frameHeight = 100;
             for (int i = 0; i < frameCount; i++) {
                 frames[i] = spriteSheet.getSubimage(i * frameWidth, 0, frameWidth, frameHeight);
-            }
-        }
-
-        return frames;
-    }
-
-    // Keep old method for backward compatibility, but use attack animation
-    public static BufferedImage getWarriorImage(Warrior warrior) {
-        String path = "/Warriors/" + (warrior instanceof WizardWarrior ? "wizard_attack.png" : "archer_attack.png");
-        return getImageFromPath(path);
-    }
-
-    // Keep old method for backward compatibility, but use attack animation
-    public static BufferedImage[] getWarriorAnimation(Warrior warrior) {
-        return getWarriorAttackAnimation(warrior);
-    }
-
-    /**
-     * Get TNT enemy animation frames for TNT warrior
-     * Returns the TNT enemy running animation frames
-     */
-    public static BufferedImage[] getTNTEnemyAnimation() {
-        // Use existing getEnemyAtlas method which has the correct path
-        BufferedImage tntSheet = getEnemyAtlas("tnt");
-
-        if (tntSheet == null) {
-            // Create a fallback TNT sprite if image not found
-            BufferedImage fallback = new BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB);
-            Graphics2D g = fallback.createGraphics();
-            g.setColor(new Color(139, 69, 19)); // Brown color for TNT
-            g.fillRect(2, 2, 28, 28);
-            g.setColor(Color.BLACK);
-            g.drawRect(2, 2, 28, 28);
-            g.setColor(Color.RED);
-            g.drawString("TNT", 8, 18);
-            g.setColor(Color.ORANGE);
-            g.fillRect(12, 0, 8, 6); // Fuse
-            g.dispose();
-            return new BufferedImage[]{fallback};
-        }
-
-        // TNT enemy sprites are typically 64x64, extract frames if it's a sprite sheet
-        int frameWidth = 64;  // Updated to match typical enemy sprite size
-        int frameHeight = 64;
-        int frameCount = Math.max(1, tntSheet.getWidth() / frameWidth);
-
-        // If it's just a single sprite (width <= 64), use it as-is
-        if (tntSheet.getWidth() <= frameWidth) {
-            return new BufferedImage[]{tntSheet};
-        }
-
-        // Extract multiple frames if it's a sprite sheet
-        BufferedImage[] frames = new BufferedImage[frameCount];
-        for (int i = 0; i < frameCount; i++) {
-            if (i * frameWidth + frameWidth <= tntSheet.getWidth()) {
-                frames[i] = tntSheet.getSubimage(i * frameWidth, 0, frameWidth, frameHeight);
-            } else {
-                frames[i] = frames[0]; // Use first frame as fallback
             }
         }
 
