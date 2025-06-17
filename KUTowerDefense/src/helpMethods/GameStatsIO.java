@@ -48,16 +48,6 @@ public class GameStatsIO {
         }
     }
 
-
-    private static void ensureStatsDirectoryExists() {
-        File dir = new File(STATS_FOLDER_PATH);
-        if (!dir.exists()) {
-            boolean created = dir.mkdirs();
-            if (!created) {
-                System.err.println("Failed to create stats directory: " + STATS_FOLDER_PATH);
-            }
-        }
-    }
     /**
      * Deletes a statistics file by filename
      * @param filename The name of the file to delete

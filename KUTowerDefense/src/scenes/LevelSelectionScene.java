@@ -1270,8 +1270,4 @@ public class LevelSelectionScene extends JPanel {
         }
     }
 
-    private void startGame() {
-        // Instead of going directly to PLAYING, go to SKILL_SELECTION first
-        game.changeGameState(GameStates.SKILL_SELECTION);
-    }
 }

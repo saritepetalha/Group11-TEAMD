@@ -225,25 +225,4 @@ public class MapEditing extends GameScene implements SceneMethods {
         return mapModel.getCurrentLevelName();
     }
 
-    // Legacy getters/setters for backwards compatibility
-    public Tower getSelectedTower() {
-        return selectedTower;
-    }
-
-    public void setSelectedTower(Tower selectedTower) {
-        this.selectedTower = selectedTower;
-    }
-
-    // Expose MVC components for advanced usage (optional)
-    public MapModel getMapModel() {
-        return mapModel;
-    }
-
-    public MapView getMapView() {
-        return mapView;
-    }
-
-    public MapController getMapController() {
-        return mapController;
-    }
 }

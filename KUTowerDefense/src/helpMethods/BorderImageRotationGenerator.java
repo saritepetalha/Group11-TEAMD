@@ -4,7 +4,6 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 
-import helpMethods.LoadSave;
 
 /**
  * Manages wall and gate border images with rotation and caching for optimal performance.
@@ -14,7 +13,6 @@ public class BorderImageRotationGenerator {
     // Singleton instance
     private static BorderImageRotationGenerator instance;
 
-    // Source border images
     private BufferedImage wallImage;
     private BufferedImage gateImage;
     
@@ -122,13 +120,6 @@ public class BorderImageRotationGenerator {
         return -1; // no gate found
     }
 
-    public BufferedImage getWallImage() {
-        return wallImage;
-    }
-
-    public BufferedImage getGateImage() {
-        return gateImage;
-    }
 
     /**
      * Gets a properly rotated wall or gate image based on the gate edge

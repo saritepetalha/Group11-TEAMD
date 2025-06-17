@@ -191,9 +191,6 @@ public class TowerManager {
         return adjustedDistance < effectiveRange && canTarget;
     }
 
-    public BufferedImage[] getTowerImages() {
-        return towerImages;
-    }
 
     public void draw(Graphics g, float gameSpeedMultiplier) {
         boolean isNight = playing.getWeatherManager() != null && playing.getWeatherManager().isNight();
@@ -589,15 +586,6 @@ public class TowerManager {
         upgradeEffects.add(new TowerUpgradeEffect(tower.getX() + 32, tower.getY() + 32));
     }
 
-    // Method to spawn a Wizard Warrior
-    public void spawnWizardWarrior(int x, int y) {
-        warriors.add(new WizardWarrior(x, y));
-    }
-
-    // Method to spawn an Archer Warrior
-    public void spawnArcherWarrior(int x, int y) {
-        warriors.add(new ArcherWarrior(x, y));
-    }
 
     public List<Warrior> getWarriors() {
         return warriors;

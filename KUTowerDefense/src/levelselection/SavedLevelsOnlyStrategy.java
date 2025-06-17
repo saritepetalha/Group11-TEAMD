@@ -63,15 +63,7 @@ public class SavedLevelsOnlyStrategy implements LevelSelectionStrategy {
         return levelsWithSaves;
     }
 
-    @Override
-    public String getSelectionTitle() {
-        return "Load Game";
-    }
 
-    @Override
-    public String getSelectionDescription() {
-        return "Choose a saved game to continue";
-    }
 
     /**
      * Gets a user-friendly display name for a save file

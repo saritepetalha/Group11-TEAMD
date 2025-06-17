@@ -6,7 +6,6 @@ import java.awt.Color;
 import java.awt.Composite;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.RenderingHints;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
@@ -1005,7 +1004,6 @@ public class EnemyManager {
         int targetX = nextPoint.getX() * tileSize + tileSize / 2;
         int targetY = nextPoint.getY() * tileSize + tileSize / 2;
 
-        // calculate direction to move
         // Calculate direction to move - optimized distance calculation
         float xDiff = targetX - e.getX();
         float yDiff = targetY - e.getY();
@@ -1678,10 +1676,6 @@ public class EnemyManager {
         return true;
     }
 
-    public int getNextEnemyID() {
-        return nextEnemyID++;
-    }
-
     public boolean canTargetEnemy(Enemy enemy) {
         return isEnemyTargetable(enemy);
     }
@@ -1820,11 +1814,6 @@ public class EnemyManager {
         }
     }
 
-    private float calculateDistance(Enemy e1, Enemy e2) {
-        float xDiff = e1.getSpriteCenterX() - e2.getSpriteCenterX();
-        float yDiff = e1.getSpriteCenterY() - e2.getSpriteCenterY();
-        return (float) Math.sqrt(xDiff * xDiff + yDiff * yDiff);
-    }
 
     // Optimized version for distance comparison without sqrt
     private float calculateDistanceSquared(Enemy e1, Enemy e2) {

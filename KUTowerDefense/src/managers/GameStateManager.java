@@ -88,9 +88,6 @@ public class GameStateManager {
         gson = new GsonBuilder().setPrettyPrinting().create();
     }
 
-    public void saveGameState(GameStateMemento memento) {
-        saveGameState(memento, DEFAULT_SAVE_FILE);
-    }
 
     public void saveGameState(GameStateMemento memento, String saveFileName) {
         try {
@@ -119,9 +116,6 @@ public class GameStateManager {
         }
     }
 
-    public GameStateMemento loadGameState() {
-        return loadGameState(DEFAULT_SAVE_FILE);
-    }
 
     public GameStateMemento loadGameState(String saveFileName) {
         // Ensure the filename has .json extension
@@ -148,9 +142,6 @@ public class GameStateManager {
         }
     }
 
-    public boolean saveFileExists() {
-        return saveFileExists(DEFAULT_SAVE_FILE);
-    }
 
     public boolean saveFileExists(String saveFileName) {
         // Ensure the filename has .json extension
@@ -161,75 +152,5 @@ public class GameStateManager {
         boolean exists = Files.exists(savePath);
         System.out.println("🔍 GameStateManager: Checking if save file exists: " + savePath.toAbsolutePath() + " - " + exists);
         return exists;
-    }
-
-    /**
-     * Deletes all save files in the saves directory
-     * Called when starting a new game to ensure a fresh start
-     */
-    public void deleteAllSaveFiles() {
-        try {
-            File savesDir = new File(SAVE_DIR);
-            if (!savesDir.exists() || !savesDir.isDirectory()) {
-                System.out.println("🔍 GameStateManager: Saves directory doesn't exist, nothing to delete");
-                return;
-            }
-
-            File[] saveFiles = savesDir.listFiles((dir, name) -> name.toLowerCase().endsWith(".json"));
-            if (saveFiles == null || saveFiles.length == 0) {
-                System.out.println("🔍 GameStateManager: No save files found to delete");
-                return;
-            }
-
-            int deletedCount = 0;
-            for (File saveFile : saveFiles) {
-                try {
-                    Files.delete(saveFile.toPath());
-                    System.out.println("✅ GameStateManager: Deleted save file: " + saveFile.getName());
-                    deletedCount++;
-                } catch (IOException e) {
-                    System.err.println("❌ GameStateManager: Failed to delete save file: " + saveFile.getName() + " - " + e.getMessage());
-                }
-            }
-
-            System.out.println("✅ GameStateManager: Successfully deleted " + deletedCount + " save files for fresh game start");
-        } catch (Exception e) {
-            System.err.println("❌ GameStateManager: Error during save files cleanup: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * Deletes the save file for a specific level when starting that level as a new game
-     * This ensures only the current level's progress is cleared, not all saved games
-     * @param levelName The name of the level whose save file should be deleted
-     */
-    public void deleteSaveFileForLevel(String levelName) {
-        try {
-            // Ensure we have a level name
-            if (levelName == null || levelName.trim().isEmpty()) {
-                System.out.println("🔍 GameStateManager: No level name provided, skipping save file deletion");
-                return;
-            }
-
-            // Create the save file path for this specific level
-            String saveFileName = levelName.trim();
-            if (!saveFileName.toLowerCase().endsWith(".json")) {
-                saveFileName += ".json";
-            }
-
-            File saveFile = new File(SAVE_DIR, saveFileName);
-
-            if (saveFile.exists()) {
-                Files.delete(saveFile.toPath());
-                System.out.println("✅ GameStateManager: Deleted save file for level '" + levelName + "': " + saveFile.getAbsolutePath());
-            } else {
-                System.out.println("🔍 GameStateManager: No existing save file found for level '" + levelName + "', starting fresh");
-            }
-
-        } catch (Exception e) {
-            System.err.println("❌ GameStateManager: Error deleting save file for level '" + levelName + "': " + e.getMessage());
-            e.printStackTrace();
-        }
     }
 }

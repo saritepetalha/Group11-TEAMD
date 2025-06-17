@@ -413,16 +413,4 @@ public class MapView implements MapChangeObserver {
         this.popupStartTime = System.currentTimeMillis();
     }
 
-    public void hidePopupMessage() {
-        this.popupMessage = "";
-    }
-
-    public boolean isDrawSelected() {
-        return drawSelected;
-    }
-
-    // Performance method
-    public void invalidateCache() {
-        needsFullRedraw = true;
-    }
 } 

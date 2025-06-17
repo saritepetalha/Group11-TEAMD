@@ -44,7 +44,6 @@ import main.GameStates;
 import managers.TileManager;
 import managers.GameStateManager;
 import managers.GameStateMemento;
-import config.GameOptions;
 import ui_p.AssetsLoader;
 import ui_p.TheButton;
 
@@ -1162,19 +1161,6 @@ public class LoadGameMenu extends JPanel {
 
     }
 
-    /**
-     * Cleanup method to be called when the LoadGameMenu is no longer active
-     * This ensures all tooltips and timers are properly disposed
-     */
-    public void cleanup() {
-        hideCustomTooltip();
-
-        // Additional cleanup if needed
-        if (tooltipTimer != null) {
-            tooltipTimer.stop();
-            tooltipTimer = null;
-        }
-    }
 
     /**
      * Deletes a saved game and refreshes the UI

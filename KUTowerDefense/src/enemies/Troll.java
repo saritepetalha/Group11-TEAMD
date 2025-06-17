@@ -11,6 +11,6 @@ public class Troll extends Enemy {
 
     @Override
     public float getEffectiveSpeed() {
-        return 1.0f; // Force troll speed to 1.0f
+        return 1.0f;
     }
 }

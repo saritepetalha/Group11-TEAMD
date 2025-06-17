@@ -34,7 +34,4 @@ public enum SkillType {
         return description;
     }
 
-    public float getValue() {
-        return value;
-    }
 } 

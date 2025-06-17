@@ -118,32 +118,6 @@ public class TheButton {
                 g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
             }
         }
-        /*
-        // For buttons without a sprite
-        g.setColor(Color.BLACK);
-        g.drawRect(x, y, width, height);
-
-        if (mouseOver) {
-            // Create a hover effect with animation
-            Graphics2D g2d = (Graphics2D) g;
-            long currentTime = System.currentTimeMillis();
-            float alpha = (float) (0.3f + 0.2f * Math.sin(currentTime * 0.003)); // Oscillate alpha
-
-            // Draw a subtle glow effect
-            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-            g2d.setColor(new Color(255, 255, 200)); // Yellowish glow
-            g2d.fillRect(x, y, width, height);
-            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
-        }
-
-        if (mousePressed) {
-            g.drawRect(x + 1, y + 1, width - 2, height - 2);
-            g.drawRect(x + 2, y + 2, width - 4, height - 4);
-        }
-
-        int w = g.getFontMetrics().stringWidth(text);
-        int h = g.getFontMetrics().getHeight();
-        g.drawString(text, x + (width - w) / 2, y + (height + h / 2) / 2);*/
     }
 
 
@@ -156,12 +130,6 @@ public class TheButton {
         Font font = new Font("MV Boli", Font.PLAIN, 45);  // You can change the font here
         g2d.setFont(font);
 
-        /* set color depending on hover state
-        if (mouseOver) {
-            g2d.setColor(new Color(255, 99, 71)); // tomato red when hovered
-        } else {
-            g2d.setColor(new Color(255, 255, 255, 230)); // soft white
-        }*/
 
         // Draw background with hover effects
         if (mouseOver) {
@@ -272,11 +240,6 @@ public class TheButton {
     }
 
     public void resetBooleans() {
-        mouseOver = false;
-        mousePressed = false;
-    }
-
-    public void resetButtonState() {
         mouseOver = false;
         mousePressed = false;
     }

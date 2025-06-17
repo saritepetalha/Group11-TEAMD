@@ -49,10 +49,6 @@ public class SkillTree {
         return isSkillSelected(SkillType.BOUNTIFUL_START) ? 150 : 0;
     }
 
-    public int getExtraGoldPerKill() {
-        return isSkillSelected(SkillType.PLUNDERER_BONUS) ? 1 : 0;
-    }
-
     public float getInterestRate() {
         boolean isSelected = isSkillSelected(SkillType.INTEREST_SYSTEM);
         System.out.println("Interest System skill selected: " + isSelected);

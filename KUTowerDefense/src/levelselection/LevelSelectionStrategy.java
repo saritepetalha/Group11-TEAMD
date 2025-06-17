@@ -12,15 +12,4 @@ public interface LevelSelectionStrategy {
      */
     ArrayList<String> getLevelsToShow();
 
-    /**
-     * Gets the title to display for this selection mode
-     * @return Title string for the UI
-     */
-    String getSelectionTitle();
-
-    /**
-     * Gets the description to display for this selection mode
-     * @return Description string for the UI
-     */
-    String getSelectionDescription();
 }

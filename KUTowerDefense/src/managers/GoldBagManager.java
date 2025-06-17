@@ -46,7 +46,6 @@ public class GoldBagManager {
         for (GoldBag bag : bagsCopy) {
             if (!bag.isCollected() && bag.contains(mouseX, mouseY)) {
                 bag.collect();
-                // Play collection sound
                 AudioManager.getInstance().playSound("coin_collect");
                 return bag;
             }

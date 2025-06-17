@@ -147,11 +147,6 @@ public class MapController {
         }
     }
 
-    public String getCurrentMode() {
-        return currentMode;
-    }
-
-    // Tile selection
     public void setSelectedTile(Tile tile) {
         this.selectedTile = tile;
         mapView.setSelectedTile(tile);
@@ -200,13 +195,8 @@ public class MapController {
         return validationResult;
     }
 
-    public void loadLevel(String filename) {
-        mapModel.loadLevel(filename);
-    }
-
     // Getters for external access
     public MapModel getMapModel() { return mapModel; }
-    public MapView getMapView() { return mapView; }
 
     // Mouse position getters for backwards compatibility
     public int getMouseX() { return mouseX; }

@@ -6,7 +6,6 @@ import strategies.TargetingStrategyFactory.StrategyType;
 import objects.Tower;
 
 import java.awt.*;
-import java.awt.image.BufferedImage;
 
 /**
  * Specialized button for changing tower targeting strategies at runtime.
@@ -221,26 +220,12 @@ public class TargetingButton extends TheButton {
         g2d.setColor(Color.WHITE);
         g2d.drawString(tooltipText, tooltipX + 6, tooltipY + fm.getAscent() + 4);
     }
-    
-    /**
-     * Updates the associated tower (useful when tower is upgraded)
-     */
-    public void updateAssociatedTower(Tower tower) {
-        this.associatedTower = tower;
-        this.currentStrategyType = getCurrentStrategyType(tower.getTargetingStrategy());
-    }
-    
+
     /**
      * Gets the current strategy type
      */
     public StrategyType getCurrentStrategyType() {
         return currentStrategyType;
     }
-    
-    /**
-     * Gets the associated tower
-     */
-    public Tower getAssociatedTower() {
-        return associatedTower;
-    }
+
 } 

@@ -3,7 +3,6 @@ package models;
 import static constants.Constants.PathPoints.*;
 import helpMethods.LoadSave;
 import managers.TileManager;
-import models.PathValidator;
 import objects.Tile;
 import observers.MapChangeObserver;
 import observers.MapChangeType;

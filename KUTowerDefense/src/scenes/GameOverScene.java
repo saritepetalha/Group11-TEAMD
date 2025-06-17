@@ -6,10 +6,8 @@ import main.Game;
 import main.GameStates;
 import ui_p.TheButton;
 
-import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.IOException;
 
 import static helpMethods.LoadSave.resizeImage;
 

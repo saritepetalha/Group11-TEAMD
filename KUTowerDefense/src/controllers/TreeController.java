@@ -1,7 +1,6 @@
 package controllers;
 
 import models.PlayingModel;
-import managers.TreeInteractionManager;
 import ui_p.DeadTree;
 import ui_p.LiveTree;
 
@@ -122,13 +121,6 @@ public class TreeController {
     }
 
     /**
-     * Gets the currently selected dead tree
-     */
-    public DeadTree getSelectedDeadTree() {
-        return model.getSelectedDeadTree();
-    }
-
-    /**
      * Checks if a specific tree is clicked
      */
     public boolean isTreeClicked(int x, int y) {
@@ -169,30 +161,4 @@ public class TreeController {
         // Note: Dead tree tooltips are handled within the tree objects themselves
     }
 
-    /**
-     * Sets a dead tree as selected
-     */
-    public void selectDeadTree(DeadTree tree) {
-        // Clear other selections first
-        clearTreeSelections();
-
-        // Set the new selection
-        if (tree != null) {
-            tree.setShowChoices(true);
-            model.setSelectedDeadTree(tree);
-        }
-    }
-
-    /**
-     * Sets a live tree to show choices
-     */
-    public void selectLiveTree(LiveTree tree) {
-        // Clear other selections first
-        clearTreeSelections();
-
-        // Set the new selection
-        if (tree != null) {
-            tree.setShowChoices(true);
-        }
-    }
 }

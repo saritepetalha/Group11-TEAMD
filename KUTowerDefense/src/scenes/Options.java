@@ -1,19 +1,13 @@
 package scenes;
 
 import config.GameOptions;
-import constants.GameDimensions;
+
 import helpMethods.OptionsIO;
 import main.Game;
-import main.GameStates;
-// import managers.AudioManager; // AudioManager is used via SceneMethods default
 import ui_p.GameOptionsUI;
-import ui_p.TheButton;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionAdapter;
 
 /**
  * The Options scene that displays and manages game configuration settings

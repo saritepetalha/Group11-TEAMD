@@ -8,10 +8,8 @@ import java.awt.image.IndexColorModel;
 
 /**
  * Utility class for pixel-perfect sprite manipulation in tower defense games.
- *
  * Provides advanced image processing methods such as upscaling, rotation, masking, and
  * sprite sheet generation — all designed to maintain the sharpness and integrity of pixel art.
- *
  * This helper class will be used to have pixel perfect rotation especially for arrow asset
  */
 public class RotSprite {

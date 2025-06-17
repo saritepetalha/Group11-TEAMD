@@ -7,8 +7,6 @@ import java.awt.image.BufferedImage;
 public class GoldBag {
     private static final BufferedImage[] frames = LoadSave.getGoldBagAnimation();
     private static final int FRAME_COUNT = 8;
-    private static final int FRAME_WIDTH = 128;
-    private static final int FRAME_HEIGHT = 128;
     private static final long LIFETIME_MILLIS = 10000; // 10 seconds base lifetime
     private static final int DRAW_SIZE = 64; // display size in game
     private static final int COLLECTION_BOX_SIZE = 96; // bigger bounding box for easier collection

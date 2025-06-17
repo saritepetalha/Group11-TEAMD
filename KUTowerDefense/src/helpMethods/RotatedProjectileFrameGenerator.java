@@ -6,7 +6,6 @@ import java.io.File;
 /**
  * Utility class to generate and save rotated projectile frames (arrows and fireballs).
  * This should be run once to pre-generate frames and avoid runtime generation.
- *
  * Usage: Run this class's main method to generate all frames before running the game.
  */
 public class RotatedProjectileFrameGenerator {

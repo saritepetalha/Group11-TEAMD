@@ -40,33 +40,5 @@ public class TargetingStrategyFactory {
                 return FIRST_ENEMY_STRATEGY; // Default fallback
         }
     }
-    
-    /**
-     * Gets the default targeting strategy (First Enemy).
-     * 
-     * @return The default targeting strategy
-     */
-    public static TargetingStrategy getDefaultStrategy() {
-        return FIRST_ENEMY_STRATEGY;
-    }
-    
-    /**
-     * Gets all available strategy types.
-     * 
-     * @return Array of all available strategy types
-     */
-    public static StrategyType[] getAllStrategyTypes() {
-        return StrategyType.values();
-    }
-    
-    /**
-     * Gets a human-readable name for a strategy type.
-     * 
-     * @param type The strategy type
-     * @return Human-readable name
-     */
-    public static String getStrategyDisplayName(StrategyType type) {
-        TargetingStrategy strategy = createStrategy(type);
-        return strategy.getStrategyName();
-    }
+
 } 

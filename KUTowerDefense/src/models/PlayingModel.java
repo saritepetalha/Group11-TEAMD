@@ -9,8 +9,6 @@ import java.util.List;
 import java.util.Observable;
 
 import config.GameOptions;
-import constants.Constants;
-import constants.GameDimensions;
 import enemies.Enemy;
 import helpMethods.LoadSave;
 import helpMethods.OptionsIO;
@@ -26,7 +24,6 @@ import ui_p.MineableStone;
 /**
  * PlayingModel - Contains all game state data and business logic
  * Part of the MVC architecture for the Playing scene
- *
  * Responsibilities:
  * - Manage game state (paused, speed, victory/defeat conditions)
  * - Manage game resources and statistics
@@ -35,7 +32,6 @@ import ui_p.MineableStone;
  */
 @SuppressWarnings("deprecation")
 public class PlayingModel extends Observable implements GameContext {
-
     // Core game state
     private boolean gamePaused = false;
     private boolean gameSpeedIncreased = false;
@@ -124,8 +120,6 @@ public class PlayingModel extends Observable implements GameContext {
     private GameStateManager gameStateManager;
     private StoneMiningManager stoneMiningManager;
 
-    // Initialization flag
-    private boolean isFirstReset = true;
 
     public PlayingModel() {
         this.tileManager = new TileManager();
@@ -525,8 +519,6 @@ public class PlayingModel extends Observable implements GameContext {
     // Basic getters and setters
     public boolean isGameSpeedIncreased() { return gameSpeedIncreased; }
     public boolean isOptionsMenuOpen() { return optionsMenuOpen; }
-    public boolean isGameOverHandled() { return gameOverHandled; }
-    public boolean isVictoryHandled() { return victoryHandled; }
 
     public String getCurrentMapName() { return currentMapName; }
     public String getCurrentDifficulty() { return currentDifficulty; }
@@ -563,7 +555,6 @@ public class PlayingModel extends Observable implements GameContext {
     public ProjectileManager getProjectileManager() { return projectileManager; }
     public FireAnimationManager getFireAnimationManager() { return fireAnimationManager; }
     public TreeInteractionManager getTreeInteractionManager() { return treeInteractionManager; }
-    public GameStateManager getGameStateManager() { return gameStateManager; }
 
     // Statistics getters
     public int getTotalEnemiesSpawned() { return totalEnemiesSpawned; }
@@ -934,23 +925,6 @@ public class PlayingModel extends Observable implements GameContext {
         );
     }
 
-    /**
-     * Create tower states from current towers
-     */
-    private java.util.List<GameStateMemento.TowerState> createTowerStates() {
-        java.util.List<GameStateMemento.TowerState> towerStates = new java.util.ArrayList<>();
-
-        if (towerManager != null && towerManager.getTowers() != null) {
-            for (Tower tower : towerManager.getTowers()) {
-                GameStateMemento.TowerState towerState = new GameStateMemento.TowerState(
-                        tower.getX(), tower.getY(), tower.getType(), tower.getLevel()
-                );
-                towerStates.add(towerState);
-            }
-        }
-
-        return towerStates;
-    }
 
     /**
      * Create tower states for wave start saves - includes targeting strategy and light information
@@ -1162,81 +1136,6 @@ public class PlayingModel extends Observable implements GameContext {
         playerData.put("health", playerManager.getHealth());
         playerData.put("shield", playerManager.getShield());
         return playerData;
-    }
-
-    /**
-     * Create simple wave save data
-     */
-    private Object createWaveSaveData() {
-        if (waveManager == null) return null;
-
-        java.util.Map<String, Object> waveData = new java.util.HashMap<>();
-        waveData.put("currentWaveIndex", waveManager.getWaveIndex());
-        waveData.put("currentGroupIndex", waveManager.getCurrentGroupIndex());
-        // Note: Additional wave state can be added when methods are available
-        return waveData;
-    }
-
-    /**
-     * Create simple weather save data
-     */
-    private Object createWeatherSaveData() {
-        if (weatherManager == null) return null;
-        return weatherManager.getWeatherState();
-    }
-
-    /**
-     * Apply loaded game state data to the current game
-     */
-    private void applyGameSaveData(GameSaveData saveData) {
-        // Core game state
-        gamePaused = saveData.isGamePaused();
-        gameSpeedIncreased = saveData.isGameSpeedIncreased();
-        gameSpeedMultiplier = saveData.getGameSpeedMultiplier();
-        currentMapName = saveData.getCurrentMapName();
-        currentDifficulty = saveData.getCurrentDifficulty();
-
-        // Game statistics
-        totalEnemiesSpawned = saveData.getTotalEnemiesSpawned();
-        enemiesReachedEnd = saveData.getEnemiesReachedEnd();
-        enemyDefeated = saveData.getEnemyDefeated();
-        totalDamage = saveData.getTotalDamage();
-        timePlayedInSeconds = saveData.getTimePlayedInSeconds();
-        gameTimeMillis = saveData.getGameTimeMillis();
-
-        // Castle health
-        castleMaxHealth = saveData.getCastleMaxHealth();
-        castleCurrentHealth = saveData.getCastleCurrentHealth();
-
-        // Level data
-        if (saveData.getLevel() != null) {
-            level = deepCopy2DArray(saveData.getLevel());
-        }
-        if (saveData.getOverlay() != null) {
-            overlay = deepCopy2DArray(saveData.getOverlay());
-        }
-
-        // Restore skills selected at the start of the game
-        if (saveData.getSelectedSkills() != null) {
-            skills.SkillTree.getInstance().setSelectedSkills(saveData.getSelectedSkills());
-            System.out.println("Restored " + saveData.getSelectedSkills().size() + " skills from save data");
-        } else {
-            // Clear skills if none were saved (backward compatibility)
-            System.out.println("No skills found in save data, cleared skill tree");
-        }
-
-        // Apply manager states (if managers are available) - basic version
-        if (managersInitialized()) {
-            if (saveData.getPlayerData() != null) {
-                applyPlayerSaveData(saveData.getPlayerData());
-            }
-            if (saveData.getWaveData() != null) {
-                applyWaveSaveData(saveData.getWaveData());
-            }
-            if (saveData.getWeatherData() != null) {
-                applyWeatherSaveData(saveData.getWeatherData());
-            }
-        }
     }
 
     /**
@@ -1535,63 +1434,6 @@ public class PlayingModel extends Observable implements GameContext {
     }
 
 
-
-    /**
-     * Apply player save data
-     */
-    @SuppressWarnings("unchecked")
-    private void applyPlayerSaveData(Object playerDataObj) {
-        if (playerManager == null || playerDataObj == null) return;
-
-        try {
-            java.util.Map<String, Object> playerData = (java.util.Map<String, Object>) playerDataObj;
-            if (playerData.containsKey("gold")) {
-                playerManager.setGold((Integer) playerData.get("gold"));
-            }
-            if (playerData.containsKey("health")) {
-                playerManager.setHealth((Integer) playerData.get("health"));
-            }
-            if (playerData.containsKey("shield")) {
-                playerManager.setShield((Integer) playerData.get("shield"));
-            }
-        } catch (Exception e) {
-            System.err.println("Failed to apply player save data: " + e.getMessage());
-        }
-    }
-
-    /**
-     * Apply wave save data
-     */
-    @SuppressWarnings("unchecked")
-    private void applyWaveSaveData(Object waveDataObj) {
-        if (waveManager == null || waveDataObj == null) return;
-
-        try {
-            java.util.Map<String, Object> waveData = (java.util.Map<String, Object>) waveDataObj;
-            // Wave manager state restoration can be implemented based on available methods
-            // For now, we'll skip complex wave state restoration
-            System.out.println("Wave save data available but detailed restoration not yet implemented");
-        } catch (Exception e) {
-            System.err.println("Failed to apply wave save data: " + e.getMessage());
-        }
-    }
-
-    /**
-     * Apply weather save data
-     */
-    @SuppressWarnings("unchecked")
-    private void applyWeatherSaveData(Object weatherDataObj) {
-        if (weatherManager == null || weatherDataObj == null) return;
-
-        try {
-            java.util.Map<String, Object> weatherData = (java.util.Map<String, Object>) weatherDataObj;
-            weatherManager.restoreWeatherState(weatherData);
-            System.out.println("Restored weather state from save data");
-        } catch (Exception e) {
-            System.err.println("Failed to apply weather save data: " + e.getMessage());
-        }
-    }
-
     // ================ PROJECTILE MANAGER ABSTRACTION ================
 
     /**
@@ -1607,16 +1449,6 @@ public class PlayingModel extends Observable implements GameContext {
         }
     }
 
-    /**
-     * Clear all projectiles from the game
-     */
-    public void clearProjectiles() {
-        if (projectileManager != null) {
-            projectileManager.clearProjectiles();
-            setChanged();
-            notifyObservers("projectillesCleared");
-        }
-    }
 
     /**
      * Get the current number of active projectiles
@@ -1638,13 +1470,7 @@ public class PlayingModel extends Observable implements GameContext {
         return 0;
     }
 
-    /**
-     * Check if there are any active projectiles
-     * @return true if there are active projectiles, false otherwise
-     */
-    public boolean hasActiveProjectiles() {
-        return getActiveProjectileCount() > 0;
-    }
+
 
     public StoneMiningManager getStoneMiningManager() {
         return stoneMiningManager;
@@ -1652,9 +1478,6 @@ public class PlayingModel extends Observable implements GameContext {
 
     public void setStoneMiningManager(StoneMiningManager stoneMiningManager) {
         this.stoneMiningManager = stoneMiningManager;
-    }
-    public List<MineableStone> getMineableStones() {
-        return mineableStones;
     }
 
     private void initializeGame() {
@@ -1672,11 +1495,6 @@ public class PlayingModel extends Observable implements GameContext {
         }
     }
 
-    public void addGold(int amount) {
-        if (playerManager != null) {
-            playerManager.addGold(amount);
-        }
-    }
 
     public void onWaveComplete() {
         // Apply interest from skill tree
@@ -1739,123 +1557,12 @@ public class PlayingModel extends Observable implements GameContext {
         }
     }
 
-    /**
-     * Get the gold value at wave start (for saving)
-     */
-    public int getWaveStartGold() {
-        return waveStartGold;
-    }
-
-    /**
-     * Set the gold value at wave start (for loading)
-     */
-    public void setWaveStartGold(int gold) {
-        this.waveStartGold = gold;
-    }
-
-    /**
-     * Get the health value at game start (for saving)
-     */
-    public int getGameStartHealth() {
-        return gameStartHealth;
-    }
-
-    /**
-     * Set the health value at game start (for loading)
-     */
-    public void setGameStartHealth(int health) {
-        this.gameStartHealth = health;
-    }
-
-    /**
-     * Get the shield value at game start (for saving)
-     */
-    public int getGameStartShield() {
-        return gameStartShield;
-    }
-
-    /**
-     * Set the shield value at game start (for loading)
-     */
-    public void setGameStartShield(int shield) {
-        this.gameStartShield = shield;
-    }
 
     /**
      * Get the current victory confetti animation (for rendering)
      */
     public ui_p.ConfettiAnimation getVictoryConfetti() {
         return victoryConfetti;
-    }
-
-    /**
-     * Get the health value at wave start (for saving)
-     */
-    public int getWaveStartHealth() {
-        return waveStartHealth;
-    }
-
-    /**
-     * Set the health value at wave start (for loading)
-     */
-    public void setWaveStartHealth(int health) {
-        this.waveStartHealth = health;
-    }
-
-    /**
-     * Get the shield value at wave start (for saving)
-     */
-    public int getWaveStartShield() {
-        return waveStartShield;
-    }
-
-    /**
-     * Set the shield value at wave start (for loading)
-     */
-    public void setWaveStartShield(int shield) {
-        this.waveStartShield = shield;
-    }
-
-    /**
-     * Get the weather data at wave start (for saving)
-     */
-    public Object getWaveStartWeatherData() {
-        return waveStartWeatherData;
-    }
-
-    /**
-     * Set the weather data at wave start (for loading)
-     */
-    public void setWaveStartWeatherData(Object weatherData) {
-        this.waveStartWeatherData = weatherData;
-    }
-
-    /**
-     * Get the dead trees at wave start (for saving)
-     */
-    public java.util.List<DeadTree> getWaveStartDeadTrees() {
-        return waveStartDeadTrees;
-    }
-
-    /**
-     * Set the dead trees at wave start (for loading)
-     */
-    public void setWaveStartDeadTrees(java.util.List<DeadTree> deadTrees) {
-        this.waveStartDeadTrees = deadTrees;
-    }
-
-    /**
-     * Get the live trees at wave start (for saving)
-     */
-    public java.util.List<LiveTree> getWaveStartLiveTrees() {
-        return waveStartLiveTrees;
-    }
-
-    /**
-     * Set the live trees at wave start (for loading)
-     */
-    public void setWaveStartLiveTrees(java.util.List<LiveTree> liveTrees) {
-        this.waveStartLiveTrees = liveTrees;
     }
 
 }

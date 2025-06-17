@@ -137,28 +137,6 @@ public class ThumbnailCache {
         System.out.println("Thumbnail removed from cache: " + levelName);
     }
 
-    /**
-     * Clears all cached thumbnails (both memory and disk)
-     */
-    public void clearAllCache() {
-        memoryCache.clear();
-        modifiedLevels.clear();
-
-        String cacheDir = getCacheDirectoryPath();
-        File cacheDirFile = new File(cacheDir);
-        if (cacheDirFile.exists() && cacheDirFile.isDirectory()) {
-            File[] files = cacheDirFile.listFiles();
-            if (files != null) {
-                for (File file : files) {
-                    if (file.isFile() && file.getName().endsWith(".png")) {
-                        file.delete();
-                    }
-                }
-            }
-        }
-
-        System.out.println("All thumbnail cache cleared");
-    }
 
     /**
      * Loads a thumbnail from disk cache

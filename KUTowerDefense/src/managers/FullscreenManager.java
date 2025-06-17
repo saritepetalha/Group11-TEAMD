@@ -303,33 +303,6 @@ public class FullscreenManager {
         return new Point(gameX, gameY);
     }
 
-    public void applyRenderingTransform(Graphics2D g2d) {
-        if (!isFullscreen) {
-            return;
-        }
-
-        // Store original transform
-        AffineTransform originalTransform = g2d.getTransform();
-
-        // Apply scaling and offset
-        g2d.translate(offsetX, offsetY);
-        g2d.scale(scaleX, scaleY);
-
-        // Enable high-quality rendering for scaled graphics
-        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-        g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-    }
-
-    public void resetRenderingTransform(Graphics2D g2d) {
-        if (!isFullscreen) {
-            return;
-        }
-
-        // Reset to identity transform
-        g2d.setTransform(new AffineTransform());
-    }
-
     public void onGameStateChanged() {
         // If we're switching away from PLAYING mode while in fullscreen, exit fullscreen
         if (isFullscreen && GameStates.gameState != GameStates.PLAYING) {
@@ -351,11 +324,7 @@ public class FullscreenManager {
 
     // Getters
     public boolean isFullscreen() { return isFullscreen; }
-    public boolean isFullscreenSupported() { return isFullscreenSupported; }
-    public double getScaleX() { return scaleX; }
-    public double getScaleY() { return scaleY; }
-    public int getOffsetX() { return offsetX; }
-    public int getOffsetY() { return offsetY; }
+
     public int getScreenWidth() { return screenWidth; }
     public int getScreenHeight() { return screenHeight; }
 }
