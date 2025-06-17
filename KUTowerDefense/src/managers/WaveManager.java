@@ -40,6 +40,11 @@ public class WaveManager {
     private boolean waveTimerActive = false; // Tracks if the inter-wave timer is running
     private boolean pendingWaveFinish = false; // New flag to track if we're waiting for enemies to clear
 
+    // First wave delay - 4 seconds before the first wave starts
+    private static final int FIRST_WAVE_DELAY_TICKS = 60 * 4; // 4 seconds at 60 UPS
+    private boolean isFirstWave = true;
+    private boolean firstWaveDelayActive = false;
+
     public WaveManager(Playing playing, GameOptions options) {
         this.playing = playing;
         this.gameOptions = options;
@@ -57,7 +62,12 @@ public class WaveManager {
 
         setInterWaveDelay(gameOptions.getInterWaveDelay());
 
-        prepareNextWave();
+        // Start with first wave delay instead of immediately preparing the wave
+        if (isFirstWave) {
+            startFirstWaveDelay();
+        } else {
+            prepareNextWave();
+        }
     }
 
     private void loadWavesFromOptions() {
@@ -187,6 +197,21 @@ public class WaveManager {
     public void update(){
         // Get the current game speed multiplier from Playing
         float gameSpeedMultiplier = playing.getGameSpeedMultiplier();
+
+        // Handle first wave delay
+        if (firstWaveDelayActive) {
+            interWaveTick += gameSpeedMultiplier;
+            if (interWaveTick >= FIRST_WAVE_DELAY_TICKS) {
+                firstWaveDelayActive = false;
+                isFirstWave = false;
+                interWaveTick = 0;
+                prepareNextWave();
+                System.out.println("First wave delay completed. Starting first wave!");
+                return;
+            }
+            // Don't process other wave logic during first wave delay
+            return;
+        }
 
         // If we're waiting for all enemies to be gone before starting the inter-wave timer
         if (pendingWaveFinish) {
@@ -330,18 +355,26 @@ public class WaveManager {
     }
 
     public String getCurrentStateInfo() {
-        if (waitingForNextWave) {
-            return waveTimerActive ? "Next Wave In: " + String.format("%.1f", getTimeUntilNextSpawn()) + "s" : "Waiting...";
+        if (firstWaveDelayActive) {
+            float remainingTicks = FIRST_WAVE_DELAY_TICKS - interWaveTick;
+            float remainingSeconds = remainingTicks / 60.0f; // Convert ticks to seconds (60 UPS)
+            return "First Wave In: " + String.format("%.1f", remainingSeconds) + "s";
+        } else if (waitingForNextWave && waveTimerActive) {
+            float remainingTicks = interWaveTickLimit - interWaveTick;
+            float remainingSeconds = remainingTicks / 60.0f; // Convert ticks to seconds (60 UPS)
+            return "Next Wave In: " + String.format("%.1f", remainingSeconds) + "s";
+        } else if (waitingForNextWave && !waveTimerActive) {
+            return "Wave " + (waveIndex + 1) + " Ready";
         } else if (waitingForNextGroup) {
-            return "Next Group In: " + String.format("%.1f", getTimeUntilNextSpawn()) + "s";
+            float remainingTicks = groupDelayTickLimit - groupDelayTick;
+            float remainingSeconds = remainingTicks / 60.0f;
+            return "Next Group In: " + String.format("%.1f", remainingSeconds) + "s";
         } else if (waitingForNextEnemy) {
-            return "Next Enemy In: " + String.format("%.1f", getTimeUntilNextSpawn()) + "s";
-        } else if (!currentGroupEnemyQueue.isEmpty()){
-            return "Spawning...";
-        } else if (isAllWavesFinished()){
-            return "All Waves Done";
+            float remainingTicks = enemyDelayTickLimit - enemyDelayTick;
+            float remainingSeconds = remainingTicks / 60.0f;
+            return "Next Enemy In: " + String.format("%.1f", remainingSeconds) + "s";
         } else {
-            return "Processing...";
+            return waveTimerActive ? "Next Wave In: " + String.format("%.1f", getTimeUntilNextSpawn()) + "s" : "Waiting...";
         }
     }
 
@@ -385,7 +418,6 @@ public class WaveManager {
     private void resetWaveManagerEssentials() {
         waveIndex = 0;
         groupIndex = 0;
-        currentGroupEnemyQueue.clear();
         waitingForNextWave = true;
         waitingForNextGroup = false;
         waitingForNextEnemy = false;
@@ -394,10 +426,18 @@ public class WaveManager {
         interWaveTick = 0;
         groupDelayTick = 0;
         enemyDelayTick = 0;
-        if (this.gameOptions != null) {
-            setInterWaveDelay(this.gameOptions.getInterWaveDelay());
+        currentGroupEnemyQueue.clear();
+
+        // Reset first wave delay variables
+        isFirstWave = true;
+        firstWaveDelayActive = false;
+
+        // Start first wave delay when reset
+        if (isFirstWave) {
+            startFirstWaveDelay();
+        } else {
+            prepareNextWave();
         }
-        prepareNextWave();
     }
 
     private Integer convertEnemyTypeToConstant(config.EnemyType enemyType) {
@@ -488,5 +528,10 @@ public class WaveManager {
         prepareNextWave();
 
         System.out.println("Wave state restored successfully - ready to continue from Wave " + (savedWaveIndex + 1));
+    }
+
+    private void startFirstWaveDelay() {
+        firstWaveDelayActive = true;
+        System.out.println("First wave delay started. Waiting for " + FIRST_WAVE_DELAY_TICKS + " ticks.");
     }
 }
