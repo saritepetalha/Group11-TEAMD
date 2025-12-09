@@ -24,7 +24,6 @@ import scenes.Options;
 import scenes.Playing;
 import scenes.StatisticsScene;
 import scenes.SkillSelectionScene;
-import skills.SkillTree;
 
 public class  Game extends JFrame implements Runnable{
 
@@ -62,15 +61,6 @@ public class  Game extends JFrame implements Runnable{
 
 		// Initialize the enhanced options system
 		helpMethods.OptionsIO.initialize();
-
-		// Quick resource test for IntelliJ debugging
-		java.net.URL resourceTest = Game.class.getResource("/UI/Save_Button_For_In_Game_Options.png");
-		if (resourceTest != null) {
-			System.out.println("✅ Save button resource found at: " + resourceTest);
-		} else {
-			System.err.println("❌ Save button resource NOT found!");
-			System.err.println("   This indicates a classpath/resource issue in IntelliJ");
-		}
 
 		this.tileManager = new TileManager();
 		this.fullscreenManager = new FullscreenManager(this);
@@ -114,15 +104,6 @@ public class  Game extends JFrame implements Runnable{
 		System.out.println("========================");
 	}
 
-	private void createDefaultLevel() {
-		int[][] bruh = new int[20][20];
-		for (int i = 0; i < 20; i++) {
-			for (int j = 0; j < 20; j++) {
-				bruh[i][j] = 0;
-			}
-		}
-		//LoadSave.createLevel("defaultleveltest1", bruh);
-	}
 
 	public void changeGameState(GameStates newState) {
 		GameStates previousState = GameStates.gameState;
@@ -433,16 +414,6 @@ public class  Game extends JFrame implements Runnable{
 		}
 	}
 
-	public void startPlayingWithLevel(int[][] levelData, int[][] overlayData) {
-		this.playing = new Playing(this, tileManager, levelData, overlayData);
-	}
-
-	public void startPlayingWithLevel(int[][] levelData, int[][] overlayData, String mapName) {
-		this.playing = new Playing(this, tileManager, levelData, overlayData);
-		this.playing.setCurrentMapName(mapName);
-		this.playing.loadGameState();
-	}
-
 	public void startPlayingWithDifficulty(int[][] levelData, int[][] overlayData, String mapName, String difficulty) {
 		// Load the appropriate difficulty configuration
 		config.GameOptions gameOptions = null;
@@ -536,10 +507,6 @@ public class  Game extends JFrame implements Runnable{
 	}
 	public StatisticsScene getStatisticsScene() {
 		return statisticsScene;
-	}
-	public void repaintGameScreen() {
-		if (gamescreen != null)
-			gamescreen.repaint();
 	}
 
 	public SkillSelectionScene getSkillSelectionScene() {

@@ -1,0 +1,24 @@
+@startuml
+!theme mars
+title Communication Diagram - Save Map File
+
+skinparam rectangle {
+  BackgroundColor #E6F2FF
+  BorderColor black
+}
+
+actor "Player" as Player
+rectangle "MapEditing" as MapEditing
+rectangle "MapModel" as MapModel
+rectangle "PathValidator" as PathValidator
+rectangle "LoadSave" as LoadSave
+rectangle "ThumbnailCache" as ThumbnailCache
+rectangle "FileSystem" as FileSystem
+
+Player -right- MapEditing : clicks "Save"\n ← 3: show "Map saved successfully!"
+MapEditing -down- MapModel : ↓ 1: validateBeforeSave()\n↓ 2: saveLevel(filename)
+MapModel -down- PathValidator : ↓ 1.1: validatePath(level, overlayData)\n↓ 1.1.1: checkStartEndPoints()\n↓ 1.1.2: checkPathConnectivity()
+MapModel -down- LoadSave : ↓ 2.1: saveLevel(filename, level)\n↓ 2.2: saveOverlay(filename, overlayData)
+LoadSave -down- FileSystem : ↓ 2.1.1: write /resources/Levels/filename.json\n↓ 2.2.1: write /resources/Levels/filename_overlay.json
+LoadSave -down- ThumbnailCache : ↓ 2.3: invalidateLevel(filename)
+@enduml

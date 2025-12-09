@@ -1,0 +1,29 @@
+@startuml
+!theme mars
+title Communication Diagram - Select Tower
+
+skinparam rectangle {
+  BackgroundColor #E6F2FF
+  BorderColor black
+}
+
+actor "Player" as Player
+rectangle "Playing" as Playing
+rectangle "PlayingController" as PlayingController
+rectangle "PlayingModel" as PlayingModel
+rectangle "PlayerManager" as PlayerManager
+rectangle "TowerManager" as TowerManager
+rectangle "TowerSelectionUI" as TowerSelectionUI
+rectangle "AudioManager" as AudioManager
+
+Player -right- Playing : clicks tile & selects tower
+Playing -right- PlayingController : → 1: mousePressed(x, y)\n→ 2: selectTower(type)
+PlayingController -down- PlayingModel : ↓ 1.1: isValidTileForPlacement(x, y)\n↓ 1.2: setSelectedTile(tile)
+PlayingController -right- PlayerManager : → 2.1: getGold()
+PlayingController -down- TowerManager : ↓ 2.2: buildTowerAt(tile, type)
+TowerManager -right- PlayerManager : → 2.2.1: reduceGold(towerCost)
+TowerManager -down- PlayingModel : ↓ 2.2.2: addTowerToList(tower)
+TowerManager -down- AudioManager : ↓ 2.2.3: playTowerPlacementSound()
+PlayingController -down- TowerSelectionUI : ↓ 2.3: setSelectedTower(tower)
+
+@enduml

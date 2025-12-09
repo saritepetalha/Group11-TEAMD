@@ -1,8 +1,7 @@
 package objects;
 
 import enemies.Enemy;
-import scenes.Playing;
-import helpMethods.LoadSave;
+
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -10,7 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class LightDecorator extends TowerDecorator {
-    private BufferedImage lightSprite;
     private float lightRadius;
     private List<LightParticle> lightParticles;
     private long animationStartTime;
@@ -20,16 +18,10 @@ public class LightDecorator extends TowerDecorator {
         super(decoratedTower);
         // Light radius is same as tower's range
         this.lightRadius = decoratedTower.getRange();
-        loadLightSprite();
         initializeLightParticles();
         this.animationStartTime = System.nanoTime();
     }
 
-    private void loadLightSprite() {
-        // Use the existing night tower sprites that are already loaded in TowerManager
-        // The actual sprite will be handled by TowerManager based on tower type
-        lightSprite = null; // TowerManager handles the sprite selection
-    }
 
     private void initializeLightParticles() {
         lightParticles = new ArrayList<>();
@@ -62,13 +54,6 @@ public class LightDecorator extends TowerDecorator {
                 Math.pow(x - towerCenterX, 2) + Math.pow(y - towerCenterY, 2)
         );
         return distance <= lightRadius;
-    }
-
-    /**
-     * Checks if an enemy is within the light radius
-     */
-    public boolean isEnemyLit(Enemy enemy) {
-        return isPositionLit(enemy.getSpriteCenterX(), enemy.getSpriteCenterY());
     }
 
     /**
@@ -207,13 +192,6 @@ public class LightDecorator extends TowerDecorator {
         }
     }
 
-    private void drawLightParticles(Graphics2D g2d) {
-        // Draw much more subtle particles that complement the sprite's fire effects
-        for (LightParticle particle : lightParticles) {
-            particle.drawSubtle(g2d);
-        }
-    }
-
     @Override
     public Tower upgrade() {
         // If the decorated tower can be upgraded, upgrade it and wrap it in a new LightDecorator
@@ -268,10 +246,5 @@ public class LightDecorator extends TowerDecorator {
             y = baseY + (float)(Math.sin(angle) * distance);
         }
 
-        public void drawSubtle(Graphics2D g2d) {
-            float currentAlpha = alpha * (1.0f - distance / maxRadius) * 0.5f; // Much more subtle
-            g2d.setColor(new Color(255, 200, 100, (int)(currentAlpha * 255)));
-            g2d.fillOval((int)(x - size/2), (int)(y - size/2), (int)size, (int)size);
-        }
     }
 }

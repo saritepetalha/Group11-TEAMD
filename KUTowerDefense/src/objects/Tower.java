@@ -173,22 +173,6 @@ public abstract class Tower {
         }
     }
 
-    public float getCondition() {
-        return condition;
-    }
-
-    public boolean needsRepair() {
-        return condition <= MIN_CONDITION;
-    }
-
-    public void repair() {
-        condition = 100.0f;
-        usageCount = 0;
-    }
-
-    public float getEffectiveRange() {
-        return getRange();
-    }
 
     public float getConditionBasedRange() {
         float baseRange = getRange();
@@ -202,37 +186,16 @@ public abstract class Tower {
         return (int)(baseDamage * conditionMultiplier);
     }
 
-    public float getAttackSpeedMultiplier() {
-        return attackSpeedMultiplier;
-    }
-
-    public float getConditionBasedAttackSpeed() {
-        float baseMultiplier = attackSpeedMultiplier;
-        float conditionMultiplier = 1.0f - (CONDITION_SPEED_MULTIPLIER * (1.0f - condition / 100.0f));
-        return baseMultiplier * conditionMultiplier;
-    }
-
-    public int getUsageCount() {
-        return usageCount;
-    }
-
     public int getLevel() { return level; }
     public boolean isUpgradeable() { return level == 1; }
     public abstract Tower upgrade();
     public void setLevel(int lvl) { this.level = lvl; }
 
-    public int getUpgradeCost() {
-        return Constants.Towers.getUpgradeCost(getType());
-    }
 
     // Default implementation for on-hit effects. Can be overridden by specific towers or decorators.
     public void applyOnHitEffect(Enemy enemy, scenes.Playing playingScene) {
         // Base towers typically don't have special on-hit effects beyond damage.
         // This can be left empty or log a message if needed.
-    }
-
-    public void setAttackSpeedMultiplier(float multiplier) {
-        this.attackSpeedMultiplier = multiplier;
     }
 
     public int getWidth() {
@@ -294,15 +257,6 @@ public abstract class Tower {
         int maxDistance = Math.max(deltaX, deltaY); // Chebyshev distance (allows diagonal)
 
         return maxDistance <= MAX_SPAWN_DISTANCE_TILES;
-    }
-
-    public void activateBoost() {
-        boostActive = true;
-        boostEndTime = System.currentTimeMillis() + 40000; // 40 seconds
-    }
-
-    public boolean isBoostActive() {
-        return boostActive && System.currentTimeMillis() < boostEndTime;
     }
 
     public float getRange() {

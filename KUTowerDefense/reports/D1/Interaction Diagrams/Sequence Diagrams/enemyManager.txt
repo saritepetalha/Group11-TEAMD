@@ -1,0 +1,77 @@
+@startuml
+!theme reddress-lightblue
+
+title Enemy Manager SD
+
+participant "Game" as Game
+participant "Playing" as Playing
+participant "EnemyManager" as EM
+participant "Goblin" as Goblin
+participant "Utilz" as Utilz
+participant "TileManager" as TileManager
+
+== Spawning Enemy ==
+
+Game -> Playing : spawnEnemy(Goblin)
+Playing -> EM : spawnEnemy(Goblin)
+activate EM
+EM -> EM : addEnemy(Goblin)
+activate EM
+create Goblin
+EM -> Goblin : new Goblin(x, y, id, EM)
+activate Goblin
+Goblin --> EM
+deactivate Goblin
+deactivate EM
+
+== Game Loop Update ==
+
+Game -> Playing : update()
+Playing -> EM : update()
+
+loop for each Enemy
+    EM -> Orc : isAlive()
+    activate Goblin
+    Goblin --> EM : true
+    deactivate Goblin
+
+    EM -> EM : updateEnemyMoveNew(Goblin)
+    activate EM 
+    EM -> EM : getEnemyTile(Goblin)
+    activate EM #ADD8E6
+    EM -> TileManager : getTypeArr()
+    TileManager --> EM
+    EM -> Utilz : GetRoadDirArr(...)
+    Utilz --> EM : roadDirArr
+    deactivate EM
+
+    EM -> Goblin : move(speed, direction)
+    activate Goblin
+    Goblin --> EM
+    deactivate Goblin
+    alt Reached end tile
+        EM -> Goblin : kill()
+        activate Goblin
+        Goblin --> EM
+        deactivate Goblin
+
+        EM -> Playing : removeOneLife()
+    else
+        alt Direction changed
+            EM -> Goblin : setPos(...)
+            activate Goblin
+            Goblin --> EM
+            deactivate Goblin
+
+            EM -> Goblin : setLastDir(newDir)
+            activate Goblin 
+            Goblin --> EM
+            deactivate Goblin
+        end
+    end
+
+    deactivate EM
+end
+deactivate EM
+
+@enduml

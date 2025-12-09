@@ -1,7 +1,6 @@
 package ui_p;
 
 import helpMethods.LoadSave;
-import ui_p.AssetsLoader;
 
 import javax.imageio.ImageIO;
 import java.awt.*;

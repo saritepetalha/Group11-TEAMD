@@ -1,0 +1,41 @@
+@startuml
+actor Player
+
+participant Playing
+participant TowerSelectionUI
+participant TowerManager
+participant PlayerManager
+participant PlayingModel
+participant AudioManager
+
+== Player initiates tower selling ==
+
+Player -> Playing : mouseClicked(x, y)
+activate Playing
+Playing -> TowerSelectionUI : mouseClicked(x, y)
+activate TowerSelectionUI
+TowerSelectionUI -> TowerSelectionUI : getSellPrice(tower)
+TowerSelectionUI -> TowerSelectionUI : showSellTooltip()
+deactivate TowerSelectionUI
+deactivate Playing
+
+== Player confirms sell ==
+
+Player -> Playing : mouseClicked(x, y)
+activate Playing
+Playing -> TowerSelectionUI : mouseClicked(x, y)
+activate TowerSelectionUI
+TowerSelectionUI -> TowerSelectionUI : getSellPrice(tower)
+TowerSelectionUI -> PlayerManager : addGold(sellPrice)
+TowerSelectionUI -> TowerManager : removeTower(tower)
+activate TowerManager
+TowerManager -> TowerManager : resetTileToDeadTree(tower)
+TowerManager -> TowerManager : createDeadTreeAtPosition(tower.getX(), tower.getY())
+deactivate TowerManager
+TowerSelectionUI -> TowerSelectionUI : setSelectedTower(null)
+TowerSelectionUI -> Playing : updateUIResources()
+TowerSelectionUI -> AudioManager : playTowerSellSound()
+deactivate TowerSelectionUI
+deactivate Playing
+
+@enduml

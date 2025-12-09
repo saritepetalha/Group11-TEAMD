@@ -1,0 +1,52 @@
+@startuml
+
+skinparam sequence {
+ParticipantPadding 40
+BoxPadding 10
+ClassFontName Source Code Pro
+ArrowColor MidnightBlue
+ActorBorderColor MidnightBlue
+
+ParticipantBorderColor DeepSkyBlue
+ParticipantBackgroundColor DodgerBlue
+ParticipantFontName Source Code Pro
+ParticipantFontSize 17
+
+ActorFontSize 17
+ActorFontName Source Code Pro
+}
+
+title <u>SSD – Start Enemy Wave</u>
+
+participant "System Timer" #orchid
+participant ":System" as System #yellow
+
+== Start Flow ==
+"System Timer" -> System: triggerWaveStart()
+
+alt Game is not paused
+    System -> System: spawnEnemyGroup()
+    loop While group not complete
+        System -> System: wait(spawnInterval)
+        System -> System: spawnNextEnemy()
+    end
+
+    loop Between groups
+        System -> System: wait(groupDelay)
+        System -> System: spawnEnemyGroup()
+    end
+
+    System -> System: wait(waveCooldown)
+
+    note right of System
+        Wave complete. Next wave will be scheduled.
+    end note
+
+else Game is paused
+    System -> System: delayWaveStart()
+    note right of System
+        Spawning postponed until unpaused.
+    end note
+end
+
+@enduml

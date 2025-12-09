@@ -1,0 +1,24 @@
+@startuml
+!theme mars
+title Communication Diagram - Select Map and Difficulty
+
+skinparam rectangle {
+  BackgroundColor #E6F2FF
+  BorderColor black
+}
+
+actor "Player" as Player
+rectangle "LevelSelectionScene" as LevelSelectionScene
+rectangle "AudioManager" as AudioManager
+rectangle "Game" as Game
+rectangle "Playing" as Playing
+
+Player -right- LevelSelectionScene : clicks level & difficulty
+LevelSelectionScene -down- AudioManager : ↓ 1: playButtonClickSound()\n↓ 2: playButtonClickSound()
+LevelSelectionScene -down- LevelSelectionScene : ↓ 3: showDifficultyOverlay(levelName, levelData)\n↓ 4: selectDifficultyAndPlay(difficulty)
+LevelSelectionScene -down- Game : ↓ 5: startPlayingWithDifficulty(...)\n↓ 5.1: changeGameState(SKILL_SELECTION)
+Game -down- Game : ↓ 5.1.1: gameState = SKILL_SELECTION
+Game -down- Playing : ↓ 5.1.2: resetGameState()
+Game -left- AudioManager : ← 5.1.3: playRandomGameMusic()
+
+@enduml

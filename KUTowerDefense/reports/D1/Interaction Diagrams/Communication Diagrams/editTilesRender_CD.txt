@@ -1,0 +1,38 @@
+@startuml
+!theme mars
+
+title Communication Diagram - Edit Mode Render Flow
+
+skinparam linestyle ortho
+skinparam rectangle {
+  backgroundColor #FFF5F5
+  borderColor Black
+}
+
+' Define participants
+actor "User" as Actor
+rectangle "Game" as Game
+rectangle "Render" as Render
+rectangle "Playing" as Playing
+rectangle "TileManager" as TileManager
+rectangle "EditTiles" as EditTiles
+rectangle "TheButton[i]" as ButtonLoop
+
+' Message flow
+Actor - Game: run()
+Game - Render: → 1: <<create>> new Render()
+Render - Playing : → 1.1: render()
+
+Playing -down- TileManager :  ↓ 1.1: getSprite()
+
+Playing -down- EditTiles : ↓ 1.2: draw()
+
+EditTiles -down- EditTiles : 1.2.1: drawButtons()
+
+EditTiles -down- ButtonLoop : ↓ 1.2.2*[i=1..n]: draw()
+
+EditTiles -left- TileManager : → 1.2.3: getSprite()
+
+Playing -down- Playing : 1.3: drawSelectedTile()
+
+@enduml

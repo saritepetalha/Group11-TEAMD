@@ -1,0 +1,84 @@
+@startuml
+title <u>SSD – Save Map File</u>
+
+skinparam ParticipantPadding 100
+skinparam sequence {
+  BoxPadding 10
+  ClassFontName Source Code Pro
+  ArrowColor MidnightBlue
+
+  ParticipantBorderColor DeepSkyBlue
+  ParticipantBackgroundColor DodgerBlue
+  ParticipantFontName Source Code Pro
+  ParticipantFontSize 17
+
+  ActorFontSize 17
+  ActorFontName Source Code Pro
+}
+
+actor Player #blue
+participant ":EditTiles" as EditTiles #yellow
+participant ":MapController" as MapController #orange
+participant ":MapModel" as MapModel #lightblue
+participant ":PathValidator" as PathValidator #lightgreen
+participant ":LoadSave" as LoadSave #lightcoral
+participant ":ThumbnailCache" as Cache #lightyellow
+
+== Start Flow ==
+Player -> EditTiles: clickSaveButton()
+
+alt Current level name exists
+    EditTiles -> EditTiles: getCurrentLevelName()
+    EditTiles -> EditTiles: saveLevel(levelName)
+    
+else No level name set
+    EditTiles -> EditTiles: promptForLevelName()
+    Player --> EditTiles: enterLevelName(fileName)
+    EditTiles -> EditTiles: setCurrentLevelName(fileName)
+    EditTiles -> EditTiles: saveLevel(fileName)
+end
+
+EditTiles -> MapController: saveLevel(fileName)
+MapController -> MapModel: validateBeforeSave()
+MapModel -> PathValidator: validatePath(level, overlayData)
+
+alt Map validation checks
+    PathValidator -> PathValidator: findPoint(START_POINT)
+    PathValidator -> PathValidator: findPoint(END_POINT)
+    
+    alt Both start and end points exist
+        PathValidator -> PathValidator: buildRoadNetwork()
+        PathValidator -> PathValidator: findPath(start, end)
+        
+        alt Valid path found
+            PathValidator --> MapModel: ValidationResult.valid()
+            MapModel -> LoadSave: saveLevel(fileName, level)
+            MapModel -> LoadSave: saveOverlay(fileName, overlayData)
+            LoadSave -> Cache: invalidateLevel(fileName)
+            LoadSave --> MapModel: saveSuccess
+            MapModel --> MapController: ValidationResult.valid()
+            MapController --> EditTiles: ValidationResult.valid()
+            EditTiles -> EditTiles: showSuccessDialog()
+            
+        else No valid path between points
+            PathValidator --> MapModel: ValidationResult.invalid("No valid path found")
+            MapModel --> MapController: ValidationResult.invalid()
+            MapController --> EditTiles: ValidationResult.invalid()
+            EditTiles -> EditTiles: showValidationError()
+        end
+        
+    else Missing start or end points
+        PathValidator --> MapModel: ValidationResult.invalid("Missing points")
+        MapModel --> MapController: ValidationResult.invalid()
+        MapController --> EditTiles: ValidationResult.invalid()
+        EditTiles -> EditTiles: showValidationError()
+    end
+    
+else File system error
+    LoadSave --> MapModel: saveError
+    MapModel --> MapController: saveError
+    MapController --> EditTiles: saveError
+    EditTiles -> EditTiles: showErrorDialog()
+end
+
+@enduml

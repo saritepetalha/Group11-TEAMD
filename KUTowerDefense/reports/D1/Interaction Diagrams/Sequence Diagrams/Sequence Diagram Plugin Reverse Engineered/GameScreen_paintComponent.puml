@@ -1,0 +1,82 @@
+@startuml
+participant Actor
+Actor -> GameScreen : paintComponent
+activate GameScreen
+GameScreen -> Render : render
+activate Render
+Render -> Intro : render
+activate Intro
+Intro -> Intro : startMusic
+activate Intro
+Intro --> Intro
+deactivate Intro
+Intro --> Render
+deactivate Intro
+Render -> Menu : render
+activate Menu
+Menu -> Menu : drawBackground
+activate Menu
+Menu --> Menu
+deactivate Menu
+Menu -> Menu : drawButtons
+activate Menu
+Menu -> TheButton : drawStyled
+activate TheButton
+TheButton --> Menu
+deactivate TheButton
+Menu -> TheButton : drawStyled
+activate TheButton
+TheButton --> Menu
+deactivate TheButton
+Menu -> TheButton : drawStyled
+activate TheButton
+TheButton --> Menu
+deactivate TheButton
+Menu -> TheButton : drawStyled
+activate TheButton
+TheButton --> Menu
+deactivate TheButton
+Menu -> TheButton : drawStyled
+activate TheButton
+TheButton --> Menu
+deactivate TheButton
+Menu --> Menu
+deactivate Menu
+Menu --> Render
+deactivate Menu
+Render -> Playing : render
+activate Playing
+Playing -> TileManager : getSprite
+activate TileManager
+TileManager --> Playing
+deactivate TileManager
+Playing -> EditTiles : draw
+activate EditTiles
+EditTiles -> EditTiles : drawButtons
+activate EditTiles
+EditTiles --> EditTiles
+deactivate EditTiles
+EditTiles --> Playing
+deactivate EditTiles
+Playing -> Playing : drawSelectedTile
+activate Playing
+Playing --> Playing
+deactivate Playing
+Playing --> Render
+deactivate Playing
+Render -> Options : render
+activate Options
+Options -> Options : drawButtons
+activate Options
+Options -> TheButton : draw
+activate TheButton
+TheButton --> Options
+deactivate TheButton
+Options --> Options
+deactivate Options
+Options --> Render
+deactivate Options
+Render --> GameScreen
+deactivate Render
+return
+@enduml

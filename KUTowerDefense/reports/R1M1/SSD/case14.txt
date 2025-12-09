@@ -1,0 +1,49 @@
+@startuml
+skinparam sequence {
+ParticipantPadding 40
+BoxPadding 10
+ClassFontName Source Code Pro
+ArrowColor MidnightBlue
+ActorBorderColor MidnightBlue
+
+ParticipantBorderColor DeepSkyBlue
+ParticipantBackgroundColor DodgerBlue
+ParticipantFontName Source Code Pro
+ParticipantFontSize 17
+
+ActorFontSize 17
+ActorFontName Source Code Pro
+}
+
+title <u>SSD – Save Game Options</u>
+
+actor Player #blue
+participant ":System" as System #yellow
+participant "File System" as FileSystem #lightgreen
+
+== Main Scenario ==
+Player -> System: clickSaveButton()
+
+System -> System: validateSettings()
+
+alt Settings are valid
+    System -> FileSystem: saveSettingsToDisk()
+    
+    alt Write successful
+        FileSystem --> System: success
+        System -> Player: showConfirmation("Settings saved")
+        note right of System
+            Settings retained for future sessions.
+        end note
+
+    else Write fails
+        FileSystem --> System: error
+        System -> Player: showError("Failed to save. Using previous settings.")
+        System -> System: keepPreviousSettings()
+    end
+
+else Settings are invalid
+    System -> Player: showError("Invalid settings. Cannot save.")
+end
+
+@enduml

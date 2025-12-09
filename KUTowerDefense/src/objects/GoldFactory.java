@@ -131,13 +131,6 @@ public class GoldFactory {
         g.drawRect(barX, barY, barWidth, barHeight);
     }
 
-    public boolean isDestroyed() {
-        return destroyed;
-    }
-
-    public void destroy() {
-        destroyed = true;
-    }
 
     public int getTileX() {
         return tileX;

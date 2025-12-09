@@ -1,7 +1,6 @@
 package managers;
 
 import enemies.Enemy;
-import helpMethods.LoadSave;
 import objects.GoldFactory;
 import scenes.Playing;
 import ui_p.AssetsLoader;
@@ -11,7 +10,6 @@ import skills.SkillType;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
@@ -288,10 +286,6 @@ public class UltiManager {
         for (GoldFactory factory : factoriesCopy) {
             factory.draw(g, gameSpeedMultiplier);
         }
-    }
-
-    public boolean isLightningPlaying() {
-        return !activeStrikes.isEmpty();
     }
 
     // Getter methods for cooldown calculations

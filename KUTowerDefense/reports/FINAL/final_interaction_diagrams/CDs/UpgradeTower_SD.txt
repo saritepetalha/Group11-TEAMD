@@ -1,0 +1,27 @@
+@startuml
+!theme mars
+title Communication Diagram - Upgrade Tower
+
+skinparam rectangle {
+  BackgroundColor #E6F2FF
+  BorderColor black
+}
+
+actor "Player" as Player
+rectangle "TowerSelectionUI" as TowerSelectionUI
+rectangle "Playing" as Playing
+rectangle "TowerManager" as TowerManager
+rectangle "PlayerManager" as PlayerManager
+rectangle "Tower" as Tower
+rectangle "AudioManager" as AudioManager
+
+Player -right- TowerSelectionUI : clicks tower\nclicks "Upgrade"
+
+TowerSelectionUI -down- Tower : ↓ 1: isUpgradeable()\n↓ 1.1: upgrade()\n↓ 1.2: update stats
+TowerSelectionUI -down- PlayerManager : ↓ 2: getGold()\n↓ 2.1: spendGold(cost)
+TowerSelectionUI -down- TowerSelectionUI : ↓ 3: getUpgradeCost(tower)\n↓ 3.1: setSelectedTower(upgradedTower)\n↓ 3.2: show warning ("Not enough gold")\n↓ 3.3: show warning ("Max level")
+TowerSelectionUI -down- TowerManager : ↓ 4: replaceTower(oldTower, upgradedTower)\n↓ 4.1: triggerUpgradeEffect(upgradedTower)
+TowerSelectionUI -up- Playing : ↑ 5: updateUIResources()
+Playing -right- AudioManager : → 5.1: playUpgradeSound()
+
+@enduml

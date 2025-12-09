@@ -2,7 +2,6 @@ package objects;
 
 import enemies.Enemy;
 import java.awt.*;
-import java.awt.geom.Point2D;
 
 public class Projectile {
     private float x, y, xSpeed, ySpeed;

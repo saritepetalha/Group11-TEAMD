@@ -1,0 +1,53 @@
+@startuml 
+title <u>SSD – Select Map</u>
+
+skinparam ParticipantPadding 100
+skinparam sequence {
+  BoxPadding 10
+  ClassFontName Source Code Pro
+  ArrowColor MidnightBlue
+
+  ParticipantBorderColor DeepSkyBlue
+  ParticipantBackgroundColor DodgerBlue
+  ParticipantFontName Source Code Pro
+  ParticipantFontSize 17
+
+  ActorFontSize 17
+  ActorFontName Source Code Pro
+}
+
+actor Player #blue
+participant ":System" as System #yellow
+participant "File System" as FileSystem #lightgreen
+
+== Start Flow ==
+Player -> System: displayAvailableMaps()
+System --> Player: mapList
+
+loop While map not selected
+    Player -> System: selectMap(mapFileName)
+    System -> System: highlightMap(mapFileName)
+
+    Player -> System: confirmSelection()
+
+    alt map is valid
+        System -> System: validateMap(mapFileName)
+        System -> FileSystem: loadMapFile(mapFileName)
+        FileSystem --> System: mapData
+        System -> System: queueMap(mapFileName)
+        note right of System
+            Map is confirmed and selected.
+            Loop ends.
+        end note
+
+    else map is invalid
+        System -> System: showError("Invalid Map")
+        System --> Player: errorMessage
+
+    else player cancels
+        Player -> System: cancelSelection()
+        System -> System: returnToMainMenu()
+    end
+end
+
+@enduml

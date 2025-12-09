@@ -1,0 +1,67 @@
+@startuml
+skinparam sequence {
+ParticipantPadding 40
+BoxPadding 10
+ClassFontName Source Code Pro
+ArrowColor MidnightBlue
+ActorBorderColor MidnightBlue
+
+ParticipantBorderColor DeepSkyBlue
+ParticipantBackgroundColor DodgerBlue
+ParticipantFontName Source Code Pro
+ParticipantFontSize 17
+
+ActorFontSize 17
+ActorFontName Source Code Pro
+}
+
+title <u>SSD – View Tower Range</u>
+
+actor Player #blue
+participant ":PlayingController" as Controller #yellow
+participant ":TowerSelectionUI" as TowerUI #orange
+participant ":Tower" as Tower #lightblue
+
+== Main Scenario ==
+Player -> Controller: clickTower(towerID)
+
+alt Tower exists and is valid
+    Controller -> TowerUI: setSelectedTower(tower)
+    TowerUI -> Tower: getRange()
+    Tower --> TowerUI: baseRange
+    
+    TowerUI -> TowerUI: calculateEffectiveRange(weather, skills)
+    TowerUI -> TowerUI: drawEnhancedRangeIndicator(strategy)
+    
+    alt Strategy-specific range visualization
+        TowerUI -> TowerUI: getStrategyColor(targetingStrategy)
+        TowerUI -> TowerUI: drawRangeArea(semi-transparent)
+        
+        alt First Enemy Strategy
+            TowerUI -> TowerUI: drawDashedRangeCircle()
+        else Last Enemy Strategy  
+            TowerUI -> TowerUI: drawPulsingRangeCircle()
+        else Strongest Enemy Strategy
+            TowerUI -> TowerUI: drawThickRangeCircle()
+        else Weakest Enemy Strategy
+            TowerUI -> TowerUI: drawThinRangeCircle()
+        end
+    end
+    
+    note right of TowerUI
+        Range circle displayed with strategy-specific
+        visual effects. No enemy highlighting.
+    end note
+
+    Player -> Controller: moveCursorAway()
+    Controller -> TowerUI: setSelectedTower(null)
+    TowerUI -> TowerUI: hideRangeOverlay()
+
+else Tower data invalid
+    Controller -> Controller: showError("Invalid tower selection")
+    note right of Controller
+        No range display shown.
+    end note
+end
+
+@enduml

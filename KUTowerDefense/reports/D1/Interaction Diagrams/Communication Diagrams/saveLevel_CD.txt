@@ -1,0 +1,28 @@
+@startuml
+!theme mars
+
+title Communication Diagram - Save Level Operation
+
+skinparam linestyle ortho
+skinparam rectangle {
+  backgroundColor #E6F2FF
+  borderColor Black
+}
+
+' Participants
+actor "User" as Actor
+rectangle "Editor/Playing" as Caller
+rectangle "LoadSave" as LoadSave
+rectangle "Utilz" as Utilz
+rectangle "PrintWriter" as PrintWriter
+
+' Message flow
+Actor -right- Caller : save()
+Caller -right- LoadSave :→ 1: SaveLevel(idArr, start, end)\n← 1.2 [If file does NOT exist]:  print "File does not exist" 
+Utilz -up- LoadSave : ↓ 1.1 [If file exists]: TwoDto1DintArr(idArr)\n↑ 1.1.1: flatArr\n↓ 1.1.2: WriteToFile(flatArr, start, end)
+ 
+
+LoadSave -up- PrintWriter :↑ 1.1.2.1: new PrintWriter(lvlFile) 
+PrintWriter -down- PrintWriter : 1.1.2.2: println(flatArr values)\n1.1.2.3: println(start.x, start.y, end.x, end.y)\nclose()
+
+@enduml

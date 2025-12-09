@@ -1,0 +1,31 @@
+@startuml
+!theme mars
+
+title Communication Diagram - Tower Manager Flow
+
+skinparam linestyle ortho
+skinparam rectangle {
+  backgroundColor #FFF5F0
+  borderColor Black
+}
+
+' Participants
+rectangle "TowerManager" as TM
+rectangle "Tower" as Tower
+rectangle "Enemy" as Enemy
+rectangle "Playing" as Playing
+rectangle "EnemyManager" as EM
+rectangle "Utilz" as Utilz
+
+' Message Flow
+external -down- TM : ↓ * update()
+
+TM -down- Tower : ↓ 1: update()\n 2.1.1.1.3: isCooldownOver()\n 2.1.1.1.5: resetCooldown()
+
+TM -down- Playing : ↓ 2: getEnemyManger()\n ↓ 2.1.1.1.4: ↓ shootEnemy(Tower, Enemy)\n ↑ 2.1.1.1 *: List<Enemy>
+Playing -down- EM : ↓ 2.1: getEnemies()\n ↑ 2.1.1: List<Enemy>
+
+TM -down- Enemy : ↓ 2.1.1.1.1: isAlive()
+TM -down- Utilz : ↓ 2.1.1.1.2: GetHypoDistance(tX,tY,eX,eY) → distance
+
+@enduml

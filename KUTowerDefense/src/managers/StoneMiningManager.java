@@ -83,9 +83,6 @@ public class StoneMiningManager {
         }
     }
 
-    public boolean isButtonClicked(int mouseX, int mouseY) {
-        return mineButton != null && mineButton.getBounds().contains(mouseX, mouseY);
-    }
 
     public void showMiningButton(Tile tile) {
         int x = tile.getX() * TILE_DISPLAY_SIZE;
@@ -185,10 +182,6 @@ public class StoneMiningManager {
         return mineButton;
     }
 
-    public boolean isMiningInProgress() {
-        return isMiningInProgress;
-    }
-
     public void draw(Graphics2D g) {
         // 1. Draw the mine button if it's currently visible, or pressed button if mining
         if (mineButton != null && (showButton || isMiningInProgress)) {
@@ -252,21 +245,6 @@ public class StoneMiningManager {
         }
     }
 
-
-    public void updateMiningAnimation() {
-        if (!isMiningInProgress) return;
-
-        animationTick++;
-        if (animationTick >= MAX_TICKS_PER_FRAME) {
-            animationTick = 0;
-            currentFrame++;
-
-            if (currentFrame >= TOTAL_FRAMES) {
-                currentFrame = 0;
-                isMiningInProgress = false;
-            }
-        }
-    }
 
     public void update() {
         if (!isMiningInProgress || currentMiningTile == null)

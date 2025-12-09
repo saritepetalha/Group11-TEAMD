@@ -9,9 +9,6 @@ import objects.ArcherWarrior;
 import objects.Warrior;
 
 import java.awt.*;
-import java.awt.geom.Ellipse2D;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Manages the UI for selected towers, including upgrade and targeting strategy buttons.

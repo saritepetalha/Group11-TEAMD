@@ -1,0 +1,51 @@
+@startuml
+skinparam sequence {
+ParticipantPadding 200
+BoxPadding 10
+ClassFontName Source Code Pro
+ArrowColor MidnightBlue
+ActorBorderColor MidnightBlue
+
+ParticipantBorderColor DeepSkyBlue
+ParticipantBackgroundColor DodgerBlue
+ParticipantFontName Source Code Pro
+ParticipantFontSize 17
+
+ActorFontSize 17
+ActorFontName Source Code Pro
+}
+title <u>SSD – Pause / Resume Game</u>
+
+actor Player #blue
+participant ":System" as System #yellow
+
+== Pause Flow ==
+Player -> System: clickPauseButton()
+
+alt Pause successful
+    System -> System: freezeTimersAndAnimations()
+    System -> System: updateUI("Resume")
+    
+    Player -> System: clickResumeButton()
+
+    alt Player resumes game
+        System -> System: resumeTimersAndAnimations()
+        System -> System: restoreGameState()
+        note right of System
+            Game continues from previous state.
+        end note
+    else Player exits instead
+        System -> System: returnToMainMenu()
+        note right of System
+            Game exited without resuming.
+        end note
+    end
+
+else Pause failed
+    System -> Player: showWarning("Pause failed")
+    note right of System
+        Game remains running.
+    end note
+end
+
+@enduml

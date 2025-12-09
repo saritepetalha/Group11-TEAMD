@@ -1,0 +1,32 @@
+@startuml
+!theme mars
+
+title Communication Diagram - Game Run
+
+skinparam linestyle ortho
+skinparam rectangle {
+  backgroundColor #FFF5F5
+  borderColor Black
+}
+
+' Participants
+rectangle "Game (Thread)" as Game
+rectangle "Intro Scene" as Intro
+rectangle "GameScreen (UI)" as GameScreen
+rectangle "KeyboardListener" as Keyboard
+
+' Message Flow
+
+external -right- Game : → 1:run()
+
+user -right- Keyboard: → 2[User presses key]
+
+Game -down- Game : 1.1: updateGame()
+
+Game -down- Intro : ↓ 1.1.1: update()\n ↓ 2.1: stopMusic()\n ↑ 1.1.1.2: changeGameState(MENU)\n ↓ 2.1.1: stopMusic()
+
+Intro -down- Intro : 1.1.1.1 [introState > 3]: stopMusic()
+Game -down- GameScreen : ↓ 1.1.1.2.1: setPanelSize()\n ↓ 2.1.2: setPanelSize()
+
+Keyboard -down- Game : ↓ 2.1[GameState==INTRO] changeGameState(MENU)
+@enduml

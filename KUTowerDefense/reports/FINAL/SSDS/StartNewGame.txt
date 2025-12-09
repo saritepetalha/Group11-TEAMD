@@ -1,0 +1,136 @@
+@startuml
+skinparam sequence {
+ParticipantPadding 40
+BoxPadding 10
+ClassFontName Source Code Pro
+ArrowColor MidnightBlue
+ActorBorderColor MidnightBlue
+
+ParticipantBorderColor DeepSkyBlue
+ParticipantBackgroundColor DodgerBlue
+ParticipantFontName Source Code Pro
+ParticipantFontSize 17
+
+ActorFontSize 17
+ActorFontName Source Code Pro
+}
+
+title <u>SSD – Start New Game (Enhanced Tower Defense)</u>
+
+actor Player #blue
+participant ":Game" as Game #yellow
+participant ":LevelSelectionScene" as LevelSelection #lightblue
+participant ":LoadSave" as LoadSave #lightgreen
+participant ":SkillSelectionScene" as SkillSelection #orange
+participant ":PlayingController" as PlayingController #pink
+participant ":GameManagers" as Managers #lightcoral
+
+== Enhanced Start New Game Flow ==
+Player -> Game: clickNewGame()
+activate Game
+
+Game -> Game: changeGameState(NEW_GAME_LEVEL_SELECT)
+Game -> LevelSelection: initialize()
+activate LevelSelection
+
+LevelSelection -> LoadSave: getSavedLevels()
+activate LoadSave
+LoadSave --> LevelSelection: availableLevels[]
+deactivate LoadSave
+
+LevelSelection -> LevelSelection: generateThumbnails()
+LevelSelection --> Game: displayLevelSelection()
+Game --> Player: showLevelSelectionUI()
+
+alt Player selects level and difficulty
+    Player -> LevelSelection: selectLevel(levelName)
+    Player -> LevelSelection: selectDifficulty(difficulty)
+    
+    LevelSelection -> LoadSave: loadLevel(levelName)
+    activate LoadSave
+    
+    alt Level file exists and is valid
+        LoadSave -> LoadSave: getLevelData(levelName)
+        LoadSave -> LoadSave: loadOverlay(levelName)
+        LoadSave --> LevelSelection: levelData, overlayData
+        deactivate LoadSave
+        
+        LevelSelection -> LevelSelection: validateLevelData()
+        
+        alt Skills system enabled
+            LevelSelection -> Game: changeGameState(SKILL_SELECTION)
+            deactivate LevelSelection
+            Game -> SkillSelection: initialize(levelData, difficulty)
+            activate SkillSelection
+            SkillSelection --> Player: showSkillSelectionUI()
+            
+            Player -> SkillSelection: selectSkills(selectedSkills[])
+            SkillSelection -> Game: startGameWithSkills(levelData, difficulty, skills)
+            deactivate SkillSelection
+        else Skills disabled
+            LevelSelection -> Game: startGame(levelData, difficulty)
+            deactivate LevelSelection
+        end
+        
+        Game -> Game: changeGameState(PLAYING)
+        Game -> PlayingController: initialize(levelData, overlayData, difficulty)
+        activate PlayingController
+        
+        PlayingController -> Managers: initializeManagers()
+        activate Managers
+        Managers -> Managers: createTileManager(levelData)
+        Managers -> Managers: createWaveManager(gameOptions)
+        Managers -> Managers: createEnemyManager(overlayData)
+        Managers -> Managers: createTowerManager()
+        Managers -> Managers: createWeatherManager()
+        Managers -> Managers: createPlayerManager(gameOptions)
+        Managers -> Managers: createProjectileManager()
+        Managers -> Managers: createUltiManager()
+        Managers -> Managers: createGoldBagManager()
+        Managers --> PlayingController: managersInitialized
+        deactivate Managers
+        
+        PlayingController -> PlayingController: setupGameState()
+        PlayingController -> PlayingController: initializePathfinding()
+        PlayingController --> Game: gameReady
+        deactivate PlayingController
+        
+        Game --> Player: displayGameScreen()
+        
+        note right of Game
+            Tower Defense Game Running:
+            ✓ Level loaded with pathfinding
+            ✓ Difficulty settings applied
+            ✓ Skills system activated
+            ✓ Weather system initialized
+            ✓ All managers ready
+            ✓ Ultimate abilities enabled
+            ✓ Gold bag collection system
+            ✓ Mining and tree systems
+        end note
+        
+    else Level file corrupted/missing
+        LoadSave --> LevelSelection: error("Level not found")
+        deactivate LoadSave
+        LevelSelection -> LevelSelection: showErrorDialog("Failed to load level")
+        LevelSelection --> Player: displayError()
+        note right of LevelSelection
+            Player can retry with different level
+            Level selection remains active
+        end note
+    end
+
+else Player cancels selection
+    Player -> LevelSelection: cancelSelection()
+    LevelSelection -> Game: changeGameState(MENU)
+    deactivate LevelSelection
+    Game --> Player: returnToMainMenu()
+    note right of Game
+        Back to main menu safely
+        No game state created
+    end note
+end
+
+deactivate Game
+
+@enduml

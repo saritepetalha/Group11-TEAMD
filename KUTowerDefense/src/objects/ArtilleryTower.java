@@ -3,11 +3,8 @@ package objects;
 import constants.Constants;
 import constants.GameDimensions;
 import strategies.TargetingStrategy;
-// import java.awt.image.BufferedImage; // No longer needed here
 
 public class ArtilleryTower extends Tower {
-
-    // public BufferedImage upgradedSprite; // No longer needed here
 
     public ArtilleryTower(int x, int y) {
         super(x, y);
@@ -34,7 +31,6 @@ public class ArtilleryTower extends Tower {
         float baseRange = Constants.Towers.getRange(Constants.Towers.ARTILLERY);
         if (skills.SkillTree.getInstance().isSkillSelected(skills.SkillType.EAGLE_EYE)) {
             float bonus = GameDimensions.TILE_DISPLAY_SIZE;
-            //System.out.println("[EAGLE_EYE] Artillery tower applies bonus range: " + baseRange + " -> " + (baseRange + bonus));
             baseRange += bonus;
         }
         return baseRange;

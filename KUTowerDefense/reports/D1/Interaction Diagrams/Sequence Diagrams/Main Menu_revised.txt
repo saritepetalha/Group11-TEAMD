@@ -1,0 +1,72 @@
+@startuml
+!theme reddress-lightorange
+
+title Main Menu
+
+activate Game
+[o-> Game : run()
+create Menu
+Game -> Menu : <<create>> new Menu(game)
+activate Menu
+
+
+== Inherits from GameScene ==
+create GameScene
+Menu -> GameScene : <<create>> super(game)
+activate GameScene
+GameScene --> Menu
+deactivate GameScene
+
+== Import tile sprites ==
+Menu -> Menu : importImg()
+activate Menu #FFDAB9
+deactivate Menu
+
+== Slice tile atlas into sprites ==
+Menu -> Menu : loadSprites()
+activate Menu #FFDAB9
+deactivate Menu
+
+== Initialize buttons==
+Menu -> Menu : initButtons()
+activate Menu #FFDAB9
+
+' Create each button
+create TheButton
+Menu -> TheButton : <<create>> new TheButton("New Game", ...)
+activate TheButton
+TheButton --> Menu
+deactivate TheButton
+
+create TheButton
+Menu -> TheButton : <<create>> new TheButton("Load Game", ...)
+activate TheButton
+TheButton --> Menu
+deactivate TheButton
+
+create TheButton
+Menu -> TheButton : <<create>> new TheButton("Edit Mode", ...)
+activate TheButton
+TheButton --> Menu
+deactivate TheButton
+
+create TheButton
+Menu -> TheButton : <<create>> new TheButton("Options", ...)
+activate TheButton
+TheButton --> Menu
+deactivate TheButton
+
+create TheButton
+Menu -> TheButton : <<create>> new TheButton("Quit", ...)
+activate TheButton
+TheButton --> Menu
+deactivate TheButton
+
+deactivate Menu
+
+== Load background image ==
+Menu -> Menu : loadBackground()
+activate Menu #FFDAB9
+deactivate Menu
+
+@enduml

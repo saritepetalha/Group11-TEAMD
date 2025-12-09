@@ -1,0 +1,36 @@
+@startuml
+!theme mars
+
+title Communication Diagram - Sprite Atlas Usage Across Game Managers
+
+skinparam linestyle ortho
+skinparam rectangle {
+  backgroundColor #E6F2FF
+  borderColor Black
+}
+
+' Participants
+actor "User" as Actor
+rectangle "Game Initialization" as Init
+rectangle "LoadSave" as LoadSave
+rectangle "ClassLoader" as ClassLoader
+rectangle "ImageIO" as ImageIO
+rectangle "TileManager" as TileManager
+rectangle "TowerManager" as TowerManager
+rectangle "EnemyManager" as EnemyManager
+rectangle "ProjectileManager" as ProjectileManager
+
+' Message Flow
+Actor -down- Init: run() ↓
+Init -right-> LoadSave : → 1: getSpriteAtlas()\n ← 6: return spriteAtlas
+LoadSave -right-> ClassLoader : → 2: getResourceAsStream("spriteatlas.png")\n← 3: InputStream
+
+LoadSave -up-> ImageIO : ↑ 4: read(InputStream)\n ↓ 5: spriteAtlas (BufferedImage)
+
+
+Init -left-> TileManager : ← 7: new TileManager(spriteAtlas)\nextract tile sprites
+Init -down-> TowerManager : ↓ 8: new TowerManager(spriteAtlas)\nextract tower sprites
+Init -left-> EnemyManager : \n← 9: new EnemyManager(spriteAtlas)\nextract enemy sprites
+Init -down-> ProjectileManager : ↓ 10: new ProjectileManager(spriteAtlas)\nextract projectile + explosion sprites
+
+@enduml

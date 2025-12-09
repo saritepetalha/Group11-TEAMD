@@ -1,0 +1,78 @@
+@startuml
+actor Player
+
+participant Playing
+participant WaveManager
+participant EnemyManager
+participant GameOptions
+participant PlayingModel
+
+== Game starts ==
+
+Player -> Playing : play game
+activate Playing
+Playing -> WaveManager : prepareNextWave()
+activate WaveManager
+WaveManager -> PlayingModel : onWaveStart()
+activate PlayingModel
+PlayingModel --> WaveManager
+deactivate PlayingModel
+
+== WaveManager prepares wave ==
+
+WaveManager -> WaveManager : prepareNextGroup()
+activate WaveManager
+WaveManager -> GameOptions : getWaves()
+GameOptions --> WaveManager : return waves
+WaveManager -> WaveManager : convertEnemyTypeToConstant()
+WaveManager --> WaveManager
+deactivate WaveManager
+
+== EnemyManager spawns enemies ==
+
+loop every enemyDelayTickLimit ticks
+    WaveManager -> EnemyManager : spawnEnemy(enemyType)
+    activate EnemyManager
+    EnemyManager -> EnemyManager : createEnemy()
+    EnemyManager -> GameOptions : getEnemyStats()
+    GameOptions --> EnemyManager : return stats
+    EnemyManager -> EnemyManager : applyOptionsToEnemy()
+    EnemyManager -> Playing : addEnemyToLevel(enemy)
+    EnemyManager --> WaveManager
+    deactivate EnemyManager
+end
+
+== Wave completes ==
+
+WaveManager -> EnemyManager : areAllEnemiesGone()
+activate EnemyManager
+EnemyManager --> WaveManager : return true/false
+deactivate EnemyManager
+
+alt all enemies gone
+    WaveManager -> PlayingModel : onWaveComplete()
+    activate PlayingModel
+    PlayingModel --> WaveManager
+    deactivate PlayingModel
+    
+    alt more waves available
+        WaveManager -> WaveManager : startInterWaveTimer()
+        activate WaveManager
+        WaveManager -> WaveManager : setInterWaveDelay()
+        WaveManager --> WaveManager
+        deactivate WaveManager
+    else no more waves
+        WaveManager -> PlayingModel : handleVictory()
+        activate PlayingModel
+        PlayingModel --> WaveManager
+        deactivate PlayingModel
+    end
+end
+
+== Timer triggers next wave ==
+
+loop every interWaveTickLimit ticks
+    WaveManager -> WaveManager : prepareNextWave()
+end
+
+@enduml

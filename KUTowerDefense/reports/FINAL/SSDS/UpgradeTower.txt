@@ -1,0 +1,102 @@
+@startuml
+skinparam sequence {
+ParticipantPadding 40
+BoxPadding 10
+ClassFontName Source Code Pro
+ArrowColor MidnightBlue
+ActorBorderColor MidnightBlue
+
+ParticipantBorderColor DeepSkyBlue
+ParticipantBackgroundColor DodgerBlue
+ParticipantFontName Source Code Pro
+ParticipantFontSize 17
+
+ActorFontSize 17
+ActorFontName Source Code Pro
+}
+
+title <u>SSD – Upgrade Tower (All Tower Types)</u>
+
+actor Player #blue
+participant ":TowerSelectionUI" as TowerUI #yellow
+participant ":PlayerManager" as PlayerMgr #lightgreen
+participant ":Tower" as Tower #orange
+participant ":TowerDecorator" as UpgradedTower #lightblue
+participant ":TowerManager" as TowerMgr #pink
+
+== Main Flow ==
+Player -> TowerUI: clickUpgradeButton(mouseX, mouseY)
+
+TowerUI -> Tower: isUpgradeable()
+Tower --> TowerUI: level == 1
+
+alt Tower can be upgraded
+    TowerUI -> TowerUI: getUpgradeCost(selectedTower)
+    TowerUI -> PlayerMgr: getGold()
+    
+    alt Player has sufficient gold
+        TowerUI -> PlayerMgr: spendGold(upgradeCost)
+        
+        TowerUI -> Tower: upgrade()
+        
+        alt level == 1
+            Tower -> Tower: setLevel(2)
+            
+            alt Tower type
+                Tower -> UpgradedTower: new UpgradedArcherTower(this)
+                note right of UpgradedTower
+                    Enhanced: 1.5x range, 2x fire rate
+                    Sprite: "/TowerAssets/archer_up.png"
+                end note
+            else MageTower
+                Tower -> UpgradedTower: new UpgradedMageTower(this)
+                note right of UpgradedTower
+                    Enhanced: adds slow effect
+                    Sprite: "/TowerAssets/mage_up.png"
+                end note
+            else ArtilleryTower
+                Tower -> UpgradedTower: new UpgradedArtilleryTower(this)
+                note right of UpgradedTower
+                    Enhanced: 1.2x range, 1.2x damage
+                    Sprite: "/TowerAssets/artillery_up.png"
+                end note
+            end
+            
+            UpgradedTower -> UpgradedTower: super(decoratedTower)
+            UpgradedTower -> Tower: setLevel(2)
+            UpgradedTower -> UpgradedTower: loadSprite(upgradeSpritePath)
+            UpgradedTower --> Tower: upgradedTowerInstance
+            Tower --> TowerUI: upgradedTowerInstance
+            
+        else Already upgraded
+            Tower --> TowerUI: this
+        end
+        
+        TowerUI -> TowerMgr: replaceTower(selectedTower, upgradedTower)
+        TowerMgr -> TowerMgr: towers.set(index, upgradedTower)
+        
+        TowerUI -> TowerUI: setSelectedTower(upgradedTower)
+        TowerUI -> TowerMgr: triggerUpgradeEffect(upgradedTower)
+        TowerMgr -> TowerMgr: addUpgradeEffect(x + 32, y + 32)
+        
+        TowerUI -> TowerUI: updateUIResources()
+        
+        note right of TowerUI
+            Tower successfully upgraded.
+            Visual effect triggered.
+            Decorator provides enhanced stats.
+        end note
+        
+    else Insufficient gold
+        note right of TowerUI
+            Upgrade blocked - not enough gold.
+        end note
+    end
+    
+else Tower not upgradeable
+    note right of TowerUI
+        Tower already at max level (level 2).
+    end note
+end
+
+@enduml

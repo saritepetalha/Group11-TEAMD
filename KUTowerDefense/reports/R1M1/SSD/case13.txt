@@ -1,0 +1,58 @@
+@startuml
+skinparam sequence {
+ParticipantPadding 40
+BoxPadding 10
+ClassFontName Source Code Pro
+ArrowColor MidnightBlue
+ActorBorderColor MidnightBlue
+
+ParticipantBorderColor DeepSkyBlue
+ParticipantBackgroundColor DodgerBlue
+ParticipantFontName Source Code Pro
+ParticipantFontSize 17
+
+ActorFontSize 17
+ActorFontName Source Code Pro
+}
+
+title <u>SSD – Set Game Parameters</u>
+
+actor Player #blue
+participant ":System" as System #yellow
+participant "File System" as FileSystem #lightgreen
+
+== Main Flow ==
+Player -> System: openOptionsMenu()
+System -> System: displayCurrentSettings()
+
+Player -> System: modifyParameters(params)
+Player -> System: clickSave()
+
+System -> System: validateInputs(params)
+
+alt Inputs are valid
+    System -> FileSystem: saveSettings(params)
+    
+    alt Save successful
+        FileSystem --> System: success
+        System -> System: returnToMainMenuOrContinue()
+        note right of System
+            Settings saved and applied.
+        end note
+
+    else File write fails
+        FileSystem --> System: error
+        System -> Player: showError("Failed to save. Reverting.")
+        System -> FileSystem: loadLastSavedConfig()
+        FileSystem --> System: previousParams
+        System -> System: revertToLastSavedConfig(previousParams)
+    end
+
+else Inputs invalid
+    System -> Player: showError("Invalid values entered")
+    note right of System
+        Parameters not saved.
+    end note
+end
+
+@enduml

@@ -136,27 +136,16 @@ public class GameScreen extends JPanel {
 			int offsetX = (getWidth() - scaledWidth) / 2;
 			int offsetY = (getHeight() - scaledHeight) / 2;
 
-			// Apply transformation
 			g2d.translate(offsetX, offsetY);
 			g2d.scale(scale, scale);
-
-			// Render game content
 			game.getRender().render(g2d);
-
-			// Reset transformation
 			g2d.scale(1.0/scale, 1.0/scale);
 			g2d.translate(-offsetX, -offsetY);
 		} else if (usesCustomRendering && GameStates.gameState == GameStates.EDIT) {
 			// Apply 1.3x scaling for map editing
 			double scale = 1.3;
-
-			// Apply transformation
 			g2d.scale(scale, scale);
-
-			// Render game content
 			game.getRender().render(g2d);
-
-			// Reset transformation
 			g2d.scale(1.0/scale, 1.0/scale);
 		} else if (usesCustomRendering) {
 			// In windowed mode or non-playing states, just render normally
@@ -167,12 +156,6 @@ public class GameScreen extends JPanel {
 	public void updateContentForState(GameStates newState, GameStates oldState) {
 		if (oldState == GameStates.OPTIONS && game.getOptions() instanceof scenes.Options) {
 			((scenes.Options) game.getOptions()).cleanUp();
-		}
-		if (oldState == GameStates.LOAD_GAME && game.getLoadGameMenu() instanceof LoadGameMenu) {
-			// No specific cleanup needed for LoadGameMenu panel removal by default
-		}
-		if (oldState == GameStates.NEW_GAME_LEVEL_SELECT) {
-			// No specific cleanup needed for LevelSelectionScene panel removal by default
 		}
 
 		this.removeAll();
@@ -213,10 +196,6 @@ public class GameScreen extends JPanel {
 
 		// Debug: Log focus state
 		System.out.println("GameScreen focus state after state change: " + this.hasFocus());
-	}
-
-	public MyMouseListener getMyMouseListener() {
-		return myMouseListener;
 	}
 
 	public void refreshForFullscreenChange() {

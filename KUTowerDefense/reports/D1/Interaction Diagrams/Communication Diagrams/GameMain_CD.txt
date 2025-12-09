@@ -1,0 +1,55 @@
+@startuml
+!theme mars
+
+title Communication Diagram - Game Initialization Flow
+
+skinparam linestyle ortho
+skinparam rectangle {
+  backgroundColor #FFF5F5
+  borderColor Black
+}
+
+' Participants
+actor "User" as Actor
+rectangle "Game" as Game
+rectangle "GameScreen" as GameScreen
+rectangle "Render" as Render
+rectangle "Intro" as Intro
+rectangle "Menu" as Menu
+rectangle "GameScene" as GameScene
+rectangle "Options" as Options
+rectangle "Playing" as Playing
+rectangle "TileManager" as TileManager
+rectangle "EditTiles" as EditTiles
+rectangle "MyMouseListener" as Mouse
+rectangle "KeyboardListener" as Keyboard
+
+' Message Flow
+Actor -right- Game : →: main()
+
+Game -right- Game : 1: new Game()\n1.1: initClasses() \n 3: start()\n3.1: run() [Thread loop]
+
+Game -up- GameScreen : ↑ 1.1.1: new GameScreen(this)\n↑ 1.1.1.1: setPanelSize()\n↑ 2 initInputs()
+
+Game -up- Render : ↑ 1.1.2: new Render(this)
+
+Game -up- Intro : ↑ 1.1.3: new Intro(this)
+
+Intro -left- Intro : 1.1.3.1 loadImages()\n1.1.3.2 resetIntro()
+
+Game -down- Menu : ↓ 1.1.4: new Menu(this)
+Menu -down- GameScene : ↓ 1.1.4.1: super(game)
+Menu -left- Menu : 1.1.4.2: importImg()\n1.1.4.3: loadSprites()\n1.1.4.4: initButtons()\n1.1.4.5: loadBackground()
+
+Game -down- Options : ↓ 1.1.5: new Options(this)
+Options -down- GameScene : ↓ 1.1.5.1: super(game)
+Options -down- Options : 1.1.5.2 initButtons()
+
+Game -down- Playing : ↓ 1.1.6: new Playing(this)
+Playing -down- GameScene : ↓ 1.1.6.1: super(game)
+Playing -down- TileManager : ↓ 1.1.6.2: new TileManager()
+Playing -down- EditTiles : ↓ 1.1.6.3: new EditTiles(...)
+
+GameScreen -up- Mouse : ↑ 2.1: new MyMouseListener(game)
+GameScreen -left- Keyboard : ← 2.2: new KeyboardListener(playing, game)
+@enduml

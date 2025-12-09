@@ -72,10 +72,4 @@ public class ConfettiAnimation {
         return 120; // Fallback to 2 seconds if frames not loaded
     }
 
-    /**
-     * Get the animation duration in seconds (for display purposes)
-     */
-    public static float getAnimationDurationSeconds() {
-        return getAnimationDurationTicks() / 60.0f; // 60 FPS
-    }
 }

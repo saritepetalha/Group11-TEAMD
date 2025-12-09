@@ -1,0 +1,31 @@
+@startuml
+!theme mars
+title Communication Diagram - Set Game Parameters
+
+skinparam rectangle {
+  BackgroundColor #E6F2FF
+  BorderColor black
+}
+
+actor "Player" as Player
+rectangle "Options" as Options
+rectangle "GameOptionsUI" as GameOptionsUI
+rectangle "GameOptions" as GameOptions
+rectangle "OptionsIO" as OptionsIO
+rectangle "Playing" as Playing
+rectangle "AudioManager" as AudioManager
+
+Player -right- Options : opens Options
+
+Options -down- GameOptionsUI : ↓ 1: new GameOptionsUI(game, OptionsIO.load())\n↓ 1.1: loadValuesFromOptions()
+GameOptionsUI -down- OptionsIO : ↓ 1.1.1: load()\n↓ 1.1.2: loadFromPath(CONFIG_PATH, true)\n↓ 4: save(options)\n↓ 4.1: save(options, CONFIG_PATH)\n↓ 5: saveCustom(options)\n↓ 5.1: save(options, CUSTOM_CONFIG_PATH)
+
+Player -right- GameOptionsUI : modifies & saves settings
+GameOptionsUI -down- AudioManager : ↓ 2: playButtonClickSound()
+
+GameOptionsUI -left- GameOptions : ← 3: setStartingGold()\n← 3.1: setStartingPlayerHP()\n← 3.2: setStartingShield()\n← 3.3: setInterWaveDelay()\n← 3.4: updateEnemyStats()\n← 3.5: updateTowerStats()\n← 3.6: updateWaves()
+
+GameOptionsUI -down- Playing : ↓ 6: reloadGameOptions()
+GameOptionsUI -down- GameOptionsUI : ↓ 7: showSuccessMessage()
+
+@enduml

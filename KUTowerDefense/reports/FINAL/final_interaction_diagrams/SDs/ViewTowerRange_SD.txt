@@ -1,0 +1,71 @@
+@startuml
+actor Player
+
+participant PlayingView
+participant PlayingController
+participant Playing
+participant TowerManager
+participant Tower
+participant TowerSelectionUI
+participant Graphics2D <<graphics engine>>
+
+== Player hovers over a tower ==
+
+Player -> PlayingController : mouseMoved(x, y)
+activate PlayingController
+PlayingController -> PlayingView : mouseMoved(x, y)
+activate PlayingView
+PlayingView -> TowerSelectionUI : mouseMoved(x, y)
+activate TowerSelectionUI
+
+== Tower selection and range display ==
+
+alt if tower clicked
+    PlayingController -> TowerManager : getTowers()
+    TowerManager --> PlayingController : towers
+    loop for each tower
+        PlayingController -> Tower : isClicked(x, y)
+        Tower --> PlayingController : clicked
+    end
+    PlayingController -> Playing : setDisplayedTower(tower)
+end
+
+== Each frame rendering ==
+
+loop every frame
+    PlayingView -> TowerSelectionUI : draw(Graphics2D g)
+    activate TowerSelectionUI
+    
+    TowerSelectionUI -> Tower : getRange()
+    Tower --> TowerSelectionUI : range
+    
+    alt if weather is raining
+        TowerSelectionUI -> TowerSelectionUI : applyWeatherRangeMultiplier()
+    end
+    
+    TowerSelectionUI -> TowerSelectionUI : drawEnhancedRangeIndicator()
+    activate TowerSelectionUI
+    
+    TowerSelectionUI -> TowerSelectionUI : drawRangeArea()
+    TowerSelectionUI -> TowerSelectionUI : drawStrategySpecificRange()
+    
+    alt if strategy is FIRST
+        TowerSelectionUI -> TowerSelectionUI : drawDashedRangeCircle()
+    else if strategy is LAST
+        TowerSelectionUI -> TowerSelectionUI : drawPulsingRangeCircle()
+    else if strategy is STRONGEST
+        TowerSelectionUI -> TowerSelectionUI : drawThickRangeCircle()
+    else if strategy is WEAKEST
+        TowerSelectionUI -> TowerSelectionUI : drawThinRangeCircle()
+    end
+    
+    TowerSelectionUI -> TowerSelectionUI : drawStrategyIndicator()
+    deactivate TowerSelectionUI
+    deactivate TowerSelectionUI
+end
+
+deactivate TowerSelectionUI
+deactivate PlayingView
+deactivate PlayingController
+
+@enduml

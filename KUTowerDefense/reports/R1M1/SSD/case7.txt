@@ -1,0 +1,47 @@
+@startuml
+skinparam ParticipantPadding 200
+skinparam sequence {
+	BoxPadding 40
+	ClassFontName Source Code Pro
+	ArrowColor MidnightBlue
+	ActorBorderColor MidnightBlue
+
+	ParticipantBorderColor DeepSkyBlue
+	ParticipantBackgroundColor DodgerBlue
+	ParticipantFontName Source Code Pro
+	ParticipantFontSize 17
+
+	ActorFontSize 17
+	ActorFontName Source Code Pro
+}
+
+title <u>SSD – Enemy Defeated</u>
+
+actor Tower #gray
+participant ":System" as System #yellow
+actor Enemy #red
+
+== Main Scenario ==
+Tower -> System: fireAt(enemyID)
+System -> Enemy: applyDamage(damage)
+
+Enemy -> System: reportHealth(enemyID)
+
+alt enemyHealth <= 0
+    Enemy -> System: notifyDefeat(enemyID)
+    System -> Enemy: removeFromGame(enemyID)
+    System -> System: determineReward(enemyType)
+    System -> System: addGoldToPlayer(rewardAmount)
+    System -> System: updateGoldUI()
+    note right of System
+        Enemy defeated. Reward granted.
+    end note
+
+else enemyHealth > 0
+    Enemy -> System: continuePath()
+    note right of System
+        Enemy continues moving.
+    end note
+end
+
+@enduml

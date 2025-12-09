@@ -1,0 +1,119 @@
+@startuml
+participant Actor
+Actor -> Game : main
+activate Game
+Game -> Game : new
+activate Game
+Game -> Game : initClasses
+activate Game
+create GameScreen
+Game -> GameScreen : new
+activate GameScreen
+GameScreen -> GameScreen : setPanelSize
+activate GameScreen
+GameScreen --> GameScreen
+deactivate GameScreen
+GameScreen --> Game
+deactivate GameScreen
+create Render
+Game -> Render : new
+activate Render
+Render --> Game
+deactivate Render
+create Intro
+Game -> Intro : new
+activate Intro
+Intro -> Intro : loadImages
+activate Intro
+Intro --> Intro
+deactivate Intro
+Intro -> Intro : resetIntro
+activate Intro
+Intro --> Intro
+deactivate Intro
+Intro --> Game
+deactivate Intro
+create Menu
+Game -> Menu : new
+activate Menu
+create GameScene
+Menu -> GameScene : new
+activate GameScene
+GameScene --> Menu
+deactivate GameScene
+Menu -> Menu : importImg
+activate Menu
+Menu --> Menu
+deactivate Menu
+Menu -> Menu : loadSprites
+activate Menu
+Menu --> Menu
+deactivate Menu
+Menu -> Menu : initButtons
+activate Menu
+Menu --> Menu
+deactivate Menu
+Menu -> Menu : loadBackground
+activate Menu
+Menu --> Menu
+deactivate Menu
+Menu --> Game
+deactivate Menu
+create Options
+Game -> Options : new
+activate Options
+create GameScene
+Options -> GameScene : new
+activate GameScene
+GameScene --> Options
+deactivate GameScene
+Options -> Options : initButtons
+activate Options
+Options --> Options
+deactivate Options
+Options --> Game
+deactivate Options
+create Playing
+Game -> Playing : new
+activate Playing
+create GameScene
+Playing -> GameScene : new
+activate GameScene
+GameScene --> Playing
+deactivate GameScene
+create TileManager
+Playing -> TileManager : new
+activate TileManager
+TileManager --> Playing
+deactivate TileManager
+create EditTiles
+Playing -> EditTiles : new
+activate EditTiles
+EditTiles --> Playing
+deactivate EditTiles
+Playing --> Game
+deactivate Playing
+Game --> Game
+deactivate Game
+Game --> Game
+deactivate Game
+Game -> GameScreen : initInputs
+activate GameScreen
+create MyMouseListener
+GameScreen -> MyMouseListener : new
+activate MyMouseListener
+MyMouseListener --> GameScreen
+deactivate MyMouseListener
+create KeyboardListener
+GameScreen -> KeyboardListener : new
+activate KeyboardListener
+KeyboardListener --> GameScreen
+deactivate KeyboardListener
+GameScreen --> Game
+deactivate GameScreen
+Game -> Game : start
+activate Game
+Game --> Game
+deactivate Game
+return
+@enduml

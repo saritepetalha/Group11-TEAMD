@@ -1,0 +1,30 @@
+@startuml
+actor Player
+participant Options
+participant GameOptionsUI
+participant GameOptions
+participant OptionsIO
+participant FileSystem <<external>>
+participant Playing
+
+== Player saves settings ==
+
+Player -> GameOptionsUI : click "Save Settings"
+GameOptionsUI -> AudioManager : playButtonClickSound()
+GameOptionsUI -> GameOptionsUI : validateInputs()
+alt if inputs valid
+    GameOptionsUI -> GameOptions : update settings from UI
+    GameOptionsUI -> OptionsIO : save(options)
+    OptionsIO -> OptionsIO : save(options, CONFIG_PATH)
+    OptionsIO -> FileSystem : write JSON to options.json
+    GameOptionsUI -> OptionsIO : saveCustom(options)
+    OptionsIO -> OptionsIO : save(options, CUSTOM_CONFIG_PATH)
+    OptionsIO -> FileSystem : write JSON to custom_options.json
+    GameOptionsUI -> Playing : reloadGameOptions()
+    Playing -> Playing : reloadDifficultyConfiguration()
+    GameOptionsUI -> Player : show "Settings saved successfully!"
+else validation failed
+    GameOptionsUI -> Player : show error message
+end
+
+@enduml

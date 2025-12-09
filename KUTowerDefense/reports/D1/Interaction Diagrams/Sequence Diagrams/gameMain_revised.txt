@@ -1,0 +1,141 @@
+@startuml
+!theme reddress-lightred
+
+title Main (Executable)
+
+== Application Entry ==
+[o-> Game : main()
+activate Game 
+Game -> Game : new Game()
+activate Game #FFDDCC
+
+== Initialization Phase ==
+Game -> Game : initClasses()
+activate Game #FFCCCC
+
+== Create & Setup GameScreen ==
+create GameScreen
+Game -> GameScreen : <<create>> new GameScreen(this)
+activate GameScreen
+GameScreen -> GameScreen : setPanelSize()
+activate GameScreen #FFDDCC
+deactivate GameScreen
+GameScreen --> Game
+deactivate GameScreen
+
+== Create & Setup Render ==
+create Render
+Game -> Render : <<create>> new Render(this)
+activate Render
+Render --> Game
+deactivate Render
+
+== Create & Setup Intro ==
+create Intro
+Game -> Intro : <<create>> new Intro(this)
+activate Intro
+Intro -> Intro : loadImages()
+activate Intro #FFDDCC
+deactivate Intro
+Intro -> Intro : resetIntro()
+activate Intro #FFDDCC
+deactivate Intro
+Intro --> Game 
+deactivate Intro
+
+== Create & Setup Menu ==
+create Menu
+Game -> Menu : <<create>> new Menu(this)
+activate Menu
+create GameScene
+Menu -> GameScene : <<create>> super(game)
+activate GameScene
+deactivate GameScene
+Menu -> Menu : importImg()
+activate Menu #FFDDCC
+deactivate Menu
+Menu -> Menu : loadSprites()
+activate Menu #FFDDCC
+deactivate Menu
+Menu -> Menu : initButtons()
+activate Menu #FFDDCC
+deactivate Menu
+Menu -> Menu : loadBackground()
+activate Menu #FFDDCC
+deactivate Menu
+Menu --> Game
+deactivate Menu
+
+== Create & Setup Options ==
+create Options
+Game -> Options : <<create>> new Options(this)
+activate Options
+Options -> GameScene : <<create>> super(game)
+activate GameScene
+deactivate GameScene
+Options -> Options : initButtons()
+activate Options #FFDDCC
+deactivate Options
+Options --> Game
+deactivate Options
+
+== Create & Setup Playing ==
+create Playing
+Game -> Playing : <<create>> new Playing(this)
+activate Playing
+
+
+Playing -> GameScene : <<create>> super(game)
+activate GameScene
+deactivate GameScene
+GameScene --> Game 
+deactivate GameScene
+
+
+create TileManager
+Playing -> TileManager : <<create>> new TileManager()
+activate TileManager
+TileManager --> Playing
+deactivate TileManager
+
+create EditTiles
+Playing -> EditTiles : <<create>> new EditTiles(...)
+activate EditTiles
+EditTiles --> Playing
+deactivate EditTiles
+Playing --> Game
+deactivate Playing
+Game --> Game
+deactivate Game
+Game --> Game
+
+== Finish Game Initialization ==
+deactivate Game #FFCCCC
+Game --> Game
+
+== Input Initialization ==
+Game -> GameScreen : initInputs()
+activate GameScreen
+
+create MyMouseListener
+GameScreen -> MyMouseListener : <<create>> new MyMouseListener(game)
+activate MyMouseListener
+MyMouseListener --> GameScreen
+deactivate MyMouseListener
+
+create KeyboardListener
+GameScreen -> KeyboardListener : <<create>> new KeyboardListener(playing, game)
+activate KeyboardListener
+KeyboardListener --> GameScreen
+deactivate KeyboardListener
+GameScreen --> Game
+deactivate GameScreen
+
+== Start Main Game Loop ==
+Game -> Game : start()
+activate Game #FFDDCC
+Game -> Game : run() [Thread loop]
+deactivate Game
+return
+
+@enduml

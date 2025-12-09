@@ -1,0 +1,70 @@
+@startuml
+!theme reddress-lightgreen
+
+title Sequence Diagrams for Load/Save: Load Level
+
+participant "Game/LevelManager" as Caller
+participant "LoadSave" as LoadSave
+participant "Utilz" as Utilz
+participant "Scanner" as Scanner
+
+== Reading Level Data / Tile IDs ==
+[o-> Caller: clicks "Load Game" Button
+activate Caller
+Caller -> LoadSave : GetLevelData()
+activate LoadSave
+
+alt File exists
+    LoadSave -> LoadSave : ReadFromFile()
+    activate LoadSave #CCFFCC
+    create Scanner
+    LoadSave -> Scanner : new Scanner(lvlFile)
+    activate Scanner
+    Scanner -> Scanner : read all lines
+    Scanner --> LoadSave : List<Integer>
+    deactivate Scanner
+    deactivate LoadSave
+
+    LoadSave -> Utilz : ArrayListTo2Dint(list, 16, 9)  
+    activate Utilz
+    Utilz --> LoadSave : int[][] levelData
+    deactivate Utilz
+    LoadSave --> Caller : levelData
+else File does not exist
+    LoadSave -> Caller : print error
+end
+
+deactivate LoadSave
+
+== Reading Path Points ==
+Caller -> LoadSave : GetLevelPathPoints()
+activate LoadSave
+
+alt File exists
+    LoadSave -> LoadSave : ReadFromFile()
+    activate LoadSave #CCFFCC
+    create Scanner
+    LoadSave -> Scanner : new Scanner(lvlFile)
+    activate Scanner
+    Scanner -> Scanner : read all lines
+    Scanner --> LoadSave : List<Integer>
+    deactivate Scanner
+    deactivate LoadSave
+
+    LoadSave -> LoadSave : extract list[144] to [147]
+    note right of LoadSave
+    there are 16x9 tiles, 0-144 indexes have tile IDs 
+    list[144] = start.x    spawn point coordinates
+    list[145] = start.y    
+    list[146] = end.x      end point coordinates
+    list[147] = end.y
+    end note
+    LoadSave -> Caller : return start & end as PathPoint
+else File does not exist
+    LoadSave -> Caller : print error
+end
+
+deactivate LoadSave
+deactivate Caller
+
+@enduml

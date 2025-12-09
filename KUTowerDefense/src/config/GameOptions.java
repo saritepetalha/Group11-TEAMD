@@ -93,6 +93,7 @@ public class GameOptions {
         // Reset progress trackers
         o.currentWaveIndex = 0;
         o.currentGroupIndex = 0;
+
         // Enemy defaults - based on Constants.Enemies values
         o.enemyStats.put(EnemyType.GOBLIN, new EnemyStats(100, 0.85, 5));
         o.enemyStats.put(EnemyType.KNIGHT, new EnemyStats(200, 0.45, 25));
@@ -108,7 +109,7 @@ public class GameOptions {
         o.towerStats.put(TowerType.MAGE,
                 new TowerStats(90, 3.0, 0.9, 0.0, 20));
 
-        // Waves - updated to use WARRIOR instead of KNIGHT
+        // Waves
         Group g1 = new Group(Map.of(EnemyType.GOBLIN, 8), 0.5);
         Group g2 = new Group(Map.of(EnemyType.GOBLIN, 5,
                 EnemyType.KNIGHT, 2), 0.4);

@@ -1,0 +1,25 @@
+@startuml
+!theme mars
+title Communication Diagram - Start New Game
+
+skinparam rectangle {
+  BackgroundColor #E6F2FF
+  BorderColor black
+}
+
+actor "Player" as Player
+rectangle "Menu" as Menu
+rectangle "AudioManager" as AudioManager
+rectangle "Game" as Game
+rectangle "LevelSelectionScene" as LevelSelectionScene
+rectangle "SkillSelectionScene" as SkillSelectionScene
+
+' === Player clicks "New Game" ===
+Player -right- Menu : clicks playButton
+Menu -down- AudioManager : ↓ 1: playButtonClickSound()
+Menu -right- Game : → 2: changeGameState(NEW_GAME_LEVEL_SELECT)
+Game -down- LevelSelectionScene : ↓ 2.1: refreshLevelList()\n2.2: loadLevelFiles()\n2.3: initUI()\n3.1: showDifficultyOverlay()\n↑ 6: startPlayingWithDifficulty(...)\n6.1: changeGameState(SKILL_SELECTION)
+LevelSelectionScene -down- AudioManager : ↓ 4: playButtonClickSound()\n5: playButtonClickSound()
+Game -down- SkillSelectionScene : ↓ 6.2: gameState = SKILL_SELECTION\n6.3: resetSkillSelections()\n6.4: initUI()
+
+@enduml

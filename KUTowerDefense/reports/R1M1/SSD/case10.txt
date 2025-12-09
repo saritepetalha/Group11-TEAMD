@@ -1,0 +1,57 @@
+@startuml
+skinparam sequence {
+ParticipantPadding 40
+BoxPadding 10
+ClassFontName Source Code Pro
+ArrowColor MidnightBlue
+ActorBorderColor MidnightBlue
+
+ParticipantBorderColor DeepSkyBlue
+ParticipantBackgroundColor DodgerBlue
+ParticipantFontName Source Code Pro
+ParticipantFontSize 17
+
+ActorFontSize 17
+ActorFontName Source Code Pro
+}
+
+title <u>SSD – Start New Game</u>
+
+actor Player #blue
+participant ":System" as System #yellow
+participant "File System" as FileSystem #lightgreen
+
+== Main Scenario ==
+Player -> System: clickNewGame()
+System -> System: displayMapList()
+
+alt Player selects a map
+    Player -> System: selectMap(mapFileName)
+
+    alt Map file is valid
+        System -> FileSystem: readMapFile(mapFileName)
+        FileSystem --> System: mapData
+        System -> System: initializeGameScreen()
+        note right of System
+            Game screen is now ready.
+        end note
+
+    else Map file is corrupted or missing
+        System -> FileSystem: readMapFile(mapFileName)
+        FileSystem --> System: error
+        System -> System: showError("Failed to load map")
+        System -> System: returnToMainMenu()
+        note right of System
+            Player returns to main menu.
+        end note
+    end
+
+else Player closes map selection
+    Player -> System: closeMapSelection()
+    System -> System: returnToMainMenu()
+    note right of System
+        No map selected. Back to main menu.
+    end note
+end
+
+@enduml

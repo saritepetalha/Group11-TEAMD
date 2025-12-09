@@ -2,7 +2,6 @@ package objects;
 
 import enemies.Enemy;
 import helpMethods.LoadSave;
-import constants.Constants;
 import scenes.Playing;
 
 import java.awt.*;
@@ -403,9 +402,6 @@ public class TNTWarrior {
     public float getX() { return x; }
     public float getY() { return y; }
     public boolean isActive() { return active; }
-    public boolean isExploding() { return exploding; }
-    public float getExplosionRange() { return explosionRange; }
-    public int getExplosionDamage() { return explosionDamage; }
 
     // For collision detection or other purposes
     public Rectangle getBounds() {

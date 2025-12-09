@@ -1,0 +1,85 @@
+@startuml
+!theme reddress-lightred
+
+participant "Tower" as Tower
+participant "Enemy" as Enemy
+participant "ProjectileManager" as PM
+participant "Projectile" as Projectile
+participant "EnemyManager" as EnemyManager
+participant "Explosion" as Explosion
+participant "Utilz" as Utilz
+
+== Create Projectile ==
+
+create PM
+Tower -> PM : newProjectile(t, e)
+activate PM
+create Projectile
+PM -> Projectile : new Projectile(...)
+activate Projectile
+Projectile --> PM
+deactivate Projectile
+PM --> Tower
+deactivate PM
+
+== Game Loop Frame ==
+
+[o-> PM : update()
+activate PM
+
+loop for each Projectile
+    PM -> Projectile : isActive()
+    activate Projectile
+    Projectile --> PM : true
+    deactivate Projectile
+
+    PM -> Projectile : move()
+    activate Projectile
+    Projectile --> PM
+    deactivate Projectile
+
+    PM -> PM : isProjHittingEnemy(p)
+    activate PM #FFBBBB
+    alt Enemy is hit
+        PM -> EnemyManager : getEnemies()
+        activate EnemyManager
+        EnemyManager --> PM : List<Enemy>
+        deactivate EnemyManager
+
+        PM -> Enemy : hurt(damage)
+        activate Enemy
+        Enemy --> PM
+        deactivate Enemy
+
+        alt Projectile is ARTILLERY/MAGE
+            create Explosion
+            PM -> Explosion : new Explosion(pos)
+            activate Explosion
+            Explosion --> PM
+            deactivate Explosion
+
+            loop for nearby enemies
+                PM -> Enemy : hurt(damage)
+                activate Enemy
+                Enemy --> PM
+                deactivate Enemy
+            end
+        end
+    else
+        PM -> PM : isProjectileOutOfBounds(projectile)
+        activate PM #8B0000
+        PM --> PM
+        deactivate PM
+    end
+    deactivate PM
+end
+
+loop for each Explosion
+    PM -> Explosion : update()
+    activate Explosion
+    Explosion --> PM
+    deactivate Explosion
+end
+
+deactivate PM
+@enduml

@@ -1,0 +1,69 @@
+@startuml
+
+title EditTiles SD
+!theme reddress-lightgreen
+participant "MyMouseListener" as Mouse
+participant "Playing" as Playing
+participant "TileManager" as TileManager
+participant "EditTiles" as EditTiles
+
+== User Clicks Somewhere to Modify Tiles on the Map ==
+
+[o-> Mouse : mouseClicked(x, y)
+activate Mouse
+
+Mouse -> Playing : mouseClicked(x, y)
+activate Playing
+
+alt Clicked inside map area (x < GAME_WIDTH)
+
+    alt selectedTile is Castle
+        Playing -> TileManager : getId(CastleTopLeft)
+        activate TileManager
+        TileManager --> Playing
+        deactivate TileManager
+
+        Playing -> TileManager : getId(CastleTopRight)
+        activate TileManager
+        TileManager --> Playing
+        deactivate TileManager
+
+        Playing -> TileManager : getId(CastleBottomLeft)
+        activate TileManager
+        TileManager --> Playing
+        deactivate TileManager
+
+        Playing -> TileManager : getId(CastleBottomRight)
+        activate TileManager
+        TileManager --> Playing
+        deactivate TileManager
+
+        note right of Playing
+        Place 2x2 Castle tiles:
+        - level[y][x] = TopLeft
+        - level[y][x+1] = TopRight
+        - level[y+1][x] = BottomLeft
+        - level[y+1][x+1] = BottomRight
+        end note
+
+    else selectedTile is normal
+        Playing -> TileManager : getId(selectedTile)
+        activate TileManager
+        TileManager --> Playing
+        deactivate TileManager
+
+        note right of Playing
+        Place selected tile at (x, y)
+        end note
+    end
+
+else Clicked on Edit Sidebar
+    Playing -> EditTiles : mouseClicked(x, y)
+    activate EditTiles
+    EditTiles --> Playing
+    deactivate EditTiles
+end
+
+deactivate Playing
+deactivate Mouse
+@enduml

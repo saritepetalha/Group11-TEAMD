@@ -1,0 +1,85 @@
+@startuml
+!theme reddress-lightblue
+
+title Mouse Click in Different Scenes
+
+participant "MyMouseListener"
+participant "Playing"
+participant "EditTiles"
+participant "TileManager"
+participant "Menu"
+participant "Options"
+participant "Game"
+participant "GameScreen"
+
+== Mouse Click in Edit Mode ==
+
+[o-> MyMouseListener : mouseClicked()
+activate MyMouseListener
+
+MyMouseListener -> Playing : mouseClicked()
+activate Playing
+
+Playing -> EditTiles : mouseClicked()
+activate EditTiles
+
+EditTiles -> Game : changeGameState(EDIT)
+activate Game
+Game -> GameScreen : setPanelSize()
+activate GameScreen
+GameScreen --> Game
+deactivate GameScreen
+Game --> EditTiles
+deactivate Game
+
+EditTiles -> TileManager : getTile()
+activate TileManager
+TileManager --> EditTiles
+deactivate TileManager
+EditTiles --> Playing
+deactivate EditTiles
+
+Playing -> Playing : modifyTile()
+activate Playing #CCEFEE
+deactivate Playing
+Playing --> MyMouseListener
+deactivate Playing
+
+== Mouse Click in Menu ==
+
+MyMouseListener -> Menu : mouseClicked()
+activate Menu
+
+loop multiple button clicks
+    Menu -> Game : changeGameState(...)
+    activate Game
+    Game -> GameScreen : setPanelSize()
+    activate GameScreen
+    GameScreen --> Game
+    deactivate GameScreen
+    Game --> Menu
+    deactivate Game
+end
+
+Menu --> MyMouseListener
+deactivate Menu
+
+== Mouse Click in Options ==
+
+MyMouseListener -> Options : mouseClicked()
+activate Options
+
+Options -> Game : changeGameState(OPTIONS)
+activate Game
+Game -> GameScreen : setPanelSize()
+activate GameScreen
+GameScreen --> Game
+deactivate GameScreen
+Game --> Options
+deactivate Game
+
+Options --> MyMouseListener
+deactivate Options
+
+deactivate MyMouseListener
+@enduml

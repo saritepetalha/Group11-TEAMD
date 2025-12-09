@@ -132,25 +132,14 @@ public class GameStateMemento {
         return weatherData;
     }
 
-    public void setWeatherData(Object weatherData) {
-        this.weatherData = weatherData;
-    }
-
     public List<TreeState> getDeadTreeStates() {
         return deadTreeStates;
-    }
-
-    public void setDeadTreeStates(List<TreeState> deadTreeStates) {
-        this.deadTreeStates = deadTreeStates;
     }
 
     public List<TreeState> getLiveTreeStates() {
         return liveTreeStates;
     }
 
-    public void setLiveTreeStates(List<TreeState> liveTreeStates) {
-        this.liveTreeStates = liveTreeStates;
-    }
 
     public static class TowerState {
         private int x;

@@ -1,9 +1,6 @@
 package scenes;
 
 import main.Game;
-import java.awt.Cursor;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import ui_p.AssetsLoader;
 
 public class GameScene {

@@ -1,0 +1,90 @@
+@startuml
+skinparam sequence {
+ParticipantPadding 100
+BoxPadding 10
+ClassFontName Source Code Pro
+ArrowColor MidnightBlue
+ActorBorderColor MidnightBlue
+
+ParticipantBorderColor DeepSkyBlue
+ParticipantBackgroundColor DodgerBlue
+ParticipantFontName Source Code Pro
+ParticipantFontSize 17
+
+ActorFontSize 17
+ActorFontName Source Code Pro
+}
+
+title <u>SSD – Map Validation (Integrated with Save)</u>
+
+actor Player #blue
+participant ":MapModel" as MapModel #yellow
+participant ":PathValidator" as PathValidator #orange
+participant ":RoadNetworkPathfinder" as Pathfinder #lightblue
+participant ":MapView" as MapView #lightgreen
+
+== Real-time Validation During Editing ==
+Player -> MapModel: placeTile(x, y, tile)
+
+MapModel -> MapModel: isValidTilePlacement(x, y, tile)
+
+alt Tile placement validation
+    alt Placing on walls/gates
+        MapModel -> MapView: showPopupMessage("Cannot place on walls/gates!")
+        note right of MapModel
+            Immediate feedback shown.
+        end note
+        
+    else Start/End point constraints
+        alt Not on road tile
+            MapModel -> MapView: showPopupMessage("Must be placed on road tile!")
+        else Not on map edge
+            MapModel -> MapView: showPopupMessage("Must be on map edge!")
+        end
+        
+    else Valid placement
+        MapModel -> MapModel: updateTileData()
+        note right of MapModel
+            Tile placed successfully.
+        end note
+    end
+end
+
+== Comprehensive Validation During Save ==
+Player -> MapModel: validateBeforeSave()
+MapModel -> PathValidator: validatePath(level, overlayData)
+
+PathValidator -> PathValidator: findPoint(START_POINT)
+PathValidator -> PathValidator: findPoint(END_POINT)
+
+alt Path validation checks
+    alt Missing start or end points
+        PathValidator --> MapModel: ValidationResult.invalid("Missing points")
+        note right of PathValidator
+            Critical error: Cannot save.
+        end note
+        
+    else Both points exist
+        PathValidator -> Pathfinder: buildGraph(level)
+        PathValidator -> Pathfinder: findPath(start, end)
+        
+        alt Valid path found
+            Pathfinder --> PathValidator: path[]
+            PathValidator --> MapModel: ValidationResult.valid()
+            note right of PathValidator
+                Map structure is valid.
+                Save can proceed.
+            end note
+            
+        else No valid path
+            Pathfinder --> PathValidator: empty[]
+            PathValidator --> MapModel: ValidationResult.invalid("No valid path")
+            note right of PathValidator
+                Critical error: Path unreachable.
+                Save blocked.
+            end note
+        end
+    end
+end
+
+@enduml

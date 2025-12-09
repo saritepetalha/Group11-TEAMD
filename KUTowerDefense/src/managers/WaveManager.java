@@ -399,17 +399,6 @@ public class WaveManager {
             if (this.gameOptions == null) this.gameOptions = GameOptions.defaults();
         }
         loadWavesFromOptions();
-        int currentWaveIndex = this.waveIndex;
-        int currentGroupIndex = this.groupIndex;
-        Queue<Integer> currentQueueState = new LinkedList<>(this.currentGroupEnemyQueue);
-        boolean currentWaitingWave = this.waitingForNextWave;
-        boolean currentWaitingGroup = this.waitingForNextGroup;
-        boolean currentWaitingEnemy = this.waitingForNextEnemy;
-        boolean currentTimerActive = this.waveTimerActive;
-        int currentInterWaveTick = this.interWaveTick;
-        int currentGroupDelayTick = this.groupDelayTick;
-        int currentEnemyDelayTick = this.enemyDelayTick;
-
         resetWaveManagerEssentials();
 
         System.out.println("WaveManager reloaded and progression reset based on new options.");

@@ -1,0 +1,25 @@
+@startuml
+!theme mars
+title Communication Diagram - Sell Tower
+
+skinparam rectangle {
+  BackgroundColor #E6F2FF
+  BorderColor black
+}
+
+actor "Player" as Player
+rectangle "Playing" as Playing
+rectangle "TowerSelectionUI" as TowerSelectionUI
+rectangle "PlayerManager" as PlayerManager
+rectangle "TowerManager" as TowerManager
+rectangle "AudioManager" as AudioManager
+
+Player -right- Playing : clicks tower & confirms sell
+Playing -right- TowerSelectionUI : → 1: mouseClicked(x, y)\n← 2.5: updateUIResources()
+TowerSelectionUI -down- TowerSelectionUI : ↓ 1.1: getSellPrice(tower)\n↓ 1.2: showSellTooltip()\n↓ 2.1: getSellPrice(tower)\n↓ 2.2: setSelectedTower(null)
+TowerSelectionUI -up- PlayerManager : ↑ 2.3: addGold(sellPrice)
+TowerSelectionUI -down- TowerManager : ↓ 2.4: removeTower(tower)
+TowerManager -down- TowerManager : ↓ 2.4.1: resetTileToDeadTree(tower)\n↓ 2.4.2: createDeadTreeAtPosition(x, y)
+TowerSelectionUI -down- AudioManager : ↓ 2.6: playTowerSellSound()
+
+@enduml
