@@ -27,20 +27,22 @@
 <div align="center">
 
 ### 🎮 Main Menu
-<!-- Add your main menu screenshot here -->
-![Main Menu](path/to/screenshot1.png)
+<img width="956" height="751" alt="Screenshot 2025-12-10 024515" src="https://github.com/user-attachments/assets/8a901cbf-24c9-4591-a009-667952f85f3d" />
 
 ### ⚔️ Gameplay
-<!-- Add your gameplay screenshot here -->
-![Gameplay](path/to/screenshot2.png)
+<img width="1529" height="867" alt="Screenshot 2025-12-10 025221" src="https://github.com/user-attachments/assets/9d3e20de-88fb-4b7e-9541-f5e289f1b658" />
 
 ### 🗺️ Level Editor
-<!-- Add your level editor screenshot here -->
-![Level Editor](path/to/screenshot3.png)
+<img width="2306" height="1117" alt="Screenshot 2025-12-10 024928" src="https://github.com/user-attachments/assets/2814a29e-7486-48e8-be3b-85a9c63c1f30" />
+
+### 🗺️ Map Selecting
+<img width="964" height="748" alt="Screenshot 2025-12-10 024958" src="https://github.com/user-attachments/assets/2f789212-2dd8-4419-a762-569a0936b5fb" />
+
+## ⚙️ Options
+<img width="956" height="747" alt="Screenshot 2025-12-10 024940" src="https://github.com/user-attachments/assets/5cb04e12-47dc-4bb6-9404-d75dd4e6ae05" />
 
 ### 🏆 Victory Screen
-<!-- Add your victory screenshot here -->
-![Victory](path/to/screenshot4.png)
+<img width="1537" height="862" alt="Screenshot 2025-12-10 025418" src="https://github.com/user-attachments/assets/cdbb3056-9f87-497d-8730-d42a50b6c65b" />
 
 </div>
 
@@ -327,3 +329,4 @@ This project was developed as part of a software engineering course at Koç Univ
 **Made with ☕ and ❤️ by Team D**
 
 </div>
+
