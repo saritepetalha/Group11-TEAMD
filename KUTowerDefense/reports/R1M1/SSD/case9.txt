@@ -1,0 +1,55 @@
+@startuml
+skinparam sequence {
+ParticipantPadding 40
+BoxPadding 10
+ClassFontName Source Code Pro
+ArrowColor MidnightBlue
+ActorBorderColor MidnightBlue
+
+ParticipantBorderColor DeepSkyBlue
+ParticipantBackgroundColor DodgerBlue
+ParticipantFontName Source Code Pro
+ParticipantFontSize 17
+
+ActorFontSize 17
+ActorFontName Source Code Pro
+}
+title <u>SSD – Toggle Game Speed</u>
+
+actor Player #blue
+participant ":System" as System #yellow
+
+== Start Flow ==
+Player -> System: clickSpeedToggle()
+
+alt Game is paused
+    System -> Player: showWarning("Cannot toggle while paused")
+    note right of System
+        Speed toggle blocked.
+    end note
+
+else Game is running
+    alt Current mode is normal
+        System -> System: doubleTimersAndMovementRates()
+        System -> System: updateUI("Fast Mode")
+        note right of System
+            Game now runs in fast mode.
+        end note
+    else Current mode is fast
+        System -> System: resetTimersAndRatesToDefault()
+        System -> System: updateUI("Normal Speed")
+        note right of System
+            Game returns to normal speed.
+        end note
+    end
+
+    alt Speed change lags
+        System -> Player: notify("Performance drop. Speed reset.")
+        System -> System: disableSpeedToggleUntilRecovered()
+        note right of System
+            Reverts to normal mode.
+        end note
+    end
+end
+
+@enduml

@@ -1,0 +1,63 @@
+@startuml
+!theme reddress-lightblue
+
+title Game Run
+
+participant "Game (Thread)" as Game
+participant "Intro Scene" as Intro
+participant "GameScreen (UI)" as GameScreen
+participant "KeyboardListener" as Keyboard
+
+== Frame Loop ==
+-> Game : run()
+activate Game 
+
+Game -> Game : updateGame()
+activate Game #CCEFFF
+
+Game -> Intro : update()
+activate Intro 
+
+alt Intro completes naturally (introState > 3)
+    Intro -> Intro : stopMusic()
+    activate Intro #CCFFEE
+    deactivate Intro
+
+    Intro -> Game : changeGameState(MENU)
+    activate Game #CCFFEE
+
+    Game -> GameScreen : setPanelSize()
+    activate GameScreen
+    GameScreen --> Game
+    deactivate GameScreen
+    deactivate Game
+else User presses a key
+    -> Keyboard : keyPressed(event)
+    activate Keyboard 
+
+    alt gameState == INTRO
+        Keyboard -> Game : changeGameState(MENU)
+        activate Game #CCFFEE
+
+        Game -> Intro : stopMusic()
+        Intro --> Game
+ 
+
+        Game -> GameScreen : setPanelSize()
+        activate GameScreen 
+        GameScreen --> Game
+        deactivate GameScreen
+
+        deactivate Game
+    end
+
+    deactivate Keyboard
+end
+
+Intro --> Game
+deactivate Intro
+
+Game --> Game
+deactivate Game #CCEFFF
+
+@enduml

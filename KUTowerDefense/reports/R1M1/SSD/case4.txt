@@ -1,0 +1,45 @@
+@startuml
+title <u>SSD – Save Map File</u>
+
+skinparam ParticipantPadding 100
+skinparam sequence {
+  BoxPadding 10
+  ClassFontName Source Code Pro
+  ArrowColor MidnightBlue
+
+  ParticipantBorderColor DeepSkyBlue
+  ParticipantBackgroundColor DodgerBlue
+  ParticipantFontName Source Code Pro
+  ParticipantFontSize 17
+
+  ActorFontSize 17
+  ActorFontName Source Code Pro
+}
+
+actor Player #blue
+participant ":System" as System #yellow
+participant "File System" as FileSystem #lightgreen
+
+== Start Flow==
+Player -> System: clickSaveMap()
+
+System -> System: validateMapStructure()
+
+alt Structure is valid
+    System -> System: promptForFilenameOrDefault()
+    System -> FileSystem: writeMapToDisk(filename)
+    FileSystem --> System: writeSuccess
+    System -> Player: showSuccessMessage()
+
+else Structure invalid
+    System -> Player: showValidationErrors()
+    note right of System
+        Save is blocked.
+    end note
+
+else File system error
+    FileSystem --> System: writeFailed
+    System -> Player: notify("File save failed, please retry.")
+end
+
+@enduml

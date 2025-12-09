@@ -1,0 +1,51 @@
+@startuml
+skinparam sequence {
+ParticipantPadding 40
+BoxPadding 10
+ClassFontName Source Code Pro
+ArrowColor MidnightBlue
+ActorBorderColor MidnightBlue
+
+ParticipantBorderColor DeepSkyBlue
+ParticipantBackgroundColor DodgerBlue
+ParticipantFontName Source Code Pro
+ParticipantFontSize 17
+
+ActorFontSize 17
+ActorFontName Source Code Pro
+}
+
+title <u>SSD – View Tower Range</u>
+
+actor Player #blue
+participant ":System" as System #yellow
+
+== Main Scenario ==
+Player -> System: clickTower(towerID)
+
+alt Range data available
+    System -> System: calculateRange(towerStats)
+    
+    alt Overlay animation success
+        System -> System: showRangeOverlay(radius)
+        note right of System
+            Circle shown around tower.
+        end note
+    else Animation fails
+        System -> System: showFallbackRangeOverlay()
+        note right of System
+            Fallback visual used.
+        end note
+    end
+
+    Player -> System: moveCursorAway()
+    System -> System: hideRangeOverlay()
+
+else Range data missing
+    System -> System: showError("Missing range data")
+    note right of System
+        No overlay shown.
+    end note
+end
+
+@enduml

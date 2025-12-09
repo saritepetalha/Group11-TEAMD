@@ -1,0 +1,34 @@
+@startuml
+!theme mars
+
+title Communication Diagram - Projectile Flow
+
+skinparam linestyle ortho
+skinparam rectangle {
+  backgroundColor #FFF5F5
+  borderColor Black
+}
+
+' Participants
+
+rectangle "Tower" as Tower
+rectangle "Enemy" as Enemy
+rectangle "ProjectileManager" as PM
+rectangle "Projectile" as Projectile
+rectangle "EnemyManager" as EnemyManager
+rectangle "Explosion" as Explosion
+
+
+' Create Projectile
+
+Tower -down- PM : ↓ 1: newProjectile(t, e)
+PM -down- Projectile : ↓ 1.1: new Projectile(...)\n ↓ 2.1: isActive() → true\n↓ 2.1: move()
+
+' Game Loop Frame
+
+external - PM : → 2: update()
+PM -down- PM : 2.3: isProjHittingEnemy(p)\n2.3.5: isProjectileOutOfBounds(projectile)
+PM -down- EnemyManager : ↓ 2.3.1 [Enemy is hit]:\ngetEnemies() → List<Enemy>
+PM -up- Enemy : ↑ 2.3.2: hurt(damage)\n ↑ 2.3.4 * [nearby]: hurt(damage)
+PM -down- Explosion : ↓ 2.3.3 [ARTILLERY/MAGE]: new Explosion(pos)\n ↓ 2.4 *: update()
+@enduml

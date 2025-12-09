@@ -1,0 +1,182 @@
+@startuml
+skinparam sequence {
+ParticipantPadding 40
+BoxPadding 10
+ClassFontName Source Code Pro
+ArrowColor MidnightBlue
+ActorBorderColor MidnightBlue
+
+ParticipantBorderColor DeepSkyBlue
+ParticipantBackgroundColor DodgerBlue
+ParticipantFontName Source Code Pro
+ParticipantFontSize 17
+
+ActorFontSize 17
+ActorFontName Source Code Pro
+}
+
+title <u>SSD – Sell Tower (Advanced Management System)</u>
+
+actor Player #blue
+participant ":PlayingController" as Controller #yellow
+participant ":TowerManager" as TowerMgr #orange
+participant ":PlayerManager" as PlayerMgr #lightgreen
+participant ":TileManager" as TileMgr #pink
+participant ":Tower" as Tower #lightblue
+participant ":PlayingUI" as UI #lightcoral
+participant ":LightDecorator" as LightTower #lavender
+
+== Enhanced Tower Selling Flow ==
+Player -> Controller: rightMouseClicked(x, y)
+Controller -> Controller: convertToTileCoordinates(x, y)
+Controller -> TowerMgr: getTowerAt(tileX, tileY)
+
+alt Tower exists at location
+    TowerMgr --> Controller: tower
+    Controller -> UI: showTowerDetailsPopup(tower)
+    
+    UI -> Tower: getTowerStats()
+    activate Tower
+    Tower -> Tower: getCondition()
+    Tower -> Tower: getLevel()
+    Tower -> Tower: getType()
+    Tower -> Tower: getCurrentWarriors()
+    Tower -> Tower: getUsageCount()
+    Tower --> UI: towerStats
+    deactivate Tower
+    
+    UI -> UI: displayTowerInfo(stats, condition, warriors)
+    UI -> UI: calculateSellValue(tower)
+    UI --> Player: showSellOptionMenu(sellValue, towerInfo)
+
+    alt Player chooses "Sell Tower"
+        Player -> UI: selectSellTower()
+        UI -> Controller: confirmTowerSale(tower)
+        
+        Controller -> TowerMgr: validateTowerSale(tower)
+        
+        alt Tower can be sold
+            TowerMgr --> Controller: true
+            
+            alt Tower has active warriors
+                TowerMgr -> TowerMgr: getWarriors(tower)
+                TowerMgr -> TowerMgr: removeAllWarriors(tower)
+                TowerMgr -> TowerMgr: updateWarriorCount(tower, 0)
+                note right of TowerMgr
+                    🏃‍♂️ All spawned warriors removed
+                    Warrior count reset to 0
+                end note
+            end
+            
+            TowerMgr -> TowerMgr: calculateRefund(tower)
+            TowerMgr -> TowerMgr: getBaseSellValue(towerType)
+            TowerMgr -> TowerMgr: applyConditionMultiplier(condition)
+            TowerMgr -> TowerMgr: applyUpgradeBonus(level)
+            
+            alt Tower has light upgrade
+                TowerMgr -> LightTower: hasLightUpgrade(tower)
+                LightTower --> TowerMgr: true
+                TowerMgr -> TowerMgr: addLightUpgradeRefund()
+                note right of TowerMgr
+                    💡 Light upgrade refund included
+                    Bonus for upgrade investment
+                end note
+            end
+            
+            TowerMgr -> TowerMgr: calculateFinalRefund()
+            TowerMgr --> Controller: refundAmount
+            
+            Controller -> TowerMgr: removeTower(tower)
+            TowerMgr -> TowerMgr: towers.remove(tower)
+            
+            alt Original tile was dead tree
+                TowerMgr -> TowerMgr: resetTileToDeadTree(tower)
+                TowerMgr -> TileMgr: setTile(tileX, tileY, DEAD_TREE)
+                note right of TowerMgr
+                    🌳 Restored to dead tree state
+                    Can be used for future building
+                end note
+            else Original tile was grass
+                TowerMgr -> TowerMgr: resetTileToGrass(tower)
+                TowerMgr -> TileMgr: setTile(tileX, tileY, GRASS)
+                note right of TowerMgr
+                    🌱 Restored to grass tile
+                    Ready for new placement
+                end note
+            end
+            
+            TowerMgr --> Controller: towerRemoved
+            
+            Controller -> PlayerMgr: addGold(refundAmount)
+            PlayerMgr -> PlayerMgr: gold += refundAmount
+            PlayerMgr -> PlayerMgr: updateGoldDisplay()
+            PlayerMgr --> Controller: goldAdded
+            
+            Controller -> UI: closeTowerMenu()
+            Controller --> Player: towerSoldSuccessfully(refundAmount)
+            
+            note right of Controller
+                💰 Tower Sale Complete:
+                ✓ Tower removed from game
+                ✓ Refund calculated by condition
+                ✓ Tile properly restored
+                ✓ Warriors cleaned up
+                ✓ Gold added to player
+                ✓ UI updated
+            end note
+            
+        else Tower cannot be sold
+            TowerMgr --> Controller: false
+            Controller -> UI: showSaleError("Tower cannot be sold")
+            UI --> Player: displayError("Sale blocked!")
+            note right of UI
+                🚫 Sale Prevention Reasons:
+                - Tower under attack
+                - Critical defense position
+                - System state invalid
+            end note
+        end
+
+    else Player selects "Upgrade Tower"
+        Player -> UI: selectUpgradeTower()
+        UI -> Controller: showUpgradeOptions(tower)
+        Controller -> TowerMgr: getAvailableUpgrades(tower)
+        
+        alt Tower is upgradeable
+            TowerMgr --> Controller: upgradeOptions[]
+            Controller -> UI: displayUpgradeMenu(options, costs)
+            UI --> Player: showUpgradeChoices()
+            note right of UI
+                ⬆️ Upgrade Options Available:
+                - Damage enhancement
+                - Range improvement  
+                - Light upgrade
+                - Special abilities
+            end note
+        else Tower at max level
+            TowerMgr --> Controller: noUpgradesAvailable
+            Controller -> UI: showMessage("Tower fully upgraded")
+            UI --> Player: maxLevelReached()
+        end
+
+    else Player clicks elsewhere
+        Player -> Controller: clickElsewhere()
+        Controller -> UI: dismissTowerMenu()
+        UI -> UI: closeTowerPopup()
+        UI --> Player: menuClosed()
+        note right of UI
+            ❌ Menu dismissed
+            No action taken
+        end note
+    end
+
+else No tower at location
+    TowerMgr --> Controller: null
+    Controller --> Player: noTowerSelected()
+    note right of Controller
+        📍 Empty tile clicked
+        No tower interaction available
+    end note
+end
+
+@enduml

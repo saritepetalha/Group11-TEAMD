@@ -1,0 +1,60 @@
+@startuml
+!theme reddress-lightblue
+
+title Sprite Atlas Usage Across Game Managers
+
+participant "Game Initialization" as Init
+participant "LoadSave" as LoadSave
+participant "ImageIO" as ImageIO
+participant "TileManager" as TileManager
+participant "TowerManager" as TowerManager
+participant "EnemyManager" as EnemyManager
+participant "ProjectileManager" as ProjectileManager
+
+== Load Sprite Atlas Once ==
+
+activate Init
+Init -> LoadSave : getSpriteAtlas()
+activate LoadSave
+LoadSave -> ClassLoader : getResourceAsStream("spriteatlas.png")
+ClassLoader --> LoadSave : InputStream
+
+LoadSave -> ImageIO : read(InputStream)
+activate ImageIO
+ImageIO --> LoadSave : BufferedImage
+deactivate ImageIO
+
+LoadSave --> Init : spriteAtlas (BufferedImage)
+deactivate LoadSave
+
+== SpriteAtlas Shared Across Managers ==
+
+Init -> TileManager : new TileManager(spriteAtlas)
+activate TileManager
+TileManager -> TileManager : extract tile sprites
+activate TileManager
+deactivate TileManager
+deactivate TileManager
+
+Init -> TowerManager : new TowerManager(spriteAtlas)
+activate TowerManager
+TowerManager -> TowerManager : extract tower sprites
+activate TowerManager
+deactivate TowerManager
+deactivate TowerManager
+
+Init -> EnemyManager : new EnemyManager(spriteAtlas)
+activate EnemyManager
+EnemyManager -> EnemyManager : extract enemy sprites
+activate EnemyManager
+deactivate EnemyManager
+deactivate EnemyManager
+
+Init -> ProjectileManager : new ProjectileManager(spriteAtlas)
+activate ProjectileManager
+ProjectileManager -> ProjectileManager : extract projectile & explosion sprites
+activate ProjectileManager
+deactivate ProjectileManager
+deactivate ProjectileManager
+deactivate Init
+@enduml

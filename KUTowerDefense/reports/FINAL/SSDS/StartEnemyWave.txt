@@ -1,0 +1,92 @@
+@startuml
+
+skinparam sequence {
+ParticipantPadding 40
+BoxPadding 10
+ClassFontName Source Code Pro
+ArrowColor MidnightBlue
+ActorBorderColor MidnightBlue
+
+ParticipantBorderColor DeepSkyBlue
+ParticipantBackgroundColor DodgerBlue
+ParticipantFontName Source Code Pro
+ParticipantFontSize 17
+
+ActorFontSize 17
+ActorFontName Source Code Pro
+}
+
+title <u>SSD – Start Enemy Wave (Advanced Wave System)</u>
+
+participant ":PlayingModel" as PlayingModel #orchid
+participant ":WaveManager" as WaveManager #yellow
+participant ":EnemyManager" as EnemyManager #orange
+
+== Wave Progression Flow ==
+PlayingModel -> WaveManager: update(gameSpeedMultiplier)
+
+alt Waiting for next wave
+    alt Wave timer active
+        WaveManager -> WaveManager: interWaveTick += gameSpeedMultiplier
+        
+        alt Timer completed
+            WaveManager -> WaveManager: waveIndex++
+            WaveManager -> WaveManager: prepareNextWave()
+            WaveManager -> WaveManager: prepareNextGroup()
+            WaveManager -> WaveManager: populateEnemyQueue()
+            note right of WaveManager
+                Wave prepared with groups and enemy composition.
+            end note
+        end
+    else Wave timer not active
+        WaveManager -> WaveManager: checkIfAllEnemiesGone()
+        
+        alt All enemies cleared
+            WaveManager -> WaveManager: startInterWaveTimer()
+            note right of WaveManager
+                Starting countdown to next wave.
+            end note
+        end
+    end
+
+else Waiting for next group
+    WaveManager -> WaveManager: groupDelayTick += gameSpeedMultiplier
+    
+    alt Group delay completed
+        WaveManager -> WaveManager: groupIndex++
+        WaveManager -> WaveManager: prepareNextGroup()
+        WaveManager -> WaveManager: populateEnemyQueue()
+    end
+
+else Waiting for next enemy
+    WaveManager -> WaveManager: enemyDelayTick += gameSpeedMultiplier
+    
+    alt Enemy delay completed
+        WaveManager -> WaveManager: resetEnemyWait()
+    end
+
+else Ready to spawn
+    alt Enemy queue not empty
+        WaveManager -> WaveManager: pollEnemyFromQueue()
+        WaveManager -> EnemyManager: spawnEnemy(enemyType)
+        EnemyManager -> EnemyManager: createEnemyInstance()
+        EnemyManager -> EnemyManager: applyOptionsToEnemy()
+        EnemyManager -> EnemyManager: addToEnemyList()
+        
+        alt More enemies in group
+            WaveManager -> WaveManager: waitForNextEnemy()
+        else Group complete
+            alt More groups in wave
+                WaveManager -> WaveManager: waitForNextGroup()
+            else Wave complete
+                WaveManager -> WaveManager: pendingWaveFinish = true
+                note right of WaveManager
+                    Wait for all enemies to be cleared
+                    before starting inter-wave timer.
+                end note
+            end
+        end
+    end
+end
+
+@enduml

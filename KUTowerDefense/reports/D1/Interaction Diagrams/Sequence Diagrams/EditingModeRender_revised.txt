@@ -1,0 +1,53 @@
+@startuml
+!theme reddress-lightred
+participant "Game"
+participant "Render"
+participant "Playing"
+participant "TileManager"
+participant "EditTiles"
+participant "TheButton"
+
+title Editing Mode Scene Render Flow
+[o-> Game: run()
+activate Game
+create Render
+Game -> Render: <<create>> new Render()
+activate Render
+Render -> Playing : render()
+activate Playing
+
+Playing -> TileManager : getSprite()
+activate TileManager #FFDAB9
+TileManager --> Playing
+deactivate TileManager
+
+Playing -> EditTiles : draw()
+activate EditTiles
+
+EditTiles -> EditTiles : drawButtons()
+activate EditTiles #FFDAB9
+deactivate EditTiles
+
+loop for each button in the EditMode
+    EditTiles -> TheButton : draw()
+    activate TheButton #FFDAB9
+    TheButton --> EditTiles
+    deactivate TheButton
+end
+
+EditTiles -> TileManager : getSprite()
+activate TileManager #FFDAB9
+TileManager --> EditTiles
+deactivate TileManager
+
+EditTiles --> Playing
+deactivate EditTiles
+
+Playing -> Playing : drawSelectedTile()
+activate Playing #FFDAB9
+deactivate Playing
+deactivate Playing
+
+deactivate Render
+deactivate Game
+@enduml

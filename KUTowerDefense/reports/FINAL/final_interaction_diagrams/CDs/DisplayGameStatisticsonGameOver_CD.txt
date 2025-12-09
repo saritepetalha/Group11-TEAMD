@@ -1,0 +1,35 @@
+@startuml
+!theme mars
+title Communication Diagram - Display Game Statistics on Game Over
+
+skinparam rectangle {
+  BackgroundColor #E6F2FF
+  BorderColor black
+}
+
+actor "Player" as Player
+rectangle "PlayingModel" as PlayingModel
+rectangle "PlayingController" as PlayingController
+rectangle "GameStatsRecord" as GameStatsRecord
+rectangle "GameOverScene" as GameOverScene
+rectangle "Game" as Game
+rectangle "AudioManager" as AudioManager
+rectangle "UI" as UI
+
+' === GAME ENDS (Victory or Defeat) ===
+PlayingModel -right- PlayingController : → 1: notifyObservers("victory"/"gameOver")\n← 1.1: createGameStatsRecord(isVictory)
+PlayingController -right- GameStatsRecord : → 1.2: collectStats()
+PlayingController -right- Game : → 1.3: getGameOverScene()
+PlayingController -down- GameOverScene : → 1.4: setStats(isVictory, goldEarned, enemiesSpawned,\n enemiesReachedEnd, towersBuilt, enemyDefeated,\n totalDamage, timePlayed)
+PlayingController -down- Game : → 1.5: changeGameState(GAME_OVER)
+
+GameOverScene -right- AudioManager : → 1.6: playVictoryMusic()/playDefeatMusic()
+GameOverScene -down- UI : → 1.7: render stats + buttons
+
+' === PLAYER INTERACTION ===
+Player -right- GameOverScene : clicks "Replay" or "Main Menu"
+GameOverScene -right- Game : → 2: resetGameWithSameLevel()/changeGameState(MENU)
+Game -right- PlayingModel : → 2.1: resetGameState()
+Game -down- AudioManager : → 2.2: playRandomGameMusic()/playMusic("lonelyhood")
+
+@enduml

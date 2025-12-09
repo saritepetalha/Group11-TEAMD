@@ -1,0 +1,169 @@
+@startuml
+skinparam sequence {
+ParticipantPadding 40
+BoxPadding 10
+ClassFontName Source Code Pro
+ArrowColor MidnightBlue
+ActorBorderColor MidnightBlue
+
+ParticipantBorderColor DeepSkyBlue
+ParticipantBackgroundColor DodgerBlue
+ParticipantFontName Source Code Pro
+ParticipantFontSize 17
+
+ActorFontSize 17
+ActorFontName Source Code Pro
+}
+
+title <u>SSD – Place Tower (Advanced Tower Defense System)</u>
+
+actor Player #blue
+participant ":PlayingController" as Controller #yellow
+participant ":TowerSelectionUI" as TowerUI #orange
+participant ":PlayerManager" as PlayerMgr #lightgreen
+participant ":TowerManager" as TowerMgr #pink
+participant ":TileManager" as TileMgr #lightcoral
+participant ":Tower" as Tower #lightblue
+participant ":TargetingStrategy" as Strategy #lavender
+
+== Enhanced Tower Placement Flow ==
+Player -> Controller: mouseClicked(x, y)
+Controller -> Controller: convertToTileCoordinates(x, y)
+Controller -> TileMgr: isValidTileForPlacement(tileX, tileY)
+
+alt Valid placement location
+    TileMgr --> Controller: true
+    Controller -> TowerUI: showTowerSelectionMenu(tileX, tileY)
+    TowerUI --> Player: displayTowerOptions(archer, artillery, mage, poison)
+
+    alt Player selects tower type
+        Player -> TowerUI: selectTowerType("archer")
+        TowerUI -> TowerUI: highlightSelectedTower("archer")
+        TowerUI -> TowerUI: displayTowerStats(damage, range, cost)
+        TowerUI -> TowerUI: showTargetingOptions()
+        
+        Player -> TowerUI: selectTargetingStrategy("FirstEnemy")
+        TowerUI -> Strategy: createStrategy("FirstEnemy")
+        Strategy --> TowerUI: targetingStrategy
+        
+        Player -> TowerUI: confirmPlacement()
+        TowerUI -> Controller: placeTower("archer", tileX, tileY, targetingStrategy)
+        
+        Controller -> PlayerMgr: validateGold(towerCost)
+        
+        alt Sufficient gold
+            PlayerMgr --> Controller: true
+            Controller -> TowerMgr: buildArcherTower(tileX, tileY, targetingStrategy)
+            
+            TowerMgr -> Tower: new ArcherTower(tileX, tileY, targetingStrategy)
+            activate Tower
+            Tower -> Tower: initializeStats()
+            Tower -> Tower: setDefaultCooldown()
+            Tower -> Tower: setDefaultRange()
+            Tower -> Tower: setDefaultDamage()
+            Tower --> TowerMgr: towerCreated
+            
+            TowerMgr -> TowerMgr: addTower(tower)
+            TowerMgr -> TileMgr: updateTileData(tileX, tileY, ARCHER_TOWER)
+            TowerMgr --> Controller: towerPlaced
+            
+            Controller -> PlayerMgr: spendGold(towerCost)
+            PlayerMgr -> PlayerMgr: deductGold(cost)
+            PlayerMgr -> PlayerMgr: updateGoldDisplay()
+            PlayerMgr --> Controller: goldDeducted
+            
+            Controller -> TowerUI: closeTowerMenu()
+            Controller --> Player: towerPlacedSuccessfully()
+            
+            note right of Tower
+                🏰 Tower Features Activated:
+                ✓ Attack range visualization
+                ✓ Targeting strategy active
+                ✓ Upgrade potential unlocked
+                ✓ Condition monitoring started
+                ✓ Special abilities available
+                ✓ Warrior spawn capability
+            end note
+            
+        else Insufficient gold
+            PlayerMgr --> Controller: false
+            Controller -> TowerUI: showInsufficientGoldWarning()
+            TowerUI --> Player: displayError("Not enough gold!")
+            note right of TowerUI
+                💰 Player needs more gold
+                Current options:
+                - Wait for enemy defeats
+                - Collect gold bags
+                - Use gold factory ultimate
+            end note
+        end
+
+    else Player selects upgrade options
+        Player -> TowerUI: viewUpgradeOptions()
+        TowerUI -> TowerUI: showUpgradeMenu(lightUpgrade, damageUpgrade)
+        Player -> TowerUI: selectLightUpgrade()
+        TowerUI -> Controller: requestLightUpgrade(existingTower)
+        
+        Controller -> TowerMgr: canUpgradeWithLight(tower)
+        alt Light upgrade available
+            TowerMgr --> Controller: true
+            Controller -> PlayerMgr: validateGold(lightUpgradeCost)
+            alt Sufficient gold for upgrade
+                PlayerMgr --> Controller: true
+                Controller -> TowerMgr: upgradeTowerWithLight(tower)
+                TowerMgr -> TowerMgr: createLightDecorator(tower)
+                TowerMgr --> Controller: towerUpgraded
+                Controller -> PlayerMgr: spendGold(upgradeCost)
+                Controller --> Player: upgradeComplete()
+                note right of TowerMgr
+                    🌟 Light Upgrade Applied:
+                    ✓ Increased visibility range
+                    ✓ Night combat bonus
+                    ✓ Enemy detection improved
+                end note
+            else Insufficient gold for upgrade
+                PlayerMgr --> Controller: false
+                Controller --> Player: insufficientGoldForUpgrade()
+            end
+        else Upgrade not available
+            TowerMgr --> Controller: false
+            Controller --> Player: upgradeNotAvailable()
+        end
+
+    else Player cancels selection
+        Player -> TowerUI: cancelSelection()
+        TowerUI -> Controller: cancelTowerPlacement()
+        Controller -> TowerUI: closeTowerMenu()
+        TowerUI --> Player: menuClosed()
+        note right of Controller
+            🚫 Placement cancelled
+            No changes made to game state
+        end note
+    end
+
+else Invalid placement location
+    TileMgr --> Controller: false
+    Controller -> Controller: checkTileType(tileX, tileY)
+    
+    alt Tile is road
+        Controller --> Player: showError("Cannot place on road!")
+    else Tile has obstacle
+        Controller --> Player: showError("Tile blocked by obstacle!")
+    else Tile already occupied
+        Controller --> Player: showError("Tile already occupied!")
+    else Out of bounds
+        Controller --> Player: showError("Invalid placement area!")
+    end
+    
+    note right of Controller
+        🚧 Placement Validation Failed
+        Player must select valid tile:
+        - Empty grass tiles
+        - Dead tree locations
+        - Specific build zones
+    end note
+end
+
+deactivate Tower
+
+@enduml

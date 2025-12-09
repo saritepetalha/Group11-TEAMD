@@ -58,4 +58,10 @@ ehthumbs.db
 Desktop.ini
 
 # Linux
-*~ 
+*~
+
+# Build artifacts and executables
+out/
+TowerDefenseBuild/
+*.exe
+*.ico 

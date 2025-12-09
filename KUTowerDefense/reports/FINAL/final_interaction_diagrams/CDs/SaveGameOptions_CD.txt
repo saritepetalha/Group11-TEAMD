@@ -1,0 +1,28 @@
+@startuml
+!theme mars
+title Communication Diagram - Save Game Options
+
+skinparam rectangle {
+  BackgroundColor #E6F2FF
+  BorderColor black
+}
+
+actor "Player" as Player
+rectangle "GameOptionsUI" as GameOptionsUI
+rectangle "AudioManager" as AudioManager
+rectangle "GameOptions" as GameOptions
+rectangle "OptionsIO" as OptionsIO
+rectangle "FileSystem" as FileSystem
+rectangle "Playing" as Playing
+
+Player -right- GameOptionsUI : clicks "Save Settings"
+GameOptionsUI -down- AudioManager : ↓ 1: playButtonClickSound()
+GameOptionsUI -up- GameOptionsUI : → 2: validateInputs()\n→ 3: show error message (if invalid)
+GameOptionsUI -up- GameOptions : ↑ 4: updateSettingsFromUI()
+GameOptionsUI -down- OptionsIO : ↓ 5: save(options)\n↓ 5.1: save(options, CONFIG_PATH)
+GameOptionsUI -down- OptionsIO : ↓ 6: saveCustom(options)\n↓ 6.1: save(options, CUSTOM_CONFIG_PATH)
+OptionsIO -down- FileSystem : ↓ 5.1.1: write to options.json\n↓ 6.1.1: write to custom_options.json
+GameOptionsUI -down- Playing : ↓ 7: reloadGameOptions()
+Playing -right- Playing : → 7.1: reloadDifficultyConfiguration()
+GameOptionsUI -left- Player : ← 8: show "Settings saved successfully!"
+@enduml

@@ -1,0 +1,21 @@
+@startuml
+!theme mars
+title Communication Diagram - Validate Map
+
+skinparam rectangle {
+  BackgroundColor #E6F2FF
+  BorderColor black
+}
+
+actor "Player" as Player
+rectangle "MapEditing" as MapEditing
+rectangle "BFSValidator" as BFSValidator
+rectangle "PopupHandler" as PopupHandler
+
+Player -right- MapEditing : clicks "Save"
+
+MapEditing -down- MapEditing : ↓ 1: findStartAndEnd()\n↓ 1.1: clear validationErrors\n↓ 1.2: enableSaveButton()\n↓ 1.3: add error messages\n↓ 1.4: disableSaveButton()
+MapEditing -up- BFSValidator : ↑ 2: validatePath(level)
+MapEditing -down- PopupHandler : ↓ 3: show(validationErrors)
+
+@enduml

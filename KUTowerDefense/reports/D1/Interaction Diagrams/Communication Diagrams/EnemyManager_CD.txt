@@ -1,0 +1,35 @@
+@startuml
+!theme mars
+
+title Communication Diagram - Enemy Manager Flow
+
+skinparam linestyle ortho
+skinparam rectangle {
+  backgroundColor #FFF5F5
+  borderColor Black
+}
+
+' Participants
+actor "User" as Actor
+rectangle "Game" as Game
+rectangle "Playing" as Playing
+rectangle "EnemyManager" as EM
+rectangle "Goblin" as Goblin
+rectangle "Utilz" as Utilz
+rectangle "TileManager" as TileManager
+
+' Spawning Enemy
+Actor - Game : starts →
+
+Game -right- Playing : → 1: spawnEnemy(Goblin) \n → 2: update()
+Playing -down- EM : ↓ 1.1: spawnEnemy(Goblin)\n ↓ 2.1 *: update()\n ↑ 2.1.3a.1: removeOneLife()
+EM -down- Goblin : ↓ 1.1.1.1: new Goblin(x, y, id, EM) \n ↓ 2.1.1: isAlive()\n ↓ 2.1.2.2: move(speed, direction)\n ↓ 2.1.2.3a [Reached End]: kill()\n ↓ 2.1.2.3b.1 [Dir Changed]: setPos(...)\n ↓ 2.1.2.3b.2: setLastDir(newDir)
+
+' For each enemy
+EM -down- EM :1.1.1: addEnemy(Goblin)\n2.1.2: updateEnemyMoveNew(Goblin)\n2.1.2.1: getEnemyTile(Goblin)
+EM -left- TileManager : ← 2.1.2.1.1: getTypeArr()
+EM -down- Utilz : ↓ 2.1.2.1.2: GetRoadDirArr(...)
+
+
+
+@enduml

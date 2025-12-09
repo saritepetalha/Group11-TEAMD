@@ -1,0 +1,53 @@
+@startuml
+skinparam ParticipantPadding 100
+skinparam sequence {
+BoxPadding 10
+ClassFontName Source Code Pro
+ArrowColor MidnightBlue
+
+ParticipantBorderColor DeepSkyBlue
+ParticipantBackgroundColor DodgerBlue
+ParticipantFontName Source Code Pro
+ParticipantFontSize 17
+
+ActorFontSize 17
+ActorFontName Source Code Pro
+}
+
+title <u>SSD – Display Game Over</u>
+
+actor Player #blue
+participant ":System" as System #yellow
+
+
+== Start ==
+System -> System: checkPlayerLife()
+
+alt Life == 0
+    System -> System: pauseGame()
+    System -> System: showGameOverScreen()
+    System -> System: stopOrChangeMusic()
+    
+    alt Player clicks anywhere
+        Player -> System: clickGameOverScreen()
+        System -> System: resetGameState()
+        System -> System: returnToMainMenu()
+        note right of System
+            Game is reset and menu shown.
+        end note
+
+    else Player closes game
+        Player -> System: closeGame()
+        System -> System: saveExitState()
+        note right of System
+            Game exited safely.
+        end note
+    end
+
+else Life > 0
+    note right of System
+        Game continues. No action taken.
+    end note
+end
+
+@enduml

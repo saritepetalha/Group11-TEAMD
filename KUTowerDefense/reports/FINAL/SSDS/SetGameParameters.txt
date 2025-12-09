@@ -1,0 +1,139 @@
+@startuml
+skinparam sequence {
+ParticipantPadding 40
+BoxPadding 10
+ClassFontName Source Code Pro
+ArrowColor MidnightBlue
+ActorBorderColor MidnightBlue
+
+ParticipantBorderColor DeepSkyBlue
+ParticipantBackgroundColor DodgerBlue
+ParticipantFontName Source Code Pro
+ParticipantFontSize 17
+
+ActorFontSize 17
+ActorFontName Source Code Pro
+}
+
+title <u>SSD – Set Game Parameters (GameOptionsUI)</u>
+
+actor Player #blue
+participant ":GameOptionsUI" as OptionsUI #yellow
+participant ":OptionsIO" as OptionsIO #lightgreen
+participant ":AudioManager" as AudioMgr #pink
+participant ":Game" as Game #lightblue
+
+== GameOptionsUI Configuration Flow ==
+Player -> OptionsUI: openGameOptionsUI()
+OptionsUI -> OptionsIO: load()
+activate OptionsIO
+OptionsIO --> OptionsUI: gameOptions
+deactivate OptionsIO
+
+OptionsUI -> OptionsUI: createTabbedPane()
+OptionsUI -> OptionsUI: createGeneralPanel()
+OptionsUI -> OptionsUI: createEnemyStatsPanel()
+OptionsUI -> OptionsUI: createTowerStatsPanel()
+OptionsUI -> OptionsUI: createWavesPanel()
+OptionsUI -> OptionsUI: loadValuesFromOptions()
+OptionsUI --> Player: displayConfigurationUI()
+
+loop While configuring parameters
+    alt Player modifies general settings
+        Player -> OptionsUI: modifyStartingGold(value)
+        Player -> OptionsUI: modifyStartingPlayerHP(value)
+        Player -> OptionsUI: modifyStartingShield(value)
+        Player -> OptionsUI: modifyInterWaveDelay(value)
+        
+    else Player modifies enemy stats
+        Player -> OptionsUI: selectEnemyTab()
+        Player -> OptionsUI: modifyEnemyStats(type, hitPoints, moveSpeed, goldReward)
+        
+    else Player modifies tower stats
+        Player -> OptionsUI: selectTowerTab()
+        Player -> OptionsUI: modifyTowerStats(type, buildCost, range, fireRate, aoeRadius, damage)
+        
+    else Player configures waves
+        Player -> OptionsUI: selectWaveTab()
+        Player -> OptionsUI: addNewWave()
+        OptionsUI -> OptionsUI: createWavePanel()
+        Player -> OptionsUI: addNewGroup()
+        OptionsUI -> OptionsUI: createGroupPanel()
+        Player -> OptionsUI: configureEnemyComposition(enemyType, count)
+        Player -> OptionsUI: setIntraEnemyDelay(delay)
+    end
+    
+    OptionsUI -> AudioMgr: playButtonClickSound()
+end
+
+alt Player saves configuration
+    Player -> OptionsUI: clickSaveSettings()
+    OptionsUI -> AudioMgr: playButtonClickSound()
+    OptionsUI -> OptionsUI: saveOptions()
+    
+    alt Input validation successful
+        OptionsUI -> OptionsUI: updateOptionsFromFields()
+        
+        OptionsUI -> OptionsIO: save(options)
+        activate OptionsIO
+        OptionsIO -> OptionsIO: writeToFile(optionsPath)
+        OptionsIO --> OptionsUI: saveSuccessful
+        deactivate OptionsIO
+        
+        OptionsUI -> OptionsIO: saveCustom(options)
+        activate OptionsIO
+        OptionsIO -> OptionsIO: writeToFile(customOptionsPath)
+        OptionsIO --> OptionsUI: customSaveSuccessful
+        deactivate OptionsIO
+        
+        alt Game is currently running
+            OptionsUI -> Game: getPlaying()
+            Game --> OptionsUI: playingInstance
+            OptionsUI -> Game: reloadGameOptions()
+            Game --> OptionsUI: optionsReloaded
+        end
+        
+        OptionsUI --> Player: showSuccessMessage("Settings saved successfully!")
+        
+    else Input validation failed
+        OptionsUI --> Player: showErrorMessage("Invalid number format")
+        note right of OptionsUI
+            Validation errors:
+            - NumberFormatException
+            - IllegalArgumentException
+        end note
+    end
+
+else Player resets to defaults
+    Player -> OptionsUI: clickResetDefaults()
+    OptionsUI -> AudioMgr: playButtonClickSound()
+    OptionsUI -> OptionsUI: showConfirmationDialog()
+    
+    alt Player confirms reset
+        Player -> OptionsUI: confirmReset()
+        OptionsUI -> OptionsIO: resetToDefaults()
+        activate OptionsIO
+        OptionsIO -> OptionsIO: loadDefaults()
+        OptionsIO --> OptionsUI: defaultOptions
+        deactivate OptionsIO
+        
+        OptionsUI -> OptionsUI: loadValuesFromOptions()
+        OptionsUI --> Player: settingsResetToDefaults()
+        
+    else Player cancels reset
+        OptionsUI --> Player: resetCancelled()
+    end
+
+else Player returns to menu
+    Player -> OptionsUI: clickBackButton()
+    OptionsUI -> AudioMgr: playButtonClickSound()
+    
+    alt Game context available
+        OptionsUI -> Game: changeGameState(MENU)
+        Game --> Player: returnToMainMenu()
+    else Game context not available
+        OptionsUI --> Player: showError("Cannot return to menu")
+    end
+end
+
+@enduml

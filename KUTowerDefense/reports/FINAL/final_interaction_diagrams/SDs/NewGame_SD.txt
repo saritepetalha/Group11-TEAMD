@@ -1,0 +1,40 @@
+@startuml
+actor Player
+participant Menu
+participant Game
+participant GameStates <<enumeration>>
+participant LevelSelectionScene
+participant AudioManager
+participant SkillSelectionScene
+
+== Player clicks "New Game" ==
+
+Player -> Menu : mouseClicked(x, y)
+Menu -> Menu : check if playButton.contains(x, y)
+Menu -> AudioManager : playButtonClickSound()
+Menu -> Game : changeGameState(GameStates.NEW_GAME_LEVEL_SELECT)
+
+== Game transitions to level selection ==
+
+Game -> Game : gameState = NEW_GAME_LEVEL_SELECT
+Game -> LevelSelectionScene : refreshLevelList()
+LevelSelectionScene -> LevelSelectionScene : loadLevelFiles()
+LevelSelectionScene -> LevelSelectionScene : initUI()
+
+== Player selects level and difficulty ==
+
+Player -> LevelSelectionScene : click level preview
+LevelSelectionScene -> AudioManager : playButtonClickSound()
+LevelSelectionScene -> LevelSelectionScene : showDifficultyOverlay()
+Player -> LevelSelectionScene : select difficulty
+LevelSelectionScene -> AudioManager : playButtonClickSound()
+LevelSelectionScene -> Game : startPlayingWithDifficulty(levelData, overlayData, levelName, difficulty)
+LevelSelectionScene -> Game : changeGameState(GameStates.SKILL_SELECTION)
+
+== Game transitions to skill selection ==
+
+Game -> Game : gameState = SKILL_SELECTION
+Game -> SkillSelectionScene : resetSkillSelections()
+Game -> SkillSelectionScene : initUI()
+
+@enduml

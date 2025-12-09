@@ -1,0 +1,31 @@
+@startuml
+!theme mars
+
+title Communication Diagram - Main Menu Construction
+
+skinparam linestyle ortho
+skinparam rectangle {
+  backgroundColor #FFF3E0
+  borderColor Black
+}
+
+' Participants
+actor "User" as Actor
+rectangle "Game" as Game
+rectangle "Menu" as Menu
+rectangle "GameScene" as GameScene
+rectangle "TheButton" as TheButton
+
+' Object Creation
+Actor - Game: → run()
+Game - Menu : → 1: <<create>> new Menu(game)
+
+Menu -down- GameScene : ↓ 1.1: <<create>> super(game)
+
+' Self interactions within Menu
+Menu -down- Menu : 1.2: importImg()\n1.3: loadSprites()\n1.4: initButtons()\n1.5: loadBackground()
+
+' Button creations (shared target, different messages)
+Menu -up- TheButton : ↑ 1.4.1: <<create>> new TheButton("New Game", ...)\n  ↑ 1.4.2: <<create>> new TheButton("Load Game", ...)\n ↑ 1.4.3: <<create>> new TheButton("Edit Mode", ...)\n  ↑ 1.4.4:  <<create>> new TheButton("Options", ...)\n  ↑ 1.4.5: <<create>> new TheButton("Quit", ...)
+
+@enduml

@@ -1,0 +1,64 @@
+@startuml
+!theme reddress-lightorange
+
+title Tower Manager SD
+
+participant "TowerManager" as TowerManager
+participant "Tower" as Tower
+participant "Enemy" as Enemy
+participant "Playing" as Playing
+participant "EnemyManager" as EnemyManager
+participant "Utilz" as Utilz
+
+== Tower Manager - Game Loop Frame ==
+[o-> TowerManager : update()
+activate TowerManager
+
+loop for each Tower
+    TowerManager -> Tower : update()
+    activate Tower
+    Tower --> TowerManager
+    deactivate Tower
+
+    TowerManager -> Playing : getEnemyManger()
+    activate Playing
+    Playing -> EnemyManager : getEnemies()
+    activate EnemyManager
+    EnemyManager --> Playing : List<Enemy>
+    deactivate EnemyManager
+    Playing --> TowerManager : List<Enemy>
+    deactivate Playing
+
+    loop for each Enemy
+        TowerManager -> Enemy : isAlive()
+        activate Enemy
+        Enemy --> TowerManager : true
+        deactivate Enemy
+
+        TowerManager -> Utilz : GetHypoDistance(tX, tY, eX, eY)
+        activate Utilz
+        Utilz --> TowerManager : distance
+        deactivate Utilz
+
+        alt distance < tower.range
+            TowerManager -> Tower : isCooldownOver()
+            activate Tower
+            Tower --> TowerManager : true
+            deactivate Tower
+
+            TowerManager -> Playing : shootEnemy(Tower, Enemy)
+            activate Playing
+            Playing --> TowerManager
+            deactivate Playing
+
+            TowerManager -> Tower : resetCooldown()
+            activate Tower
+            Tower --> TowerManager
+            deactivate Tower
+        end
+
+    end
+end
+
+deactivate TowerManager
+@enduml

@@ -1,0 +1,95 @@
+@startuml
+skinparam sequence {
+ParticipantPadding 40
+BoxPadding 10
+ClassFontName Source Code Pro
+ArrowColor MidnightBlue
+ActorBorderColor MidnightBlue
+
+ParticipantBorderColor DeepSkyBlue
+ParticipantBackgroundColor DodgerBlue
+ParticipantFontName Source Code Pro
+ParticipantFontSize 17
+
+ActorFontSize 17
+ActorFontName Source Code Pro
+}
+
+title <u>SSD – Save Game Options</u>
+
+actor Player #blue
+participant ":GameOptionsUI" as OptionsUI #yellow
+participant ":GameOptions" as GameOptions #orange
+participant ":OptionsIO" as OptionsIO #lightgreen
+participant ":Game" as Game #pink
+participant ":Playing" as Playing #lightblue
+
+== Main Scenario ==
+Player -> OptionsUI: clickSaveButton()
+
+OptionsUI -> OptionsUI: saveOptions()
+
+alt Parse and validate all fields
+    OptionsUI -> GameOptions: setStartingGold(parseInt(field))
+    OptionsUI -> GameOptions: setStartingPlayerHP(parseInt(field))
+    OptionsUI -> GameOptions: setStartingShield(parseInt(field))
+    OptionsUI -> GameOptions: setInterWaveDelay(parseDouble(field))
+    
+    loop For each EnemyType
+        OptionsUI -> GameOptions: updateEnemyStats(type, hitPoints, moveSpeed, goldReward)
+    end
+    
+    loop For each TowerType
+        OptionsUI -> GameOptions: updateTowerStats(type, buildCost, range, fireRate, damage)
+    end
+    
+    loop For each Wave
+        OptionsUI -> GameOptions: updateWaveConfiguration(wavePanel.getWave())
+    end
+    
+    OptionsUI -> OptionsIO: save(options)
+    OptionsIO -> OptionsIO: writeToPath(CONFIG_PATH)
+    
+    OptionsUI -> OptionsIO: saveCustom(options)
+    OptionsIO -> OptionsIO: writeToPath(CUSTOM_CONFIG_PATH)
+    
+    alt Save successful
+        OptionsIO --> OptionsUI: success
+        
+        OptionsUI -> Game: getPlaying()
+        Game --> OptionsUI: playingInstance
+        
+        alt Playing instance exists
+            OptionsUI -> Playing: reloadGameOptions()
+            Playing -> Playing: loadOptionsOrDefault()
+            Playing -> Playing: updateAllManagers()
+        end
+        
+        OptionsUI -> OptionsUI: showSuccessMessage("Settings saved successfully!")
+        
+        note right of OptionsUI
+            Settings saved to:
+            - options.json (current)
+            - custom_options.json (backup)
+            Playing instance reloaded with new settings.
+        end note
+        
+    else Save failed
+        OptionsIO --> OptionsUI: IOException
+        OptionsUI -> OptionsUI: showErrorMessage("Failed to save settings")
+        
+        note right of OptionsUI
+            Settings not saved due to file system error.
+        end note
+    end
+    
+else Parse validation failed
+    OptionsUI -> OptionsUI: showErrorMessage("Invalid input values")
+    
+    note right of OptionsUI
+        Number format exception or invalid values.
+        Settings not saved.
+    end note
+end
+
+@enduml

@@ -1,0 +1,34 @@
+@startuml
+!theme mars
+
+title Communication Diagram - Load Level Operation
+
+skinparam linestyle ortho
+skinparam rectangle {
+  backgroundColor #E6FFE6
+  borderColor Black
+}
+
+actor "Player" as Player
+rectangle "Game/LevelManager" as Caller
+rectangle "LoadSave" as LoadSave
+rectangle "Utilz" as Utilz
+rectangle "Scanner" as Scanner
+
+' Message flow
+Player -right- Caller : clicks "Load Game"
+
+Caller -right- LoadSave : --> 1: GetLevelData() → Get tile IDs from file\n<-- 1.4: return levelData\n<-- 2.4: return start/end as PathPoint\n--> 2: GetLevelPathPoints()→ Extract start/end PathPoints
+
+LoadSave - LoadSave : 1.1: ReadFromFile()\n2.1: ReadFromFile()\n2.3: extract list[144] to [147]\n[startX, startY, endX, endY]
+LoadSave -up--> Scanner : 1.2: new Scanner(lvlFile) \n 2.2: new Scanner(lvlFile)
+Scanner -down--> LoadSave : 1.2.2: List<Integer> \n 2.2.2: List<Integer>
+
+Scanner -right- Scanner : 1.2.1: read all lines\n2.2.1: read all lines
+
+LoadSave -down-> Utilz : 1.3: ArrayListTo2Dint(list, 16, 9)
+Utilz -up--> LoadSave : \n\n\n1.3.1: int[][] levelData
+
+
+
+@enduml

@@ -1,0 +1,54 @@
+@startuml
+skinparam sequence {
+ParticipantPadding 100
+BoxPadding 10
+ClassFontName Source Code Pro
+ArrowColor MidnightBlue
+ActorBorderColor MidnightBlue
+
+ParticipantBorderColor DeepSkyBlue
+ParticipantBackgroundColor DodgerBlue
+ParticipantFontName Source Code Pro
+ParticipantFontSize 17
+
+ActorFontSize 17
+ActorFontName Source Code Pro
+}
+
+title <u>SSD – Validate Map</u>
+
+actor Player #blue
+participant ":System" as System #yellow
+participant "File System" as FileSystem #lightgreen
+
+== Main Scenario ==
+Player -> System: clickValidate()
+
+System -> FileSystem: loadMapFile(mapFileName)
+FileSystem --> System: mapData
+
+System -> System: validateMapStructure(mapData)
+System -> System: checkGameplayConstraints()
+
+alt Map is valid
+    System -> Player: showMessage("Map is valid. You may save.")
+    note right of System
+        Save is allowed.
+    end note
+
+else Map has errors
+    System -> Player: showValidationErrors(errors)
+
+    alt Multiple errors
+        note right of System
+            All issues displayed at once.
+        end note
+
+    else Critical errors present
+        note right of System
+            Critical issues block saving.
+        end note
+    end
+end
+
+@enduml

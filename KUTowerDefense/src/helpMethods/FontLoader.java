@@ -6,7 +6,7 @@ import java.io.InputStream;
 public class FontLoader {
     public static Font loadMedodicaFont(float size) {
         try {
-            InputStream is = FontLoader.class.getResourceAsStream("/fonts/MedodicaRegular.otf");
+            InputStream is = FontLoader.class.getResourceAsStream("/Fonts/MedodicaRegular.otf");
             if (is == null) {
                 throw new RuntimeException("Font not found in resources/fonts/MedodicaRegular.otf");
             }

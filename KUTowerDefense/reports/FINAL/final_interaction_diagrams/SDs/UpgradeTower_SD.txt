@@ -1,0 +1,64 @@
+@startuml
+actor Player
+
+participant TowerSelectionUI
+participant Playing
+participant TowerManager
+participant PlayerManager
+participant Tower
+participant AudioManager
+
+== Player interacts with tower ==
+
+Player -> TowerSelectionUI : click tower
+activate TowerSelectionUI
+TowerSelectionUI -> TowerSelectionUI : setSelectedTower(tower)
+TowerSelectionUI -> TowerSelectionUI : createButtons()
+TowerSelectionUI -> TowerSelectionUI : show tower info + Upgrade button
+TowerSelectionUI --> Player
+deactivate TowerSelectionUI
+
+== Player upgrades tower ==
+
+Player -> TowerSelectionUI : click "Upgrade"
+activate TowerSelectionUI
+TowerSelectionUI -> Tower : isUpgradeable()
+Tower --> TowerSelectionUI : return true/false
+
+alt if upgradeable
+    TowerSelectionUI -> PlayerManager : getGold()
+    PlayerManager --> TowerSelectionUI : return gold amount
+    TowerSelectionUI -> TowerSelectionUI : getUpgradeCost(tower)
+    TowerSelectionUI --> TowerSelectionUI : return cost
+
+    alt if gold sufficient
+        TowerSelectionUI -> PlayerManager : spendGold(cost)
+        PlayerManager --> TowerSelectionUI : return success
+        TowerSelectionUI -> Tower : upgrade()
+        activate Tower
+        Tower -> Tower : update stats (range, fire rate, etc.)
+        Tower --> TowerSelectionUI : return upgraded tower
+        deactivate Tower
+        
+        TowerSelectionUI -> TowerManager : replaceTower(oldTower, upgradedTower)
+        activate TowerManager
+        TowerManager -> TowerManager : triggerUpgradeEffect(upgradedTower)
+        TowerManager --> TowerSelectionUI
+        deactivate TowerManager
+        
+        TowerSelectionUI -> TowerSelectionUI : setSelectedTower(upgradedTower)
+        TowerSelectionUI -> Playing : updateUIResources()
+        Playing -> AudioManager : playUpgradeSound()
+        AudioManager --> Playing
+        Playing --> TowerSelectionUI
+    else insufficient gold
+        TowerSelectionUI -> TowerSelectionUI : show warning ("Not enough gold")
+    end
+else max level
+    TowerSelectionUI -> TowerSelectionUI : show warning ("Max level")
+end
+
+TowerSelectionUI --> Player
+deactivate TowerSelectionUI
+
+@enduml

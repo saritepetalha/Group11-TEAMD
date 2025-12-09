@@ -1,0 +1,53 @@
+@startuml
+!theme reddress-lightorange
+
+title Sequence Diagram - Save Level (Triggered by UI)
+
+
+participant "Editor/Playing" as Caller
+participant "LoadSave" as LoadSave
+participant "Utilz" as Utilz
+participant "PrintWriter" as PrintWriter
+
+== Save Triggered From UI ==
+[o-> Caller : clicks "Save" button
+activate Caller
+
+== Saving Level Data ==
+Caller -> LoadSave : SaveLevel(idArr, start, end)
+activate LoadSave
+
+alt File exists
+    LoadSave -> Utilz : TwoDto1DintArr(idArr)
+    activate Utilz
+    Utilz --> LoadSave : int[] flatArr
+    deactivate Utilz
+
+    LoadSave -> LoadSave : WriteToFile(flatArr, start, end)
+    activate LoadSave #FFDDCC
+
+    LoadSave -> PrintWriter : new PrintWriter(lvlFile)
+    activate PrintWriter
+
+    PrintWriter -> PrintWriter : println(flatArr values)
+    activate PrintWriter #FFDDCC
+    deactivate PrintWriter
+
+    PrintWriter -> PrintWriter : println(start.x, start.y, end.x, end.y)
+    activate PrintWriter #FFDDCC
+    deactivate PrintWriter
+
+    PrintWriter -> PrintWriter : close()
+    activate PrintWriter #FFDDCC
+    deactivate PrintWriter
+
+    deactivate PrintWriter
+    deactivate LoadSave
+
+else File does not exist
+    LoadSave -> Caller : print "File does not exist"
+end
+
+deactivate LoadSave
+deactivate Caller
+@enduml

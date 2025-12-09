@@ -1,0 +1,116 @@
+@startuml 
+title <u>SSD – Select Map/Level (Enhanced)</u>
+
+skinparam ParticipantPadding 100
+skinparam sequence {
+  BoxPadding 10
+  ClassFontName Source Code Pro
+  ArrowColor MidnightBlue
+
+  ParticipantBorderColor DeepSkyBlue
+  ParticipantBackgroundColor DodgerBlue
+  ParticipantFontName Source Code Pro
+  ParticipantFontSize 17
+
+  ActorFontSize 17
+  ActorFontName Source Code Pro
+}
+
+actor Player #blue
+participant ":LevelSelectionScene" as LevelSelection #yellow
+participant ":LevelSelectionStrategy" as Strategy #orange
+participant ":LoadSave" as LoadSave #lightgreen
+participant ":ThumbnailCache" as Cache #lightcoral
+participant ":PathValidator" as Validator #lightblue
+
+== Enhanced Level Selection Flow ==
+Player -> LevelSelection: displayAvailableMaps()
+LevelSelection -> Strategy: getLevelsToShow()
+
+alt All Levels Strategy
+    Strategy -> LoadSave: getSavedLevels()
+    LoadSave --> Strategy: allAvailableLevels[]
+else Saved Games Only Strategy  
+    Strategy -> LoadSave: getSavedLevels()
+    LoadSave -> LoadSave: filterSavedGames()
+    LoadSave --> Strategy: savedGameLevels[]
+end
+
+Strategy --> LevelSelection: filteredLevelList[]
+
+LevelSelection -> Cache: generateThumbnails(levelList)
+loop For each level
+    Cache -> LoadSave: loadLevel(levelName)
+    LoadSave --> Cache: levelData[][]
+    Cache -> Cache: generateThumbnail(levelData)
+    Cache -> Cache: cacheThumbnail(levelName, thumbnail)
+end
+Cache --> LevelSelection: thumbnailsReady
+
+LevelSelection --> Player: displayMapGrid(levels, thumbnails)
+
+loop While level not selected
+    Player -> LevelSelection: selectLevel(levelName)
+    LevelSelection -> LevelSelection: highlightLevel(levelName)
+    LevelSelection -> Cache: getCachedThumbnail(levelName)
+    Cache --> LevelSelection: thumbnail
+    LevelSelection --> Player: showLevelPreview(thumbnail)
+
+    Player -> LevelSelection: selectDifficulty(difficulty)
+    LevelSelection -> LevelSelection: updateDifficultySettings(difficulty)
+
+    Player -> LevelSelection: confirmSelection()
+
+    alt Level is valid
+        LevelSelection -> LoadSave: loadLevel(levelName)
+        LoadSave -> LoadSave: getLevelData(levelName)
+        LoadSave -> LoadSave: loadOverlay(levelName)
+        LoadSave --> LevelSelection: levelData[][], overlayData[][]
+        
+        LevelSelection -> Validator: validatePath(levelData, overlayData)
+        Validator -> Validator: findStartAndEndPoints()
+        Validator -> Validator: checkPathConnectivity()
+        
+        alt Path validation successful
+            Validator --> LevelSelection: ValidationResult.valid()
+            LevelSelection -> LevelSelection: queueLevel(levelName, difficulty)
+            LevelSelection --> Player: levelConfirmed()
+            note right of LevelSelection
+                Level is validated and confirmed.
+                Pathfinding verified.
+                Difficulty applied.
+                Loop ends.
+            end note
+
+        else Path validation failed
+            Validator --> LevelSelection: ValidationResult.invalid(errorMsg)
+            LevelSelection -> LevelSelection: showError("Invalid level path")
+            LevelSelection --> Player: pathValidationError
+            note right of LevelSelection
+                Level has invalid path structure.
+                Player must select different level.
+            end note
+        end
+
+    else Level file corrupted/missing
+        LoadSave --> LevelSelection: error("Level not found")
+        LevelSelection -> LevelSelection: showError("Failed to load level")
+        LevelSelection --> Player: fileErrorMessage
+        note right of LevelSelection
+            Level file is corrupted or missing.
+            Player can try another level.
+        end note
+
+    else Player cancels selection
+        Player -> LevelSelection: cancelSelection()
+        LevelSelection -> LevelSelection: clearSelection()
+        LevelSelection -> LevelSelection: returnToMainMenu()
+        LevelSelection --> Player: backToMainMenu
+        note right of LevelSelection
+            Selection cancelled.
+            Return to main menu.
+        end note
+    end
+end
+
+@enduml

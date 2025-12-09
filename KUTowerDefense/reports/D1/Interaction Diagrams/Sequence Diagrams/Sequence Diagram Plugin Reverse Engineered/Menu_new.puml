@@ -1,0 +1,53 @@
+@startuml
+participant Actor
+create Menu
+Actor -> Menu : new
+activate Menu
+create GameScene
+Menu -> GameScene : new
+activate GameScene
+GameScene --> Menu
+deactivate GameScene
+Menu -> Menu : importImg
+activate Menu
+Menu --> Menu
+deactivate Menu
+Menu -> Menu : loadSprites
+activate Menu
+Menu --> Menu
+deactivate Menu
+Menu -> Menu : initButtons
+activate Menu
+create TheButton
+Menu -> TheButton : new
+activate TheButton
+TheButton --> Menu
+deactivate TheButton
+create TheButton
+Menu -> TheButton : new
+activate TheButton
+TheButton --> Menu
+deactivate TheButton
+create TheButton
+Menu -> TheButton : new
+activate TheButton
+TheButton --> Menu
+deactivate TheButton
+create TheButton
+Menu -> TheButton : new
+activate TheButton
+TheButton --> Menu
+deactivate TheButton
+create TheButton
+Menu -> TheButton : new
+activate TheButton
+TheButton --> Menu
+deactivate TheButton
+Menu --> Menu
+deactivate Menu
+Menu -> Menu : loadBackground
+activate Menu
+Menu --> Menu
+deactivate Menu
+return
+@enduml

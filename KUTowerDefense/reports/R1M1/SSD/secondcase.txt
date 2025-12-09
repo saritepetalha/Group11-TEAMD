@@ -1,0 +1,56 @@
+@startuml
+skinparam sequence {
+ParticipantPadding 40
+BoxPadding 10
+ClassFontName Source Code Pro
+ArrowColor MidnightBlue
+ActorBorderColor MidnightBlue
+
+ParticipantBorderColor DeepSkyBlue
+ParticipantBackgroundColor DodgerBlue
+ParticipantFontName Source Code Pro
+ParticipantFontSize 17
+
+ActorFontSize 17
+ActorFontName Source Code Pro
+}
+
+title <u>SSD – Place Tower</u>
+
+
+actor Player #blue
+participant ":System" as System #yellow
+
+== Start Flow ==
+Player -> System: selectEmptyLot(location)
+System -> System: showTowerSelectionMenu()
+
+alt Player selects tower
+    Player -> System: chooseTower("archer")
+
+    System -> System: validateGold("archer")
+
+    alt Sufficient gold
+        System -> System: placeTower("archer", location)
+        System -> System: deductGold(cost)
+        System -> System: activateTower(location)
+        System -> System: updateGoldDisplay()
+        note right of System
+            Tower is placed and active.
+        end note
+    else Insufficient gold
+        System -> System: showWarning("Not enough gold")
+        note right of System
+            Tower is not placed.
+        end note
+    end
+
+else Player cancels
+    Player -> System: cancelTowerSelection()
+    System -> System: closeTowerMenu()
+    note right of System
+        Menu closed, no action taken.
+    end note
+end
+
+@enduml

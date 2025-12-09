@@ -1,0 +1,92 @@
+@startuml
+skinparam sequence {
+ParticipantPadding 40
+BoxPadding 10
+ClassFontName Source Code Pro
+ArrowColor MidnightBlue
+ActorBorderColor MidnightBlue
+
+ParticipantBorderColor DeepSkyBlue
+ParticipantBackgroundColor DodgerBlue
+ParticipantFontName Source Code Pro
+ParticipantFontSize 17
+
+ActorFontSize 17
+ActorFontName Source Code Pro
+}
+
+title <u>SSD – Display Game Statistics on Game Over Screen</u>
+
+participant ":PlayingController" as Controller #yellow
+participant ":PlayingModel" as Model #orange
+participant ":GameStatsRecord" as StatsRecord #lightgreen
+participant ":GameStatsManager" as StatsManager #lightblue
+participant ":GameStatsIO" as StatsIO #pink
+participant ":Game" as Game #lightcoral
+participant ":GameOverScene" as GameOverScene #lightyellow
+
+== Victory Scenario ==
+Controller -> Model: createGameStatsRecord(true)
+Model -> StatsRecord: new GameStatsRecord(mapName, true, stats...)
+StatsRecord --> Model: statsRecord
+Model --> Controller: statsRecord
+
+Controller -> StatsManager: addRecord(statsRecord)
+Controller -> StatsManager: saveToFile(statsRecord)
+StatsManager -> StatsIO: saveToFile(statsRecord)
+note right of StatsIO
+    Saves stats to JSON file
+    for persistent storage
+end note
+
+Controller -> Game: getGameOverScene()
+Game --> Controller: gameOverScene
+
+Controller -> GameOverScene: setStats(victory=true, goldEarned, enemiesSpawned, etc...)
+
+Controller -> Game: changeGameState(GAME_OVER)
+
+== Game Over Scenario ==
+Controller -> Model: createGameStatsRecord(false)
+Model -> StatsRecord: new GameStatsRecord(mapName, false, stats...)
+StatsRecord --> Model: statsRecord
+Model --> Controller: statsRecord
+
+Controller -> StatsManager: addRecord(statsRecord)
+Controller -> StatsManager: saveToFile(statsRecord)
+StatsManager -> StatsIO: saveToFile(statsRecord)
+
+Controller -> GameOverScene: setStats(victory=false, goldEarned, enemiesSpawned, etc...)
+
+Controller -> Game: changeGameState(GAME_OVER)
+
+== Display Statistics ==
+GameOverScene -> GameOverScene: render(Graphics g)
+
+alt Victory
+    GameOverScene -> GameOverScene: drawImage(victoryBackground)
+    GameOverScene -> GameOverScene: drawString("VICTORY!")
+else Defeat  
+    GameOverScene -> GameOverScene: drawImage(defeatBackground)
+    GameOverScene -> GameOverScene: drawString("GAME OVER")
+end
+
+GameOverScene -> GameOverScene: drawString("Total Gold: " + goldEarned)
+GameOverScene -> GameOverScene: drawString("Enemies Spawned: " + enemiesSpawned)
+GameOverScene -> GameOverScene: drawString("Enemies Reached End: " + enemiesReachedEnd)
+GameOverScene -> GameOverScene: drawString("Towers Built: " + towersBuilt)
+GameOverScene -> GameOverScene: drawString("Enemies Defeated: " + enemyDefeated)
+GameOverScene -> GameOverScene: drawString("Total Damage Dealt: " + totalDamage)
+GameOverScene -> GameOverScene: drawString("Time Played: " + timeFormatted)
+
+GameOverScene -> GameOverScene: drawReplayButton()
+GameOverScene -> GameOverScene: drawMenuButton()
+
+note right of GameOverScene
+    Statistics displayed with
+    victory/defeat background,
+    formatted time display,
+    and action buttons
+end note
+
+@enduml

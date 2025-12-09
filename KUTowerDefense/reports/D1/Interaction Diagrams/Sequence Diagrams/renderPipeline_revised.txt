@@ -1,0 +1,117 @@
+@startuml
+!theme reddress-lightgreen
+ 
+title GameScreen Render Pipeline
+
+participant "UI Thread" as UI
+participant "GameScreen" as GameScreen
+participant "Render" as Render
+participant "Intro" as Intro
+participant "Menu" as Menu
+participant "EditMode" as EditMode
+participant "PlayingMode" as PlayingMode
+participant "Loaded" as Loaded
+participant "Options" as Options
+participant "TileManager" as TileManager
+participant "EditTiles" as EditTiles
+participant "TheButton" as TheButton
+
+== Paint Event ==
+UI -> GameScreen : paintComponent()
+activate GameScreen
+GameScreen -> Render : render()
+activate Render
+
+alt GameState == INTRO
+    Render -> Intro : render()
+    activate Intro
+    Intro -> Intro : startMusic()
+    activate Intro #CCFFEE
+    deactivate Intro
+    Intro --> Render
+    deactivate Intro
+
+else GameState == MENU
+    Render -> Menu : render()
+    activate Menu 
+    Menu -> Menu : drawBackground()
+    activate Menu #CCFFEE
+    deactivate Menu 
+    Menu -> Menu : drawButtons()
+    activate Menu #CCFFEE
+    deactivate Menu
+    loop for each button
+        Menu -> TheButton : drawStyled()
+        activate TheButton
+        TheButton --> Menu
+        deactivate TheButton
+    end
+    Menu --> Render
+    deactivate Menu
+
+else GameState == EDIT
+    Render -> EditMode : render()
+    activate EditMode
+    EditMode -> TileManager : getSprite()
+    activate TileManager
+    TileManager --> EditMode
+    deactivate TileManager
+    EditMode -> EditTiles : draw()
+    activate EditTiles
+    EditTiles -> EditTiles : drawButtons()
+    activate EditTiles #CCFFEE
+    EditTiles --> EditTiles
+    deactivate EditTiles
+    EditTiles --> EditMode
+    deactivate EditTiles
+    EditMode -> EditMode : drawSelectedTile()
+    activate EditMode #CCFFEE
+    deactivate EditMode
+    EditMode --> Render
+    deactivate EditMode
+
+else GameState == PLAYING
+    Render -> PlayingMode : render()
+    activate PlayingMode
+    PlayingMode -> TileManager : getSprite()
+    activate TileManager 
+    TileManager --> PlayingMode
+    deactivate TileManager
+    PlayingMode -> PlayingMode : draw towers, enemies, projectiles
+    activate PlayingMode #CCFFEE
+    deactivate PlayingMode
+    PlayingMode --> Render
+    deactivate PlayingMode
+
+else GameState == LOADED
+    Render -> PlayingMode : render()
+    activate PlayingMode
+    PlayingMode -> TileManager : getSprite()
+    activate TileManager
+    TileManager --> PlayingMode
+    deactivate TileManager
+    PlayingMode -> PlayingMode : draw towers, enemies, projectiles
+    activate PlayingMode #CCFFEE
+    deactivate PlayingMode
+    PlayingMode --> Render
+    deactivate PlayingMode
+
+
+else GameState == OPTIONS
+    Render -> Options : render()
+    activate Options
+    Options -> Options : drawButtons()
+    activate Options #CCFFEE
+    deactivate Options
+    Options -> TheButton : draw()
+    activate TheButton
+    TheButton --> Options
+    deactivate TheButton
+    Options --> Render
+    deactivate Options
+end
+
+Render --> GameScreen
+deactivate Render
+deactivate GameScreen
+@enduml

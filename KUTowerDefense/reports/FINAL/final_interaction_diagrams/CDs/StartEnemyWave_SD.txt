@@ -1,0 +1,28 @@
+@startuml
+!theme mars
+title Communication Diagram - Start Enemy Wave
+
+skinparam rectangle {
+  BackgroundColor #E6F2FF
+  BorderColor black
+}
+
+actor "Player" as Player
+rectangle "Playing" as Playing
+rectangle "WaveManager" as WaveManager
+rectangle "PlayingModel" as PlayingModel
+rectangle "GameOptions" as GameOptions
+rectangle "EnemyManager" as EnemyManager
+
+Player -right- Playing : plays game
+
+Playing -down- WaveManager : ↓ 1: prepareNextWave()
+WaveManager -down- PlayingModel : ↓ 1.1: onWaveStart()\n↓ 3.1: onWaveComplete()\n↓ 3.3: handleVictory()
+WaveManager -down- WaveManager : ↓ 1.2: prepareNextGroup()\n↓ 1.3: convertEnemyTypeToConstant()\n↓ 4: startInterWaveTimer()\n↓ 4.1: setInterWaveDelay()\n↓ 5: prepareNextWave()
+WaveManager -down- GameOptions : ↓ 1.4: getWaves()
+WaveManager -down- EnemyManager : → 2: spawnEnemy(enemyType)\n← 3: areAllEnemiesGone()
+EnemyManager -down- EnemyManager : ↓ 2.1: createEnemy()\n↓ 2.3: applyOptionsToEnemy()
+EnemyManager -down- GameOptions : ↓ 2.2: getEnemyStats()
+EnemyManager -left- Playing : ↓ 2.4: addEnemyToLevel(enemy)
+
+@enduml

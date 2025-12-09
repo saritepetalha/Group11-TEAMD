@@ -1,0 +1,53 @@
+@startuml
+skinparam sequence {
+ParticipantPadding 40
+BoxPadding 10
+ClassFontName Source Code Pro
+ArrowColor MidnightBlue
+ActorBorderColor MidnightBlue
+
+ParticipantBorderColor DeepSkyBlue
+ParticipantBackgroundColor DodgerBlue
+ParticipantFontName Source Code Pro
+ParticipantFontSize 17
+
+ActorFontSize 17
+ActorFontName Source Code Pro
+}
+title <u>SSD – Sell Tower</u>
+
+
+actor Player #blue
+participant ":System" as System #yellow
+
+== Start Flow ==
+Player -> System: clickTower(location)
+System -> System: showSellOptionPopup()
+
+alt Player chooses "Sell Tower"
+    Player -> System: selectSellTower()
+
+    alt Tower data is valid
+        System -> System: removeTower(location)
+        System -> System: calculateRefund(towerType, upgradeLevel)
+        System -> System: addGoldToPlayer(refundAmount)
+        System -> System: markLotAsEmpty()
+        note right of System
+            Tower is removed and refund added.
+        end note
+    else Tower data corrupted
+        System -> System: showError("Tower data corrupted")
+        note right of System
+            Sale cancelled.
+        end note
+    end
+
+else Player clicks elsewhere
+    Player -> System: dismissSellMenu()
+    System -> System: closePopup()
+    note right of System
+        No action taken.
+    end note
+end
+
+@enduml

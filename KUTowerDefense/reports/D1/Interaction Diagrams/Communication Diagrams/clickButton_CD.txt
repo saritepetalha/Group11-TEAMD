@@ -1,0 +1,35 @@
+@startuml
+!theme mars
+
+title Communication Diagram - Main Menu Screen Button Interactions
+
+skinparam linestyle ortho
+skinparam rectangle {
+  backgroundColor #E6F2FF
+  borderColor Black
+}
+
+' Define participants
+actor "User" as Actor
+rectangle "Mouse" as Mouse
+rectangle "Menu" as Menu
+rectangle "Game" as Game
+rectangle "GameScreen" as GameScreen
+rectangle "System" as System
+
+' Message flow
+
+Actor -right- Mouse : clicks →
+
+Mouse -right- Menu : 1: mouseClicked(x, y) →
+Menu -right- Game : → 2a [New Game]: changeGameState(PLAYING)\n→ 2b [Load Game]: changeGameState(LOADED)\n→ 2c [Edit Mode] : changeGameState(EDIT)\n→ 2d [Options] : changeGameState(OPTIONS)
+
+Game -down- GameScreen : ↓ 2a.1/2b.1/2c.1/2d.1 : setPanelSize()
+
+Game -down- Game : 2a.2/2b.2/2c.2/2d.2 : pack()\n2a.3/2b.3/2c.3/2d.3 : setLocationRelativeTo(null)
+
+Menu -down- System : ↓ 2e [Quit] : exit(0)
+
+@enduml
+
+

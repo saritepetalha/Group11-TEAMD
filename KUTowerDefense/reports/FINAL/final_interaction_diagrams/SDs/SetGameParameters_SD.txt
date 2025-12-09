@@ -1,0 +1,71 @@
+@startuml
+actor Player
+
+participant Options
+participant GameOptionsUI
+participant GameOptions
+participant OptionsIO
+participant Playing
+participant AudioManager
+
+== Player enters the Options scene ==
+
+Player -> Options : openOptions()
+activate Options
+Options -> GameOptionsUI : new GameOptionsUI(game, OptionsIO.load())
+activate GameOptionsUI
+GameOptionsUI -> OptionsIO : load()
+activate OptionsIO
+OptionsIO -> OptionsIO : loadFromPath(CONFIG_PATH, true)
+OptionsIO --> GameOptionsUI : return GameOptions
+deactivate OptionsIO
+GameOptionsUI -> GameOptionsUI : loadValuesFromOptions()
+deactivate GameOptionsUI
+deactivate Options
+
+== Player modifies and saves ==
+
+Player -> GameOptionsUI : modify settings
+Player -> GameOptionsUI : clickSave()
+activate GameOptionsUI
+GameOptionsUI -> AudioManager : playButtonClickSound()
+activate AudioManager
+AudioManager --> GameOptionsUI
+deactivate AudioManager
+
+GameOptionsUI -> GameOptionsUI : saveOptions()
+activate GameOptionsUI
+GameOptionsUI -> GameOptions : setStartingGold()
+GameOptionsUI -> GameOptions : setStartingPlayerHP()
+GameOptionsUI -> GameOptions : setStartingShield()
+GameOptionsUI -> GameOptions : setInterWaveDelay()
+GameOptionsUI -> GameOptions : updateEnemyStats()
+GameOptionsUI -> GameOptions : updateTowerStats()
+GameOptionsUI -> GameOptions : updateWaves()
+
+GameOptionsUI -> OptionsIO : save(options)
+activate OptionsIO
+OptionsIO -> OptionsIO : save(options, CONFIG_PATH)
+OptionsIO --> GameOptionsUI
+deactivate OptionsIO
+
+GameOptionsUI -> OptionsIO : saveCustom(options)
+activate OptionsIO
+OptionsIO -> OptionsIO : save(options, CUSTOM_CONFIG_PATH)
+OptionsIO --> GameOptionsUI
+deactivate OptionsIO
+
+GameOptionsUI -> Playing : reloadGameOptions()
+activate Playing
+Playing --> GameOptionsUI
+deactivate Playing
+
+GameOptionsUI -> GameOptionsUI : showSuccessMessage()
+deactivate GameOptionsUI
+deactivate GameOptionsUI
+
+== Confirmation ==
+
+GameOptionsUI -> Player : show "Settings saved successfully!"
+
+@enduml

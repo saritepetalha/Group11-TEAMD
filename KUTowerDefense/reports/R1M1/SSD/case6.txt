@@ -1,0 +1,55 @@
+@startuml
+skinparam ParticipantPadding 200
+skinparam sequence {
+	BoxPadding 10
+	ClassFontName Source Code Pro
+	ArrowColor MidnightBlue
+	ActorBorderColor MidnightBlue
+
+	ParticipantBorderColor DeepSkyBlue
+	ParticipantBackgroundColor DodgerBlue
+	ParticipantFontName Source Code Pro
+	ParticipantFontSize 17
+
+	ActorFontSize 17
+	ActorFontName Source Code Pro
+}
+
+title <u>SSD – Enemy Reaches Exit</u>
+
+actor Enemy #red
+participant ":System" as System #yellow
+
+== Main Scenario ==
+Enemy -> System: reachEndTile()
+
+System -> System: detectEnemyAtExit()
+
+alt Enemy is at exit
+    System -> Enemy: requestExitStatus()
+    Enemy -> System: confirmReachedExit(enemyID)
+    System -> Enemy: removeFromGame(enemyID)
+    System -> System: decreasePlayerLife(1)
+    System -> System: updateLifeUI()
+
+    alt PlayerLife == 0
+        System -> System: showGameOverScreen()
+        note right of System
+            Game ends.
+        end note
+    else PlayerLife > 0
+        note right of System
+            Game continues.
+        end note
+    end
+
+else Enemy stuck at exit
+    Enemy -> System: reportPosition()
+    System -> Enemy: forceRemove(enemyID)
+    System -> System: decreasePlayerLife(1)
+    note right of System
+        Penalty applied anyway.
+    end note
+end
+
+@enduml

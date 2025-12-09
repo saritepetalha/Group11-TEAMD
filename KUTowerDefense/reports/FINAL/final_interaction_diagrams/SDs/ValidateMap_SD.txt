@@ -1,0 +1,23 @@
+@startuml
+actor Player
+
+participant MapEditing
+participant PopupHandler
+participant BFSValidator <<validatePath helper>>
+
+== Player initiates map validation ==
+
+Player -> MapEditing : click "Save"
+MapEditing -> MapEditing : findStartAndEnd()
+MapEditing -> BFSValidator : validatePath(level)
+
+alt if valid
+    MapEditing -> MapEditing : clear validationErrors
+    MapEditing -> MapEditing : enableSaveButton()
+else invalid
+    MapEditing -> MapEditing : add error messages
+    MapEditing -> PopupHandler : show(validationErrors)
+    MapEditing -> MapEditing : disableSaveButton()
+end
+
+@enduml

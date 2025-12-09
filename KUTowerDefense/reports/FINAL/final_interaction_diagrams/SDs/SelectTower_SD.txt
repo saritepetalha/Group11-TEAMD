@@ -1,0 +1,42 @@
+@startuml
+actor Player
+
+participant Playing
+participant PlayingController
+participant PlayingModel
+participant TowerManager
+participant PlayerManager
+participant TowerSelectionUI
+participant AudioManager
+
+== Player clicks an empty tile ==
+
+Player -> Playing : mousePressed(x, y)
+activate Playing
+Playing -> PlayingController : mousePressed(x, y)
+activate PlayingController
+PlayingController -> PlayingModel : isValidTileForPlacement(x, y)
+PlayingModel --> PlayingController : isValid
+PlayingController -> PlayingModel : setSelectedTile(tile)
+deactivate PlayingController
+deactivate Playing
+
+== Player selects a tower type ==
+
+Player -> Playing : selectTower(type)
+activate Playing
+Playing -> PlayingController : selectTower(type)
+activate PlayingController
+PlayingController -> PlayerManager : getGold()
+PlayerManager --> PlayingController : goldAmount
+PlayingController -> TowerManager : buildTowerAt(tile, type)
+activate TowerManager
+TowerManager -> PlayerManager : reduceGold(towerCost)
+TowerManager -> PlayingModel : addTowerToList(tower)
+TowerManager -> AudioManager : playTowerPlacementSound()
+deactivate TowerManager
+PlayingController -> TowerSelectionUI : setSelectedTower(tower)
+deactivate PlayingController
+deactivate Playing
+
+@enduml

@@ -1,0 +1,32 @@
+@startuml
+actor Player
+participant MapEditing
+participant MapController
+participant MapModel
+participant PathValidator
+participant LoadSave
+participant ThumbnailCache
+participant FileSystem <<external>>
+
+== Player saves a custom map ==
+
+Player -> MapEditing : click "Save"
+MapEditing -> AudioManager : playButtonClickSound()
+MapEditing -> MapModel : validateBeforeSave()
+MapModel -> PathValidator : validatePath(level, overlayData)
+PathValidator -> PathValidator : checkStartEndPoints()
+PathValidator -> PathValidator : checkPathConnectivity()
+
+alt if map is valid
+    MapEditing -> MapModel : saveLevel(filename)
+    MapModel -> LoadSave : saveLevel(filename, level)
+    LoadSave -> FileSystem : write to /resources/Levels/filename.json
+    MapModel -> LoadSave : saveOverlay(filename, overlayData)
+    LoadSave -> FileSystem : write to /resources/Levels/filename_overlay.json
+    LoadSave -> ThumbnailCache : invalidateLevel(filename)
+    MapEditing -> Player : show "Map saved successfully!"
+else validation fails
+    MapEditing -> Player : show error dialog with validation message
+end
+
+@enduml

@@ -1,0 +1,48 @@
+@startuml
+actor Player
+participant Playing
+participant PlayingController
+participant PlayingModel
+participant Game
+participant GameOverScene
+participant GameStatsRecord
+participant AudioManager
+participant UI
+
+== Game ends ==
+
+Playing -> PlayingModel : checkGameOverConditions()
+alt all waves complete
+    PlayingModel -> PlayingController : notifyObservers("victory")
+    PlayingController -> PlayingModel : createGameStatsRecord(true)
+    PlayingController -> GameStatsRecord : collectStats()
+    PlayingController -> Game : getGameOverScene()
+    PlayingController -> GameOverScene : setStats(isVictory, goldEarned, enemiesSpawned, enemiesReachedEnd, towersBuilt, enemyDefeated, totalDamage, timePlayed)
+    PlayingController -> Game : changeGameState(GAME_OVER)
+    GameOverScene -> AudioManager : playVictoryMusic()
+    GameOverScene -> UI : render stats + buttons
+else baseHP == 0
+    PlayingModel -> PlayingController : notifyObservers("gameOver")
+    PlayingController -> PlayingModel : createGameStatsRecord(false)
+    PlayingController -> GameStatsRecord : collectStats()
+    PlayingController -> Game : getGameOverScene()
+    PlayingController -> GameOverScene : setStats(isVictory, goldEarned, enemiesSpawned, enemiesReachedEnd, towersBuilt, enemyDefeated, totalDamage, timePlayed)
+    PlayingController -> Game : changeGameState(GAME_OVER)
+    GameOverScene -> AudioManager : playDefeatMusic()
+    GameOverScene -> UI : render stats + buttons
+end
+
+== Player interacts with Game Over screen ==
+
+alt Replay
+    Player -> GameOverScene : click "Replay"
+    GameOverScene -> Game : resetGameWithSameLevel()
+    Game -> Playing : resetGameState()
+    Game -> AudioManager : playRandomGameMusic()
+else Main Menu
+    Player -> GameOverScene : click "Main Menu"
+    GameOverScene -> Game : changeGameState(MENU)
+    Game -> AudioManager : playMusic("lonelyhood")
+end
+
+@enduml

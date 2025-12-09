@@ -1,0 +1,34 @@
+@startuml
+actor Player
+
+participant LevelSelectionScene
+participant Playing
+participant Game
+participant AudioManager
+participant GameStates <<enumeration>>
+
+== Player selects a map ==
+
+Player -> LevelSelectionScene : mouseClicked(x, y)
+activate LevelSelectionScene
+LevelSelectionScene -> AudioManager : playButtonClickSound()
+LevelSelectionScene -> LevelSelectionScene : showDifficultyOverlay(levelName, levelData)
+deactivate LevelSelectionScene
+
+== Player selects difficulty ==
+
+Player -> LevelSelectionScene : mouseClicked(x, y)
+activate LevelSelectionScene
+LevelSelectionScene -> AudioManager : playButtonClickSound()
+LevelSelectionScene -> LevelSelectionScene : selectDifficultyAndPlay(difficulty)
+LevelSelectionScene -> Game : startPlayingWithDifficulty(levelData, overlayData, levelName, difficulty)
+LevelSelectionScene -> Game : changeGameState(GameStates.SKILL_SELECTION)
+deactivate LevelSelectionScene
+
+== Game transitions to skill selection ==
+
+Game -> Game : gameState = SKILL_SELECTION
+Game -> Playing : resetGameState()
+Game -> AudioManager : playRandomGameMusic()
+
+@enduml

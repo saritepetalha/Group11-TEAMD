@@ -1,0 +1,50 @@
+@startuml
+participant Actor
+Actor -> Playing : render
+activate Playing
+Playing -> TileManager : getSprite
+activate TileManager
+TileManager --> Playing
+deactivate TileManager
+Playing -> EditTiles : draw
+activate EditTiles
+EditTiles -> EditTiles : drawButtons
+activate EditTiles
+EditTiles -> TheButton : draw
+activate TheButton
+TheButton --> EditTiles
+deactivate TheButton
+EditTiles -> TheButton : draw
+activate TheButton
+TheButton --> EditTiles
+deactivate TheButton
+EditTiles -> TheButton : draw
+activate TheButton
+TheButton --> EditTiles
+deactivate TheButton
+EditTiles -> TheButton : draw
+activate TheButton
+TheButton --> EditTiles
+deactivate TheButton
+EditTiles -> TheButton : draw
+activate TheButton
+TheButton --> EditTiles
+deactivate TheButton
+EditTiles -> TheButton : draw
+activate TheButton
+TheButton --> EditTiles
+deactivate TheButton
+EditTiles -> TileManager : getSprite
+activate TileManager
+TileManager --> EditTiles
+deactivate TileManager
+EditTiles --> EditTiles
+deactivate EditTiles
+EditTiles --> Playing
+deactivate EditTiles
+Playing -> Playing : drawSelectedTile
+activate Playing
+Playing --> Playing
+deactivate Playing
+return
+@enduml

@@ -1,0 +1,38 @@
+@startuml
+!theme mars
+
+title Communication Diagram - Mouse Click in Different Scenes
+
+skinparam linestyle ortho
+skinparam rectangle {
+  backgroundColor #FFF5F5
+  borderColor Black
+}
+
+' Participants
+rectangle "MyMouseListener" as Mouse
+rectangle "Playing" as Playing
+rectangle "EditTiles" as EditTiles
+rectangle "TileManager" as TileManager
+rectangle "Menu" as Menu
+rectangle "Options" as Options
+rectangle "Game" as Game
+rectangle "GameScreen" as GameScreen
+
+' Click in Edit Mode
+Mouse -down- Playing : ↓ 1: mouseClicked()
+Playing -down- EditTiles : ↓ 1.1: mouseClicked()
+EditTiles -down- Game : ↓ 1.1.1: changeGameState(EDIT)
+Game -down- GameScreen : ↓ 1.1.1.1: setPanelSize()\n↓ 2.1.1: setPanelSize()\n↓ 3.1.1: setPanelSize()
+EditTiles -left- TileManager : ← 1.1.2: getTile()
+Playing -down- Playing : ↓ 1.2: modifyTile()
+
+' Click in Menu
+Mouse -down- Menu : ↓ 2 *: mouseClicked()
+Menu -down- Game : ↓ 2.1: changeGameState(...)
+
+' Click in Options
+Mouse -down- Options : ↓ 3: mouseClicked()
+Options -down- Game : ↓ 3.1: changeGameState(OPTIONS)
+
+@enduml

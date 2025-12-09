@@ -1,0 +1,30 @@
+@startuml
+!theme mars
+title Communication Diagram - View Tower Range
+
+skinparam rectangle {
+  BackgroundColor #E6F2FF
+  BorderColor black
+}
+
+actor "Player" as Player
+rectangle "PlayingController" as PlayingController
+rectangle "PlayingView" as PlayingView
+rectangle "TowerSelectionUI" as TowerSelectionUI
+rectangle "TowerManager" as TowerManager
+rectangle "Tower" as Tower
+rectangle "Playing" as Playing
+
+Player -right- PlayingController : moves mouse
+
+PlayingController -down- PlayingView : ↓ 1: mouseMoved(x, y)
+PlayingView -down- TowerSelectionUI : ↓ 1.1: mouseMoved(x, y)\n↓ 3: draw(Graphics2D g)
+
+PlayingController -up- TowerManager : ↑ 2: getTowers()\n↑ 2.1: isClicked(x, y)\n↓ 2.2: towers\n↓ 2.3: clicked
+PlayingController -right- Playing : → 2.4: setDisplayedTower(tower)
+
+TowerSelectionUI -down- Tower : ↓ 3.1: getRange()\n↑ 3.2: range
+
+TowerSelectionUI -down- TowerSelectionUI : ↓ 3.3: applyWeatherRangeMultiplier()\n↓ 3.4: drawEnhancedRangeIndicator()\n↓ 3.5: drawRangeArea()\n↓ 3.6: drawStrategySpecificRange()\n↓ 3.7: drawStrategyIndicator()
+
+@enduml

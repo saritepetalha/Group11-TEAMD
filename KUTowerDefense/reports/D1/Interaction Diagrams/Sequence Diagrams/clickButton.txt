@@ -1,0 +1,88 @@
+@startuml
+!theme reddress-lightblue
+title Main Menu Screen Button Interactions SD
+participant "MyMouseListener" as Mouse
+participant "Menu" as Menu
+participant "Game" as Game
+participant "GameScreen" as GameScreen
+
+== User Clicks a Button on The Main Menu Screen == 
+
+
+[o-> Mouse : mouseClicked(x, y)
+activate Mouse
+
+Mouse -> Menu : mouseClicked(x, y)
+activate Menu
+
+alt Clicked button is New Game
+Menu -> Game : changeGameState(PLAYING)
+activate Game
+Game -> GameScreen : setPanelSize()
+activate GameScreen
+GameScreen --> Game
+deactivate GameScreen
+
+Game -> Game : pack()
+activate Game
+deactivate Game
+Game -> Game : setLocationRelativeTo(null)
+activate Game
+deactivate Game
+deactivate Game
+
+else Clicked button is Load Game
+Menu -> Game : changeGameState(LOADED)
+activate Game
+Game -> GameScreen : setPanelSize()
+activate GameScreen
+GameScreen --> Game
+deactivate GameScreen
+
+Game -> Game : pack()
+activate Game
+deactivate Game
+Game -> Game : setLocationRelativeTo(null)
+activate Game
+deactivate Game
+deactivate Game
+
+else Clicked button is Edit Mode
+Menu -> Game : changeGameState(EDIT)
+activate Game
+Game -> GameScreen : setPanelSize()
+activate GameScreen
+GameScreen --> Game
+deactivate GameScreen
+
+Game -> Game : pack()
+activate Game
+deactivate Game
+Game -> Game : setLocationRelativeTo(null)
+activate Game
+deactivate Game
+deactivate Game
+
+else Clicked button is Options
+Menu -> Game : changeGameState(OPTIONS)
+activate Game
+Game -> GameScreen : setPanelSize()
+activate GameScreen
+GameScreen --> Game
+deactivate GameScreen
+
+Game -> Game : pack()
+activate Game
+deactivate Game
+Game -> Game : setLocationRelativeTo(null)
+activate Game
+deactivate Game
+deactivate Game
+
+else Clicked button is Quit
+Menu -> System : exit(0)
+end
+
+deactivate Menu
+deactivate Mouse
+@enduml
