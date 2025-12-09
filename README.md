@@ -297,16 +297,16 @@ Additional documentation and design artifacts can be found in:
 | Tower | Specialty | Best Against |
 |-------|-----------|--------------|
 | 🏹 Archer | Fast firing rate | Light enemies |
-| 🔮 Mage | Area damage | Grouped enemies |
-| 💣 Artillery | Heavy damage | Tanky enemies |
+| 🔮 Mage | Slow and teleport effect | Fast enemies |
+| 💣 Artillery | Heavy and area damage | Grouped enemies |
 | ☠️ Poison | Damage over time | All enemy types |
 
 ### 👹 Enemy Types
 - 👺 **Goblin**: Fast and numerous
 - ⚔️ **Knight**: Armored and tough
 - 🧌 **Troll**: Slow but powerful
-- 🛢️ **Barrel**: Explosive surprise
-- 💣 **TNT**: High risk, high reward
+- 🛢️ **Barrel**: Medium tank
+- 💣 **TNT**: Faster 
 
 ---
 
@@ -318,7 +318,7 @@ This project was developed as part of a software engineering course at Koç Univ
 
 - 🎮 Game assets and sprites used for educational purposes
 - 👨‍🏫 Course instructors and teaching assistants for their invaluable guidance
-- 💡 Open source community for inspiration and resources
+- 💡 Open source community for inspiration and resources of audio and assets
 
 ---
 
@@ -329,4 +329,5 @@ This project was developed as part of a software engineering course at Koç Univ
 **Made with ☕ and ❤️ by Team D**
 
 </div>
+
 
